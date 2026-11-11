@@ -119,7 +119,10 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
     auto project=ws::importMidi(path);
     if(s->project.tracks.size()+project.tracks.size()>128)throw std::runtime_error("Maximum 128 tracks");
     checkpoint(s);s->project.durationSeconds=std::min(20000.,std::max(s->project.durationSeconds,project.durationSeconds));
-    for(auto& t:project.tracks)s->project.tracks.push_back(std::move(t));change(s);
+    for(auto& t:project.tracks){
+     s->project.tracks.push_back(std::move(t));
+    }
+    change(s);
     notice(s,tr("MIDI imported","MIDI importerad"));break;}
    case Pick::ExportWav:
     if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
