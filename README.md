@@ -23,6 +23,10 @@ git tag matte-v0.3 && git push origin matte-v0.3
 ```
 
 Kontrollen bygger, signerar med programnyckeln (hemligheten `WENUYOS_PROGRAM_KEY`) och släpper `matte.wapp`.
+
+**Osignerat** (provversioner, eller utan programnyckel): lägg till `-osignerad` i taggen –
+`git tag matte-v0.4-osignerad && git push origin matte-v0.4-osignerad`. Samma släpp, men utan signatur: datorerna
+installerar det med varningen *Inte signerat*. Nästa vanliga tagg (`matte-v0.5`) är signerad igen.
 WenuyOS-datorerna:
 - installerar: `wenuyos install github.com/danielwoxne/wenuyos-program#matte`
 - får nya versioner med `wenuyos update` (bara släpp vars tagg börjar med `matte-v`)

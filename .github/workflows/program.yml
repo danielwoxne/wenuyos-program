@@ -3,6 +3,8 @@ name: Program
 #  - PR och push till main: varje program som ändrats provas (wenuyos verify för C++, paketeras för alla).
 #  - Taggen <program>-v<version> (t.ex. matte-v0.3): programmet byggs, signeras med programnyckeln och släpps
 #    som GitHub Release med <program>.wapp. WenuyOS hittar det med källan github.com/<ägare>/<förråd>#<program>.
+#  - Taggen <program>-v<version>-osignerad (t.ex. matte-v0.4-osignerad): samma, men utan signatur – datorerna visar
+#    "Inte signerat" när det installeras. För provversioner; programnyckeln behövs inte.
 # Taggen sätts först när Daniel godkänt (docs/ARBETSORDNING.md avsnitt 10 i New-wenuyos).
 on:
   push:
@@ -49,7 +51,8 @@ jobs:
             tag=$GITHUB_REF_NAME; p=${tag%-v*}
             [[ "$tag" =~ ^[a-z0-9][a-z0-9-]*-v[0-9][0-9A-Za-z.+-]*$ ]] || { echo "Taggen ska vara <program>-v<version>, t.ex. matte-v0.3"; exit 1; }
             is_prog "$p" || { echo "Det finns inget program i mappen $p/"; exit 1; }
-            echo "list=$p" >> "$GITHUB_OUTPUT"; echo "release=$p" >> "$GITHUB_OUTPUT"; exit 0
+            unsigned=""; case "$tag" in *-osignerad|*-unsigned) unsigned=1;; esac
+            echo "list=$p" >> "$GITHUB_OUTPUT"; echo "release=$p" >> "$GITHUB_OUTPUT"; echo "unsigned=$unsigned" >> "$GITHUB_OUTPUT"; exit 0
           fi
           if [ "${{ github.event_name }}" = pull_request ]; then base=origin/${{ github.base_ref }}; else base=${{ github.event.before }}; fi
           git cat-file -e "$base" 2>/dev/null || base=$(git rev-list --max-parents=0 HEAD | tail -1)
@@ -77,13 +80,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           p=${{ steps.which.outputs.release }}; tag=$GITHUB_REF_NAME
-          [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "Hemligheten WENUYOS_PROGRAM_KEY saknas (Settings → Secrets → Actions)"; exit 1; }
-          export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"
-          printf '%s\n' "$WENUYOS_PROGRAM_KEY" | gpg --batch --import 2>/dev/null
-          bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" --sign
-          rm -rf "$GNUPGHOME"
+          if [ -n "${{ steps.which.outputs.unsigned }}" ]; then
+            bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp"   # osignerad: datorerna visar "Inte signerat"
+            note="Osignerad version – WenuyOS visar \"Inte signerat\" när den installeras."
+          else
+            [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "Hemligheten WENUYOS_PROGRAM_KEY saknas (Settings → Secrets → Actions) – eller släpp osignerat: taggen $tag-osignerad"; exit 1; }
+            export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"
+            printf '%s\n' "$WENUYOS_PROGRAM_KEY" | gpg --batch --import 2>/dev/null
+            bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" --sign
+            rm -rf "$GNUPGHOME"; note=""
+          fi
           name=$(sed -n 's/^Name\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1); [ -n "$name" ] || name=$(sed -n 's/^ *title *= *//p' "$p/game.ini" 2>/dev/null | head -1)
-          body=$(sed -n 's/^Comment\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1)
+          body=$(sed -n 's/^Comment\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1); [ -n "$note" ] && body="$body"$'\n\n'"$note"
           # GitHub-API direkt (curl) – gh finns inte i debian:trixie
           api=https://api.github.com/repos/$GITHUB_REPOSITORY
           rel=$(python3 -c 'import json,sys; print(json.dumps({"tag_name":sys.argv[1],"name":sys.argv[2],"body":sys.argv[3]}))' "$tag" "${name:-$p} ${tag#$p-}" "$body" \
