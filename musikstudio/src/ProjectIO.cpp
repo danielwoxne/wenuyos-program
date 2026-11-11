@@ -18,265 +18,221 @@
 
 #include <stdexcept>
 
-namespace fs = std::filesystem;
-
 namespace wenuystudio {
+
+namespace fs=std::filesystem;
 
 namespace {
 
-constexpr std::size_t kMaxProjectBytes=8*1024*1024;
+void require(bool b,const char* m){if(!b)throw std::runtime_error(m);}
 
-constexpr std::size_t kMaxTracks=128;
+bool sane(const std::string& s){if(s.size()>4096)return false;for(char c:s)if(c=='\r'||c=='\n'||c=='\0')return false;return true;}
 
-constexpr std::size_t kMaxClips=4096;
+void validate(const Project& p){
 
-constexpr std::size_t kMaxNotes=50000;
+ require(p.sampleRate>=8000&&p.sampleRate<=192000,"Invalid sample rate");
 
-constexpr std::size_t kMaxPathLength=4096;
+ require(std::isfinite(p.durationSeconds)&&p.durationSeconds>0&&p.durationSeconds<=20000,"Invalid duration");
 
-void value(bool ok,const char* why) { if(!ok)throw std::runtime_error(why); }
+ require(std::isfinite(p.bpm)&&p.bpm>=20&&p.bpm<=400,"Invalid tempo");
 
-bool safeText(const std::string& s){
+ require(std::isfinite(p.masterGain)&&p.masterGain>=0&&p.masterGain<=4,"Invalid master volume");
 
- for(unsigned char c:s) if(c==0 || c==10 || c==13) return false;
+ require(p.tracks.size()<=128,"Too many tracks");
 
- return true;
+ require(std::isfinite(p.loop.startSeconds)&&std::isfinite(p.loop.endSeconds)&&p.loop.startSeconds>=0&&
 
-}
+         p.loop.endSeconds>=0&&p.loop.startSeconds<=p.durationSeconds&&p.loop.endSeconds<=p.durationSeconds&&
 
-void validTime(double t) {value(std::isfinite(t) && t>=0 && t<=20000,"Ogiltig tidsposition i projektet");}
+         (!p.loop.enabled||p.loop.endSeconds-p.loop.startSeconds>=.05),"Invalid loop");
 
-void validate(const Project& p) {
-
- value(p.sampleRate>=8000 && p.sampleRate<=192000,"Ogiltig samplingsfrekvens");
-
- validTime(p.durationSeconds);value(p.durationSeconds>0,"Projektet måste ha en längd");
-
- value(std::isfinite(p.bpm)&&p.bpm>=20&&p.bpm<=400,"Ogiltigt tempo");
-
- value(p.tracks.size()<=kMaxTracks,"För många spår");
-
- std::size_t nClips=0,nNotes=0;
+ std::size_t clips=0,notes=0;
 
  for(const auto& t:p.tracks){
 
-  value(t.name.size()<=512 && safeText(t.name),"Ogiltigt spårnamn");
+  require(sane(t.name)&&t.name.size()<=512,"Invalid track title");
 
-  value(std::isfinite(t.gain)&&t.gain>=0&&t.gain<=8,"Ogiltig spårvolym");
+  require(std::isfinite(t.gain)&&t.gain>=0&&t.gain<=8&&std::isfinite(t.pan)&&t.pan>=-1&&t.pan<=1,"Invalid mixer levels");
 
-  value(std::isfinite(t.pan)&&t.pan>=-1&&t.pan<=1,"Ogiltig panorering");
+  require(validTrackEffects(t.effects),"Invalid track FX");
 
-  nClips+=t.clips.size();nNotes+=t.notes.size();
+  require(t.instrument>=0&&t.instrument<=3,"Invalid instrument type");
 
-  value(nClips<=kMaxClips && nNotes<=kMaxNotes,"För många klipp eller noter");
+  clips+=t.clips.size();notes+=t.notes.size();require(clips<=4096&&notes<=50000,"Too many events");
 
-  for(const auto& c:t.clips){
+  for(const auto& c:t.clips){require(!c.filename.empty()&&sane(c.filename)&&std::isfinite(c.gain)&&c.gain>=0&&c.gain<=8&&
 
-   value(!c.filename.empty() && c.filename.size()<=kMaxPathLength && safeText(c.filename),"Ogiltig klippsökväg");
+     std::isfinite(c.startSeconds)&&c.startSeconds>=0&&c.startSeconds<=20000&&
 
-   validTime(c.startSeconds);validTime(c.sourceOffsetSeconds);validTime(c.durationSeconds);
+     std::isfinite(c.sourceOffsetSeconds)&&c.sourceOffsetSeconds>=0&&c.sourceOffsetSeconds<=20000&&
 
-   value(std::isfinite(c.gain)&&c.gain>=0&&c.gain<=8,"Ogiltig klippvolym");
+     std::isfinite(c.durationSeconds)&&c.durationSeconds>=0&&c.durationSeconds<=20000,"Invalid audio clip");}
 
-  }
+  for(const auto& n:t.notes){require(n.key>=0&&n.key<=127&&std::isfinite(n.atSeconds)&&n.atSeconds>=0&&n.atSeconds<=20000&&
 
-  for(const auto& n:t.notes){
+     std::isfinite(n.durationSeconds)&&n.durationSeconds>=0&&n.durationSeconds<=20000&&
 
-   value(n.key>=0 && n.key<=127,"Ogiltigt MIDI-tonvärde");
-
-   validTime(n.atSeconds);validTime(n.durationSeconds);
-
-   value(std::isfinite(n.velocity)&&n.velocity>=0&&n.velocity<=1,"Ogiltig anslagsstyrka");
-
-  }
+     std::isfinite(n.velocity)&&n.velocity>=0&&n.velocity<=1,"Invalid MIDI note");}
 
  }
 
 }
 
-void noExtra(std::istringstream& is){ is>>std::ws; value(is.eof(),"Extra fält eller felaktig projektfil"); }
+std::string portable(const std::string& name,const fs::path& basedir){
 
-std::string nativePath(const std::string& input, const fs::path& base){
+ fs::path abs=fs::absolute(fs::u8path(name)).lexically_normal();
 
- const fs::path p=fs::u8path(input);
-
- return (p.is_absolute()?p:base/p).lexically_normal().u8string();
+ std::error_code ec;auto rel=fs::relative(abs,basedir,ec);return (ec?abs:rel).generic_u8string();
 
 }
 
-std::string portablePath(const std::string& input, const fs::path& base){
-
- const fs::path p=fs::absolute(fs::u8path(input)).lexically_normal();
-
- std::error_code ec;
-
- const fs::path relative=fs::relative(p,base,ec);
-
- return (ec?p:relative).generic_u8string();
+void noExtra(std::istringstream& s){s>>std::ws;require(s.eof(),"Extra data in project line");}
 
 }
 
-}
+void saveProject(const Project& p,const std::string& pathstr){
 
-void saveProject(const Project& p,const std::string& filepath){
+ validate(p);auto path=fs::absolute(fs::u8path(pathstr)).lexically_normal();
 
- validate(p);
+ require(!path.filename().empty(),"Missing project filename");
 
- const fs::path path=fs::absolute(fs::u8path(filepath)).lexically_normal();
+ std::ostringstream s;s.imbue(std::locale::classic());s<<std::setprecision(std::numeric_limits<double>::max_digits10);
 
- value(!path.filename().empty(),"Ogiltig sökväg för projektet");
+ s<<"WENUYSTUDIO 5\nRATE "<<p.sampleRate<<"\nDURATION "<<p.durationSeconds<<"\nBPM "<<p.bpm
 
- std::ostringstream ss;ss.imbue(std::locale::classic());
-
- ss<<std::setprecision(std::numeric_limits<double>::max_digits10);
-
- ss<<"WENUYSTUDIO 3\nRATE "<<p.sampleRate<<"\nDURATION "<<p.durationSeconds<<"\nBPM "<<p.bpm<<"\nMASTER "<<p.masterGain<<"\n";
+   <<"\nMASTER "<<p.masterGain<<"\nLOOP "<<int(p.loop.enabled)<<' '<<p.loop.startSeconds<<' '<<p.loop.endSeconds<<'\n';
 
  for(const auto& t:p.tracks){
 
-  ss<<"TRACK "<<std::quoted(t.name)<<' '<<t.gain<<' '<<t.pan<<' '<<(t.mute?1:0)<<' '<<(t.solo?1:0)<<'\n';
+  s<<"TRACK "<<std::quoted(t.name)<<' '<<t.gain<<' '<<t.pan<<' '<<int(t.mute)<<' '<<int(t.solo)<<'\n';
 
-  for(const auto& c:t.clips)ss<<"CLIP "<<std::quoted(portablePath(c.filename,path.parent_path()))<<' '<<c.startSeconds<<' '<<c.sourceOffsetSeconds<<' '<<c.durationSeconds<<' '<<c.gain<<'\n';
+  s<<"INSTR "<<t.instrument<<"\n";
 
-  for(const auto& n:t.notes)ss<<"NOTE "<<n.key<<' '<<n.atSeconds<<' '<<n.durationSeconds<<' '<<n.velocity<<'\n';
+  const auto& f=t.effects;
 
-  ss<<"ENDTRACK\n";
+  s<<"FX "<<int(f.enabled)<<' '<<f.lowDb<<' '<<f.midDb<<' '<<f.highDb<<' '<<f.thresholdDb<<' '<<f.ratio<<'\n';
+
+  for(const auto& c:t.clips)s<<"CLIP "<<std::quoted(portable(c.filename,path.parent_path()))<<' '<<c.startSeconds<<' '
+
+     <<c.sourceOffsetSeconds<<' '<<c.durationSeconds<<' '<<c.gain<<'\n';
+
+  for(const auto& n:t.notes)s<<"NOTE "<<n.key<<' '<<n.atSeconds<<' '<<n.durationSeconds<<' '<<n.velocity<<'\n';
+
+  s<<"ENDTRACK\n";
 
  }
 
- ss<<"END\n";
+ s<<"END\n";auto data=s.str();require(data.size()<=8*1024*1024,"Project too large");
 
- const std::string data=ss.str();value(data.size()<=kMaxProjectBytes,"Projektfilen överskrider storleksgränsen");
-
- const fs::path tmp=path.string()+".part";
+ auto tmp=path.string()+".part";auto backup=path.string()+".bak";
 
  try{
 
-  {
+  {std::ofstream file(tmp,std::ios::binary|std::ios::trunc);require(bool(file),"Cannot create temporary project file");
 
-   std::ofstream file(tmp,std::ios::binary|std::ios::trunc);
-
-   value(bool(file),"Kunde inte skapa temporär projektfil");
-
-   file.write(data.data(),static_cast<std::streamsize>(data.size()));file.flush();
-
-   value(bool(file),"Kunde inte skriva projektfilen");
-
-  }
+   file.write(data.data(),std::streamsize(data.size()));file.flush();require(bool(file),"Cannot save project");}
 
   std::error_code ec;
 
-  if(fs::exists(path)) {
+  if(fs::exists(path)){fs::copy_file(path,backup,fs::copy_options::overwrite_existing,ec);require(!ec,"Cannot save project backup");}
 
-   fs::copy_file(path,path.string()+".bak",fs::copy_options::overwrite_existing,ec);
-
-   value(!ec,"Kunde inte säkerhetskopiera tidigare projektversion");
-
-  }
-
-  fs::rename(tmp,path,ec);
-
-  value(!ec,"Kunde inte slutföra projektsparningen");
+  fs::rename(tmp,path,ec);require(!ec,"Cannot finalize project save");
 
  }catch(...){std::error_code ec;fs::remove(tmp,ec);throw;}
 
 }
 
-Project loadProject(const std::string& filepath){
+Project loadProject(const std::string& pathstr){
 
- const fs::path path=fs::absolute(fs::u8path(filepath)).lexically_normal();
+ const auto path=fs::absolute(fs::u8path(pathstr)).lexically_normal();
 
- std::error_code ec;
+ std::error_code ec;auto size=fs::file_size(path,ec);require(!ec&&size>0&&size<=8*1024*1024,"Missing or oversized project");
 
- const auto filesize=fs::file_size(path,ec);
+ std::ifstream in(path,std::ios::binary);require(bool(in),"Cannot read project");
 
- value(!ec && filesize>0 && filesize<=kMaxProjectBytes,"Projektfil saknas eller är för stor");
+ Project p;p.tracks.clear();int ver=0;bool header=false,ended=false,rate=false,duration=false,bpm=false,master=false,loop=false,fx=false,instr=false;Track* active=nullptr;
 
- std::ifstream file(path,std::ios::binary);
+ std::size_t nclips=0,nnotes=0;
 
- value(bool(file),"Kunde inte öppna projektfilen");
+ std::string line;
 
- Project p; p.tracks.clear();
+ while(std::getline(in,line)){
 
- std::string line;bool gotHead=false,gotRate=false,gotDuration=false,gotBpm=false,gotMaster=false,done=false;
-
- int version=0;
-
- Track* active=nullptr;std::size_t clips=0,notes=0;
-
- while(std::getline(file,line)){
-
-  value(line.size()<=kMaxPathLength+128,"För lång rad i projektfilen");
+  require(line.size()<=4300,"Oversized project record");
 
   if(line.empty())continue;
 
-  std::istringstream is(line);is.imbue(std::locale::classic());
+  std::istringstream s(line);s.imbue(std::locale::classic());std::string type;s>>type;
 
-  std::string kind;is>>kind;
+  if(!header){require(type=="WENUYSTUDIO"&&bool(s>>ver)&&(ver==2||ver==3||ver==4||ver==5),"Unsupported project header");noExtra(s);header=true;continue;}
 
-  if(!gotHead){value(kind=="WENUYSTUDIO","Filen är inte ett Wenuy Studio-projekt");value(bool(is>>version)&&(version==2||version==3),"Projektversionen stöds inte");noExtra(is);gotHead=true;continue;}
+  require(!ended,"Unexpected data after end");
 
-  value(!done,"Data efter projektets slut");
+  if(type=="RATE"){require(!rate&&!active&&bool(s>>p.sampleRate),"Invalid RATE");rate=true;}
 
-  if(kind=="RATE") {value(!active&&!gotRate,"Dubbelt RATE-fält");value(bool(is>>p.sampleRate),"Felaktigt RATE-fält");gotRate=true;}
+  else if(type=="DURATION"){require(!duration&&!active&&bool(s>>p.durationSeconds),"Invalid DURATION");duration=true;}
 
-  else if(kind=="DURATION") {value(!active&&!gotDuration,"Dubbelt DURATION-fält");value(bool(is>>p.durationSeconds),"Felaktigt DURATION-fält");gotDuration=true;}
+  else if(type=="BPM"){require(!bpm&&!active&&bool(s>>p.bpm),"Invalid BPM");bpm=true;}
 
-  else if(kind=="BPM") {value(!active&&!gotBpm,"Dubbelt BPM-fält");value(bool(is>>p.bpm),"Felaktigt BPM-fält");gotBpm=true;}
+  else if(type=="MASTER"){require(ver>=3&&!master&&!active&&bool(s>>p.masterGain),"Invalid MASTER");master=true;}
 
-  else if(kind=="MASTER") {value(version==3 && !active && !gotMaster && gotBpm, "Dubbelt eller felplacerat MASTER-fält");value(bool(is>>p.masterGain),"Felaktigt MASTER-fält");gotMaster=true;}
+  else if(type=="LOOP"){int e=0;require(ver>=4&&!loop&&!active&&bool(s>>e>>p.loop.startSeconds>>p.loop.endSeconds)&&(e==0||e==1),"Invalid LOOP");p.loop.enabled=e;loop=true;}
 
-  else if(kind=="TRACK") {
+  else if(type=="TRACK"){
 
-   value(!active&&gotRate&&gotDuration&&gotBpm&&(version==2||gotMaster),"Felaktig spårordning");
+   require(!active&&rate&&duration&&bpm&&(ver==2||master)&&(ver<4||loop)&&p.tracks.size()<128,"Invalid TRACK order");
 
-   value(p.tracks.size()<kMaxTracks,"För många spår");
+   Track t;int mute=0,solo=0;require(bool(s>>std::quoted(t.name)>>t.gain>>t.pan>>mute)&&(mute==0||mute==1),"Invalid TRACK");
 
-   Track t;int muted=0,solo=0;
+   if(ver>=3)require(bool(s>>solo)&&(solo==0||solo==1),"Invalid SOLO");
 
-   value(bool(is>>std::quoted(t.name)>>t.gain>>t.pan>>muted) && (muted==0||muted==1),"Felaktigt TRACK-fält");
+   t.mute=mute;t.solo=solo;p.tracks.push_back(std::move(t));active=&p.tracks.back();fx=false;instr=false;
 
-   if(version==3)value(bool(is>>solo)&&(solo==0||solo==1),"Felaktigt solo-fält");
+  }else if(type=="INSTR"){
 
-   t.mute=muted!=0;t.solo=solo!=0;p.tracks.push_back(std::move(t));active=&p.tracks.back();
+   require(ver==5&&active&&!instr,"Invalid INSTR order");
 
-  }
+   require(bool(s>>active->instrument)&&active->instrument>=0&&active->instrument<=3,"Invalid instrument");instr=true;
 
-  else if(kind=="CLIP") {
+  }else if(type=="FX"){
 
-   value(active!=nullptr && ++clips<=kMaxClips,"För många klipp eller klipp utanför spår");
+   require(ver>=4&&active&&!fx&&(ver<5||instr),"Invalid FX order");int enabled=0;auto& f=active->effects;
 
-   AudioClip c;std::string src;
+   require(bool(s>>enabled>>f.lowDb>>f.midDb>>f.highDb>>f.thresholdDb>>f.ratio)&&(enabled==0||enabled==1),"Invalid FX values");
 
-   value(bool(is>>std::quoted(src)>>c.startSeconds>>c.sourceOffsetSeconds>>c.durationSeconds>>c.gain),"Felaktigt CLIP-fält");
+   f.enabled=enabled;fx=true;
 
-   value(!src.empty()&&src.size()<=kMaxPathLength && safeText(src),"Felaktig ljudsökväg");
+  }else if(type=="CLIP"){
 
-   c.filename=nativePath(src,path.parent_path());active->clips.push_back(std::move(c));
+   require(active&&++nclips<=4096,"Invalid CLIP order");std::string file;AudioClip c;
 
-  }
+   require(bool(s>>std::quoted(file)>>c.startSeconds>>c.sourceOffsetSeconds>>c.durationSeconds>>c.gain)&&!file.empty()&&sane(file),"Invalid CLIP");
 
-  else if(kind=="NOTE") {
+   auto src=fs::u8path(file);c.filename=(src.is_absolute()?src:path.parent_path()/src).lexically_normal().u8string();
 
-   value(active!=nullptr && ++notes<=kMaxNotes,"För många noter eller noter utanför spår");
+   active->clips.push_back(std::move(c));
 
-   MidiNote n;value(bool(is>>n.key>>n.atSeconds>>n.durationSeconds>>n.velocity),"Felaktigt NOTE-fält");active->notes.push_back(n);
+  }else if(type=="NOTE"){
 
-  }
+   require(active&&++nnotes<=50000,"Invalid NOTE order");MidiNote n;
 
-  else if(kind=="ENDTRACK") {value(active!=nullptr,"ENDTRACK utanför spår");active=nullptr;}
+   require(bool(s>>n.key>>n.atSeconds>>n.durationSeconds>>n.velocity),"Invalid NOTE");active->notes.push_back(n);
 
-  else if(kind=="END") {value(!active&&gotRate&&gotDuration&&gotBpm&&(version==2||gotMaster),"Ofullständigt projekt");done=true;}
+  }else if(type=="ENDTRACK"){
 
-  else throw std::runtime_error("Okänt fält i projektfilen: "+kind);
+   require(active&&(ver<4||fx)&&(ver<5||instr),"Invalid ENDTRACK");active=nullptr;
 
-  noExtra(is);
+  }else if(type=="END"){
+
+   require(!active&&rate&&duration&&bpm&&(ver==2||master)&&(ver<4||loop),"Incomplete project");ended=true;
+
+  }else throw std::runtime_error("Unrecognized project record: "+type);
+
+  noExtra(s);
 
  }
 
- value(gotHead&&done,"Projektfilen är ofullständig");
-
- validate(p);return p;
+ require(header&&ended,"Incomplete project");validate(p);return p;
 
 }
 

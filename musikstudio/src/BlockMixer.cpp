@@ -4,13 +4,13 @@
 
 #include <algorithm>
 
+#include <array>
+
 #include <cmath>
 
 #include <limits>
 
 #include <stdexcept>
-
-#include <utility>
 
 #include <unordered_map>
 
@@ -20,61 +20,27 @@ namespace wenuystudio {
 
 namespace {
 
-constexpr std::size_t kMaxBlock=1024;
+constexpr double pi=3.14159265358979323846;
 
-constexpr double kPi=3.14159265358979323846;
+constexpr std::size_t maxBlock=1024;
 
-std::uint64_t frames(double seconds,std::uint32_t rate){
+std::uint64_t frames(double sec,uint32_t rate){
 
- if(!std::isfinite(seconds) || seconds<0 || seconds>20000)
+ if(!std::isfinite(sec)||sec<0||sec>20000)throw std::invalid_argument("Bad position");
 
-  throw std::invalid_argument("Invalid timeline time");
-
- return static_cast<std::uint64_t>(std::llround(seconds*rate));
+ return static_cast<std::uint64_t>(std::llround(sec*rate));
 
 }
 
-float envelope(double local,double duration){
+struct Clip {float gain=1;std::shared_ptr<WaveReader> file;uint64_t at=0,length=0,offset=0;double ratio=1;};
 
- constexpr double attack=.005,release=.12;
+struct Note {uint64_t at=0,length=0;float velocity=1;double rad=0;};
 
- if(local<0 || local>=duration || duration<=0)return 0.0f;
+struct TrackState {
 
- return static_cast<float>(std::max(0.0,std::min({1.0,local/attack,(duration-local)/release})));
+ float left=1,right=1;bool mute=false,solo=false;int instrument=0;TrackFX fx;
 
-}
-
-struct PreparedClip {
-
- float gain=1.0f;
-
- std::shared_ptr<WaveReader> reader;
-
- std::uint64_t start=0,offset=0,length=0;
-
- double sourcePerOutput=1.0;
-
-};
-
-struct PreparedNote {
-
- std::uint64_t start=0, length=0;
-
- double angularFrequency=0.0, duration=0.0;
-
- float velocity=0.0f;
-
-};
-
-struct PreparedTrack {
-
- float left=1.0f, right=1.0f;
-
- bool mute=false, solo=false;
-
- std::vector<PreparedClip> clips;
-
- std::vector<PreparedNote> notes;
+ std::vector<Clip> clips;std::vector<Note> notes;
 
 };
 
@@ -82,137 +48,79 @@ struct PreparedTrack {
 
 struct BlockMixer::Impl {
 
- std::uint32_t rate=48000;
+ uint32_t rate=48000;uint64_t length=0;float master=1;bool hasSolo=false;
 
- std::uint64_t total=0;
+ std::vector<TrackState> tracks;
 
- float master=1.0f;
+ std::unordered_map<std::string,std::shared_ptr<WaveReader>> files;
 
- bool hasSolo=false;
+ std::vector<Stereo> inputScratch=std::vector<Stereo>(maxBlock*24+3);
 
- std::vector<PreparedTrack> tracks;
+ std::array<Stereo,maxBlock> trackScratch{};
 
- std::unordered_map<std::string,std::shared_ptr<WaveReader>> openedFiles;
+ uint64_t prev=std::numeric_limits<uint64_t>::max();
 
- // Max input/output sample-rate ratio is 192kHz/8kHz = 24.
+ explicit Impl(Project p){
 
- std::vector<Stereo> scratch=std::vector<Stereo>(kMaxBlock*24+3);
+  if(p.sampleRate<8000||p.sampleRate>192000||!std::isfinite(p.masterGain)||p.masterGain<0||p.masterGain>4)
 
- explicit Impl(const Project& project) {
+   throw std::invalid_argument("Invalid project settings");
 
-  if(project.sampleRate<8000 || project.sampleRate>192000)
+  rate=p.sampleRate;length=frames(p.durationSeconds,rate);master=p.masterGain;
 
-   throw std::invalid_argument("Invalid sample rate");
+  if(length==0||p.tracks.size()>128)throw std::invalid_argument("Project size invalid");
 
-  if(!std::isfinite(project.masterGain) || project.masterGain<0 || project.masterGain>4)
+  tracks.reserve(p.tracks.size());
 
-   throw std::invalid_argument("Invalid master gain");
+  for(const auto& t:p.tracks){
 
-  rate=project.sampleRate;
+   TrackState out;out.left=t.gain*(t.pan>0?1-t.pan:1);
 
-  total=frames(project.durationSeconds,rate);
+   out.right=t.gain*(t.pan<0?1+t.pan:1);
 
-  if(total==0)throw std::invalid_argument("Empty project");
+   out.mute=t.mute;out.solo=t.solo;out.instrument=t.instrument;out.fx.configure(t.effects,rate);
 
-  master=project.masterGain;
+   hasSolo|=(t.solo&&!t.mute);
 
-  if(project.tracks.size()>128)throw std::invalid_argument("Too many tracks");
+   for(const auto& c:t.clips){
 
-  tracks.reserve(project.tracks.size());
+    auto it=files.find(c.filename);
 
-  for(const auto& track:project.tracks){
+    if(it==files.end())it=files.emplace(c.filename,std::make_shared<WaveReader>(c.filename)).first;
 
-   if(!std::isfinite(track.gain)||track.gain<0||track.gain>8||
+    Clip x;x.file=it->second;x.at=frames(c.startSeconds,rate);
 
-      !std::isfinite(track.pan)||track.pan< -1||track.pan>1)
+    x.offset=frames(c.sourceOffsetSeconds,x.file->rate());
 
-    throw std::invalid_argument("Invalid track gain or pan");
+    x.ratio=double(x.file->rate())/rate;x.gain=c.gain;
 
-   PreparedTrack t;
+    if(x.offset>=x.file->frames()||x.at>=length)continue;
 
-   t.left=track.gain*(track.pan>0?1-track.pan:1);
+    x.length=uint64_t(std::ceil((x.file->frames()-x.offset)/x.ratio));
 
-   t.right=track.gain*(track.pan<0?1+track.pan:1);
+    if(c.durationSeconds>0)x.length=std::min(x.length,frames(c.durationSeconds,rate));
 
-   t.mute=track.mute;t.solo=track.solo;
+    x.length=std::min(x.length,length-x.at);
 
-   if(track.solo && !track.mute)hasSolo=true;
-
-   for(const auto& clip:track.clips){
-
-    if(!std::isfinite(clip.gain)||clip.gain<0||clip.gain>8)
-
-     throw std::invalid_argument("Invalid clip gain");
-
-    PreparedClip c;
-
-    c.gain=clip.gain;
-
-    c.start=frames(clip.startSeconds,rate);
-
-    const auto found=openedFiles.find(clip.filename);
-
-    if(found!=openedFiles.end())c.reader=found->second;
-
-    else{
-
-     auto reader=std::make_shared<WaveReader>(clip.filename);
-
-     openedFiles.emplace(clip.filename,reader);
-
-     c.reader=std::move(reader);
-
-    }
-
-    c.offset=frames(clip.sourceOffsetSeconds,c.reader->rate());
-
-    c.sourcePerOutput=static_cast<double>(c.reader->rate())/rate;
-
-    const auto available=c.offset>=c.reader->frames()?0:c.reader->frames()-c.offset;
-
-    c.length=static_cast<std::uint64_t>(std::ceil(available/c.sourcePerOutput));
-
-    if(clip.durationSeconds!=0)
-
-     c.length=std::min(c.length,frames(clip.durationSeconds,rate));
-
-    // The output duration fits 20k seconds; cap to protect sum calculations.
-
-    if(c.start>=total || c.length==0)continue;
-
-    c.length=std::min(c.length,total-c.start);
-
-    t.clips.emplace_back(std::move(c));
+    if(x.length)out.clips.emplace_back(std::move(x));
 
    }
 
-   for(const auto& note:track.notes){
+   for(const auto& n:t.notes){
 
-    if(note.key<0||note.key>127||!std::isfinite(note.velocity)||note.velocity<0||note.velocity>1)
+    if(n.key<0||n.key>127||!std::isfinite(n.velocity)||n.velocity<0||n.velocity>1)throw std::invalid_argument("Invalid note");
 
-     throw std::invalid_argument("Invalid MIDI note");
+    Note x;x.at=frames(n.atSeconds,rate);x.length=frames(n.durationSeconds,rate);
 
-    PreparedNote n;
+    if(x.at>=length||x.length==0)continue;
 
-    n.start=frames(note.atSeconds,rate);
+    x.length=std::min(x.length,length-x.at);
 
-    n.length=frames(note.durationSeconds,rate);
-
-    if(n.start>=total || n.length==0)continue;
-
-    n.length=std::min(n.length,total-n.start);
-
-    n.angularFrequency=2*kPi*440.0*std::pow(2.0,(note.key-69)/12.0);
-
-    n.duration=note.durationSeconds;
-
-    n.velocity=note.velocity;
-
-    t.notes.emplace_back(n);
+    x.velocity=n.velocity;x.rad=2*pi*440*std::pow(2.,(n.key-69.)/12.);out.notes.push_back(x);
 
    }
 
-   tracks.emplace_back(std::move(t));
+   tracks.emplace_back(std::move(out));
 
   }
 
@@ -220,121 +128,125 @@ struct BlockMixer::Impl {
 
 };
 
-BlockMixer::BlockMixer(Project project):impl_(std::make_unique<Impl>(project)){}
+BlockMixer::BlockMixer(Project p):p_(std::make_unique<Impl>(std::move(p))){}
 
 BlockMixer::~BlockMixer()=default;
 
-BlockMixer::BlockMixer(BlockMixer&&) noexcept=default;
+BlockMixer::BlockMixer(BlockMixer&&)noexcept=default;
 
-BlockMixer& BlockMixer::operator=(BlockMixer&&) noexcept=default;
+BlockMixer& BlockMixer::operator=(BlockMixer&&)noexcept=default;
 
-std::uint32_t BlockMixer::sampleRate() const noexcept {return impl_->rate;}
+uint32_t BlockMixer::sampleRate()const noexcept{return p_->rate;}
 
-std::uint64_t BlockMixer::totalFrames() const noexcept {return impl_->total;}
+uint64_t BlockMixer::totalFrames()const noexcept{return p_->length;}
 
-std::size_t BlockMixer::process(std::uint64_t start,Stereo* dst,std::size_t count,BlockMeter* meter){
+std::size_t BlockMixer::process(uint64_t first,Stereo* out,std::size_t count,BlockMeter* meter){
 
- if(count>kMaxBlock || (count && !dst))throw std::invalid_argument("Block buffer must hold 1..1024 frames");
+ if(count>maxBlock||(!out&&count))throw std::invalid_argument("Bad audio block");
 
  if(meter)*meter={};
 
- if(count==0)return 0;
+ if(!count)return 0;
 
- std::fill_n(dst,count,Stereo{});
+ std::fill_n(out,count,Stereo{});
 
- if(start>=impl_->total)return 0;
+ if(first>=p_->length)return 0;
 
- count=static_cast<std::size_t>(std::min<std::uint64_t>(count,impl_->total-start));
+ count=static_cast<std::size_t>(std::min<uint64_t>(count,p_->length-first));
 
- for(auto& track:impl_->tracks){
+ if(first!=p_->prev)for(auto& t:p_->tracks)t.fx.reset();
 
-  if(track.mute || (impl_->hasSolo && !track.solo))continue;
+ p_->prev=first+count;
 
-  for(auto& clip:track.clips){
+ for(auto& track:p_->tracks){
 
-   if(start+count<=clip.start || start>=clip.start+clip.length)continue;
+  if(track.mute||(p_->hasSolo&&!track.solo))continue;
 
-   const auto first=std::max(start,clip.start);
+  auto* scratch=p_->trackScratch.data();std::fill_n(scratch,count,Stereo{});
 
-   const auto end=std::min(start+count,clip.start+clip.length);
+  for(auto& c:track.clips){
 
-   const auto n=static_cast<std::size_t>(end-first);
+   if(first+count<=c.at||first>=c.at+c.length)continue;
 
-   const double sourceStart=clip.offset+(first-clip.start)*clip.sourcePerOutput;
+   const auto begin=std::max(first,c.at),end=std::min(first+count,c.at+c.length),n=end-begin;
 
-   const auto sourceFirst=static_cast<std::uint64_t>(std::floor(sourceStart));
+   const double sourceAt=c.offset+(begin-c.at)*c.ratio;
 
-   const double finalPos=sourceStart+(n-1)*clip.sourcePerOutput;
+   const uint64_t start=uint64_t(std::floor(sourceAt));
 
-   const auto need=static_cast<std::size_t>(std::floor(finalPos)-sourceFirst+2);
+   const auto required=std::size_t(std::floor(sourceAt+(n-1)*c.ratio)-start+2);
 
-   if(need>impl_->scratch.size())throw std::runtime_error("Resampling buffer exceeded");
+   if(required>p_->inputScratch.size())throw std::runtime_error("Resample buffer exceeded");
 
-   clip.reader->read(sourceFirst,impl_->scratch.data(),need);
+   c.file->read(start,p_->inputScratch.data(),required);
 
-   const auto dest=static_cast<std::size_t>(first-start);
+   for(uint64_t j=0;j<n;++j){
 
-   for(std::size_t i=0;i<n;++i){
+    const double pos=sourceAt+j*c.ratio-start;
 
-    const double sourcePos=sourceStart+i*clip.sourcePerOutput-sourceFirst;
+    const auto a=std::size_t(std::floor(pos));const float v=float(pos-a);
 
-    const auto lo=static_cast<std::size_t>(std::floor(sourcePos));
+    const auto& l=p_->inputScratch[a];const auto& r=p_->inputScratch[a+1];
 
-    const float frac=static_cast<float>(sourcePos-lo);
+    auto& dst=scratch[begin-first+j];
 
-    const float l=impl_->scratch[lo].l+(impl_->scratch[lo+1].l-impl_->scratch[lo].l)*frac;
+    dst.l+=(l.l+(r.l-l.l)*v)*c.gain*track.left;
 
-    const float r=impl_->scratch[lo].r+(impl_->scratch[lo+1].r-impl_->scratch[lo].r)*frac;
-
-    dst[dest+i].l+=l*clip.gain*track.left;
-
-    dst[dest+i].r+=r*clip.gain*track.right;
+    dst.r+=(l.r+(r.r-l.r)*v)*c.gain*track.right;
 
    }
 
   }
 
-  for(const auto& note:track.notes){
+  for(const auto& n:track.notes){
 
-   if(start+count<=note.start || start>=note.start+note.length)continue;
+   if(first+count<=n.at||first>=n.at+n.length)continue;
 
-   const auto first=std::max(start,note.start);
+   for(auto f=std::max(first,n.at);f<std::min(first+count,n.at+n.length);++f){
 
-   const auto end=std::min(start+count,note.start+note.length);
+    const double sec=double(f-n.at)/p_->rate;
 
-   for(auto f=first;f<end;++f){
+    const double dur=double(n.length)/p_->rate;
 
-    const double sec=double(f-note.start)/impl_->rate;
+    const float envelope=float(std::clamp(std::min(sec/.006,(dur-sec)/.09),0.,1.));
 
-    const float v=static_cast<float>(std::sin(note.angularFrequency*sec))*note.velocity*.20f*envelope(sec,note.duration);
+    const double phase=n.rad*sec;
 
-    const auto i=static_cast<std::size_t>(f-start);
+    double wave=std::sin(phase);
 
-    dst[i].l+=v*track.left;
+    switch(track.instrument){
 
-    dst[i].r+=v*track.right;
+     case 1:wave=(2./pi)*std::asin(std::clamp(wave,-1.,1.));break;
+
+     case 2:wave=.7*wave+.25*std::sin(phase*2.)+.15*std::sin(phase*3.);break;
+
+     case 3:wave=.65*wave+.20*std::sin(phase*1.005)+.12*std::sin(phase*2.);break;
+
+     default:break;
+
+    }
+
+    const float sample=float(wave)*.2f*n.velocity*envelope;
+
+    scratch[f-first].l+=sample*track.left;scratch[f-first].r+=sample*track.right;
 
    }
 
   }
+
+  track.fx.process(scratch,count);
+
+  for(std::size_t i=0;i<count;++i){out[i].l+=scratch[i].l;out[i].r+=scratch[i].r;}
 
  }
-
- BlockMeter result;
 
  for(std::size_t i=0;i<count;++i){
 
-  dst[i].l*=impl_->master;
+  out[i].l*=p_->master;out[i].r*=p_->master;
 
-  dst[i].r*=impl_->master;
-
-  result.left=std::max(result.left,std::abs(dst[i].l));
-
-  result.right=std::max(result.right,std::abs(dst[i].r));
+  if(meter){meter->left=std::max(meter->left,std::abs(out[i].l));meter->right=std::max(meter->right,std::abs(out[i].r));}
 
  }
-
- if(meter)*meter=result;
 
  return count;
 

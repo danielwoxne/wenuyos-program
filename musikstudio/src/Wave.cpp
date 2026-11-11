@@ -18,263 +18,145 @@ namespace wenuystudio {
 
 namespace {
 
-std::uint16_t rd16(std::istream& s) {
+uint16_t u16(const unsigned char* b){return uint16_t(b[0])|uint16_t(b[1])<<8;}
 
-    unsigned char x[2]; if (!s.read(reinterpret_cast<char*>(x), 2)) throw std::runtime_error("Invalid WAV header");
+uint32_t u32(const unsigned char* b){return uint32_t(u16(b))|uint32_t(u16(b+2))<<16;}
 
-    return static_cast<std::uint16_t>(x[0] | (x[1]<<8));
+void put16(std::ostream& o,uint16_t x){char b[2]={char(x&255),char(x>>8)};o.write(b,2);}
 
-}
+void put32(std::ostream& o,uint32_t x){put16(o,uint16_t(x&65535));put16(o,uint16_t(x>>16));}
 
-std::uint32_t rd32(std::istream& s) {
-
-    unsigned char x[4]; if (!s.read(reinterpret_cast<char*>(x), 4)) throw std::runtime_error("Invalid WAV header");
-
-    return std::uint32_t(x[0])|(std::uint32_t(x[1])<<8)|(std::uint32_t(x[2])<<16)|(std::uint32_t(x[3])<<24);
+int16_t sample16(float v){return int16_t(std::lround(std::clamp(double(v),-1.0,1.0)*32767.0));}
 
 }
 
-void wr16(std::ostream& s, std::uint16_t x) {
+WaveReader::WaveReader(const std::string& path):stream_(path,std::ios::binary){
 
-    const char c[2]={char(x&255),char((x>>8)&255)};s.write(c,2);
+ if(!stream_)throw std::runtime_error("Cannot open WAV file: "+path);
 
-}
+ unsigned char h[12]{};stream_.read(reinterpret_cast<char*>(h),12);
 
-void wr32(std::ostream& s, std::uint32_t x) {
+ if(!stream_||memcmp(h,"RIFF",4)||memcmp(h+8,"WAVE",4))throw std::runtime_error("Not a RIFF/WAVE file");
 
-    const char c[4]={char(x&255),char((x>>8)&255),char((x>>16)&255),char((x>>24)&255)};s.write(c,4);
+ bool fmt=false,data=false;
 
-}
+ for(int i=0;i<96&&!data;++i){
 
-float sample(const unsigned char* p,std::uint16_t fmt,std::uint16_t bits) {
+  unsigned char ch[8]{};stream_.read(reinterpret_cast<char*>(ch),8);if(!stream_)break;
 
-    if(fmt==1 && bits==16) {
+  uint32_t size=u32(ch+4);
 
-        const std::uint16_t u=std::uint16_t(p[0])|std::uint16_t(std::uint16_t(p[1])<<8);
+  if(!memcmp(ch,"fmt ",4)){
 
-        const std::int32_t v=(u&0x8000u)?static_cast<std::int32_t>(u)-65536:static_cast<std::int32_t>(u);
+   if(size<16||size>100000)throw std::runtime_error("Invalid WAV fmt chunk");
 
-        return static_cast<float>(v)/32768.0f;
+   unsigned char f[16]{};stream_.read(reinterpret_cast<char*>(f),16);
 
-    }
+   if(!stream_)throw std::runtime_error("Incomplete WAV fmt");
 
-    if(fmt==3 && bits==32) {
+   format_=u16(f);channels_=u16(f+2);rate_=u32(f+4);blockAlign_=u16(f+12);bits_=u16(f+14);
 
-        std::uint32_t u=std::uint32_t(p[0])|(std::uint32_t(p[1])<<8)|(std::uint32_t(p[2])<<16)|(std::uint32_t(p[3])<<24);
+   if((format_!=1&&format_!=3)||channels_<1||channels_>2||rate_<8000||rate_>192000||
 
-        float v=0;std::memcpy(&v,&u,sizeof(v));return std::isfinite(v)?v:0.0f;
+       ((format_==1&&bits_!=16&&bits_!=24)||(format_==3&&bits_!=32))||
 
-    }
+       blockAlign_!=channels_*bits_/8)throw std::runtime_error("Unsupported WAV encoding");
 
-    throw std::runtime_error("Unsupported WAV sample format");
+   stream_.seekg(size-16+(size&1),std::ios::cur);fmt=true;
 
-}
+  }else if(!memcmp(ch,"data",4)){
 
-}
+   if(!fmt)throw std::runtime_error("WAV data before fmt");
 
-WaveReader::WaveReader(const std::string& path):stream_(path,std::ios::binary) {
+   dataOffset_=uint64_t(stream_.tellg());frames_=size/blockAlign_;data=true;
 
-    if(!stream_) throw std::runtime_error("Cannot open audio file: "+path);
+  }else stream_.seekg(uint64_t(size)+(size&1),std::ios::cur);
 
-    char id[4];
+ }
 
-    if(!stream_.read(id,4)||std::strncmp(id,"RIFF",4)!=0) throw std::runtime_error("Not a RIFF WAV file");
-
-    const auto riffSize=rd32(stream_);
-
-    if(riffSize<4 || !stream_.read(id,4)||std::strncmp(id,"WAVE",4)!=0) throw std::runtime_error("Not a WAVE file");
-
-    bool gotFmt=false,gotData=false;
-
-    // Stop at RIFF declared boundary; malformed files never allocate according to untrusted lengths.
-
-    const std::uint64_t riffEnd=std::uint64_t(riffSize)+8;
-
-    while(static_cast<std::uint64_t>(stream_.tellg())+8<=riffEnd) {
-
-        if(!stream_.read(id,4))break;
-
-        const auto n=rd32(stream_);
-
-        const auto at=static_cast<std::uint64_t>(stream_.tellg());
-
-        if(at+std::uint64_t(n)>riffEnd)throw std::runtime_error("Truncated WAV chunk");
-
-        if(std::strncmp(id,"fmt ",4)==0 && !gotFmt) {
-
-            if(n<16)throw std::runtime_error("Short WAV format chunk");
-
-            format_=rd16(stream_);channels_=rd16(stream_);rate_=rd32(stream_);
-
-            const auto byteRate=rd32(stream_);const auto align=rd16(stream_);bits_=rd16(stream_);
-
-            const auto bytes=static_cast<std::uint32_t>(channels_)*(bits_/8);
-
-            if(!((format_==1 && bits_==16)||(format_==3 && bits_==32)) || (channels_!=1 && channels_!=2)
-
-               || rate_<8000 || rate_>192000 || align!=bytes || byteRate!=rate_*bytes)
-
-                throw std::runtime_error("Unsupported WAV format (needs PCM16 or float32, mono/stereo)");
-
-            gotFmt=true;
-
-        } else if(std::strncmp(id,"data",4)==0 && !gotData) {
-
-            dataOffset_=at;
-
-            // frames computed after fmt is found, independent of chunk order
-
-            frames_=n;
-
-            gotData=true;
-
-        }
-
-        stream_.seekg(static_cast<std::streamoff>(at+n+(n&1u)),std::ios::beg);
-
-        if(!stream_) throw std::runtime_error("Bad WAV chunk boundary");
-
-        if(gotFmt && gotData)break;
-
-    }
-
-    if(!gotFmt || !gotData)throw std::runtime_error("WAV missing format or data");
-
-    const std::uint64_t bpf=channels_*(bits_/8);
-
-    if(frames_%bpf)throw std::runtime_error("Misaligned WAV data");
-
-    frames_/=bpf;
-
-    stream_.seekg(0,std::ios::end);
-
-    if(!stream_||static_cast<std::uint64_t>(stream_.tellg())<dataOffset_+frames_*bpf)
-
-        throw std::runtime_error("Truncated audio data");
+ if(!fmt||!data)throw std::runtime_error("Missing WAV chunks");
 
 }
 
-void WaveReader::read(std::uint64_t start,Stereo* dst,std::size_t count) {
+void WaveReader::read(uint64_t first,Stereo* out,std::size_t n){
 
-    if(count && !dst)throw std::invalid_argument("Null audio output buffer");
+ if(n&& !out)throw std::invalid_argument("Null WAV output");
 
-    if(count==0)return;
+ std::fill_n(out,n,Stereo{});
 
-    std::fill_n(dst,count,Stereo{});
+ if(first>=frames_||n==0)return;
 
-    if(start>=frames_)return;
+ const auto available=std::min<uint64_t>(n,frames_-first);
 
-    const std::size_t valid=static_cast<std::size_t>(std::min<std::uint64_t>(count,frames_-start));
+ stream_.clear();stream_.seekg(static_cast<std::streamoff>(dataOffset_+first*blockAlign_),std::ios::beg);
 
-    const std::size_t bps=bits_/8;
+ std::array<unsigned char,8> raw{};
 
-    const std::size_t bpf=bps*channels_;
+ for(std::uint64_t i=0;i<available;++i){
 
-    stream_.clear();stream_.seekg(static_cast<std::streamoff>(dataOffset_+start*bpf),std::ios::beg);
+  stream_.read(reinterpret_cast<char*>(raw.data()),blockAlign_);
 
-    constexpr std::size_t kFramesPerRead=1024;
+  if(!stream_)throw std::runtime_error("WAV file truncated while playing");
 
-    std::array<unsigned char,8*kFramesPerRead> bytes{};
+  auto value=[&](unsigned channel){const auto* p=raw.data()+channel*(bits_/8);
 
-    for(std::size_t base=0;base<valid;base+=kFramesPerRead){
+    if(format_==3){float v=0;memcpy(&v,p,4);return std::isfinite(v)?v:0.f;}
 
-        const std::size_t n=std::min(kFramesPerRead,valid-base);
+    if(bits_==16)return float(int16_t(u16(p)))/32768.f;
 
-        if(!stream_.read(reinterpret_cast<char*>(bytes.data()),static_cast<std::streamsize>(n*bpf)))
+    int32_t a=(int32_t(p[0])|(int32_t(p[1])<<8)|(int32_t(p[2])<<16));
 
-            throw std::runtime_error("Cannot read audio data");
+    if(a&0x800000)a|=~0xFFFFFF;
 
-        for(std::size_t i=0;i<n;++i){
+    return float(a)/8388608.f;
 
-            const auto* sampleBytes=bytes.data()+i*bpf;
+  };
 
-            dst[base+i].l=sample(sampleBytes,format_,bits_);
+  out[i].l=value(0);out[i].r=channels_==2?value(1):out[i].l;
 
-            dst[base+i].r=channels_==2?sample(sampleBytes+bps,format_,bits_):dst[base+i].l;
-
-        }
-
-    }
+ }
 
 }
 
-WaveWriter::WaveWriter(const std::string& path,std::uint32_t sampleRate):stream_(path,std::ios::binary|std::ios::trunc){
+WaveWriter::WaveWriter(const std::string& filename,uint32_t sampleRate):stream_(filename,std::ios::binary|std::ios::trunc),rate_(sampleRate){
 
-    if(!stream_)throw std::runtime_error("Cannot create WAV file: "+path);
+ if(!stream_||rate_<8000||rate_>192000)throw std::runtime_error("Cannot create WAV output");
 
-    if(sampleRate<8000||sampleRate>192000)throw std::invalid_argument("Unsupported sample rate");
+ stream_.write("RIFF",4);put32(stream_,0);stream_.write("WAVEfmt ",8);put32(stream_,16);
 
-    stream_.write("RIFF",4);wr32(stream_,0);stream_.write("WAVEfmt ",8);wr32(stream_,16);
+ put16(stream_,1);put16(stream_,2);put32(stream_,rate_);put32(stream_,rate_*4);put16(stream_,4);put16(stream_,16);
 
-    wr16(stream_,1);wr16(stream_,2);wr32(stream_,sampleRate);wr32(stream_,sampleRate*4);
-
-    wr16(stream_,4);wr16(stream_,16);stream_.write("data",4);wr32(stream_,0);
+ stream_.write("data",4);put32(stream_,0);
 
 }
 
 WaveWriter::~WaveWriter(){try{finish();}catch(...){}}
 
-void WaveWriter::append(const Stereo* frames,std::size_t count){
+void WaveWriter::append(const Stereo* data,std::size_t n){
 
-    if(finished_)throw std::runtime_error("WAV already finished");
+ if(finished_||(!data&&n))throw std::runtime_error("WAV is closed");
 
-    if(count && !frames)throw std::invalid_argument("Null audio input buffer");
+ if(frames_+n>0x3fffffff)throw std::runtime_error("WAV exceeds 4 GB RIFF limit");
 
-    if(count>std::numeric_limits<std::uint32_t>::max()/4-frames_)throw std::runtime_error("WAV exceeds 4 GiB; RF64 planned");
+ for(std::size_t i=0;i<n;++i){put16(stream_,uint16_t(sample16(data[i].l)));put16(stream_,uint16_t(sample16(data[i].r)));}
 
-    constexpr std::size_t kWriteFrames=4096;
+ if(!stream_)throw std::runtime_error("WAV write failed");
 
-    std::array<char,kWriteFrames*4> bytes{};
-
-    for(std::size_t base=0;base<count;base+=kWriteFrames){
-
-        const auto n=std::min(kWriteFrames,count-base);
-
-        for(std::size_t i=0;i<n;++i){
-
-            for(std::size_t c=0;c<2;++c){
-
-                const float raw=c==0?frames[base+i].l:frames[base+i].r;
-
-                const float safe=std::isfinite(raw)?std::clamp(raw,-1.0f,1.0f):0.0f;
-
-                const auto v=static_cast<std::int16_t>(std::lrint(safe*32767.0f));
-
-                const auto u=static_cast<std::uint16_t>(v);
-
-                bytes[i*4+c*2]=static_cast<char>(u&255);
-
-                bytes[i*4+c*2+1]=static_cast<char>((u>>8)&255);
-
-            }
-
-        }
-
-        stream_.write(bytes.data(),static_cast<std::streamsize>(n*4));
-
-    }
-
-    if(!stream_)throw std::runtime_error("WAV output failed");
-
-    frames_+=static_cast<std::uint32_t>(count);
+ frames_+=n;
 
 }
 
 void WaveWriter::finish(){
 
-    if(finished_)return;
+ if(finished_)return;
 
-    finished_=true;
+ if(!stream_)throw std::runtime_error("WAV file is not writable");
 
-    if(!stream_)return;
+ const auto bytes=uint32_t(frames_*4);stream_.seekp(4);put32(stream_,36+bytes);
 
-    stream_.seekp(4,std::ios::beg);wr32(stream_,36+frames_*4);
+ stream_.seekp(40);put32(stream_,bytes);stream_.flush();if(!stream_)throw std::runtime_error("WAV finalize failed");
 
-    stream_.seekp(40,std::ios::beg);wr32(stream_,frames_*4);
-
-    stream_.flush();
-
-    if(!stream_)throw std::runtime_error("Cannot finish WAV output");
+ finished_=true;stream_.close();
 
 }
 

@@ -8,51 +8,35 @@
 
 #include <array>
 
-#include <cstdio>
+#include <filesystem>
 
 #include <stdexcept>
 
 namespace wenuystudio {
 
-void render(const Project& project,const std::string& outputFile,const std::atomic<bool>* keepRunning){
+void render(const Project& p,const std::string& dest,const std::atomic<bool>* keepRunning){
 
- BlockMixer mixer(project);
+ if(std::filesystem::exists(dest))throw std::runtime_error("Output already exists: "+dest);
 
- const auto total=mixer.totalFrames();
-
- if(total>(std::uint64_t(0xffffffff)-36)/4)
-
-  throw std::invalid_argument("Duration does not fit WAV/PCM16; RF64 not implemented");
-
- constexpr std::size_t block=1024;
-
- std::array<Stereo,block> mix{};
-
- const auto tmp=outputFile+".part";
+ const auto tmp=dest+".part";
 
  try{
 
-  {
+  BlockMixer mix(p);WaveWriter out(tmp,p.sampleRate);std::array<Stereo,1024> block{};
 
-   WaveWriter out(tmp,project.sampleRate);
+  for(uint64_t at=0;at<mix.totalFrames();){
 
-   for(std::uint64_t frame=0;frame<total;frame+=block){
+   if(keepRunning&&!keepRunning->load())throw std::runtime_error("Export cancelled");
 
-    if(keepRunning && !keepRunning->load())throw std::runtime_error("Export cancelled");
+   auto n=std::size_t(std::min<uint64_t>(1024,mix.totalFrames()-at));
 
-    const auto n=mixer.process(frame,mix.data(),static_cast<std::size_t>(std::min<std::uint64_t>(block,total-frame)));
-
-    out.append(mix.data(),n);
-
-   }
-
-   out.finish();
+   mix.process(at,block.data(),n);out.append(block.data(),n);at+=n;
 
   }
 
-  if(std::rename(tmp.c_str(),outputFile.c_str())!=0)throw std::runtime_error("Could not finalize WAV output");
+  out.finish();std::filesystem::rename(tmp,dest);
 
- }catch(...){std::remove(tmp.c_str());throw;}
+ }catch(...){std::error_code e;std::filesystem::remove(tmp,e);throw;}
 
 }
 

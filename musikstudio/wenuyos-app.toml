@@ -1,10 +1,12 @@
 name = "Wenuy Studio"
 name_sv = "Wenuy Musikstudio"
-version = "0.4.1"
-description = "Multi-track music studio with buffered callback playback, mixer and dropout monitoring (preview)"
-description_sv = "Flerspårig musikstudio med buffrad uppspelning, mixer och mätning av ljudavbrott (förhandsversion)"
+version = "0.8.0"
+id = "se.wenuyos.app.musikstudio"
+description = "Multitrack studio with MIDI, instruments, EQ, recording, undo/redo, and XWayland GUI"
+description_sv = "Flerspårig musikstudio med MIDI, instrument, effekter, inspelning och ångra/gör om"
 license = "GPL-3.0-or-later"
 exec = "bin/wenuy-studio"
-requires = ["libportaudio2"]
+requires = ["libportaudio2", "libx11-6", "xwayland"]
 min_ram_mb = 2048
 needs_network = false
+build_requires = ["libx11-dev"]

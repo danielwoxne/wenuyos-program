@@ -1,42 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #include "Wave.hpp"
-#include <cstdint>
+#include "TrackFX.hpp"
 #include <atomic>
+#include <cstdint>
 #include <string>
-#include <memory>
-#include <cstddef>
 #include <vector>
 namespace wenuystudio {
-struct AudioClip {
-    std::string filename;
-    double startSeconds=0.0;
-    double sourceOffsetSeconds=0.0;
-    double durationSeconds=0.0; // 0 means until end of file
-    float gain=1.0f;
-};
-struct MidiNote {
-    int key=60;
-    double atSeconds=0.0;
-    double durationSeconds=0.5;
-    float velocity=0.8f;
-};
+struct AudioClip {std::string filename;double startSeconds=0,sourceOffsetSeconds=0,durationSeconds=0;float gain=1;};
+struct MidiNote {int key=60;double atSeconds=0,durationSeconds=.5;float velocity=.8f;};
 struct Track {
-    std::string name;
-    float gain=1.0f;
-    float pan=0.0f; // -1 left, 1 right
-    bool mute=false;
-    bool solo=false; // hear only unmuted solo tracks when any solo is enabled
-    std::vector<AudioClip> clips;
-    std::vector<MidiNote> notes;
+ std::string name;float gain=1,pan=0;bool mute=false,solo=false;
+ TrackEffects effects{};
+ int instrument=0; // 0 sine, 1 triangle, 2 organ, 3 warm lead
+ std::vector<AudioClip> clips;
+ std::vector<MidiNote> notes;
 };
+struct LoopRegion {bool enabled=false;double startSeconds=0,endSeconds=0;};
 struct Project {
-    std::uint32_t sampleRate=48000;
-    double durationSeconds=5.0;
-    double bpm=120.0;
-    float masterGain=1.0f; // linear fader: 0..4
-    std::vector<Track> tracks;
+ std::uint32_t sampleRate=48000;
+ double durationSeconds=12,bpm=120;
+ float masterGain=1;
+ LoopRegion loop{};
+ std::vector<Track> tracks;
 };
-// Bounded-block offline reference engine. Future realtime engine reuses its immutable model.
-void render(const Project& project, const std::string& outputFile, const std::atomic<bool>* keepRunning=nullptr);
+void render(const Project&,const std::string&,const std::atomic<bool>* keepRunning=nullptr);
 }
