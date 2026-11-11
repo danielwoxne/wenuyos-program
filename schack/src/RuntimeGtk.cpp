@@ -1,5 +1,3 @@
-
-wenuy-schack/src/RuntimeGtk.cpp
 // Wenuy Schack 0.3.0 – Native GTK4 runtime front end, designed for a Debian 13
 // build host without GTK development packages. GTK4 is a runtime dependency
 // of WenuyOS; only stable GTK4/GIO entry points are used.
