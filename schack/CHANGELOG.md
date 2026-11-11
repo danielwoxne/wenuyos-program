@@ -1,5 +1,10 @@
 # Versionshistorik
 
+## 0.4.0 (under utveckling)
+- Utökad schackskola till 20 interaktiva övningar, med nya taktiska och grundläggande slutspelsmoment.
+- Förbättrad språkhantering i spelklienten (svenska och engelska).
+- Förnyade regressionstester och verifierad 2 GB-profil före godkännande.
+
 ## 0.3.0 (2026-11-11)
 - Nytt tema för den GTK4-baserade klienten: nordiskt blått, ljust och trä.
 - Stöd för att dra pjäser och markera rekommenderat drag.
