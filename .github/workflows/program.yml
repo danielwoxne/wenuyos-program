@@ -83,7 +83,7 @@ jobs:
         if: github.event_name == 'pull_request' && steps.which.outputs.list != ''
         uses: actions/upload-artifact@v4
         with:
-          name: wenuyos-musikstudio-test
+          name: program-test-${{ github.event.pull_request.number }}
           path: dist/*.wapp
           if-no-files-found: error
           retention-days: 7
