@@ -78,6 +78,15 @@ jobs:
             echo "::endgroup::"
           done
           exit $fail
+      # Osignerade förhandsbyggen från PR för fysisk provning; inte en offentlig release.
+      - name: Testpaket för PR
+        if: github.event_name == 'pull_request' && steps.which.outputs.list != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: wenuyos-musikstudio-test
+          path: dist/*.wapp
+          if-no-files-found: error
+          retention-days: 7
       - name: Signera och släpp
         if: steps.which.outputs.release != ''
         env:
