@@ -32,6 +32,11 @@ for marker in (
     'tr("High contrast","Hög kontrast")',
     "app.palette=(app.palette+1)%4",
     "if(keyLower=='l'){perform(14);return 1;}",
+    'bool focusBoard=false,keyboardCursor=false;',
+    'if(app.keyboardCursor && sq==app.cursor)',
+    'app.keyboardCursor=false;chosen(sq);',
+    'tr("Selected ","Vald ")',
+    'tr(" legal moves"," möjliga drag")',
 ):
     assert marker in gui, f"Missing UI functionality: {marker}"
 print("OK: bilingual launcher, SVG, focus mode, scrolling panel and contrast palette")
