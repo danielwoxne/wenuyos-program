@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==15,"fifteen beginner lessons");
+    test(lessonCount()==20,"twenty beginner lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -66,5 +66,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: fifteen lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: twenty lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
