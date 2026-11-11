@@ -5,10 +5,12 @@ name: Program
 #    som GitHub Release med <program>.wapp. WenuyOS hittar det med källan github.com/<ägare>/<förråd>#<program>.
 #  - Taggen <program>-v<version>-osignerad (t.ex. matte-v0.4-osignerad): samma, men utan signatur – datorerna visar
 #    "Inte signerat" när det installeras. För provversioner; programnyckeln behövs inte.
-# Taggen sätts först när Daniel godkänt (docs/ARBETSORDNING.md avsnitt 10 i New-wenuyos).
+#  - Grenen slapp/<tagg> (t.ex. slapp/matte-v0.3) gör samma sak – för AI-assistenter som får skicka grenar men inte
+#    taggar. Bara kod som redan finns på main släpps; kontrollen sätter taggen, släpper och tar bort grenen.
+# Taggen/grenen sätts först när Daniel godkänt (docs/ARBETSORDNING.md avsnitt 10 i New-wenuyos).
 on:
   push:
-    branches: [main]
+    branches: [main, 'slapp/**']
     tags: ['*-v*']
   pull_request:
   workflow_dispatch:
@@ -47,12 +49,15 @@ jobs:
         run: |
           git config --global --add safe.directory "$PWD"
           is_prog() { [ -f "$1/game.ini" ] || ls "$1"/data/*.desktop >/dev/null 2>&1; }
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            tag=$GITHUB_REF_NAME; p=${tag%-v*}
+          if [[ "$GITHUB_REF" == refs/tags/* || "$GITHUB_REF" == refs/heads/slapp/* ]]; then
+            tag=${GITHUB_REF_NAME#slapp/}; p=${tag%-v*}
+            if [[ "$GITHUB_REF" == refs/heads/slapp/* ]]; then   # bara det som är godkänt: commiten måste finnas på main
+              git merge-base --is-ancestor HEAD origin/main || { echo "slapp/$tag pekar på något som inte finns på main – bara godkänd kod släpps"; exit 1; }
+            fi
             [[ "$tag" =~ ^[a-z0-9][a-z0-9-]*-v[0-9][0-9A-Za-z.+-]*$ ]] || { echo "Taggen ska vara <program>-v<version>, t.ex. matte-v0.3"; exit 1; }
             is_prog "$p" || { echo "Det finns inget program i mappen $p/"; exit 1; }
             unsigned=""; case "$tag" in *-osignerad|*-unsigned) unsigned=1;; esac
-            echo "list=$p" >> "$GITHUB_OUTPUT"; echo "release=$p" >> "$GITHUB_OUTPUT"; echo "unsigned=$unsigned" >> "$GITHUB_OUTPUT"; exit 0
+            echo "list=$p" >> "$GITHUB_OUTPUT"; echo "release=$p" >> "$GITHUB_OUTPUT"; echo "unsigned=$unsigned" >> "$GITHUB_OUTPUT"; echo "tag=$tag" >> "$GITHUB_OUTPUT"; exit 0
           fi
           if [ "${{ github.event_name }}" = pull_request ]; then base=origin/${{ github.base_ref }}; else base=${{ github.event.before }}; fi
           git cat-file -e "$base" 2>/dev/null || base=$(git rev-list --max-parents=0 HEAD | tail -1)
@@ -79,7 +84,7 @@ jobs:
           WENUYOS_PROGRAM_KEY: ${{ secrets.WENUYOS_PROGRAM_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          p=${{ steps.which.outputs.release }}; tag=$GITHUB_REF_NAME
+          p=${{ steps.which.outputs.release }}; tag=${{ steps.which.outputs.tag }}
           if [ -n "${{ steps.which.outputs.unsigned }}" ]; then
             bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp"   # osignerad: datorerna visar "Inte signerat"
             note="Osignerad version – WenuyOS visar \"Inte signerat\" när den installeras."
@@ -94,8 +99,14 @@ jobs:
           body=$(sed -n 's/^Comment\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1); [ -n "$note" ] && body="$body"$'\n\n'"$note"
           # GitHub-API direkt (curl) – gh finns inte i debian:trixie
           api=https://api.github.com/repos/$GITHUB_REPOSITORY
-          rel=$(python3 -c 'import json,sys; print(json.dumps({"tag_name":sys.argv[1],"name":sys.argv[2],"body":sys.argv[3]}))' "$tag" "${name:-$p} ${tag#$p-}" "$body" \
-            | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$api/releases" -d @-)
+          H=(-H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json")
+          # finns släppet redan (t.ex. skapat på github.com med taggen) läggs filen dit; annars skapas det – och taggen
+          # sätts på den här commiten (target_commitish), också när det startades av grenen slapp/<tagg>
+          rel=$(curl -fsS "${H[@]}" "$api/releases/tags/$tag" 2>/dev/null) || rel=$(python3 -c 'import json,sys; print(json.dumps({"tag_name":sys.argv[1],"target_commitish":sys.argv[4],"name":sys.argv[2],"body":sys.argv[3]}))' "$tag" "${name:-$p} ${tag#$p-}" "$body" "$GITHUB_SHA" \
+            | curl -fsS -X POST "${H[@]}" "$api/releases" -d @-)
           up=$(printf '%s' "$rel" | python3 -c 'import json,sys; print(json.load(sys.stdin)["upload_url"].split("{")[0])')
           curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/octet-stream" --data-binary @"dist/$p.wapp" "$up?name=$p.wapp" >/dev/null
           echo "Släppt: $tag – installeras med: wenuyos install github.com/$GITHUB_REPOSITORY#$p" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$GITHUB_REF" == refs/heads/slapp/* ]]; then   # släppgrenen behövs inte längre
+            curl -fsS -X DELETE "${H[@]}" "$api/git/refs/heads/slapp/$tag" || true
+          fi

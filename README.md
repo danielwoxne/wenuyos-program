@@ -22,6 +22,10 @@ När Daniel godkänt: sätt taggen `<program>-v<version>` på `main` och skicka 
 git tag matte-v0.3 && git push origin matte-v0.3
 ```
 
+Eller, för AI-assistenter som inte får skicka taggar: grenen `slapp/<tagg>` från `main` –
+`git push origin main:slapp/matte-v0.3`. Kontrollen sätter då taggen själv, släpper och tar bort grenen. Bara kod som
+redan finns på `main` (alltså godkänd) släpps.
+
 Kontrollen bygger, signerar med programnyckeln (hemligheten `WENUYOS_PROGRAM_KEY`) och släpper `matte.wapp`.
 
 **Osignerat** (provversioner, eller utan programnyckel): lägg till `-osignerad` i taggen –
