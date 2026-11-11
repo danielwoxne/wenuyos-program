@@ -25,7 +25,7 @@ git clone --depth 1 --single-branch --branch ai/chatgpt/musikstudio-080 \
   https://github.com/danielwoxne/wenuyos-program.git "$target"
 cd "$target/musikstudio"
 wenuyos verify --pack
-f="$PWD/dist/musikstudio.wapp"
+f="$PWD/dist/wenuy-studio.wapp"
 [[ -s "$f" ]] || { say "No .wapp was created"; exit 4; }
 if command -v wenuyos-get >/dev/null; then wenuyos-get --check "$f"; fi
 read -r -p "$confirm" answer
