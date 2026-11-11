@@ -13,9 +13,10 @@ target_compile_options(wenuystudio_core PRIVATE -Wall -Wextra -Wpedantic -Werror
 add_executable(wenuy-studio-cli src/main.cpp)
 target_link_libraries(wenuy-studio-cli PRIVATE wenuystudio_core)
 target_compile_options(wenuy-studio-cli PRIVATE -Wall -Wextra -Wpedantic -Werror)
-find_package(X11 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(X11 REQUIRED IMPORTED_TARGET x11)
  add_executable(wenuy-studio gui/XStudio.cpp)
- target_link_libraries(wenuy-studio PRIVATE wenuystudio_core X11::X11)
+ target_link_libraries(wenuy-studio PRIVATE wenuystudio_core PkgConfig::X11)
  target_compile_options(wenuy-studio PRIVATE -Wall -Wextra -Wpedantic)
  install(TARGETS wenuy-studio RUNTIME DESTINATION bin)
 
