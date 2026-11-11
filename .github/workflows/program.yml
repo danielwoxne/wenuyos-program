@@ -1,0 +1,93 @@
+name: Program
+# Det gemensamma programförrådet: en mapp per program (matte/, klossregn/ …).
+#  - PR och push till main: varje program som ändrats provas (wenuyos verify för C++, paketeras för alla).
+#  - Taggen <program>-v<version> (t.ex. matte-v0.3): programmet byggs, signeras med programnyckeln och släpps
+#    som GitHub Release med <program>.wapp. WenuyOS hittar det med källan github.com/<ägare>/<förråd>#<program>.
+# Taggen sätts först när Daniel godkänt (docs/ARBETSORDNING.md avsnitt 10 i New-wenuyos).
+on:
+  push:
+    branches: [main]
+    tags: ['*-v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: program-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  program:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Verktyg
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends git ca-certificates curl gpg gpg-agent gpgv python3 cmake g++ make \
+            pkgconf binutils labwc grim fonts-dejavu-core adwaita-icon-theme >/dev/null
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: WenuyOS SDK
+        run: |
+          base=https://github.com/danielwoxne/wenuyos-uppdateringar/releases/download/sdk
+          curl -fsSLO "$base/wenuyos-sdk-debian13.tar.gz" -fsSLO "$base/wenuyos-sdk-debian13.tar.gz.sig"
+          gpgv --keyring "$PWD/.github/wenuyos-update.gpg" wenuyos-sdk-debian13.tar.gz.sig wenuyos-sdk-debian13.tar.gz
+          tar -xzf wenuyos-sdk-debian13.tar.gz -C / && rm wenuyos-sdk-debian13.tar.gz* && ldconfig
+          cat /usr/share/wenuyos/sdk-version
+          test -f /usr/lib/wenuyos/wenuyos-get || { echo "SDK-arkivet saknar wenuyos-get – släpp WenuyOS igen (packaging/release.sh)"; exit 1; }
+      - name: Vilka program
+        id: which
+        run: |
+          git config --global --add safe.directory "$PWD"
+          is_prog() { [ -f "$1/game.ini" ] || ls "$1"/data/*.desktop >/dev/null 2>&1; }
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag=$GITHUB_REF_NAME; p=${tag%-v*}
+            [[ "$tag" =~ ^[a-z0-9][a-z0-9-]*-v[0-9][0-9A-Za-z.+-]*$ ]] || { echo "Taggen ska vara <program>-v<version>, t.ex. matte-v0.3"; exit 1; }
+            is_prog "$p" || { echo "Det finns inget program i mappen $p/"; exit 1; }
+            echo "list=$p" >> "$GITHUB_OUTPUT"; echo "release=$p" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "${{ github.event_name }}" = pull_request ]; then base=origin/${{ github.base_ref }}; else base=${{ github.event.before }}; fi
+          git cat-file -e "$base" 2>/dev/null || base=$(git rev-list --max-parents=0 HEAD | tail -1)
+          list=$(git diff --name-only "$base" HEAD | cut -d/ -f1 | sort -u | while read -r d; do [ -d "$d" ] && is_prog "$d" && echo "$d"; done | tr '\n' ' ')
+          [ "${{ github.event_name }}" = workflow_dispatch ] && list=$(for d in */; do d=${d%/}; is_prog "$d" && echo "$d"; done | tr '\n' ' ')
+          echo "Program att prova: ${list:-inga}"; echo "list=$list" >> "$GITHUB_OUTPUT"
+      - name: Prova
+        if: steps.which.outputs.list != ''
+        run: |
+          fail=0
+          for p in ${{ steps.which.outputs.list }}; do
+            echo "::group::$p"
+            if [ -f "$p/CMakeLists.txt" ]; then
+              /usr/lib/wenuyos/wenuyos-verify --yes --project "$p" || fail=1
+              cat "$p/.wenuyos/verify.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+            fi
+            bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" || fail=1
+            echo "::endgroup::"
+          done
+          exit $fail
+      - name: Signera och släpp
+        if: steps.which.outputs.release != ''
+        env:
+          WENUYOS_PROGRAM_KEY: ${{ secrets.WENUYOS_PROGRAM_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          p=${{ steps.which.outputs.release }}; tag=$GITHUB_REF_NAME
+          [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "Hemligheten WENUYOS_PROGRAM_KEY saknas (Settings → Secrets → Actions)"; exit 1; }
+          export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"
+          printf '%s\n' "$WENUYOS_PROGRAM_KEY" | gpg --batch --import 2>/dev/null
+          bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" --sign
+          rm -rf "$GNUPGHOME"
+          name=$(sed -n 's/^Name\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1); [ -n "$name" ] || name=$(sed -n 's/^ *title *= *//p' "$p/game.ini" 2>/dev/null | head -1)
+          body=$(sed -n 's/^Comment\[sv\]=//p' "$p"/data/*.desktop 2>/dev/null | head -1)
+          # GitHub-API direkt (curl) – gh finns inte i debian:trixie
+          api=https://api.github.com/repos/$GITHUB_REPOSITORY
+          rel=$(python3 -c 'import json,sys; print(json.dumps({"tag_name":sys.argv[1],"name":sys.argv[2],"body":sys.argv[3]}))' "$tag" "${name:-$p} ${tag#$p-}" "$body" \
+            | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$api/releases" -d @-)
+          up=$(printf '%s' "$rel" | python3 -c 'import json,sys; print(json.load(sys.stdin)["upload_url"].split("{")[0])')
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/octet-stream" --data-binary @"dist/$p.wapp" "$up?name=$p.wapp" >/dev/null
+          echo "Släppt: $tag – installeras med: wenuyos install github.com/$GITHUB_REPOSITORY#$p" | tee -a "$GITHUB_STEP_SUMMARY"
