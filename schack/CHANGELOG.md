@@ -4,6 +4,8 @@
 - Nytt fokusläge för brädet med knapp och Ctrl+L, utan att dölja viktiga spelkontroller.
 - Sidopanelen rullbar på små skärmar; flyttade sekundära verktyg till egen rad.
 - Fjärde brädtema med hög kontrast.
+- Tydligare markeringsram kring vald pjäs och separat tangentbordsmarkör.
+- Statusfältet berättar vilken pjäs som är vald och antalet lagliga drag, på svenska eller engelska.
 - Nya regressionstester för GUI-resurser och installationsmetadata.
 
 
