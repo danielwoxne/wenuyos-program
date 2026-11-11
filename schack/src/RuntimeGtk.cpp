@@ -189,11 +189,13 @@ void piece(cairo_t* c,char p,double x,double y,double s){
 struct App {
  Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
  Ptr themeBtn=nullptr,hintBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
+ Ptr sidePanel=nullptr,focusBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,promoteBtn=nullptr;
  chess::Game game, savedGame;
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
+ bool focusBoard=false;
  std::uint64_t lessonMask=0; std::string hintText;
  std::size_t lessonIndex=0; unsigned epoch=0; std::string transient;
 };
@@ -236,7 +238,7 @@ void load(){
  std::string move;while(i>>move){if(!temp.playUci(move))return;}
  app.game=std::move(temp);app.mode=mode==1?1:0;
  app.skill=std::clamp(skill,1,5);app.human=human==1?1:0;app.flipped=flip!=0;
- int palette=0;if(p>>palette)app.palette=std::clamp(palette,0,2);
+ int palette=0;if(p>>palette)app.palette=std::clamp(palette,0,3);
 }
 struct Geom{double x,y,s;};
 Geom boardGeom(int w,int h){
@@ -247,10 +249,11 @@ struct Palette{
  double bg[3],edge[3],light[3],dark[3],accent[3];
  const char* name;
 };
-const Palette palettes[3]={
+const Palette palettes[4]={
  {{.062,.113,.181},{.23,.38,.54},{.925,.948,.963},{.338,.507,.672},{.16,.64,.95},"Nordiskt blått"},
  {{.875,.915,.95},{.52,.65,.77},{.992,.985,.954},{.52,.65,.70},{.075,.36,.69},"Ljust läge"},
- {{.16,.134,.117},{.42,.32,.25},{.96,.86,.69},{.65,.43,.29},{.12,.6,.72},"Klassiskt trä"}
+ {{.16,.134,.117},{.42,.32,.25},{.96,.86,.69},{.65,.43,.29},{.12,.6,.72},"Klassiskt trä"},
+ {{.035,.055,.085},{.81,.86,.90},{1,1,1},{.07,.14,.24},{1,.81,.14},"Hög kontrast"}
 };
 const Palette& colors(){return palettes[app.palette];}
 void theme(){
@@ -275,6 +278,8 @@ void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHin
 void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
 void refresh(){
  if(app.closed||!app.window)return;
+ if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
+ if(app.focusBtn)g.gtk_button_set_label(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
  const std::string result=app.game.result();
  std::string text;
  if(result=="checkmate-white")text=tr("Checkmate – White wins","Schack matt – vit vinner");
@@ -303,7 +308,7 @@ void refresh(){
  g.gtk_button_set_label(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
  const char* skills[]={"",tr("Beginner","Nybörjare"),tr("Easy","Lätt"),tr("Medium","Medel"),tr("Hard","Svår"),tr("Challenge","Utmaning")};
  g.gtk_button_set_label(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
- g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+tr(app.palette==0?"Nordic blue":app.palette==1?"Light":"Classic wood",colors().name)).c_str());
+ g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+tr(app.palette==0?"Nordic blue":app.palette==1?"Light":app.palette==2?"Classic wood":"High contrast",colors().name)).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
 
  g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
@@ -477,6 +482,7 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
   if(keyLower=='s'){perform(10);return 1;}
   if(keyLower=='r'){perform(2);return 1;}
   if(keyLower=='h'){perform(12);return 1;}
+  if(keyLower=='l'){perform(14);return 1;}
   return 0;
  }
  if(state&(1u<<3))return 0; // Alt
@@ -534,7 +540,8 @@ void perform(int id){
   refresh();break;
  }
  case 12:suggestMove();break;
- case 13:app.palette=(app.palette+1)%3;theme();save();refresh();break;
+ case 13:app.palette=(app.palette+1)%4;theme();save();refresh();break;
+ case 14:app.focusBoard=!app.focusBoard;refresh();g.gtk_widget_grab_focus(app.board);break;
  case 11: {
   const std::string choices="qrnb";auto pos=choices.find(app.promotion);
   app.promotion=choices[(pos+1)%choices.size()];refresh();break;
@@ -577,7 +584,11 @@ void activate(Ptr application,void*){
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
  button(header,tr("New game","Nytt parti"),0,true);button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
- button(header,tr("Chess school","Schackskolan"),6);app.hintBtn=button(header,tr("Suggest move","Visa dragförslag"),12);
+ // A separate compact toolbar keeps the game controls legible on smaller screens.
+ Ptr tools=g.gtk_box_new(0,6);margin(tools,16,6);g.gtk_box_append(root,tools);
+ button(tools,tr("Chess school","Schackskolan"),6);
+ app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
+ app.focusBtn=button(tools,tr("Focus on board","Fokus på brädet"),14);
  Ptr main=g.gtk_box_new(0,0);g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
  g.gtk_box_append(main,boardBox);
@@ -595,8 +606,14 @@ void activate(Ptr application,void*){
  // Window-level shortcuts also work when a sidebar button has keyboard focus.
  Ptr windowKeys=g.gtk_event_controller_key_new();connect(windowKeys,"key-pressed",onKey,nullptr);
  g.gtk_widget_add_controller(app.window,windowKeys);
- Ptr side=g.gtk_box_new(1,9);g.gtk_widget_set_size_request(side,270,-1);
- margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");g.gtk_box_append(main,side);
+ // Scroll all secondary settings: nothing is clipped at a 600-pixel screen height.
+ app.sidePanel=g.gtk_scrolled_window_new();
+ g.gtk_widget_set_vexpand(app.sidePanel,1);
+ g.gtk_widget_set_size_request(app.sidePanel,280,-1);
+ g.gtk_box_append(main,app.sidePanel);
+ Ptr side=g.gtk_box_new(1,9);
+ margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");
+ g.gtk_scrolled_window_set_child(app.sidePanel,side);
  label(side,tr("YOUR GAME","DITT PARTI"),false,"title-3");
  app.turn=label(side,"",false,"heading");
  app.status=label(side,"",true);
@@ -621,7 +638,7 @@ void activate(Ptr application,void*){
  g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
  g.gtk_scrolled_window_set_child(scroll,app.history);
  button(side,tr("Export game (PGN)","Exportera parti (PGN)"),10);
- label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips"),true,"wenuy-dim");
+ label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint • Ctrl+L focus","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips • Ctrl+L fokus"),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  theme();refresh();g.gtk_window_present(app.window);startAI();
 }
