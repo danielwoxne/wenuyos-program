@@ -301,42 +301,95 @@ void activate(GApplication* application,gpointer){
  auto* s=new Studio();
  g_object_set_data_full(G_OBJECT(application),"studio",s,[](gpointer p){delete static_cast<Studio*>(p);});
  s->window=adw_application_window_new(GTK_APPLICATION(application));
- gtk_window_set_default_size(GTK_WINDOW(s->window),1150,760);
+ gtk_window_set_default_size(GTK_WINDOW(s->window),960,700);
+ gtk_widget_set_size_request(s->window,690,480);
  auto* toolbar=adw_toolbar_view_new();
  auto* overlay=adw_toast_overlay_new();s->toast=overlay;
- adw_toolbar_view_add_top_bar(ADW_TOOLBAR_VIEW(toolbar),adw_header_bar_new());
+ auto* header=adw_header_bar_new();
+ adw_toolbar_view_add_top_bar(ADW_TOOLBAR_VIEW(toolbar),header);
+ auto addTransport=[&](const char* icon,const char* caption,void(*fn)(Studio*)){
+  auto* widget=gtk_button_new_from_icon_name(icon);
+  gtk_widget_add_css_class(widget,"flat");
+  gtk_widget_set_tooltip_text(widget,caption);
+  gtk_accessible_update_property(GTK_ACCESSIBLE(widget),GTK_ACCESSIBLE_PROPERTY_LABEL,caption,-1);
+  g_signal_connect_swapped(widget,"clicked",G_CALLBACK(fn),s);
+  adw_header_bar_pack_end(ADW_HEADER_BAR(header),widget);
+ };
+ addTransport("media-record-symbolic",tr("Record","Spela in"),record);
+ addTransport("media-playback-stop-symbolic",tr("Stop","Stoppa"),stop);
+ addTransport("media-playback-start-symbolic",tr("Play","Spela"),play);
+ auto* menu=gtk_menu_button_new();
+ gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu),"open-menu-symbolic");
+ gtk_widget_set_tooltip_text(menu,tr("Project and edit menu","Projekt och redigering"));
+ gtk_accessible_update_property(GTK_ACCESSIBLE(menu),GTK_ACCESSIBLE_PROPERTY_LABEL,
+  tr("Project and edit menu","Projekt och redigering"),-1);
+ auto* model=g_menu_new();auto* files=g_menu_new();auto* edits=g_menu_new();
+ auto addAction=[&](GMenu* section,const char* id,const char* caption){
+  auto* act=g_simple_action_new(id,nullptr);
+  g_signal_connect(act,"activate",G_CALLBACK(+[](GSimpleAction* a,GVariant*,gpointer user){
+   auto* st=static_cast<Studio*>(user);const char* action=g_action_get_name(G_ACTION(a));
+   if(g_strcmp0(action,"new")==0)newProject(st);
+   else if(g_strcmp0(action,"open")==0)choose(st,Pick::Open);
+   else if(g_strcmp0(action,"save")==0)save(st);
+   else if(g_strcmp0(action,"import-wav")==0)choose(st,Pick::ImportWav);
+   else if(g_strcmp0(action,"import-midi")==0)choose(st,Pick::ImportMidi);
+   else if(g_strcmp0(action,"export-wav")==0)choose(st,Pick::ExportWav);
+   else if(g_strcmp0(action,"export-midi")==0)choose(st,Pick::ExportMidi);
+   else if(g_strcmp0(action,"undo")==0)undo(st);
+   else if(g_strcmp0(action,"redo")==0)redo(st);
+  }),s);
+  g_action_map_add_action(G_ACTION_MAP(application),G_ACTION(act));g_object_unref(act);
+  auto detailed=std::string("app.")+id;g_menu_append(section,caption,detailed.c_str());
+ };
+ addAction(files,"new",tr("New project","Nytt projekt"));
+ addAction(files,"open",tr("Open project…","Öppna projekt…"));
+ addAction(files,"save",tr("Save project","Spara projekt"));
+ addAction(files,"import-wav",tr("Import WAV…","Importera WAV…"));
+ addAction(files,"import-midi",tr("Import MIDI…","Importera MIDI…"));
+ addAction(files,"export-wav",tr("Export WAV…","Exportera WAV…"));
+ addAction(files,"export-midi",tr("Export MIDI…","Exportera MIDI…"));
+ addAction(edits,"undo",tr("Undo","Ångra"));
+ addAction(edits,"redo",tr("Redo","Gör om"));
+ g_menu_append_section(model,nullptr,G_MENU_MODEL(files));
+ g_menu_append_section(model,nullptr,G_MENU_MODEL(edits));
+ gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(menu),G_MENU_MODEL(model));
+ g_object_unref(files);g_object_unref(edits);g_object_unref(model);
+ adw_header_bar_pack_start(ADW_HEADER_BAR(header),menu);
+ const char* openKeys[]={"<Control>o",nullptr};
+ const char* saveKeys[]={"<Control>s",nullptr};
+ const char* undoKeys[]={"<Control>z",nullptr};
+ const char* redoKeys[]={"<Control><Shift>z",nullptr};
+ gtk_application_set_accels_for_action(GTK_APPLICATION(application),"app.open",openKeys);
+ gtk_application_set_accels_for_action(GTK_APPLICATION(application),"app.save",saveKeys);
+ gtk_application_set_accels_for_action(GTK_APPLICATION(application),"app.undo",undoKeys);
+ gtk_application_set_accels_for_action(GTK_APPLICATION(application),"app.redo",redoKeys);
  adw_toast_overlay_set_child(ADW_TOAST_OVERLAY(overlay),toolbar);
  adw_application_window_set_content(ADW_APPLICATION_WINDOW(s->window),overlay);
  auto* main=gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
- auto* bar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
- gtk_widget_set_margin_start(bar,10);gtk_widget_set_margin_end(bar,10);
- button(bar,s,tr("New","Nytt"),newProject);
- button(bar,s,tr("Open","Öppna"),+[](Studio* st){choose(st,Pick::Open);});
- button(bar,s,tr("Save","Spara"),save);
- button(bar,s,tr("WAV import","Importera WAV"),+[](Studio* st){choose(st,Pick::ImportWav);});
- button(bar,s,tr("MIDI import","Importera MIDI"),+[](Studio* st){choose(st,Pick::ImportMidi);});
- button(bar,s,tr("Export WAV","Exportera WAV"),+[](Studio* st){choose(st,Pick::ExportWav);});
- button(bar,s,tr("Export MIDI","Exportera MIDI"),+[](Studio* st){choose(st,Pick::ExportMidi);});
- button(bar,s,tr("Play","Spela"),play);
- button(bar,s,tr("Stop","Stoppa"),stop);
- button(bar,s,tr("Record","Spela in"),record);
- button(bar,s,tr("+Track","+Spår"),addTrack);
- button(bar,s,tr("+Note","+Not"),addNote);
- button(bar,s,tr("Quantize","Kvantisera"),quantize);
- button(bar,s,tr("Undo","Ångra"),undo);
- button(bar,s,tr("Redo","Gör om"),redo);
- auto* buttonScroll=gtk_scrolled_window_new();
- gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(buttonScroll),GTK_POLICY_AUTOMATIC,GTK_POLICY_NEVER);
- gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(buttonScroll),bar);
- gtk_box_append(GTK_BOX(main),buttonScroll);
+
  auto* split=gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);gtk_widget_set_vexpand(split,TRUE);
  auto* trackScroll=gtk_scrolled_window_new();
  s->tracks=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(trackScroll),s->tracks);
  gtk_paned_set_start_child(GTK_PANED(split),trackScroll);
  auto* notebook=gtk_notebook_new();
- gtk_notebook_append_page(GTK_NOTEBOOK(notebook),area(s,false),gtk_label_new(tr("Arrangement","Arrangemang")));
- gtk_notebook_append_page(GTK_NOTEBOOK(notebook),area(s,true),gtk_label_new(tr("Piano roll","Pianorulle")));
+ auto* arrangePage=gtk_box_new(GTK_ORIENTATION_VERTICAL,4);
+ auto* arrangeBar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
+ gtk_widget_set_margin_start(arrangeBar,8);gtk_widget_set_margin_top(arrangeBar,6);
+ button(arrangeBar,s,tr("Add track","Lägg till spår"),addTrack);
+ gtk_box_append(GTK_BOX(arrangePage),arrangeBar);
+ auto* arrangeArea=area(s,false);gtk_widget_set_vexpand(arrangeArea,TRUE);
+ gtk_box_append(GTK_BOX(arrangePage),arrangeArea);
+ gtk_notebook_append_page(GTK_NOTEBOOK(notebook),arrangePage,gtk_label_new(tr("Arrangement","Arrangemang")));
+ auto* pianoPage=gtk_box_new(GTK_ORIENTATION_VERTICAL,4);
+ auto* pianoBar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
+ gtk_widget_set_margin_start(pianoBar,8);gtk_widget_set_margin_top(pianoBar,6);
+ button(pianoBar,s,tr("Add C4 note","Lägg till C4-ton"),addNote);
+ button(pianoBar,s,tr("Quantize","Kvantisera"),quantize);
+ gtk_box_append(GTK_BOX(pianoPage),pianoBar);
+ auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
+ gtk_box_append(GTK_BOX(pianoPage),pianoArea);
+ gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));
  auto* mixerScroll=gtk_scrolled_window_new();s->mixer=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(mixerScroll),s->mixer);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),mixerScroll,gtk_label_new(tr("Mixer","Mixer")));
@@ -350,11 +403,24 @@ void activate(GApplication* application,gpointer){
  refresh(s);gtk_window_present(GTK_WINDOW(s->window));
 }
 }
+void openProjectFiles(GApplication* app,GFile** files,gint nfiles,const char*,gpointer){
+ if(nfiles<1)return;
+ if(!gtk_application_get_active_window(GTK_APPLICATION(app)))activate(app,nullptr);
+ auto* st=static_cast<Studio*>(g_object_get_data(G_OBJECT(app),"studio"));
+ if(!st)return;
+ char* filename=g_file_get_path(files[0]);
+ if(!filename){notice(st,tr("Only local project files are supported","Endast lokala projektfiler stöds"));return;}
+ fileAction(st,Pick::Open,filename);g_free(filename);
+ gtk_window_present(GTK_WINDOW(st->window));
+}
 int main(int argc,char** argv){
- const bool smoke=argc==2&&std::strcmp(argv[1],"--smoke-test")==0;
- if(smoke)argc=1;
- AdwApplication* app=adw_application_new("se.wenuyos.app.musikstudio",G_APPLICATION_DEFAULT_FLAGS);
+ bool smoke=false;
+ for(int i=1;i<argc;++i)if(std::strcmp(argv[i],"--smoke-test")==0){
+  smoke=true;for(int j=i;j<argc-1;++j)argv[j]=argv[j+1];--argc;break;
+ }
+ AdwApplication* app=adw_application_new("se.wenuyos.app.musikstudio",G_APPLICATION_HANDLES_OPEN);
  g_signal_connect(app,"activate",G_CALLBACK(activate),nullptr);
+ g_signal_connect(app,"open",G_CALLBACK(openProjectFiles),nullptr);
  if(smoke)g_timeout_add(1000,+[](gpointer data)->gboolean{
   auto* win=gtk_application_get_active_window(GTK_APPLICATION(data));
   std::puts(win&&gtk_widget_get_mapped(GTK_WIDGET(win))?"Wenuy Studio GTK smoke PASS":"Wenuy Studio GTK smoke FAIL");
