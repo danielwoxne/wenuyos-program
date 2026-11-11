@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 15> lessons{{
+constexpr std::array<Lesson, 20> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -143,6 +143,52 @@ constexpr std::array<Lesson, 15> lessons{{
         "Checkmate! Your king can help control escape squares.",
         "Schack matt! Din kung kan hjälpa till att täcka flyktfält.",
         "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1", "f7g7"
+    },
+
+    {
+        "Rook on the open file", "Tornet på den öppna linjen",
+        "Capture the black pawn on d5 with your rook.", "Slå den svarta bonden på d5 med ditt torn.",
+        "The rook moves along files and ranks. Check the clear path from d1.",
+        "Tornet går längs linjer och rader. Kontrollera den fria vägen från d1.",
+        "Nice! Open files help rooks reach useful targets.",
+        "Bra! Öppna linjer hjälper tornen att nå viktiga mål.",
+        "7k/8/8/3p4/8/8/8/K2R4 w - - 0 1", "d1d5"
+    },
+    {
+        "The knight wins a rook", "Springaren tar ett torn",
+        "Capture the rook on f4 using your knight.", "Slå tornet på f4 med springaren.",
+        "A knight from e2 reaches f4 by jumping in an L-shape.",
+        "Från e2 når springaren f4 med sitt L-formade hopp.",
+        "Well played! Knights can jump over any intervening pieces.",
+        "Snyggt! Springare kan hoppa över andra pjäser.",
+        "7k/8/8/8/5r2/8/4N3/K7 w - - 0 1", "e2f4"
+    },
+    {
+        "The queen captures", "Damen slår",
+        "Take the black knight on e4 with your queen.", "Slå den svarta springaren på e4 med damen.",
+        "The queen on e2 can move straight up the e-file.",
+        "Damen på e2 kan gå rakt upp längs e-linjen.",
+        "Correct! The queen combines rook and bishop moves.",
+        "Rätt! Damen kan gå både som ett torn och en löpare.",
+        "7k/8/8/8/4n3/8/4Q3/K7 w - - 0 1", "e2e4"
+    },
+    {
+        "Promote to a rook", "Förvandla till torn",
+        "Promote the pawn on c7 into a rook.", "Förvandla bonden på c7 till ett torn.",
+        "Choose Rook on the promotion button, then move from c7 to c8.",
+        "Välj Torn vid bondeförvandling och flytta sedan från c7 till c8.",
+        "Great! A pawn does not always need to become a queen.",
+        "Bra! En bonde behöver inte alltid förvandlas till en dam.",
+        "7k/2P5/8/8/8/8/8/4K3 w - - 0 1", "c7c8r"
+    },
+    {
+        "Black to move", "Svart vid draget",
+        "Capture the white pawn on c3 as Black.", "Slå den vita bonden på c3 som svart.",
+        "Black pawns move towards the first rank and capture diagonally.",
+        "Svarta bönder går mot första raden och slår diagonalt.",
+        "Exactly! Remember that Black moves down the board.",
+        "Precis! Kom ihåg att svart går nedåt på brädet.",
+        "4k3/8/8/8/3p4/2P5/8/4K3 b - - 0 1", "d4c3"
     },
 }};
 } // namespace
