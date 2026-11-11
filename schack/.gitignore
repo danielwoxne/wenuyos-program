@@ -1,0 +1,8 @@
+build/
+dist/
+.wenuyos/
+stage/
+*.wapp
+*.zip
+*.o
+*.so

@@ -1,0 +1,638 @@
+// Wenuy Schack 0.3.0 – Native GTK4 runtime front end, designed for a Debian 13
+// build host without GTK development packages. GTK4 is a runtime dependency
+// of WenuyOS; only stable GTK4/GIO entry points are used.
+#include "Chess.h"
+#include "Lessons.h"
+#include <algorithm>
+#include <atomic>
+#include <cctype>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
+#include <ctime>
+#include <dlfcn.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
+
+extern "C" {
+// Keep a direct GTK4 dependency so WenuyOS verify can recognize this as a GUI application.
+unsigned int gtk_get_major_version(void);
+// GLib and GIO ABI: these signatures are stable on Debian 13 / WenuyOS.
+unsigned long g_signal_connect_data(void*, const char*, void (*)(), void*, void (*)(void*,void*), unsigned int);
+int g_application_run(void*, int, char**);
+void g_object_unref(void*);
+unsigned int g_idle_add(int (*)(void*),void*);
+// Cairo 1.x public ABI; the runtime uses GTK4's Cairo drawing surface.
+struct _cairo; typedef _cairo cairo_t;
+void cairo_save(cairo_t*); void cairo_restore(cairo_t*);
+void cairo_translate(cairo_t*, double, double); void cairo_scale(cairo_t*, double, double);
+void cairo_set_source_rgba(cairo_t*, double,double,double,double);
+void cairo_rectangle(cairo_t*,double,double,double,double); void cairo_fill(cairo_t*);
+void cairo_fill_preserve(cairo_t*); void cairo_stroke(cairo_t*); void cairo_new_path(cairo_t*);
+void cairo_move_to(cairo_t*,double,double); void cairo_line_to(cairo_t*,double,double);
+void cairo_curve_to(cairo_t*,double,double,double,double,double,double);
+void cairo_close_path(cairo_t*); void cairo_arc(cairo_t*,double,double,double,double,double);
+void cairo_set_line_width(cairo_t*,double); void cairo_set_line_join(cairo_t*,int);
+void cairo_set_line_cap(cairo_t*,int); void cairo_select_font_face(cairo_t*,const char*,int,int);
+void cairo_set_font_size(cairo_t*,double); void cairo_show_text(cairo_t*,const char*);
+}
+
+namespace {
+using Ptr=void*;
+#define GTK_SYMBOLS(M) \
+ M(Ptr, gtk_application_new, (const char*,int)) \
+ M(Ptr, gtk_application_window_new, (Ptr)) \
+ M(void,gtk_window_set_title,(Ptr,const char*)) \
+ M(void,gtk_window_set_default_size,(Ptr,int,int)) \
+ M(void,gtk_window_set_child,(Ptr,Ptr)) \
+ M(void,gtk_window_present,(Ptr)) \
+ M(Ptr,gtk_box_new,(int,int)) \
+ M(void,gtk_box_append,(Ptr,Ptr)) \
+ M(Ptr,gtk_label_new,(const char*)) \
+ M(void,gtk_label_set_label,(Ptr,const char*)) \
+ M(void,gtk_label_set_xalign,(Ptr,float)) \
+ M(void,gtk_label_set_yalign,(Ptr,float)) \
+ M(void,gtk_label_set_wrap,(Ptr,int)) \
+ M(Ptr,gtk_button_new_with_label,(const char*)) \
+ M(void,gtk_button_set_label,(Ptr,const char*)) \
+ M(Ptr,gtk_drawing_area_new,()) \
+ M(void,gtk_drawing_area_set_draw_func,(Ptr,void(*)(Ptr,cairo_t*,int,int,void*),void*,void(*)(void*))) \
+ M(Ptr,gtk_gesture_click_new,()) \
+ M(Ptr,gtk_gesture_drag_new,()) \
+ M(void,gtk_gesture_single_set_button,(Ptr,unsigned int)) \
+ M(void,gtk_widget_add_controller,(Ptr,Ptr)) \
+ M(Ptr,gtk_event_controller_key_new,()) \
+ M(void,gtk_widget_set_vexpand,(Ptr,int)) \
+ M(void,gtk_widget_set_hexpand,(Ptr,int)) \
+ M(void,gtk_widget_set_size_request,(Ptr,int,int)) \
+ M(void,gtk_widget_set_margin_start,(Ptr,int)) \
+ M(void,gtk_widget_set_margin_end,(Ptr,int)) \
+ M(void,gtk_widget_set_margin_top,(Ptr,int)) \
+ M(void,gtk_widget_set_margin_bottom,(Ptr,int)) \
+ M(void,gtk_widget_set_visible,(Ptr,int)) \
+ M(void,gtk_widget_set_sensitive,(Ptr,int)) \
+ M(void,gtk_widget_queue_draw,(Ptr)) \
+ M(void,gtk_widget_set_focusable,(Ptr,int)) \
+ M(int,gtk_widget_grab_focus,(Ptr)) \
+ M(void,gtk_widget_add_css_class,(Ptr,const char*)) \
+ M(Ptr,gtk_scrolled_window_new,()) \
+ M(void,gtk_scrolled_window_set_child,(Ptr,Ptr)) \
+ M(void,gtk_widget_set_tooltip_text,(Ptr,const char*))
+struct GTK {
+ void* lib=nullptr;
+ #define DECL(ret,name,args) ret (*name) args = nullptr;
+ GTK_SYMBOLS(DECL)
+ #undef DECL
+ Ptr (*gtk_css_provider_new)() = nullptr;
+ void (*gtk_css_provider_load_from_data)(Ptr,const char*,long) = nullptr;
+ Ptr (*gtk_widget_get_display)(Ptr) = nullptr;
+ void (*gtk_style_context_add_provider_for_display)(Ptr,Ptr,unsigned) = nullptr;
+ bool load() {
+   lib=dlopen("libgtk-4.so.1",RTLD_NOW|RTLD_LOCAL);
+   if(!lib){std::fprintf(stderr,"Wenuy Schack: GTK4-biblioteket saknas: %s\n",dlerror());return false;}
+   #define LOAD(ret,name,args) name=reinterpret_cast<decltype(name)>(dlsym(lib,#name)); if(!name){std::fprintf(stderr,"Wenuy Schack: GTK4 saknar symbol %s\n",#name);return false;}
+   GTK_SYMBOLS(LOAD)
+   #undef LOAD
+   // Appearance enhancements are optional; older GTK4 runtimes still work.
+   gtk_css_provider_new=reinterpret_cast<decltype(gtk_css_provider_new)>(dlsym(lib,"gtk_css_provider_new"));
+   gtk_css_provider_load_from_data=reinterpret_cast<decltype(gtk_css_provider_load_from_data)>(dlsym(lib,"gtk_css_provider_load_from_data"));
+   gtk_widget_get_display=reinterpret_cast<decltype(gtk_widget_get_display)>(dlsym(lib,"gtk_widget_get_display"));
+   gtk_style_context_add_provider_for_display=reinterpret_cast<decltype(gtk_style_context_add_provider_for_display)>(dlsym(lib,"gtk_style_context_add_provider_for_display"));
+   return true;
+ }
+} g;
+#undef GTK_SYMBOLS
+
+template <typename Fn> void connect(Ptr obj,const char* signal,Fn callback,void* data){
+ g_signal_connect_data(obj,signal,reinterpret_cast<void(*)()>(callback),data,nullptr,0);
+}
+void rgba(cairo_t* c,double r,double gg,double b,double a=1){cairo_set_source_rgba(c,r,gg,b,a);}
+void outline(cairo_t* c,bool white){
+ rgba(c,white?.975:.135,white?.98:.195,white?.99:.285);cairo_fill_preserve(c);
+ rgba(c,white?.14:.82,white?.21:.88,white?.3:.93);cairo_set_line_width(c,2.9);cairo_stroke(c);
+}
+void base(cairo_t* c,bool white){
+ cairo_new_path(c);cairo_move_to(c,28,79);cairo_line_to(c,72,79);
+ cairo_curve_to(c,77,79,79,83,79,88);cairo_line_to(c,21,88);
+ cairo_curve_to(c,21,83,23,79,28,79);cairo_close_path(c);outline(c,white);
+}
+void piece(cairo_t* c,char p,double x,double y,double s){
+ if(!p)return;
+ const bool w=std::isupper(static_cast<unsigned char>(p));
+ const char k=static_cast<char>(std::tolower(static_cast<unsigned char>(p)));
+ cairo_save(c);cairo_translate(c,x+s*.065,y+s*.065);cairo_scale(c,s*.87/100,s*.87/100);
+ cairo_set_line_join(c,1);cairo_set_line_cap(c,1);
+ switch(k){
+ case 'p':
+  cairo_new_path(c);cairo_arc(c,50,33,15,0,6.28318530718);outline(c,w);
+  cairo_new_path(c);cairo_move_to(c,41,48);cairo_curve_to(c,41,59,34,70,30,79);cairo_line_to(c,70,79);
+  cairo_curve_to(c,66,70,59,59,59,48);cairo_close_path(c);outline(c,w);break;
+ case 'r':
+  cairo_new_path(c);cairo_move_to(c,27,27);cairo_line_to(c,27,17);cairo_line_to(c,37,17);
+  cairo_line_to(c,37,25);cairo_line_to(c,45,25);cairo_line_to(c,45,17);
+  cairo_line_to(c,55,17);cairo_line_to(c,55,25);cairo_line_to(c,63,25);
+  cairo_line_to(c,63,17);cairo_line_to(c,73,17);cairo_line_to(c,73,27);
+  cairo_line_to(c,69,34);cairo_line_to(c,65,75);cairo_line_to(c,35,75);
+  cairo_line_to(c,31,34);cairo_close_path(c);outline(c,w);break;
+ case 'n':
+  cairo_new_path(c);cairo_move_to(c,29,78);cairo_curve_to(c,37,64,33,58,31,52);
+  cairo_line_to(c,19,56);cairo_curve_to(c,13,55,13,47,17,43);
+  cairo_line_to(c,30,29);cairo_line_to(c,34,15);cairo_line_to(c,44,22);
+  cairo_curve_to(c,56,20,68,28,72,42);cairo_curve_to(c,77,53,72,65,67,78);
+  cairo_close_path(c);outline(c,w);
+  cairo_new_path(c);cairo_arc(c,35,38,3,0,6.28318530718);
+  rgba(c,w?.14:.94,w?.23:.96,w?.34:.98);cairo_fill(c);break;
+ case 'b':
+  cairo_new_path(c);cairo_move_to(c,50,15);cairo_curve_to(c,67,31,69,43,61,54);
+  cairo_curve_to(c,75,63,69,70,67,76);cairo_line_to(c,33,76);
+  cairo_curve_to(c,31,70,25,63,39,54);cairo_curve_to(c,31,43,33,31,50,15);
+  cairo_close_path(c);outline(c,w);
+  cairo_new_path(c);cairo_move_to(c,58,27);cairo_line_to(c,44,54);
+  rgba(c,w?.23:.8,w?.29:.86,w?.39:.92);cairo_set_line_width(c,4);cairo_stroke(c);break;
+ case 'q':
+  cairo_new_path(c);cairo_move_to(c,20,27);cairo_line_to(c,34,43);cairo_line_to(c,39,20);
+  cairo_line_to(c,50,42);cairo_line_to(c,61,20);cairo_line_to(c,66,43);
+  cairo_line_to(c,80,27);cairo_line_to(c,68,73);cairo_line_to(c,32,73);
+  cairo_close_path(c);outline(c,w);
+  for(int xx:{20,39,61,80}){cairo_new_path(c);cairo_arc(c,xx,(xx==20||xx==80)?24:18,4.2,0,6.28318530718);outline(c,w);}break;
+ case 'k':
+  cairo_new_path(c);cairo_move_to(c,47,13);cairo_line_to(c,53,13);cairo_line_to(c,53,22);
+  cairo_line_to(c,62,22);cairo_line_to(c,62,28);cairo_line_to(c,53,28);
+  cairo_line_to(c,53,38);cairo_line_to(c,47,38);cairo_line_to(c,47,28);
+  cairo_line_to(c,38,28);cairo_line_to(c,38,22);cairo_line_to(c,47,22);
+  cairo_close_path(c);outline(c,w);
+  cairo_new_path(c);cairo_move_to(c,45,36);cairo_curve_to(c,28,40,29,57,37,65);
+  cairo_line_to(c,32,76);cairo_line_to(c,68,76);cairo_line_to(c,63,65);
+  cairo_curve_to(c,71,57,72,40,55,36);cairo_close_path(c);outline(c,w);break;
+ }
+ base(c,w);cairo_restore(c);
+}
+
+struct App {
+ Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
+ Ptr themeBtn=nullptr,hintBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
+ Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,promoteBtn=nullptr;
+ chess::Game game, savedGame;
+ int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
+ int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
+ bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
+ std::uint64_t lessonMask=0; std::string hintText;
+ std::size_t lessonIndex=0; unsigned epoch=0; std::string transient;
+};
+App app;
+
+std::string userDir(){
+ const char* x=std::getenv("XDG_DATA_HOME");if(x&&*x)return std::string(x)+"/wenuy-schack";
+ const char* h=std::getenv("HOME");return std::string(h&&*h?h:"/tmp")+"/.local/share/wenuy-schack";
+}
+void saveProgress(){
+ try {
+  std::filesystem::create_directories(userDir());
+  const std::string path=userDir()+"/progress.txt";
+  const std::string tmp=path+".tmp";
+  {std::ofstream out(tmp,std::ios::trunc);out<<app.lessonMask<<'\n';if(!out) return;}
+  std::filesystem::rename(tmp,path);
+ }catch(const std::exception& e){std::fprintf(stderr,"Schack: kunde inte spara övningar: %s\n",e.what());}
+}
+void loadProgress(){
+ std::ifstream input(userDir()+"/progress.txt");
+ std::uint64_t n=0;if(input>>n)app.lessonMask=n;
+}
+void save(){
+ if(app.training)return;
+ try {
+  std::filesystem::create_directories(userDir());
+  std::ofstream o(userDir()+"/session.txt.tmp",std::ios::trunc);
+  if(!o)return;
+  o<<app.game.positions.front().fen()<<'\n'<<app.mode<<' '<<app.skill<<' '<<app.human<<' '<<app.flipped<<' '<<app.palette<<'\n';
+  for(const auto& m:app.game.moves)o<<chess::uci(m)<<'\n';
+  o.close();if(o)std::filesystem::rename(userDir()+"/session.txt.tmp",userDir()+"/session.txt");
+ }catch(const std::exception& e){std::fprintf(stderr,"Schack: spara misslyckades: %s\n",e.what());}
+}
+void load(){
+ std::ifstream i(userDir()+"/session.txt");if(!i)return;
+ std::string fen,params;std::getline(i,fen);std::getline(i,params);
+ chess::Game temp;if(!temp.loadFen(fen))return;
+ int mode=0,skill=2,human=0,flip=0;
+ std::istringstream p(params);if(!(p>>mode>>skill>>human>>flip))return;
+ std::string move;while(i>>move){if(!temp.playUci(move))return;}
+ app.game=std::move(temp);app.mode=mode==1?1:0;
+ app.skill=std::clamp(skill,1,5);app.human=human==1?1:0;app.flipped=flip!=0;
+ int palette=0;if(p>>palette)app.palette=std::clamp(palette,0,2);
+}
+struct Geom{double x,y,s;};
+Geom boardGeom(int w,int h){
+ const double s=std::max(7.,std::min((w-34.)/8.,(h-34.)/8.));
+ return {(w-s*8)/2.,(h-s*8)/2.,s};
+}
+struct Palette{
+ double bg[3],edge[3],light[3],dark[3],accent[3];
+ const char* name;
+};
+const Palette palettes[3]={
+ {{.062,.113,.181},{.23,.38,.54},{.925,.948,.963},{.338,.507,.672},{.16,.64,.95},"Nordiskt blått"},
+ {{.875,.915,.95},{.52,.65,.77},{.992,.985,.954},{.52,.65,.70},{.075,.36,.69},"Ljust läge"},
+ {{.16,.134,.117},{.42,.32,.25},{.96,.86,.69},{.65,.43,.29},{.12,.6,.72},"Klassiskt trä"}
+};
+const Palette& colors(){return palettes[app.palette];}
+void theme(){
+ if(!app.window || !g.gtk_css_provider_new || !g.gtk_widget_get_display ||
+    !g.gtk_css_provider_load_from_data || !g.gtk_style_context_add_provider_for_display)return;
+ const bool light=app.palette==1;
+ const std::string css=std::string("window { background: ")+(light?"#ecf2f7; color: #162d43;":"#0d1928; color: #e8eff7;")+"}"
+  +".wenuy-topbar {padding: 2px 3px 5px; border-bottom: 1px solid "
+  +(light?"#cad9e5;":"#28415d;")+"}"
+  +".wenuy-panel { background: "+(light?"#ffffff;":"#172c44;")
+  +" border-radius: 16px; padding: 14px; }"
+  +".wenuy-control {border-radius: 9px; padding: 5px 9px; }"
+  +".wenuy-brand {font-weight: 800; letter-spacing: 1.1px;}"
+  +".wenuy-dim {opacity: .70;}";
+ if(!app.cssProvider){
+  app.cssProvider=g.gtk_css_provider_new();
+  g.gtk_style_context_add_provider_for_display(g.gtk_widget_get_display(app.window),app.cssProvider,600);
+ }
+ g.gtk_css_provider_load_from_data(app.cssProvider,css.c_str(),-1);
+}
+void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=false;}
+void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
+void refresh(){
+ if(app.closed||!app.window)return;
+ const std::string result=app.game.result();
+ std::string text;
+ if(result=="checkmate-white")text="Schack matt – vit vinner";
+ else if(result=="checkmate-black")text="Schack matt – svart vinner";
+ else if(result=="stalemate")text="Remi – patt";
+ else if(result=="fifty")text="Remi – 50-dragsregeln";
+ else if(result=="repetition")text="Remi – trefaldig upprepning";
+ else if(result=="material")text="Remi – otillräckligt material";
+ else if(app.training&&app.lessonSolved)text="Rätt drag! Välj nästa övning.";
+ else if(app.busy)text="Datorn tänker…";
+ else if(app.thinkingHint)text="Analyserar ett drag… du kan fortsätta spela.";
+ else if(!app.hintText.empty())text=app.hintText;
+ else if(app.game.board().inCheck(app.game.board().white))text="Schack!";
+ else text="Klicka på en pjäs och sedan en ruta.";
+ if(!app.transient.empty())text=app.transient;
+ g.gtk_label_set_label(app.status,text.c_str());
+ g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?"Vit vid draget":"Svart vid draget"):"Partiet avslutat");
+ std::string history;
+ for(size_t k=0;k<app.game.sans.size();k++){
+  if(!(k%2))history+=std::to_string(k/2+1)+". ";
+  history+=app.game.sans[k];history+=(k%2)?"\n":"      ";
+ }
+ if(history.empty())history="Inga drag ännu";
+ if(history.size()>1800)history=history.substr(history.size()-1800);
+ g.gtk_label_set_label(app.history,history.c_str());
+ g.gtk_button_set_label(app.modeBtn,app.mode?"Läge: två spelare":"Läge: mot datorn");
+ const char* skills[]={"","Nybörjare","Lätt","Medel","Svår","Utmaning"};
+ g.gtk_button_set_label(app.levelBtn,("Dator: "+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
+ g.gtk_button_set_label(app.themeBtn,(std::string("Bräde: ")+colors().name).c_str());
+ g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
+
+ g.gtk_button_set_label(app.sideBtn,app.human?"Du spelar: svart":"Du spelar: vit");
+ const char* promoname=(app.promotion=='q'?"Dam":app.promotion=='r'?"Torn":app.promotion=='b'?"Löpare":"Springare");
+ g.gtk_button_set_label(app.promoteBtn,(std::string("Bondeförvandling: ")+promoname).c_str());
+ int materialBalance=0;
+ for(char pc:app.game.board().squares){
+  int val=0;switch(std::tolower(static_cast<unsigned char>(pc))){case 'p':val=1;break;case 'n':case 'b':val=3;break;case 'r':val=5;break;case 'q':val=9;break;default:break;}
+  if(pc)materialBalance+=(std::isupper(static_cast<unsigned char>(pc))?val:-val);
+ }
+ const std::string materialText=materialBalance==0?"Material: jämnt":
+    std::string("Material: ")+(materialBalance>0?"vit":"svart")+" +"+std::to_string(std::abs(materialBalance));
+ g.gtk_label_set_label(app.material,materialText.c_str());
+ g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);
+ if(app.training){
+  const auto& l=chess::lesson(app.lessonIndex);
+  g.gtk_label_set_label(app.lessonTitle,("Övning "+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" – "+l.titleSv).c_str());
+  unsigned completed=0;
+  for(std::size_t i=0;i<chess::lessonCount();++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
+  g.gtk_label_set_label(app.lessonProgress,("Avklarade övningar: "+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?"✓ Klar tidigare":"Ny övning")).c_str());
+  g.gtk_label_set_label(app.lessonTask,l.taskSv);
+  g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?l.successSv:"Gör draget på brädet. Ledtråd finns nedan.");
+ }
+ repaint();
+}
+void reset(){app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;app.game.reset();
+ app.flipped=app.mode==0&&app.human==1;app.selected=-1;app.transient.clear();save();refresh();}
+void startAI();
+void afterMove(chess::Move m,bool byComputer=false){
+ if(app.game.result()!="ongoing")return;
+ if(!app.game.play(m))return;
+ app.selected=-1;app.transient.clear();clearHint();app.epoch++;
+ if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
+ if(app.training)app.lessonSolved=true;else save();
+ refresh();if(!byComputer&&!app.training)startAI();
+}
+struct AIResult{unsigned epoch; chess::SearchResult result; bool hint=false;};
+int deliverAI(void* data){
+ std::unique_ptr<AIResult> r(static_cast<AIResult*>(data));
+ if(app.closed)return 0;
+ if(r->epoch==app.epoch){
+  if(r->hint){
+   app.thinkingHint=false;
+   if(r->result.move.from>=0){
+    app.hintFrom=r->result.move.from;app.hintTo=r->result.move.to;
+    app.hintText="Förslag: "+chess::san(app.game.board(),r->result.move)
+      +" ("+chess::squareName(app.hintFrom)+" → "+chess::squareName(app.hintTo)+")";
+   }
+   refresh();return 0;
+  }
+  app.busy=false;
+  if(!app.training&&app.mode==0&&app.game.result()=="ongoing"&&app.game.board().white!=(app.human==0))
+   afterMove(r->result.move,true);
+  refresh();
+ }
+ return 0;
+}
+void startAI(){
+ if(app.closed||app.training||app.mode!=0||app.busy||app.game.result()!="ongoing")return;
+ if(app.game.board().white==(app.human==0))return;
+ const chess::Board board=app.game.board(); const int skill=app.skill;const unsigned epoch=app.epoch;
+ app.busy=true;refresh();
+ std::thread([board,skill,epoch](){
+  auto* r=new AIResult{epoch,chess::bestMove(board,skill,skill==5?120000:50000),false};
+  g_idle_add(deliverAI,r);
+ }).detach();
+}
+void suggestMove(){
+ if(app.closed||app.training||app.busy||app.thinkingHint||app.game.result()!="ongoing")return;
+ if(app.mode==0 && app.game.board().white!=(app.human==0))return;
+ const auto b=app.game.board();const unsigned epoch=app.epoch;
+ app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=true;refresh();
+ std::thread([b,epoch](){
+  auto* result=new AIResult{epoch,chess::bestMove(b,3,18000),true};
+  g_idle_add(deliverAI,result);
+ }).detach();
+}
+void chosen(int sq){
+ if(sq<0||app.game.result()!="ongoing")return;
+ if(app.training&&app.lessonSolved)return;
+ if(!app.training&&app.mode==0&&(app.busy||app.game.board().white!=(app.human==0)))return;
+ const auto board=app.game.board();
+ if(app.selected>=0&&app.selected!=sq){
+  for(auto m:board.legalMoves()){
+   if(m.from!=app.selected||m.to!=sq)continue;
+   if(m.promotion)m.promotion=app.promotion;
+   if(app.training&&!chess::correctLessonMove(app.lessonIndex,m)){
+    app.transient="Inte riktigt – försök igen eller använd ledtråden.";
+    refresh();return;
+   }
+   afterMove(m);return;
+  }
+ }
+ const char p=board.squares[sq];
+ app.selected=(p&&((std::isupper(static_cast<unsigned char>(p))!=0)==board.white))?sq:-1;
+ app.cursor=sq;app.transient.clear();if(app.hintFrom>=0)clearHint();refresh();
+}
+void draw(Ptr,cairo_t* c,int width,int height,void*){
+ if(app.closed)return;
+ const auto geo=boardGeom(width,height); const auto& b=app.game.board();
+ const auto& pal=colors();
+ rgba(c,pal.bg[0],pal.bg[1],pal.bg[2]);cairo_rectangle(c,0,0,width,height);cairo_fill(c);
+ rgba(c,pal.edge[0],pal.edge[1],pal.edge[2]);cairo_rectangle(c,geo.x-4,geo.y-4,geo.s*8+8,geo.s*8+8);cairo_fill(c);
+ std::vector<chess::Move> allowed;
+ if(app.selected>=0)allowed=b.legalMoves();
+ int checked=-1;if(b.inCheck(b.white))for(int sq=0;sq<64;sq++)if(b.squares[sq]==(b.white?'K':'k')){checked=sq;break;}
+ for(int row=0;row<8;row++)for(int file=0;file<8;file++){
+  const int sq=(app.flipped?row:7-row)*8+(app.flipped?7-file:file);
+  const double x=geo.x+file*geo.s,y=geo.y+row*geo.s;
+  const double* baseColor=(row+file)%2==0?pal.light:pal.dark;
+  rgba(c,baseColor[0],baseColor[1],baseColor[2]);
+  cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+  if(!app.game.moves.empty()&&(sq==app.game.moves.back().from||sq==app.game.moves.back().to)){
+   rgba(c,1,.75,.22,.3);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+  }
+  if(sq==checked){rgba(c,.89,.22,.23,.37);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
+  if(sq==app.selected){rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.35);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
+  if(std::any_of(allowed.begin(),allowed.end(),[&](const chess::Move& m){return m.from==app.selected&&m.to==sq;})){
+   rgba(c,.12,.27,.42,.47);cairo_new_path(c);
+   if(b.squares[sq]){cairo_set_line_width(c,std::max(2.,geo.s*.075));cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.44,0,6.28318530718);cairo_stroke(c);}
+   else{cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.12,0,6.28318530718);cairo_fill(c);}
+  }
+  if(sq==app.hintFrom||sq==app.hintTo){
+   rgba(c,.08,.82,.72,.92);cairo_set_line_width(c,std::max(2.5,geo.s*.075));
+   cairo_rectangle(c,x+geo.s*.06,y+geo.s*.06,geo.s*.88,geo.s*.88);cairo_stroke(c);
+  }
+  piece(c,b.squares[sq],x,y,geo.s);
+  if(sq==app.cursor){rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.90);cairo_rectangle(c,x+1.5,y+1.5,geo.s-3,geo.s-3);cairo_set_line_width(c,1.5);cairo_stroke(c);}
+ }
+ rgba(c,app.palette==1?.10:.90,app.palette==1?.24:.94,app.palette==1?.36:1.);cairo_select_font_face(c,"Sans",0,0);cairo_set_font_size(c,std::clamp(geo.s*.19,8.,13.));
+ for(int i=0;i<8;i++){
+  const char row[]={char('1'+(app.flipped?i:7-i)),0};
+  const char col[]={char('a'+(app.flipped?7-i:i)),0};
+  cairo_move_to(c,geo.x-17,geo.y+(i+.56)*geo.s);cairo_show_text(c,row);
+  cairo_move_to(c,geo.x+(i+.44)*geo.s,geo.y+8*geo.s+15);cairo_show_text(c,col);
+ }
+}
+int boardWidth=720,boardHeight=680;
+int hitSquare(double x,double y){
+ const auto geo=boardGeom(boardWidth,boardHeight);
+ const int file=int(std::floor((x-geo.x)/geo.s)),row=int(std::floor((y-geo.y)/geo.s));
+ if(file<0||file>7||row<0||row>7)return -1;
+ return (app.flipped?row:7-row)*8+(app.flipped?7-file:file);
+}
+void onDragBegin(Ptr,double x,double y,void*){
+ app.dragX=x;app.dragY=y;app.dragOrigin=hitSquare(x,y);
+}
+void onDragEnd(Ptr,double offsetX,double offsetY,void*){
+ if(app.dragOrigin<0)return;
+ const int target=hitSquare(app.dragX+offsetX,app.dragY+offsetY);
+ if(target>=0&&target!=app.dragOrigin){
+  if(app.selected!=app.dragOrigin)chosen(app.dragOrigin);
+  chosen(target);
+ }
+ app.dragOrigin=-1;
+}
+void onClick(Ptr,int n,double x,double y,void*){
+ if(n!=1||app.closed)return;
+ // GTK reports coordinates local to the drawing area.
+ int sq=hitSquare(x,y);if(sq<0)return;
+ chosen(sq);
+ g.gtk_widget_grab_focus(app.board);
+}
+void drawRemember(Ptr p,cairo_t* c,int w,int h,void* d){boardWidth=w;boardHeight=h;draw(p,c,w,h,d);}
+void perform(int id);
+int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
+ if(state&(1u<<2)) { // Ctrl shortcuts
+  unsigned keyLower=(key>='A'&&key<='Z')?key+32:key;
+  if(keyLower=='n'){perform(0);return 1;}
+  if(keyLower=='z'){perform(1);return 1;}
+  if(keyLower=='s'){perform(10);return 1;}
+  if(keyLower=='r'){perform(2);return 1;}
+  if(keyLower=='h'){perform(12);return 1;}
+  return 0;
+ }
+ if(state&(1u<<3))return 0; // Alt
+ const int f=app.cursor%8,r=app.cursor/8;int x=f,y=r,d=app.flipped?-1:1;
+ if(key==0xff51)x-=d;else if(key==0xff53)x+=d;
+ else if(key==0xff52)y+=d;else if(key==0xff54)y-=d;
+ else if(key==0xff0d||key==0x20){chosen(app.cursor);return 1;}
+ else if(key==0xff1b){app.selected=-1;refresh();return 1;}
+ else return 0;
+ app.cursor=std::clamp(y,0,7)*8+std::clamp(x,0,7);repaint();return 1;
+}
+void lessonLoad(){
+ app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
+ app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
+}
+void perform(int id){
+ if(app.closed)return;
+ switch(id){
+ case 0:reset();break;
+ case 1: // Undo
+  if(app.game.undo()){
+   app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;
+   if(!app.training&&app.mode==0&&!app.game.moves.empty()&&app.game.board().white!=(app.human==0))app.game.undo();
+   app.selected=-1;app.transient.clear();save();refresh();startAI();
+  }break;
+ case 2:app.flipped=!app.flipped;app.transient.clear();save();refresh();break;
+ case 3:app.mode=1-app.mode;reset();startAI();break;
+ case 4:app.skill=1+(app.skill%5);app.transient.clear();save();refresh();break;
+ case 5:app.human=1-app.human;reset();startAI();break;
+ case 6: // Schackskola toggle
+  if(!app.training){
+   save();app.savedGame=app.game;app.training=true;app.lessonIndex=0;lessonLoad();
+  }else{
+   app.training=false;app.lessonSolved=false;app.game=app.savedGame;
+   app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
+  }break;
+ case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
+ case 8:if(app.training){app.transient=chess::lesson(app.lessonIndex).hintSv;refresh();}break;
+ case 9:if(app.training&&app.lessonIndex+1<chess::lessonCount()){app.lessonIndex++;lessonLoad();}break;
+ case 10: { // Export PGN
+  try{
+   std::filesystem::create_directories(userDir());
+   std::time_t now=std::time(nullptr);std::tm local{};
+   #if defined(_WIN32)
+   localtime_s(&local,&now);
+   #else
+   localtime_r(&now,&local);
+   #endif
+   char stamp[32];std::strftime(stamp,sizeof(stamp),"%Y%m%d-%H%M%S",&local);
+   const std::string filepath=userDir()+"/parti-"+stamp+".pgn";
+   std::ofstream o(filepath);o<<app.game.pgn();o.close();
+   if(!o)throw std::runtime_error("write failed");
+   app.transient="PGN sparad: "+filepath;
+  }catch(...){app.transient="Kunde inte spara PGN.";}
+  refresh();break;
+ }
+ case 12:suggestMove();break;
+ case 13:app.palette=(app.palette+1)%3;theme();save();refresh();break;
+ case 11: {
+  const std::string choices="qrnb";auto pos=choices.find(app.promotion);
+  app.promotion=choices[(pos+1)%choices.size()];refresh();break;
+ }
+ default:break;
+ }
+}
+struct ButtonData{int id;};
+std::vector<std::unique_ptr<ButtonData>> buttonDatas;
+void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
+Ptr button(Ptr container,const char* label,int id,bool primary=false){
+ Ptr btn=g.gtk_button_new_with_label(label);
+ if(primary)g.gtk_widget_add_css_class(btn,"suggested-action");
+ g.gtk_widget_add_css_class(btn,"wenuy-control");
+ buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id}));
+ connect(btn,"clicked",onButton,buttonDatas.back().get());
+ g.gtk_box_append(container,btn);return btn;
+}
+Ptr label(Ptr box,const char* text,bool wrap=false,const char* cls=nullptr){
+ Ptr l=g.gtk_label_new(text);g.gtk_label_set_xalign(l,0);g.gtk_label_set_yalign(l,0);
+ if(wrap)g.gtk_label_set_wrap(l,1);
+ if(cls)g.gtk_widget_add_css_class(l,cls);
+ g.gtk_box_append(box,l);return l;
+}
+void margin(Ptr w,int x,int y){
+ g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
+ g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
+}
+int onClose(Ptr,void*){app.closed=true;app.epoch++;app.cssProvider=nullptr;save();return 0;}
+void activate(Ptr application,void*){
+ if(app.window&&!app.closed){g.gtk_window_present(app.window);return;}
+ app.closed=false;clearHint();
+ app.window=g.gtk_application_window_new(application);
+ g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,1040,760);
+ connect(app.window,"close-request",onClose,nullptr);
+ Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
+ Ptr header=g.gtk_box_new(0,8);margin(header,16,12);
+ g.gtk_widget_add_css_class(header,"wenuy-topbar");g.gtk_box_append(root,header);
+ Ptr brand=g.gtk_label_new("♞  WENUY SCHACK");g.gtk_widget_add_css_class(brand,"title-2");
+ g.gtk_widget_add_css_class(brand,"wenuy-brand");
+ g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
+ button(header,"Nytt parti",0,true);button(header,"Ångra",1);button(header,"Vänd brädet",2);
+ button(header,"Schackskolan",6);app.hintBtn=button(header,"Visa dragförslag",12);
+ Ptr main=g.gtk_box_new(0,0);g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
+ Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
+ g.gtk_box_append(main,boardBox);
+ app.board=g.gtk_drawing_area_new();g.gtk_widget_set_hexpand(app.board,1);g.gtk_widget_set_vexpand(app.board,1);
+ g.gtk_widget_set_size_request(app.board,340,340);g.gtk_widget_set_focusable(app.board,1);
+ g.gtk_widget_set_tooltip_text(app.board,"Klicka på två rutor eller dra pjäsen. Piltangenter och Enter fungerar också.");
+ g.gtk_drawing_area_set_draw_func(app.board,drawRemember,nullptr,nullptr);
+ Ptr click=g.gtk_gesture_click_new();g.gtk_gesture_single_set_button(click,1);
+ connect(click,"pressed",onClick,nullptr);g.gtk_widget_add_controller(app.board,click);
+ Ptr drag=g.gtk_gesture_drag_new();g.gtk_gesture_single_set_button(drag,1);
+ connect(drag,"drag-begin",onDragBegin,nullptr);connect(drag,"drag-end",onDragEnd,nullptr);
+ g.gtk_widget_add_controller(app.board,drag);
+ Ptr keys=g.gtk_event_controller_key_new();connect(keys,"key-pressed",onKey,nullptr);
+ g.gtk_widget_add_controller(app.board,keys);g.gtk_box_append(boardBox,app.board);
+ // Window-level shortcuts also work when a sidebar button has keyboard focus.
+ Ptr windowKeys=g.gtk_event_controller_key_new();connect(windowKeys,"key-pressed",onKey,nullptr);
+ g.gtk_widget_add_controller(app.window,windowKeys);
+ Ptr side=g.gtk_box_new(1,9);g.gtk_widget_set_size_request(side,270,-1);
+ margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");g.gtk_box_append(main,side);
+ label(side,"DITT PARTI",false,"title-3");
+ app.turn=label(side,"",false,"heading");
+ app.status=label(side,"",true);
+ app.material=label(side,"",false,"wenuy-dim");
+ app.modeBtn=button(side,"Läge: mot datorn",3);
+ app.levelBtn=button(side,"Nivå: 2 / 5",4);
+ app.sideBtn=button(side,"Du spelar: vit",5);
+ app.promoteBtn=button(side,"Bondeförvandling: Dam",11);
+ app.themeBtn=button(side,"Bräde: Nordiskt blått",13);
+ app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
+ app.lessonTitle=label(app.lessonBox,"",true,"heading");
+ app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
+ app.lessonTask=label(app.lessonBox,"",true);
+ app.lessonFeedback=label(app.lessonBox,"",true);
+ Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
+ button(lessonButtons,"Föreg.",7);button(lessonButtons,"Ledtråd",8);button(lessonButtons,"Nästa",9);
+ button(app.lessonBox,"Avsluta schackskolan",6);
+ label(side,"DRAGLISTA",false,"heading");
+ Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
+ g.gtk_widget_set_size_request(scroll,240,80);g.gtk_box_append(side,scroll);
+ app.history=g.gtk_label_new("Inga drag ännu");g.gtk_label_set_xalign(app.history,0);
+ g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
+ g.gtk_scrolled_window_set_child(scroll,app.history);
+ button(side,"Exportera parti (PGN)",10);
+ label(side,"Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips",true,"wenuy-dim");
+ label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
+ theme();refresh();g.gtk_window_present(app.window);startAI();
+}
+} // namespace
+
+int main(int argc,char** argv){
+ if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
+ if(!g.load()){
+  std::fprintf(stderr,"Wenuy Schack kräver GTK4. Installera paketet libgtk-4-1.\n");
+  return 2;
+ }
+ std::string error;
+ if(!chess::validateLessons(&error)){
+  std::fprintf(stderr,"Schackskolan har ett regelproblem: %s\n",error.c_str());return 3;
+ }
+ load();loadProgress();
+ Ptr application=g.gtk_application_new("se.wenuyos.app.schack",0);
+ if(!application){std::fprintf(stderr,"Kunde inte skapa GTK-applikationen.\n");return 4;}
+ connect(application,"activate",activate,nullptr);
+ const int code=g_application_run(application,argc,argv);
+ app.closed=true;g_object_unref(application);
+ return code;
+}
