@@ -1,5 +1,12 @@
 # Versionshistorik
 
+## 0.5.0 (under utveckling)
+- Nytt fokusläge för brädet med knapp och Ctrl+L, utan att dölja viktiga spelkontroller.
+- Sidopanelen rullbar på små skärmar; flyttade sekundära verktyg till egen rad.
+- Fjärde brädtema med hög kontrast.
+- Nya regressionstester för GUI-resurser och installationsmetadata.
+
+
 ## 0.4.0 (under utveckling)
 - Utökad schackskola till 20 interaktiva övningar, med nya taktiska och grundläggande slutspelsmoment.
 - Förbättrad språkhantering i spelklienten (svenska och engelska).
