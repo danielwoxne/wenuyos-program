@@ -78,6 +78,26 @@ jobs:
             echo "::endgroup::"
           done
           exit $fail
+      - name: Programnyckeln
+        # bara på main, i PR och vid släpp: att hemligheten är Daniels programnyckel och kan signera utan lösenfras.
+        # Visar bara fingeravtrycket och gpg:s meddelanden – aldrig nyckeln.
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          WENUYOS_PROGRAM_KEY: ${{ secrets.WENUYOS_PROGRAM_KEY }}
+        run: |
+          [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "::warning::Hemligheten WENUYOS_PROGRAM_KEY saknas – bara osignerade släpp går"; exit 0; }
+          export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"; trap 'rm -rf "$GNUPGHOME"' EXIT
+          # inklistring från Windows: BOM, CR, mellanslag i början av raderna, text före/efter blocket – rättas här
+          printf '%s\n' "$WENUYOS_PROGRAM_KEY" | python3 .github/wenuyos-key.py > "$GNUPGHOME/k.asc" || exit 1
+          echo "Hemligheten: $(wc -l < "$GNUPGHOME/k.asc") rader, $(wc -c < "$GNUPGHOME/k.asc") tecken, rad 2 $( [ -z "$(sed -n 2p "$GNUPGHOME/k.asc")" ] && echo tom || echo 'inte tom'), sista raden: $(grep -c -- '-----END PGP PRIVATE KEY BLOCK-----' "$GNUPGHOME/k.asc") END"
+          gpg --batch --import "$GNUPGHOME/k.asc" 2>&1 | grep -v -i "^gpg: directory\|keybox" || true
+          fpr=$(gpg --batch --with-colons --list-secret-keys | awk -F: '/^fpr/ {print $10; exit}')
+          echo "Hemlig nyckel i hemligheten: ${fpr:-ingen}"
+          [ "$fpr" = A1E9825D3FB6CD49D583377CAC0B0BB79E68D7BA ] || { echo "::error::Hemligheten är inte programnyckeln (…9E68 D7BA) som WenuyOS litar på"; exit 1; }
+          echo prov > "$GNUPGHOME/prov.txt"
+          gpg --batch --yes --pinentry-mode loopback --passphrase '' --detach-sign "$GNUPGHOME/prov.txt" 2>&1 \
+            || { echo "::error::Nyckeln kan inte signera utan lösenfras – exportera den igen utan lösenfras"; exit 1; }
+          echo "Programnyckeln fungerar."
       - name: Signera och släpp
         if: steps.which.outputs.release != ''
         env:
@@ -91,7 +111,7 @@ jobs:
           else
             [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "Hemligheten WENUYOS_PROGRAM_KEY saknas (Settings → Secrets → Actions) – eller släpp osignerat: taggen $tag-osignerad"; exit 1; }
             export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"
-            printf '%s\n' "$WENUYOS_PROGRAM_KEY" | gpg --batch --import 2>/dev/null
+            printf '%s\n' "$WENUYOS_PROGRAM_KEY" | python3 .github/wenuyos-key.py | gpg --batch --import
             bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" --sign
             rm -rf "$GNUPGHOME"; note=""
           fi
