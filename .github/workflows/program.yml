@@ -87,9 +87,8 @@ jobs:
         run: |
           [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "::warning::Hemligheten WENUYOS_PROGRAM_KEY saknas – bara osignerade släpp går"; exit 0; }
           export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"; trap 'rm -rf "$GNUPGHOME"' EXIT
-          printf '%s\n' "$WENUYOS_PROGRAM_KEY" | tr -d '\r' > "$GNUPGHOME/k.asc"
-          head -1 "$GNUPGHOME/k.asc" | grep -q -- '-----BEGIN PGP PRIVATE KEY BLOCK-----' \
-            || { echo "::error::Hemligheten börjar inte med -----BEGIN PGP PRIVATE KEY BLOCK----- (rad 1: $(head -1 "$GNUPGHOME/k.asc" | cut -c1-40))"; exit 1; }
+          # inklistring från Windows: BOM, CR, mellanslag i början av raderna, text före/efter blocket – rättas här
+          printf '%s\n' "$WENUYOS_PROGRAM_KEY" | python3 .github/wenuyos-key.py > "$GNUPGHOME/k.asc" || exit 1
           echo "Hemligheten: $(wc -l < "$GNUPGHOME/k.asc") rader, $(wc -c < "$GNUPGHOME/k.asc") tecken, rad 2 $( [ -z "$(sed -n 2p "$GNUPGHOME/k.asc")" ] && echo tom || echo 'inte tom'), sista raden: $(grep -c -- '-----END PGP PRIVATE KEY BLOCK-----' "$GNUPGHOME/k.asc") END"
           gpg --batch --import "$GNUPGHOME/k.asc" 2>&1 | grep -v -i "^gpg: directory\|keybox" || true
           fpr=$(gpg --batch --with-colons --list-secret-keys | awk -F: '/^fpr/ {print $10; exit}')
@@ -112,7 +111,7 @@ jobs:
           else
             [ -n "$WENUYOS_PROGRAM_KEY" ] || { echo "Hemligheten WENUYOS_PROGRAM_KEY saknas (Settings → Secrets → Actions) – eller släpp osignerat: taggen $tag-osignerad"; exit 1; }
             export GNUPGHOME=$(mktemp -d); chmod 700 "$GNUPGHOME"
-            printf '%s\n' "$WENUYOS_PROGRAM_KEY" | tr -d '\r' | gpg --batch --import
+            printf '%s\n' "$WENUYOS_PROGRAM_KEY" | python3 .github/wenuyos-key.py | gpg --batch --import
             bash .github/wenuyos-pack.sh "$p" "dist/$p.wapp" --sign
             rm -rf "$GNUPGHOME"; note=""
           fi
