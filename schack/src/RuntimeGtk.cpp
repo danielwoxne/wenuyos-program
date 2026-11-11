@@ -24,6 +24,8 @@
 #include <vector>
 
 extern "C" {
+// Keep a direct GTK4 dependency so WenuyOS verify can recognize this as a GUI application.
+unsigned int gtk_get_major_version(void);
 // GLib and GIO ABI: these signatures are stable on Debian 13 / WenuyOS.
 unsigned long g_signal_connect_data(void*, const char*, void (*)(), void*, void (*)(void*,void*), unsigned int);
 int g_application_run(void*, int, char**);
@@ -617,6 +619,7 @@ void activate(Ptr application,void*){
 } // namespace
 
 int main(int argc,char** argv){
+ if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
   std::fprintf(stderr,"Wenuy Schack kräver GTK4. Installera paketet libgtk-4-1.\n");
   return 2;
