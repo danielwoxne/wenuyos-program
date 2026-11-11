@@ -48,6 +48,15 @@ void cairo_set_font_size(cairo_t*,double); void cairo_show_text(cairo_t*,const c
 
 namespace {
 using Ptr=void*;
+// WenuyOS shows English by default and Swedish for Swedish locale.
+const char* tr(const char* en,const char* sv){
+ for(const char* key:{"LC_ALL","LC_MESSAGES","LANGUAGE","LANG"}){
+  const char* value=std::getenv(key);
+  if(value&&*value)return (value[0]=='s'&&value[1]=='v')?sv:en;
+ }
+ return en;
+}
+
 #define GTK_SYMBOLS(M) \
  M(Ptr, gtk_application_new, (const char*,int)) \
  M(Ptr, gtk_application_window_new, (Ptr)) \
@@ -268,55 +277,55 @@ void refresh(){
  if(app.closed||!app.window)return;
  const std::string result=app.game.result();
  std::string text;
- if(result=="checkmate-white")text="Schack matt – vit vinner";
- else if(result=="checkmate-black")text="Schack matt – svart vinner";
- else if(result=="stalemate")text="Remi – patt";
- else if(result=="fifty")text="Remi – 50-dragsregeln";
- else if(result=="repetition")text="Remi – trefaldig upprepning";
- else if(result=="material")text="Remi – otillräckligt material";
- else if(app.training&&app.lessonSolved)text="Rätt drag! Välj nästa övning.";
- else if(app.busy)text="Datorn tänker…";
- else if(app.thinkingHint)text="Analyserar ett drag… du kan fortsätta spela.";
+ if(result=="checkmate-white")text=tr("Checkmate – White wins","Schack matt – vit vinner");
+ else if(result=="checkmate-black")text=tr("Checkmate – Black wins","Schack matt – svart vinner");
+ else if(result=="stalemate")text=tr("Draw – stalemate","Remi – patt");
+ else if(result=="fifty")text=tr("Draw – 50-move rule","Remi – 50-dragsregeln");
+ else if(result=="repetition")text=tr("Draw – threefold repetition","Remi – trefaldig upprepning");
+ else if(result=="material")text=tr("Draw – insufficient material","Remi – otillräckligt material");
+ else if(app.training&&app.lessonSolved)text=tr("Correct! Choose the next lesson.","Rätt drag! Välj nästa övning.");
+ else if(app.busy)text=tr("Computer is thinking…","Datorn tänker…");
+ else if(app.thinkingHint)text=tr("Analysing a move… you can keep playing.","Analyserar ett drag… du kan fortsätta spela.");
  else if(!app.hintText.empty())text=app.hintText;
- else if(app.game.board().inCheck(app.game.board().white))text="Schack!";
- else text="Klicka på en pjäs och sedan en ruta.";
+ else if(app.game.board().inCheck(app.game.board().white))text=tr("Check!","Schack!");
+ else text=tr("Select a piece, then a square.","Klicka på en pjäs och sedan en ruta.");
  if(!app.transient.empty())text=app.transient;
  g.gtk_label_set_label(app.status,text.c_str());
- g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?"Vit vid draget":"Svart vid draget"):"Partiet avslutat");
+ g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget")):tr("Game over","Partiet avslutat"));
  std::string history;
  for(size_t k=0;k<app.game.sans.size();k++){
   if(!(k%2))history+=std::to_string(k/2+1)+". ";
   history+=app.game.sans[k];history+=(k%2)?"\n":"      ";
  }
- if(history.empty())history="Inga drag ännu";
+ if(history.empty())history=tr("No moves yet","Inga drag ännu");
  if(history.size()>1800)history=history.substr(history.size()-1800);
  g.gtk_label_set_label(app.history,history.c_str());
- g.gtk_button_set_label(app.modeBtn,app.mode?"Läge: två spelare":"Läge: mot datorn");
- const char* skills[]={"","Nybörjare","Lätt","Medel","Svår","Utmaning"};
- g.gtk_button_set_label(app.levelBtn,("Dator: "+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
- g.gtk_button_set_label(app.themeBtn,(std::string("Bräde: ")+colors().name).c_str());
+ g.gtk_button_set_label(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
+ const char* skills[]={"",tr("Beginner","Nybörjare"),tr("Easy","Lätt"),tr("Medium","Medel"),tr("Hard","Svår"),tr("Challenge","Utmaning")};
+ g.gtk_button_set_label(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
+ g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+tr(app.palette==0?"Nordic blue":app.palette==1?"Light":"Classic wood",colors().name)).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
 
- g.gtk_button_set_label(app.sideBtn,app.human?"Du spelar: svart":"Du spelar: vit");
- const char* promoname=(app.promotion=='q'?"Dam":app.promotion=='r'?"Torn":app.promotion=='b'?"Löpare":"Springare");
- g.gtk_button_set_label(app.promoteBtn,(std::string("Bondeförvandling: ")+promoname).c_str());
+ g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
+ const char* promoname=(app.promotion=='q'?tr("Queen","Dam"):app.promotion=='r'?tr("Rook","Torn"):app.promotion=='b'?tr("Bishop","Löpare"):tr("Knight","Springare"));
+ g.gtk_button_set_label(app.promoteBtn,(std::string(tr("Promotion: ","Bondeförvandling: "))+promoname).c_str());
  int materialBalance=0;
  for(char pc:app.game.board().squares){
   int val=0;switch(std::tolower(static_cast<unsigned char>(pc))){case 'p':val=1;break;case 'n':case 'b':val=3;break;case 'r':val=5;break;case 'q':val=9;break;default:break;}
   if(pc)materialBalance+=(std::isupper(static_cast<unsigned char>(pc))?val:-val);
  }
- const std::string materialText=materialBalance==0?"Material: jämnt":
-    std::string("Material: ")+(materialBalance>0?"vit":"svart")+" +"+std::to_string(std::abs(materialBalance));
+ const std::string materialText=materialBalance==0?tr("Material: equal","Material: jämnt"):
+    std::string(tr("Material: ","Material: "))+(materialBalance>0?tr("White","vit"):tr("Black","svart"))+" +"+std::to_string(std::abs(materialBalance));
  g.gtk_label_set_label(app.material,materialText.c_str());
  g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);
  if(app.training){
   const auto& l=chess::lesson(app.lessonIndex);
-  g.gtk_label_set_label(app.lessonTitle,("Övning "+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" – "+l.titleSv).c_str());
+  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" – "+tr(l.titleEn,l.titleSv)).c_str());
   unsigned completed=0;
   for(std::size_t i=0;i<chess::lessonCount();++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
-  g.gtk_label_set_label(app.lessonProgress,("Avklarade övningar: "+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?"✓ Klar tidigare":"Ny övning")).c_str());
-  g.gtk_label_set_label(app.lessonTask,l.taskSv);
-  g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?l.successSv:"Gör draget på brädet. Ledtråd finns nedan.");
+  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))).c_str());
+  g.gtk_label_set_label(app.lessonTask,tr(l.taskEn,l.taskSv));
+  g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):tr("Make the move on the board. A hint is available below.","Gör draget på brädet. Ledtråd finns nedan."));
  }
  repaint();
 }
@@ -340,7 +349,7 @@ int deliverAI(void* data){
    app.thinkingHint=false;
    if(r->result.move.from>=0){
     app.hintFrom=r->result.move.from;app.hintTo=r->result.move.to;
-    app.hintText="Förslag: "+chess::san(app.game.board(),r->result.move)
+    app.hintText=std::string(tr("Suggestion: ","Förslag: "))+chess::san(app.game.board(),r->result.move)
       +" ("+chess::squareName(app.hintFrom)+" → "+chess::squareName(app.hintTo)+")";
    }
    refresh();return 0;
@@ -382,7 +391,7 @@ void chosen(int sq){
    if(m.from!=app.selected||m.to!=sq)continue;
    if(m.promotion)m.promotion=app.promotion;
    if(app.training&&!chess::correctLessonMove(app.lessonIndex,m)){
-    app.transient="Inte riktigt – försök igen eller använd ledtråden.";
+    app.transient=tr("Not quite – try again or use the hint.","Inte riktigt – försök igen eller använd ledtråden.");
     refresh();return;
    }
    afterMove(m);return;
@@ -505,7 +514,7 @@ void perform(int id){
    app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
   }break;
  case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
- case 8:if(app.training){app.transient=chess::lesson(app.lessonIndex).hintSv;refresh();}break;
+ case 8:if(app.training){app.transient=tr(chess::lesson(app.lessonIndex).hintEn,chess::lesson(app.lessonIndex).hintSv);refresh();}break;
  case 9:if(app.training&&app.lessonIndex+1<chess::lessonCount()){app.lessonIndex++;lessonLoad();}break;
  case 10: { // Export PGN
   try{
@@ -520,8 +529,8 @@ void perform(int id){
    const std::string filepath=userDir()+"/parti-"+stamp+".pgn";
    std::ofstream o(filepath);o<<app.game.pgn();o.close();
    if(!o)throw std::runtime_error("write failed");
-   app.transient="PGN sparad: "+filepath;
-  }catch(...){app.transient="Kunde inte spara PGN.";}
+   app.transient=std::string(tr("PGN saved: ","PGN sparad: "))+filepath;
+  }catch(...){app.transient=tr("Could not save PGN.","Kunde inte spara PGN.");}
   refresh();break;
  }
  case 12:suggestMove();break;
@@ -567,14 +576,14 @@ void activate(Ptr application,void*){
  Ptr brand=g.gtk_label_new("♞  WENUY SCHACK");g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
- button(header,"Nytt parti",0,true);button(header,"Ångra",1);button(header,"Vänd brädet",2);
- button(header,"Schackskolan",6);app.hintBtn=button(header,"Visa dragförslag",12);
+ button(header,tr("New game","Nytt parti"),0,true);button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
+ button(header,tr("Chess school","Schackskolan"),6);app.hintBtn=button(header,tr("Suggest move","Visa dragförslag"),12);
  Ptr main=g.gtk_box_new(0,0);g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
  g.gtk_box_append(main,boardBox);
  app.board=g.gtk_drawing_area_new();g.gtk_widget_set_hexpand(app.board,1);g.gtk_widget_set_vexpand(app.board,1);
  g.gtk_widget_set_size_request(app.board,340,340);g.gtk_widget_set_focusable(app.board,1);
- g.gtk_widget_set_tooltip_text(app.board,"Klicka på två rutor eller dra pjäsen. Piltangenter och Enter fungerar också.");
+ g.gtk_widget_set_tooltip_text(app.board,tr("Click two squares or drag a piece. Arrow keys and Enter also work.","Klicka på två rutor eller dra pjäsen. Piltangenter och Enter fungerar också."));
  g.gtk_drawing_area_set_draw_func(app.board,drawRemember,nullptr,nullptr);
  Ptr click=g.gtk_gesture_click_new();g.gtk_gesture_single_set_button(click,1);
  connect(click,"pressed",onClick,nullptr);g.gtk_widget_add_controller(app.board,click);
@@ -588,31 +597,31 @@ void activate(Ptr application,void*){
  g.gtk_widget_add_controller(app.window,windowKeys);
  Ptr side=g.gtk_box_new(1,9);g.gtk_widget_set_size_request(side,270,-1);
  margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");g.gtk_box_append(main,side);
- label(side,"DITT PARTI",false,"title-3");
+ label(side,tr("YOUR GAME","DITT PARTI"),false,"title-3");
  app.turn=label(side,"",false,"heading");
  app.status=label(side,"",true);
  app.material=label(side,"",false,"wenuy-dim");
- app.modeBtn=button(side,"Läge: mot datorn",3);
- app.levelBtn=button(side,"Nivå: 2 / 5",4);
- app.sideBtn=button(side,"Du spelar: vit",5);
- app.promoteBtn=button(side,"Bondeförvandling: Dam",11);
- app.themeBtn=button(side,"Bräde: Nordiskt blått",13);
+ app.modeBtn=button(side,tr("Mode: vs computer","Läge: mot datorn"),3);
+ app.levelBtn=button(side,tr("Level: 2 / 5","Nivå: 2 / 5"),4);
+ app.sideBtn=button(side,tr("You play: White","Du spelar: vit"),5);
+ app.promoteBtn=button(side,tr("Promotion: Queen","Bondeförvandling: Dam"),11);
+ app.themeBtn=button(side,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
  app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
  app.lessonTitle=label(app.lessonBox,"",true,"heading");
  app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
  app.lessonTask=label(app.lessonBox,"",true);
  app.lessonFeedback=label(app.lessonBox,"",true);
  Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
- button(lessonButtons,"Föreg.",7);button(lessonButtons,"Ledtråd",8);button(lessonButtons,"Nästa",9);
- button(app.lessonBox,"Avsluta schackskolan",6);
- label(side,"DRAGLISTA",false,"heading");
+ button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
+ button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
+ label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
  g.gtk_widget_set_size_request(scroll,240,80);g.gtk_box_append(side,scroll);
- app.history=g.gtk_label_new("Inga drag ännu");g.gtk_label_set_xalign(app.history,0);
+ app.history=g.gtk_label_new(tr("No moves yet","Inga drag ännu"));g.gtk_label_set_xalign(app.history,0);
  g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
  g.gtk_scrolled_window_set_child(scroll,app.history);
- button(side,"Exportera parti (PGN)",10);
- label(side,"Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips",true,"wenuy-dim");
+ button(side,tr("Export game (PGN)","Exportera parti (PGN)"),10);
+ label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips"),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  theme();refresh();g.gtk_window_present(app.window);startAI();
 }
@@ -621,16 +630,16 @@ void activate(Ptr application,void*){
 int main(int argc,char** argv){
  if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
-  std::fprintf(stderr,"Wenuy Schack kräver GTK4. Installera paketet libgtk-4-1.\n");
+  std::fprintf(stderr,"%s\n",tr("Wenuy Chess requires GTK4. Install libgtk-4-1.","Wenuy Schack kräver GTK4. Installera paketet libgtk-4-1."));
   return 2;
  }
  std::string error;
  if(!chess::validateLessons(&error)){
-  std::fprintf(stderr,"Schackskolan har ett regelproblem: %s\n",error.c_str());return 3;
+  std::fprintf(stderr,"%s: %s\n",tr("Chess lessons have a rules problem","Schackskolan har ett regelproblem"),error.c_str());return 3;
  }
  load();loadProgress();
  Ptr application=g.gtk_application_new("se.wenuyos.app.schack",0);
- if(!application){std::fprintf(stderr,"Kunde inte skapa GTK-applikationen.\n");return 4;}
+ if(!application){std::fprintf(stderr,"%s\n",tr("Could not create GTK application.","Kunde inte skapa GTK-applikationen."));return 4;}
  connect(application,"activate",activate,nullptr);
  const int code=g_application_run(application,argc,argv);
  app.closed=true;g_object_unref(application);
