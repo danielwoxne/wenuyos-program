@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Wenuy Chess
+Name[sv]=Wenuy Schack
+Comment=Play chess against your computer or a friend
+Comment[sv]=Spela schack mot datorn eller en vän
+Exec=schack
+Icon=se.wenuyos.app.schack
+Terminal=false
+Categories=Game;BoardGame;
+Keywords=chess;board;game;
+Keywords[sv]=schack;brädspel;spel;
+StartupWMClass=se.wenuyos.app.schack
