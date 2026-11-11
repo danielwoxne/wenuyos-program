@@ -308,7 +308,8 @@ void refresh(){
  g.gtk_button_set_label(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
  const char* skills[]={"",tr("Beginner","Nybörjare"),tr("Easy","Lätt"),tr("Medium","Medel"),tr("Hard","Svår"),tr("Challenge","Utmaning")};
  g.gtk_button_set_label(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
- g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+tr(app.palette==0?"Nordic blue":app.palette==1?"Light":app.palette==2?"Classic wood":"High contrast",colors().name)).c_str());
+ const char* paletteNames[]={tr("Nordic blue","Nordiskt blått"),tr("Light","Ljust läge"),tr("Classic wood","Klassiskt trä"),tr("High contrast","Hög kontrast")};
+ g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
 
  g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
