@@ -1,91 +1,91 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "wenuystudio/AudioIO.hpp"
+#include "wenuystudio/AudioIO.hpp"
 
-#include "wenuystudio/History.hpp"
+#include "wenuystudio/History.hpp"
 
-#include "wenuystudio/Waveform.hpp"
+#include "wenuystudio/Waveform.hpp"
 
-#include "wenuystudio/Wave.hpp"
+#include "wenuystudio/Wave.hpp"
 
-#include <cmath>
+#include <cmath>
 
-#include <filesystem>
+#include <filesystem>
 
-#include <iostream>
+#include <iostream>
 
-#include <stdexcept>
+#include <stdexcept>
 
-#include <vector>
+#include <vector>
 
-namespace fs=std::filesystem;
+namespace fs=std::filesystem;
 
-static void check(bool okay,const char* msg){if(!okay)throw std::runtime_error(msg);}
+static void check(bool okay,const char* msg){if(!okay)throw std::runtime_error(msg);}
 
-int main(){
+int main(){
 
- const fs::path wav=fs::temp_directory_path()/"wenuystudio-03-wave-test.wav";
+ const fs::path wav=fs::temp_directory_path()/"wenuystudio-03-wave-test.wav";
 
- try{
+ try{
 
-  wenuystudio::Project p;
+  wenuystudio::Project p;
 
-  wenuystudio::Track t;t.name="A";p.tracks.push_back(t);
+  wenuystudio::Track t;t.name="A";p.tracks.push_back(t);
 
-  wenuystudio::History h(1024*1024,3);
+  wenuystudio::History h(1024*1024,3);
 
-  h.checkpoint(p);p.tracks[0].gain=0.4f;
+  h.checkpoint(p);p.tracks[0].gain=0.4f;
 
-  h.checkpoint(p);p.tracks[0].mute=true;
+  h.checkpoint(p);p.tracks[0].mute=true;
 
-  check(h.undo(p)&&!p.tracks[0].mute,"Undo mute");
+  check(h.undo(p)&&!p.tracks[0].mute,"Undo mute");
 
-  check(std::abs(p.tracks[0].gain-0.4f)<.0001,"Undo retained gain");
+  check(std::abs(p.tracks[0].gain-0.4f)<.0001,"Undo retained gain");
 
-  check(h.undo(p)&&std::abs(p.tracks[0].gain-1.0f)<.0001,"Undo gain");
+  check(h.undo(p)&&std::abs(p.tracks[0].gain-1.0f)<.0001,"Undo gain");
 
-  check(h.redo(p)&&std::abs(p.tracks[0].gain-0.4f)<.0001,"Redo gain");
+  check(h.redo(p)&&std::abs(p.tracks[0].gain-0.4f)<.0001,"Redo gain");
 
-  h.checkpoint(p);p.tracks[0].name="B";
+  h.checkpoint(p);p.tracks[0].name="B";
 
-  check(!h.canRedo(),"New edits must invalidate redo");
+  check(!h.canRedo(),"New edits must invalidate redo");
 
-  wenuystudio::History tiny(1,2);tiny.checkpoint(p);check(!tiny.canUndo(),"Bounded history");
+  wenuystudio::History tiny(1,2);tiny.checkpoint(p);check(!tiny.canUndo(),"Bounded history");
 
-  {
+  {
 
-   wenuystudio::WaveWriter writer(wav.string(),48000);
+   wenuystudio::WaveWriter writer(wav.string(),48000);
 
-   std::vector<wenuystudio::Stereo> frames(4800);
+   std::vector<wenuystudio::Stereo> frames(4800);
 
-   for(std::size_t i=0;i<frames.size();++i){frames[i]={static_cast<float>(std::sin(2*3.141592653589793*i/48.0)),0};}
+   for(std::size_t i=0;i<frames.size();++i){frames[i]={static_cast<float>(std::sin(2*3.141592653589793*i/48.0)),0};}
 
-   writer.append(frames.data(),frames.size());writer.finish();
+   writer.append(frames.data(),frames.size());writer.finish();
 
-  }
+  }
 
-  const auto peak=wenuystudio::waveform(wav.string(),240);
+  const auto peak=wenuystudio::waveform(wav.string(),240);
 
-  check(peak.size()==240,"Peak count");
+  check(peak.size()==240,"Peak count");
 
-  bool loud=false;
+  bool loud=false;
 
-  for(const auto& b:peak){check(std::isfinite(b.min)&&std::isfinite(b.max)&&b.min<=b.max,"Invalid waveform peak");if(b.max>.25f)loud=true;}
+  for(const auto& b:peak){check(std::isfinite(b.min)&&std::isfinite(b.max)&&b.min<=b.max,"Invalid waveform peak");if(b.max>.25f)loud=true;}
 
-  check(loud,"Missing waveform signal");
+  check(loud,"Missing waveform signal");
 
-  bool rejected=false;
+  bool rejected=false;
 
-  try{(void)wenuystudio::waveform(wav.string(),5000);}catch(const std::invalid_argument&){rejected=true;}
+  try{(void)wenuystudio::waveform(wav.string(),5000);}catch(const std::invalid_argument&){rejected=true;}
 
-  check(rejected,"Unbounded waveform accepted");
+  check(rejected,"Unbounded waveform accepted");
 
-  fs::remove(wav);
+  fs::remove(wav);
 
-  std::cout<<"History and bounded waveform tests passed\n";
+  std::cout<<"History and bounded waveform tests passed\n";
 
-  return 0;
+  return 0;
 
- }catch(const std::exception& e){std::error_code ec;fs::remove(wav,ec);std::cerr<<e.what()<<'\n';return 1;}
+ }catch(const std::exception& e){std::error_code ec;fs::remove(wav,ec);std::cerr<<e.what()<<'\n';return 1;}
 
 }

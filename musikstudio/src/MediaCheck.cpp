@@ -1,104 +1,104 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "wenuystudio/MediaCheck.hpp"
+#include "wenuystudio/MediaCheck.hpp"
 
-#include "wenuystudio/Wave.hpp"
+#include "wenuystudio/Wave.hpp"
 
-#include <filesystem>
+#include <filesystem>
 
-#include <unordered_map>
+#include <unordered_map>
 
-#include <exception>
+#include <exception>
 
-#include <cmath>
+#include <cmath>
 
-namespace fs=std::filesystem;
+namespace fs=std::filesystem;
 
-namespace wenuystudio {
+namespace wenuystudio {
 
-namespace {
+namespace {
 
-struct Metadata{MediaIssueKind kind;std::string details;double seconds=0;};
-
-}
-
-const char* mediaIssueName(MediaIssueKind k) noexcept {
-
- switch(k){case MediaIssueKind::Missing:return "MISSING";case MediaIssueKind::Unreadable:return "UNREADABLE";
-
- case MediaIssueKind::OutOfRange:return "OUT_OF_RANGE";}
-
- return "UNKNOWN";
+struct Metadata{MediaIssueKind kind;std::string details;double seconds=0;};
 
 }
 
-std::vector<MediaIssue> inspectMedia(const Project& project){
+const char* mediaIssueName(MediaIssueKind k) noexcept {
 
- std::vector<MediaIssue> issues;
+ switch(k){case MediaIssueKind::Missing:return "MISSING";case MediaIssueKind::Unreadable:return "UNREADABLE";
 
- std::unordered_map<std::string,Metadata> cache;
+ case MediaIssueKind::OutOfRange:return "OUT_OF_RANGE";}
 
- for(std::size_t ti=0;ti<project.tracks.size();++ti){
+ return "UNKNOWN";
 
-  const auto& track=project.tracks[ti];
+}
 
-  for(std::size_t ci=0;ci<track.clips.size();++ci){
+std::vector<MediaIssue> inspectMedia(const Project& project){
 
-   const auto& clip=track.clips[ci];
+ std::vector<MediaIssue> issues;
 
-   auto it=cache.find(clip.filename);
+ std::unordered_map<std::string,Metadata> cache;
 
-   if(it==cache.end()){
+ for(std::size_t ti=0;ti<project.tracks.size();++ti){
 
-    Metadata meta{};
+  const auto& track=project.tracks[ti];
 
-    try{
+  for(std::size_t ci=0;ci<track.clips.size();++ci){
 
-     std::error_code ec;
+   const auto& clip=track.clips[ci];
 
-     if(!fs::is_regular_file(fs::u8path(clip.filename),ec)){
+   auto it=cache.find(clip.filename);
 
-      meta.kind=MediaIssueKind::Missing;
+   if(it==cache.end()){
 
-      meta.details=ec?ec.message():"Ljudfilen saknas";
+    Metadata meta{};
 
-     }else{
+    try{
 
-      WaveReader reader(clip.filename);
+     std::error_code ec;
 
-      meta.kind=MediaIssueKind::OutOfRange; // used only if a clip exceeds length
+     if(!fs::is_regular_file(fs::u8path(clip.filename),ec)){
 
-      meta.seconds=static_cast<double>(reader.frames())/reader.rate();
+      meta.kind=MediaIssueKind::Missing;
 
-     }
+      meta.details=ec?ec.message():"Ljudfilen saknas";
 
-    }catch(const std::exception& e){meta.kind=MediaIssueKind::Unreadable;meta.details=e.what();}
+     }else{
 
-    it=cache.emplace(clip.filename,std::move(meta)).first;
+      WaveReader reader(clip.filename);
 
-   }
+      meta.kind=MediaIssueKind::OutOfRange; // used only if a clip exceeds length
 
-   const Metadata& meta=it->second;
+      meta.seconds=static_cast<double>(reader.frames())/reader.rate();
 
-   if(!meta.details.empty() || meta.kind==MediaIssueKind::Missing){
+     }
 
-    issues.push_back({ti,ci,meta.kind,clip.filename,meta.details});
+    }catch(const std::exception& e){meta.kind=MediaIssueKind::Unreadable;meta.details=e.what();}
 
-   }else if(!std::isfinite(clip.sourceOffsetSeconds)||!std::isfinite(clip.durationSeconds)
+    it=cache.emplace(clip.filename,std::move(meta)).first;
 
-    ||clip.sourceOffsetSeconds>=meta.seconds+1e-7
+   }
 
-    ||(clip.durationSeconds>0 && clip.sourceOffsetSeconds+clip.durationSeconds>meta.seconds+1e-4)){
+   const Metadata& meta=it->second;
 
-    issues.push_back({ti,ci,MediaIssueKind::OutOfRange,clip.filename,"Klippet ligger utanför ljudfilens längd"});
+   if(!meta.details.empty() || meta.kind==MediaIssueKind::Missing){
 
-   }
+    issues.push_back({ti,ci,meta.kind,clip.filename,meta.details});
 
-  }
+   }else if(!std::isfinite(clip.sourceOffsetSeconds)||!std::isfinite(clip.durationSeconds)
 
- }
+    ||clip.sourceOffsetSeconds>=meta.seconds+1e-7
 
- return issues;
+    ||(clip.durationSeconds>0 && clip.sourceOffsetSeconds+clip.durationSeconds>meta.seconds+1e-4)){
+
+    issues.push_back({ti,ci,MediaIssueKind::OutOfRange,clip.filename,"Klippet ligger utanför ljudfilens längd"});
+
+   }
+
+  }
+
+ }
+
+ return issues;
 
 }
 

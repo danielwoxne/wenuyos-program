@@ -1,754 +1,754 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "wenuystudio/AudioIO.hpp"
+#include "wenuystudio/AudioIO.hpp"
 
-#include "wenuystudio/BlockMixer.hpp"
+#include "wenuystudio/BlockMixer.hpp"
 
-#include "wenuystudio/Wave.hpp"
+#include "wenuystudio/Wave.hpp"
 
-#include <algorithm>
+#include <algorithm>
 
-#include <array>
+#include <array>
 
-#include <cmath>
+#include <cmath>
 
-#include <cstdio>
+#include <cstdio>
 
-#include <cerrno>
+#include <cerrno>
 
-#include <system_error>
+#include <system_error>
 
-#include <cstring>
+#include <cstring>
 
-#include <dlfcn.h>
+#include <dlfcn.h>
 
-#include <filesystem>
+#include <filesystem>
 
-#include <stdexcept>
+#include <stdexcept>
 
-#include <string>
+#include <string>
 
-#include <unistd.h>
+#include <unistd.h>
 
-#include <vector>
+#include <vector>
 
-#include <chrono>
+#include <chrono>
 
-#include <thread>
+#include <thread>
 
-namespace wenuystudio {
+namespace wenuystudio {
 
-namespace {
+namespace {
 
-namespace fs=std::filesystem;
+namespace fs=std::filesystem;
 
-using PaError=int;
+using PaError=int;
 
-using PaStream=void;
+using PaStream=void;
 
-struct PaStreamParameters {
+struct PaStreamParameters {
 
- int device;
+ int device;
 
- int channelCount;
+ int channelCount;
 
- unsigned long sampleFormat;
+ unsigned long sampleFormat;
 
- double suggestedLatency;
+ double suggestedLatency;
 
- void* hostApiSpecificStreamInfo;
-
-};
-
-struct PaCallbackTimeInfo {
-
- double inputBufferAdcTime;
-
- double currentTime;
-
- double outputBufferDacTime;
+ void* hostApiSpecificStreamInfo;
 
 };
 
-using PaCallback=int (*)(const void*,void*,unsigned long,
+struct PaCallbackTimeInfo {
 
- const PaCallbackTimeInfo*,unsigned long,void*);
+ double inputBufferAdcTime;
 
-constexpr int paContinue=0;
+ double currentTime;
 
-constexpr int paComplete=1;
-
-// Public PortAudio v19 ABI structs, mirrored solely for runtime diagnostics.
-
-// PortAudio headers are deliberately not required for the C++ core.
-
-struct PaDeviceInfo {
-
- int structVersion;
-
- const char* name;
-
- int hostApi;
-
- int maxInputChannels;
-
- int maxOutputChannels;
-
- double defaultLowInputLatency;
-
- double defaultLowOutputLatency;
-
- double defaultHighInputLatency;
-
- double defaultHighOutputLatency;
-
- double defaultSampleRate;
+ double outputBufferDacTime;
 
 };
 
-struct PaHostApiInfo {
+using PaCallback=int (*)(const void*,void*,unsigned long,
 
- int structVersion;
+ const PaCallbackTimeInfo*,unsigned long,void*);
 
- int type;
+constexpr int paContinue=0;
 
- const char* name;
+constexpr int paComplete=1;
 
- int deviceCount;
+// Public PortAudio v19 ABI structs, mirrored solely for runtime diagnostics.
 
- int defaultInputDevice;
+// PortAudio headers are deliberately not required for the C++ core.
 
- int defaultOutputDevice;
+struct PaDeviceInfo {
 
-};
+ int structVersion;
 
-constexpr unsigned long paFloat32=0x00000001;
+ const char* name;
 
-constexpr PaError paInputOverflowed=-9981;
+ int hostApi;
 
-constexpr PaError paOutputUnderflowed=-9980;
+ int maxInputChannels;
 
-struct PortAudio {
+ int maxOutputChannels;
 
- void* library=nullptr;
+ double defaultLowInputLatency;
 
- PaError (*init)()=nullptr;
+ double defaultLowOutputLatency;
 
- PaError (*terminate)()=nullptr;
+ double defaultHighInputLatency;
 
- PaError (*open)(PaStream**,int,int,unsigned long,double,unsigned long,void*,void*)=nullptr;
+ double defaultHighOutputLatency;
 
- PaError (*openStream)(PaStream**,const PaStreamParameters*,const PaStreamParameters*,
-
-                       double,unsigned long,unsigned long,PaCallback,void*)=nullptr;
-
- PaError (*isStreamActive)(PaStream*)=nullptr;
-
- PaError (*start)(PaStream*)=nullptr;
-
- PaError (*stop)(PaStream*)=nullptr;
-
- PaError (*close)(PaStream*)=nullptr;
-
- PaError (*read)(PaStream*,void*,unsigned long)=nullptr;
-
- PaError (*write)(PaStream*,const void*,unsigned long)=nullptr;
-
- const char* (*errorText)(PaError)=nullptr;
-
- int (*getDeviceCount)()=nullptr;
-
- int (*getDefaultInputDevice)()=nullptr;
-
- int (*getDefaultOutputDevice)()=nullptr;
-
- const PaDeviceInfo* (*getDeviceInfo)(int)=nullptr;
-
- const PaHostApiInfo* (*getHostApiInfo)(int)=nullptr;
-
- template<typename F> void load(F& target,const char* name){
-
-  void* s=dlsym(library,name);
-
-  if(!s)throw std::runtime_error(std::string("Missing PortAudio symbol: ")+name);
-
-  static_assert(sizeof(target)==sizeof(s),"Function pointers incompatible with dlsym");
-
-  std::memcpy(&target,&s,sizeof(s));
-
- }
-
- PortAudio(){
-
-  library=dlopen("libportaudio.so.2",RTLD_NOW|RTLD_LOCAL);
-
-  if(!library)throw std::runtime_error("PortAudio library not installed (libportaudio.so.2)");
-
-  try{
-
-   load(init,"Pa_Initialize");load(terminate,"Pa_Terminate");
-
-   load(open,"Pa_OpenDefaultStream");load(openStream,"Pa_OpenStream");
-
-   load(isStreamActive,"Pa_IsStreamActive");load(start,"Pa_StartStream");
-
-   load(stop,"Pa_StopStream");load(close,"Pa_CloseStream");
-
-   load(read,"Pa_ReadStream");load(write,"Pa_WriteStream");
-
-   load(errorText,"Pa_GetErrorText");
-
-   load(getDeviceCount,"Pa_GetDeviceCount");
-
-   load(getDefaultInputDevice,"Pa_GetDefaultInputDevice");
-
-   load(getDefaultOutputDevice,"Pa_GetDefaultOutputDevice");
-
-   load(getDeviceInfo,"Pa_GetDeviceInfo");
-
-   load(getHostApiInfo,"Pa_GetHostApiInfo");
-
-   check(init(),"Initialize PortAudio");
-
-  }catch(...){dlclose(library);library=nullptr;throw;}
-
- }
-
- void check(PaError code,const char* operation) const {
-
-  if(code!=0)throw std::runtime_error(std::string(operation)+": "+(errorText?errorText(code):"error"));
-
- }
-
- ~PortAudio(){if(library){terminate();dlclose(library);}}
+ double defaultSampleRate;
 
 };
 
-struct Stream {
+struct PaHostApiInfo {
 
- PortAudio& api;
+ int structVersion;
 
- PaStream* ptr=nullptr;
+ int type;
 
- bool started=false;
+ const char* name;
 
- Stream(PortAudio& a,int inputs,int outputs,double rate):api(a){
+ int deviceCount;
 
-  api.check(api.open(&ptr,inputs,outputs,paFloat32,rate,512,nullptr,nullptr),"Open default audio device");
+ int defaultInputDevice;
 
-  try{api.check(api.start(ptr),"Start audio stream");started=true;}
-
-  catch(...){api.close(ptr);throw;}
-
- }
-
- ~Stream(){if(ptr){if(started)api.stop(ptr);api.close(ptr);}}
+ int defaultOutputDevice;
 
 };
 
-// Only the worker may call the mixer. The sound callback only pulls frames
+constexpr unsigned long paFloat32=0x00000001;
 
-// from this bounded SPSC ring. It never allocates, blocks, takes a mutex,
+constexpr PaError paInputOverflowed=-9981;
 
-// logs, calls GTK, or touches disk/mixer. The callback state's lifetime is
+constexpr PaError paOutputUnderflowed=-9980;
 
-// longer than the PortAudio stream's lifetime.
+struct PortAudio {
 
-struct CallbackState {
+ void* library=nullptr;
 
- AudioBuffer& buffer;
+ PaError (*init)()=nullptr;
 
- const std::atomic<bool>& playing;
+ PaError (*terminate)()=nullptr;
 
- std::atomic<bool> producerDone{false};
+ PaError (*open)(PaStream**,int,int,unsigned long,double,unsigned long,void*,void*)=nullptr;
 
- std::atomic<bool> finished{false};
+ PaError (*openStream)(PaStream**,const PaStreamParameters*,const PaStreamParameters*,
 
- std::atomic<std::uint64_t>& position;
+                       double,unsigned long,unsigned long,PaCallback,void*)=nullptr;
 
- std::atomic<std::uint64_t>& delivered;
+ PaError (*isStreamActive)(PaStream*)=nullptr;
 
- std::atomic<std::uint64_t>& underruns;
+ PaError (*start)(PaStream*)=nullptr;
 
- std::atomic<std::uint32_t>& buffered;
+ PaError (*stop)(PaStream*)=nullptr;
 
- std::atomic<float>& left;
+ PaError (*close)(PaStream*)=nullptr;
 
- std::atomic<float>& right;
+ PaError (*read)(PaStream*,void*,unsigned long)=nullptr;
 
- explicit CallbackState(AudioBuffer& b,const std::atomic<bool>& a,
+ PaError (*write)(PaStream*,const void*,unsigned long)=nullptr;
 
-   std::atomic<std::uint64_t>& pos,std::atomic<std::uint64_t>& received,std::atomic<std::uint64_t>& u,
+ const char* (*errorText)(PaError)=nullptr;
 
-   std::atomic<std::uint32_t>& fill,std::atomic<float>& l,std::atomic<float>& r)
+ int (*getDeviceCount)()=nullptr;
 
-  :buffer(b),playing(a),position(pos),delivered(received),underruns(u),buffered(fill),left(l),right(r){}
+ int (*getDefaultInputDevice)()=nullptr;
+
+ int (*getDefaultOutputDevice)()=nullptr;
+
+ const PaDeviceInfo* (*getDeviceInfo)(int)=nullptr;
+
+ const PaHostApiInfo* (*getHostApiInfo)(int)=nullptr;
+
+ template<typename F> void load(F& target,const char* name){
+
+  void* s=dlsym(library,name);
+
+  if(!s)throw std::runtime_error(std::string("Missing PortAudio symbol: ")+name);
+
+  static_assert(sizeof(target)==sizeof(s),"Function pointers incompatible with dlsym");
+
+  std::memcpy(&target,&s,sizeof(s));
+
+ }
+
+ PortAudio(){
+
+  library=dlopen("libportaudio.so.2",RTLD_NOW|RTLD_LOCAL);
+
+  if(!library)throw std::runtime_error("PortAudio library not installed (libportaudio.so.2)");
+
+  try{
+
+   load(init,"Pa_Initialize");load(terminate,"Pa_Terminate");
+
+   load(open,"Pa_OpenDefaultStream");load(openStream,"Pa_OpenStream");
+
+   load(isStreamActive,"Pa_IsStreamActive");load(start,"Pa_StartStream");
+
+   load(stop,"Pa_StopStream");load(close,"Pa_CloseStream");
+
+   load(read,"Pa_ReadStream");load(write,"Pa_WriteStream");
+
+   load(errorText,"Pa_GetErrorText");
+
+   load(getDeviceCount,"Pa_GetDeviceCount");
+
+   load(getDefaultInputDevice,"Pa_GetDefaultInputDevice");
+
+   load(getDefaultOutputDevice,"Pa_GetDefaultOutputDevice");
+
+   load(getDeviceInfo,"Pa_GetDeviceInfo");
+
+   load(getHostApiInfo,"Pa_GetHostApiInfo");
+
+   check(init(),"Initialize PortAudio");
+
+  }catch(...){dlclose(library);library=nullptr;throw;}
+
+ }
+
+ void check(PaError code,const char* operation) const {
+
+  if(code!=0)throw std::runtime_error(std::string(operation)+": "+(errorText?errorText(code):"error"));
+
+ }
+
+ ~PortAudio(){if(library){terminate();dlclose(library);}}
 
 };
 
-int playbackCallback(const void*,void* output,unsigned long count,
+struct Stream {
 
-                     const PaCallbackTimeInfo*,unsigned long,void* user) noexcept {
+ PortAudio& api;
 
- auto& s=*static_cast<CallbackState*>(user);
+ PaStream* ptr=nullptr;
 
- auto* out=static_cast<float*>(output);
+ bool started=false;
 
- // PortAudio guarantees the output pointer is valid for requested frames.
+ Stream(PortAudio& a,int inputs,int outputs,double rate):api(a){
 
- if(!s.playing.load(std::memory_order_relaxed)){
+  api.check(api.open(&ptr,inputs,outputs,paFloat32,rate,512,nullptr,nullptr),"Open default audio device");
 
-  std::fill_n(out,static_cast<std::size_t>(count)*2,0.0f);
+  try{api.check(api.start(ptr),"Start audio stream");started=true;}
 
-  s.finished.store(true,std::memory_order_release);
+  catch(...){api.close(ptr);throw;}
 
-  return paComplete;
+ }
 
- }
+ ~Stream(){if(ptr){if(started)api.stop(ptr);api.close(ptr);}}
 
- float l=0,r=0;
+};
 
- const auto n=s.buffer.popInterleaved(out,count,l,r);
+// Only the worker may call the mixer. The sound callback only pulls frames
 
- s.position.fetch_add(n,std::memory_order_relaxed);
+// from this bounded SPSC ring. It never allocates, blocks, takes a mutex,
 
- s.delivered.fetch_add(n,std::memory_order_relaxed);
+// logs, calls GTK, or touches disk/mixer. The callback state's lifetime is
 
- s.buffered.store(static_cast<std::uint32_t>(s.buffer.available()),std::memory_order_relaxed);
+// longer than the PortAudio stream's lifetime.
 
- s.left.store(l,std::memory_order_relaxed);
+struct CallbackState {
 
- s.right.store(r,std::memory_order_relaxed);
+ AudioBuffer& buffer;
 
- const bool done=s.producerDone.load(std::memory_order_acquire);
+ const std::atomic<bool>& playing;
 
- if(n<count && !done)s.underruns.fetch_add(1,std::memory_order_relaxed);
+ std::atomic<bool> producerDone{false};
 
- if(done && s.buffer.available()==0){
+ std::atomic<bool> finished{false};
 
-  s.finished.store(true,std::memory_order_release);
+ std::atomic<std::uint64_t>& position;
 
-  return paComplete;
+ std::atomic<std::uint64_t>& delivered;
 
- }
+ std::atomic<std::uint64_t>& underruns;
 
- return paContinue;
+ std::atomic<std::uint32_t>& buffered;
+
+ std::atomic<float>& left;
+
+ std::atomic<float>& right;
+
+ explicit CallbackState(AudioBuffer& b,const std::atomic<bool>& a,
+
+   std::atomic<std::uint64_t>& pos,std::atomic<std::uint64_t>& received,std::atomic<std::uint64_t>& u,
+
+   std::atomic<std::uint32_t>& fill,std::atomic<float>& l,std::atomic<float>& r)
+
+  :buffer(b),playing(a),position(pos),delivered(received),underruns(u),buffered(fill),left(l),right(r){}
+
+};
+
+int playbackCallback(const void*,void* output,unsigned long count,
+
+                     const PaCallbackTimeInfo*,unsigned long,void* user) noexcept {
+
+ auto& s=*static_cast<CallbackState*>(user);
+
+ auto* out=static_cast<float*>(output);
+
+ // PortAudio guarantees the output pointer is valid for requested frames.
+
+ if(!s.playing.load(std::memory_order_relaxed)){
+
+  std::fill_n(out,static_cast<std::size_t>(count)*2,0.0f);
+
+  s.finished.store(true,std::memory_order_release);
+
+  return paComplete;
+
+ }
+
+ float l=0,r=0;
+
+ const auto n=s.buffer.popInterleaved(out,count,l,r);
+
+ s.position.fetch_add(n,std::memory_order_relaxed);
+
+ s.delivered.fetch_add(n,std::memory_order_relaxed);
+
+ s.buffered.store(static_cast<std::uint32_t>(s.buffer.available()),std::memory_order_relaxed);
+
+ s.left.store(l,std::memory_order_relaxed);
+
+ s.right.store(r,std::memory_order_relaxed);
+
+ const bool done=s.producerDone.load(std::memory_order_acquire);
+
+ if(n<count && !done)s.underruns.fetch_add(1,std::memory_order_relaxed);
+
+ if(done && s.buffer.available()==0){
+
+  s.finished.store(true,std::memory_order_release);
+
+  return paComplete;
+
+ }
+
+ return paContinue;
 
 }
 
-struct OutputStream {
+struct OutputStream {
 
- PortAudio& api;
+ PortAudio& api;
 
- PaStream* ptr=nullptr;
+ PaStream* ptr=nullptr;
 
- bool started=false;
+ bool started=false;
 
- OutputStream(PortAudio& a,std::uint32_t rate,BufferSettings settings,CallbackState& state):api(a){
+ OutputStream(PortAudio& a,std::uint32_t rate,BufferSettings settings,CallbackState& state):api(a){
 
-  const auto device=api.getDefaultOutputDevice();
+  const auto device=api.getDefaultOutputDevice();
 
-  if(device<0)throw std::runtime_error("No default output device");
+  if(device<0)throw std::runtime_error("No default output device");
 
-  const auto* info=api.getDeviceInfo(device);
+  const auto* info=api.getDeviceInfo(device);
 
-  if(!info||info->maxOutputChannels<2)
+  if(!info||info->maxOutputChannels<2)
 
-   throw std::runtime_error("Default output device does not provide stereo");
+   throw std::runtime_error("Default output device does not provide stereo");
 
-  PaStreamParameters output{device,2,paFloat32,
+  PaStreamParameters output{device,2,paFloat32,
 
-     settings.callbackFrames<=256?info->defaultLowOutputLatency:info->defaultHighOutputLatency,nullptr};
+     settings.callbackFrames<=256?info->defaultLowOutputLatency:info->defaultHighOutputLatency,nullptr};
 
-  api.check(api.openStream(&ptr,nullptr,&output,static_cast<double>(rate),
+  api.check(api.openStream(&ptr,nullptr,&output,static_cast<double>(rate),
 
-                          static_cast<unsigned long>(settings.callbackFrames),0,
+                          static_cast<unsigned long>(settings.callbackFrames),0,
 
-                          playbackCallback,&state),"Open buffered audio output");
+                          playbackCallback,&state),"Open buffered audio output");
 
- }
+ }
 
- void start(){api.check(api.start(ptr),"Start buffered audio");started=true;}
+ void start(){api.check(api.start(ptr),"Start buffered audio");started=true;}
 
- ~OutputStream(){if(ptr){if(started)api.stop(ptr);api.close(ptr);}}
+ ~OutputStream(){if(ptr){if(started)api.stop(ptr);api.close(ptr);}}
 
 };
 
-void playProjectBuffered(PortAudio& api,BlockMixer& mixer,std::uint64_t from,
+void playProjectBuffered(PortAudio& api,BlockMixer& mixer,std::uint64_t from,
 
-              const std::atomic<bool>& active,std::atomic<std::uint64_t>& position,
+              const std::atomic<bool>& active,std::atomic<std::uint64_t>& position,
 
-              std::atomic<std::uint64_t>& delivered,std::atomic<std::uint64_t>& underruns,
+              std::atomic<std::uint64_t>& delivered,std::atomic<std::uint64_t>& underruns,
 
-              std::atomic<std::uint32_t>& buffered,
+              std::atomic<std::uint32_t>& buffered,
 
-              std::atomic<float>& peakLeft,std::atomic<float>& peakRight,
+              std::atomic<float>& peakLeft,std::atomic<float>& peakRight,
 
-              BufferSettings settings){
+              BufferSettings settings){
 
- AudioBuffer ring(settings.capacityFrames);
+ AudioBuffer ring(settings.capacityFrames);
 
- CallbackState state(ring,active,position,delivered,underruns,buffered,peakLeft,peakRight);
+ CallbackState state(ring,active,position,delivered,underruns,buffered,peakLeft,peakRight);
 
- std::array<Stereo,1024> samples{};
+ std::array<Stereo,1024> samples{};
 
- std::uint64_t next=std::min(from,mixer.totalFrames());
+ std::uint64_t next=std::min(from,mixer.totalFrames());
 
- const auto fill=[&](std::size_t target){
+ const auto fill=[&](std::size_t target){
 
-  while(active.load(std::memory_order_relaxed)&&next<mixer.totalFrames()&&
+  while(active.load(std::memory_order_relaxed)&&next<mixer.totalFrames()&&
 
-        ring.available()<target&&ring.freeFrames()>=512){
+        ring.available()<target&&ring.freeFrames()>=512){
 
-   const auto wanted=static_cast<std::size_t>(std::min<std::uint64_t>(
+   const auto wanted=static_cast<std::size_t>(std::min<std::uint64_t>(
 
-      {1024,mixer.totalFrames()-next,ring.freeFrames()}));
+      {1024,mixer.totalFrames()-next,ring.freeFrames()}));
 
-   const auto n=mixer.process(next,samples.data(),wanted);
+   const auto n=mixer.process(next,samples.data(),wanted);
 
-   if(n==0)break;
+   if(n==0)break;
 
-   const auto pushed=ring.push(samples.data(),n);
+   const auto pushed=ring.push(samples.data(),n);
 
-   if(pushed!=n)throw std::runtime_error("Audio buffer internal producer mismatch");
+   if(pushed!=n)throw std::runtime_error("Audio buffer internal producer mismatch");
 
-   next+=n;
+   next+=n;
 
-  }
+  }
 
-  if(next==mixer.totalFrames())state.producerDone.store(true,std::memory_order_release);
+  if(next==mixer.totalFrames())state.producerDone.store(true,std::memory_order_release);
 
-  buffered.store(static_cast<std::uint32_t>(ring.available()),std::memory_order_relaxed);
+  buffered.store(static_cast<std::uint32_t>(ring.available()),std::memory_order_relaxed);
 
- };
+ };
 
- // Pre-fill before the device starts. No disk read happens in its callback.
+ // Pre-fill before the device starts. No disk read happens in its callback.
 
- fill(settings.prefillFrames);
+ fill(settings.prefillFrames);
 
- if(!active.load(std::memory_order_relaxed))return;
+ if(!active.load(std::memory_order_relaxed))return;
 
- OutputStream stream(api,mixer.sampleRate(),settings,state);
+ OutputStream stream(api,mixer.sampleRate(),settings,state);
 
- stream.start();
+ stream.start();
 
- while(active.load(std::memory_order_relaxed)&&
+ while(active.load(std::memory_order_relaxed)&&
 
-       !state.finished.load(std::memory_order_acquire)){
+       !state.finished.load(std::memory_order_acquire)){
 
-  fill(settings.capacityFrames);
+  fill(settings.capacityFrames);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-  const auto streamActive=api.isStreamActive(stream.ptr);
+  const auto streamActive=api.isStreamActive(stream.ptr);
 
-  if(streamActive<0)api.check(streamActive,"Audio output stream status");
+  if(streamActive<0)api.check(streamActive,"Audio output stream status");
 
-  if(streamActive==0 && !state.finished.load(std::memory_order_acquire))
+  if(streamActive==0 && !state.finished.load(std::memory_order_acquire))
 
-   throw std::runtime_error("Audio device stopped unexpectedly");
+   throw std::runtime_error("Audio device stopped unexpectedly");
 
- }
-
-}
+ }
 
 }
 
-AudioDeviceReport queryAudioDevices(){
+}
 
- PortAudio api;
+AudioDeviceReport queryAudioDevices(){
 
- AudioDeviceReport report;
+ PortAudio api;
 
- const int count=api.getDeviceCount();
+ AudioDeviceReport report;
 
- if(count<0)api.check(count,"List audio devices");
+ const int count=api.getDeviceCount();
 
- // Reject implausible driver responses; avoid unbounded allocations.
+ if(count<0)api.check(count,"List audio devices");
 
- if(count>4096)throw std::runtime_error("Audio driver reported too many devices");
+ // Reject implausible driver responses; avoid unbounded allocations.
 
- report.defaultInput=api.getDefaultInputDevice();
+ if(count>4096)throw std::runtime_error("Audio driver reported too many devices");
 
- report.defaultOutput=api.getDefaultOutputDevice();
+ report.defaultInput=api.getDefaultInputDevice();
 
- report.devices.reserve(static_cast<std::size_t>(count));
+ report.defaultOutput=api.getDefaultOutputDevice();
 
- for(int i=0;i<count;++i){
+ report.devices.reserve(static_cast<std::size_t>(count));
 
-  const PaDeviceInfo* d=api.getDeviceInfo(i);
+ for(int i=0;i<count;++i){
 
-  if(!d)continue; // A device may disappear during enumeration.
+  const PaDeviceInfo* d=api.getDeviceInfo(i);
 
-  const PaHostApiInfo* host=api.getHostApiInfo(d->hostApi);
+  if(!d)continue; // A device may disappear during enumeration.
 
-  AudioDevice item;
+  const PaHostApiInfo* host=api.getHostApiInfo(d->hostApi);
 
-  item.index=i;
+  AudioDevice item;
 
-  item.name=d->name?d->name:"(unnamed device)";
+  item.index=i;
 
-  item.hostApi=host&&host->name?host->name:"(unknown API)";
+  item.name=d->name?d->name:"(unnamed device)";
 
-  item.inputChannels=d->maxInputChannels;
+  item.hostApi=host&&host->name?host->name:"(unknown API)";
 
-  item.outputChannels=d->maxOutputChannels;
+  item.inputChannels=d->maxInputChannels;
 
-  item.defaultSampleRate=d->defaultSampleRate;
+  item.outputChannels=d->maxOutputChannels;
 
-  item.defaultInput=(i==report.defaultInput);
+  item.defaultSampleRate=d->defaultSampleRate;
 
-  item.defaultOutput=(i==report.defaultOutput);
+  item.defaultInput=(i==report.defaultInput);
 
-  report.devices.emplace_back(std::move(item));
+  item.defaultOutput=(i==report.defaultOutput);
 
- }
+  report.devices.emplace_back(std::move(item));
 
- return report;
+ }
+
+ return report;
 
 }
 
-AudioProbeReport probeDefaultAudioDevices(){
+AudioProbeReport probeDefaultAudioDevices(){
 
- PortAudio api;
+ PortAudio api;
 
- AudioProbeReport report;
+ AudioProbeReport report;
 
- // Check output and input separately so a failed microphone doesn't hide
+ // Check output and input separately so a failed microphone doesn't hide
 
- // successful speaker initialization, or vice versa.
+ // successful speaker initialization, or vice versa.
 
- const auto tryStream=[&api](int channelsIn,int channelsOut,int idx){
+ const auto tryStream=[&api](int channelsIn,int channelsOut,int idx){
 
-  if(idx<0)throw std::runtime_error("No default audio device selected");
+  if(idx<0)throw std::runtime_error("No default audio device selected");
 
-  const PaDeviceInfo* device=api.getDeviceInfo(idx);
+  const PaDeviceInfo* device=api.getDeviceInfo(idx);
 
-  if(!device)throw std::runtime_error("Default device was removed");
+  if(!device)throw std::runtime_error("Default device was removed");
 
-  double rate=device->defaultSampleRate;
+  double rate=device->defaultSampleRate;
 
-  if(!std::isfinite(rate)||rate<8000||rate>192000)rate=48000;
+  if(!std::isfinite(rate)||rate<8000||rate>192000)rate=48000;
 
-  Stream test(api,channelsIn,channelsOut,rate);
+  Stream test(api,channelsIn,channelsOut,rate);
 
- };
+ };
 
- try{
+ try{
 
-  tryStream(0,2,api.getDefaultOutputDevice());
+  tryStream(0,2,api.getDefaultOutputDevice());
 
-  report.outputOpened=true;
+  report.outputOpened=true;
 
- }catch(const std::exception& e){report.outputError=e.what();}
+ }catch(const std::exception& e){report.outputError=e.what();}
 
- try{
+ try{
 
-  tryStream(1,0,api.getDefaultInputDevice());
+  tryStream(1,0,api.getDefaultInputDevice());
 
-  report.inputOpened=true;
+  report.inputOpened=true;
 
- }catch(const std::exception& e){report.inputError=e.what();}
+ }catch(const std::exception& e){report.inputError=e.what();}
 
- return report;
+ return report;
 
 }
 
-BufferSettings audioBufferSettings(BufferPreset preset) noexcept {
+BufferSettings audioBufferSettings(BufferPreset preset) noexcept {
 
- switch(preset){
+ switch(preset){
 
-  case BufferPreset::Low:return {128,4096,512};
+  case BufferPreset::Low:return {128,4096,512};
 
-  case BufferPreset::Balanced:return {512,8192,2048};
+  case BufferPreset::Balanced:return {512,8192,2048};
 
-  case BufferPreset::Safe:return {1024,16384,4096};
+  case BufferPreset::Safe:return {1024,16384,4096};
 
- }
+ }
 
- return {512,8192,2048};
+ return {512,8192,2048};
 
 }
 
 Playback::~Playback(){stop();}
 
-void Playback::start(Project project,double fromSeconds,BufferPreset preset){
+void Playback::start(Project project,double fromSeconds,BufferPreset preset){
 
- if(!std::isfinite(fromSeconds)||fromSeconds<0||fromSeconds>project.durationSeconds)
+ if(!std::isfinite(fromSeconds)||fromSeconds<0||fromSeconds>project.durationSeconds)
 
-  throw std::invalid_argument("Invalid playback start");
+  throw std::invalid_argument("Invalid playback start");
 
- stop();{
+ stop();{
 
-  std::lock_guard<std::mutex> guard(errorMutex_);error_.clear();
+  std::lock_guard<std::mutex> guard(errorMutex_);error_.clear();
 
- }
+ }
 
- rate_.store(project.sampleRate);
+ rate_.store(project.sampleRate);
 
- position_.store(static_cast<std::uint64_t>(fromSeconds*project.sampleRate));
+ position_.store(static_cast<std::uint64_t>(fromSeconds*project.sampleRate));
 
- peakLeft_.store(0);peakRight_.store(0);underruns_.store(0);delivered_.store(0);buffered_.store(0);
+ peakLeft_.store(0);peakRight_.store(0);underruns_.store(0);delivered_.store(0);buffered_.store(0);
 
- const auto settings=audioBufferSettings(preset);
+ const auto settings=audioBufferSettings(preset);
 
- bufferCapacity_.store(static_cast<std::uint32_t>(settings.capacityFrames));
+ bufferCapacity_.store(static_cast<std::uint32_t>(settings.capacityFrames));
 
- callbackFrames_.store(static_cast<std::uint32_t>(settings.callbackFrames));
+ callbackFrames_.store(static_cast<std::uint32_t>(settings.callbackFrames));
 
- active_.store(true);
+ active_.store(true);
 
- try{worker_=std::thread(&Playback::run,this,std::move(project),fromSeconds,preset);}
+ try{worker_=std::thread(&Playback::run,this,std::move(project),fromSeconds,preset);}
 
- catch(...){active_.store(false);throw;}
-
-}
-
-void Playback::stop(){active_.store(false);if(worker_.joinable())worker_.join();}
-
-std::string Playback::error() const {std::lock_guard<std::mutex> lock(errorMutex_);return error_;}
-
-double Playback::positionSeconds() const noexcept{return double(position_.load())/rate_.load();}
-
-PlaybackDiagnostics Playback::diagnostics() const noexcept {
-
- const auto rate=rate_.load();
-
- const auto capacity=bufferCapacity_.load();
-
- const auto frames=buffered_.load();
-
- return {delivered_.load(),underruns_.load(),frames,capacity,
-
-  rate?1000.0*frames/rate:0.0,
-
-  rate?1000.0*callbackFrames_.load()/rate:0.0};
+ catch(...){active_.store(false);throw;}
 
 }
 
-void Playback::run(Project project,double fromSeconds,BufferPreset preset) noexcept {
+void Playback::stop(){active_.store(false);if(worker_.joinable())worker_.join();}
 
- try{
+std::string Playback::error() const {std::lock_guard<std::mutex> lock(errorMutex_);return error_;}
 
-  BlockMixer mixer(std::move(project));
+double Playback::positionSeconds() const noexcept{return double(position_.load())/rate_.load();}
 
-  PortAudio api;
+PlaybackDiagnostics Playback::diagnostics() const noexcept {
 
-  playProjectBuffered(api,mixer,static_cast<std::uint64_t>(fromSeconds*mixer.sampleRate()),
+ const auto rate=rate_.load();
 
-              active_,position_,delivered_,underruns_,buffered_,peakLeft_,peakRight_,
+ const auto capacity=bufferCapacity_.load();
 
-              audioBufferSettings(preset));
+ const auto frames=buffered_.load();
 
- }catch(const std::exception& e){
+ return {delivered_.load(),underruns_.load(),frames,capacity,
 
-  if(active_.load()){std::lock_guard<std::mutex> lock(errorMutex_);error_=e.what();}
+  rate?1000.0*frames/rate:0.0,
 
- }
+  rate?1000.0*callbackFrames_.load()/rate:0.0};
 
- active_.store(false);
+}
+
+void Playback::run(Project project,double fromSeconds,BufferPreset preset) noexcept {
+
+ try{
+
+  BlockMixer mixer(std::move(project));
+
+  PortAudio api;
+
+  playProjectBuffered(api,mixer,static_cast<std::uint64_t>(fromSeconds*mixer.sampleRate()),
+
+              active_,position_,delivered_,underruns_,buffered_,peakLeft_,peakRight_,
+
+              audioBufferSettings(preset));
+
+ }catch(const std::exception& e){
+
+  if(active_.load()){std::lock_guard<std::mutex> lock(errorMutex_);error_=e.what();}
+
+ }
+
+ active_.store(false);
 
 }
 
 Recording::~Recording(){stop();}
 
-void Recording::start(const std::string& filename,std::uint32_t rate){
+void Recording::start(const std::string& filename,std::uint32_t rate){
 
- if(rate<8000||rate>192000)throw std::invalid_argument("Invalid recording sample rate");
+ if(rate<8000||rate>192000)throw std::invalid_argument("Invalid recording sample rate");
 
- stop();
+ stop();
 
- if(fs::exists(filename))throw std::runtime_error("Recording destination already exists");
+ if(fs::exists(filename))throw std::runtime_error("Recording destination already exists");
 
- {std::lock_guard<std::mutex> lock(errorMutex_);error_.clear();}
+ {std::lock_guard<std::mutex> lock(errorMutex_);error_.clear();}
 
- frames_.store(0);active_.store(true);
+ frames_.store(0);active_.store(true);
 
- try{worker_=std::thread(&Recording::run,this,filename,rate);}
+ try{worker_=std::thread(&Recording::run,this,filename,rate);}
 
- catch(...){active_.store(false);throw;}
+ catch(...){active_.store(false);throw;}
 
 }
 
-void Recording::stop(){active_.store(false);if(worker_.joinable())worker_.join();}
+void Recording::stop(){active_.store(false);if(worker_.joinable())worker_.join();}
 
-std::string Recording::error() const {std::lock_guard<std::mutex> lock(errorMutex_);return error_;}
+std::string Recording::error() const {std::lock_guard<std::mutex> lock(errorMutex_);return error_;}
 
-void Recording::run(std::string filename,std::uint32_t rate) noexcept {
+void Recording::run(std::string filename,std::uint32_t rate) noexcept {
 
- std::string part;
+ std::string part;
 
- try{
+ try{
 
-  // Unique same-directory partial file; no two sessions share a .part file.
+  // Unique same-directory partial file; no two sessions share a .part file.
 
-  std::string pattern=filename+".part-XXXXXX";
+  std::string pattern=filename+".part-XXXXXX";
 
-  std::vector<char> path(pattern.begin(),pattern.end());path.push_back('\0');
+  std::vector<char> path(pattern.begin(),pattern.end());path.push_back('\0');
 
-  const int fd=mkstemp(path.data());
+  const int fd=mkstemp(path.data());
 
-  if(fd<0)throw std::runtime_error("Cannot reserve recording temporary file");
+  if(fd<0)throw std::runtime_error("Cannot reserve recording temporary file");
 
-  close(fd);part=path.data();
+  close(fd);part=path.data();
 
-  PortAudio api;
+  PortAudio api;
 
-  // Request mono first: works with many laptop microphones and saves disk space.
+  // Request mono first: works with many laptop microphones and saves disk space.
 
-  // Stored WAV remains stereo via dual mono for editing and mix compatibility.
+  // Stored WAV remains stereo via dual mono for editing and mix compatibility.
 
-  Stream stream(api,1,0,rate);
+  Stream stream(api,1,0,rate);
 
-  WaveWriter writer(part,rate);
+  WaveWriter writer(part,rate);
 
-  std::array<float,512> input{};
+  std::array<float,512> input{};
 
-  std::array<Stereo,512> output{};
+  std::array<Stereo,512> output{};
 
-  while(active_.load()){
+  while(active_.load()){
 
-   const auto code=api.read(stream.ptr,input.data(),512);
+   const auto code=api.read(stream.ptr,input.data(),512);
 
-   if(!active_.load())break;
+   if(!active_.load())break;
 
-   if(code!=0&&code!=paInputOverflowed)api.check(code,"Recording input");
+   if(code!=0&&code!=paInputOverflowed)api.check(code,"Recording input");
 
-   for(std::size_t i=0;i<512;++i)output[i]={input[i],input[i]};
+   for(std::size_t i=0;i<512;++i)output[i]={input[i],input[i]};
 
-   writer.append(output.data(),512);
+   writer.append(output.data(),512);
 
-   frames_.fetch_add(512);
+   frames_.fetch_add(512);
 
-  }
+  }
 
-  writer.finish();
+  writer.finish();
 
-  if(frames_.load()==0)throw std::runtime_error("Recording was empty");
+  if(frames_.load()==0)throw std::runtime_error("Recording was empty");
 
-  // Atomic publish without overwrite, even if another process creates
+  // Atomic publish without overwrite, even if another process creates
 
-  // destination after Recording::start() did the initial check.
+  // destination after Recording::start() did the initial check.
 
-  if(::link(part.c_str(),filename.c_str())!=0){
+  if(::link(part.c_str(),filename.c_str())!=0){
 
-   if(errno==EEXIST)throw std::runtime_error("Recording destination already exists: "+filename);
+   if(errno==EEXIST)throw std::runtime_error("Recording destination already exists: "+filename);
 
-   throw std::system_error(errno,std::generic_category(),"Cannot publish recording");
+   throw std::system_error(errno,std::generic_category(),"Cannot publish recording");
 
-  }
+  }
 
-  std::error_code cleanup;fs::remove(part,cleanup);
+  std::error_code cleanup;fs::remove(part,cleanup);
 
- }catch(const std::exception& e){
+ }catch(const std::exception& e){
 
-  std::lock_guard<std::mutex> lock(errorMutex_);error_=e.what();
+  std::lock_guard<std::mutex> lock(errorMutex_);error_=e.what();
 
-  if(!part.empty()){std::error_code ec;fs::remove(part,ec);}
+  if(!part.empty()){std::error_code ec;fs::remove(part,ec);}
 
- }
+ }
 
- active_.store(false);
+ active_.store(false);
 
 }
 

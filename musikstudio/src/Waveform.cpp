@@ -1,136 +1,136 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "wenuystudio/Waveform.hpp"
+#include "wenuystudio/Waveform.hpp"
 
-#include "wenuystudio/Wave.hpp"
+#include "wenuystudio/Wave.hpp"
 
-#include <algorithm>
+#include <algorithm>
 
-#include <array>
+#include <array>
 
-#include <cstdint>
+#include <cstdint>
 
-#include <stdexcept>
+#include <stdexcept>
 
-namespace wenuystudio {
+namespace wenuystudio {
 
-std::vector<Peak> waveform(const std::string& path,std::size_t columns){
+std::vector<Peak> waveform(const std::string& path,std::size_t columns){
 
- if(columns==0 || columns>4096)throw std::invalid_argument("Waveform columns must be 1..4096");
+ if(columns==0 || columns>4096)throw std::invalid_argument("Waveform columns must be 1..4096");
 
- WaveReader r(path);
+ WaveReader r(path);
 
- std::vector<Peak> out(columns);
+ std::vector<Peak> out(columns);
 
- std::array<Stereo,8> samples{};
+ std::array<Stereo,8> samples{};
 
- for(std::size_t i=0;i<columns;++i){
+ for(std::size_t i=0;i<columns;++i){
 
-  const auto begin=static_cast<std::uint64_t>((static_cast<long double>(r.frames())*i)/columns);
+  const auto begin=static_cast<std::uint64_t>((static_cast<long double>(r.frames())*i)/columns);
 
-  const auto end=static_cast<std::uint64_t>((static_cast<long double>(r.frames())*(i+1))/columns);
+  const auto end=static_cast<std::uint64_t>((static_cast<long double>(r.frames())*(i+1))/columns);
 
-  if(end<=begin)continue;
+  if(end<=begin)continue;
 
-  const std::uint64_t span=end-begin;
+  const std::uint64_t span=end-begin;
 
-  float lo=1.0f,hi=-1.0f;
+  float lo=1.0f,hi=-1.0f;
 
-  const auto add=[&](std::size_t count){
+  const auto add=[&](std::size_t count){
 
-   for(std::size_t j=0;j<count;++j){
+   for(std::size_t j=0;j<count;++j){
 
-    const float a=(samples[j].l+samples[j].r)*0.5f;
+    const float a=(samples[j].l+samples[j].r)*0.5f;
 
-    lo=std::min(lo,a);hi=std::max(hi,a);
+    lo=std::min(lo,a);hi=std::max(hi,a);
 
-   }
+   }
 
-  };
+  };
 
-  if(span<=32){
+  if(span<=32){
 
-   for(std::uint64_t offset=0;offset<span;offset+=samples.size()){
+   for(std::uint64_t offset=0;offset<span;offset+=samples.size()){
 
-    const auto count=static_cast<std::size_t>(std::min<std::uint64_t>(samples.size(),span-offset));
+    const auto count=static_cast<std::size_t>(std::min<std::uint64_t>(samples.size(),span-offset));
 
-    r.read(begin+offset,samples.data(),count);add(count);
+    r.read(begin+offset,samples.data(),count);add(count);
 
-   }
+   }
 
-  }else{
+  }else{
 
-   // Four 8-frame windows, spaced across each bucket: only 4 seeks/column.
+   // Four 8-frame windows, spaced across each bucket: only 4 seeks/column.
 
-   for(std::uint64_t window=0;window<4;++window){
+   for(std::uint64_t window=0;window<4;++window){
 
-    const auto at=begin+window*(span-8)/3;
+    const auto at=begin+window*(span-8)/3;
 
-    r.read(at,samples.data(),samples.size());add(samples.size());
+    r.read(at,samples.data(),samples.size());add(samples.size());
 
-   }
+   }
 
-  }
+  }
 
-  out[i]={lo,hi};
+  out[i]={lo,hi};
 
- }
+ }
 
- return out;
-
-}
+ return out;
 
 }
 
-namespace wenuystudio {
+}
 
-std::vector<Peak> waveformAccurate(const std::string& path,std::size_t columns){
+namespace wenuystudio {
 
- if(columns==0 || columns>4096)throw std::invalid_argument("Waveform columns must be 1..4096");
+std::vector<Peak> waveformAccurate(const std::string& path,std::size_t columns){
 
- WaveReader reader(path);
+ if(columns==0 || columns>4096)throw std::invalid_argument("Waveform columns must be 1..4096");
 
- std::vector<Peak> out(columns);
+ WaveReader reader(path);
 
- std::array<Stereo,1024> samples{};
+ std::vector<Peak> out(columns);
 
- const auto frames=reader.frames();
+ std::array<Stereo,1024> samples{};
 
- for(std::size_t i=0;i<columns;++i){
+ const auto frames=reader.frames();
 
-  const auto start=static_cast<std::uint64_t>((static_cast<long double>(frames)*i)/columns);
+ for(std::size_t i=0;i<columns;++i){
 
-  const auto end=static_cast<std::uint64_t>((static_cast<long double>(frames)*(i+1))/columns);
+  const auto start=static_cast<std::uint64_t>((static_cast<long double>(frames)*i)/columns);
 
-  if(end<=start)continue;
+  const auto end=static_cast<std::uint64_t>((static_cast<long double>(frames)*(i+1))/columns);
 
-  float lowest=1.0f,highest=-1.0f;
+  if(end<=start)continue;
 
-  for(auto at=start;at<end;){
+  float lowest=1.0f,highest=-1.0f;
 
-   const auto n=static_cast<std::size_t>(std::min<std::uint64_t>(samples.size(),end-at));
+  for(auto at=start;at<end;){
 
-   reader.read(at,samples.data(),n);
+   const auto n=static_cast<std::size_t>(std::min<std::uint64_t>(samples.size(),end-at));
 
-   for(std::size_t j=0;j<n;++j){
+   reader.read(at,samples.data(),n);
 
-    // Preserve transient information on both channels, even when out of phase.
+   for(std::size_t j=0;j<n;++j){
 
-    lowest=std::min({lowest,samples[j].l,samples[j].r});
+    // Preserve transient information on both channels, even when out of phase.
 
-    highest=std::max({highest,samples[j].l,samples[j].r});
+    lowest=std::min({lowest,samples[j].l,samples[j].r});
 
-   }
+    highest=std::max({highest,samples[j].l,samples[j].r});
 
-   at+=n;
+   }
 
-  }
+   at+=n;
 
-  out[i]={lowest,highest};
+  }
 
- }
+  out[i]={lowest,highest};
 
- return out;
+ }
+
+ return out;
 
 }
 

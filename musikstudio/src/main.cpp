@@ -1,35 +1,35 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "wenuystudio/Engine.hpp"
+#include "wenuystudio/Engine.hpp"
 
-#include <exception>
+#include <exception>
 
-#include <iostream>
+#include <iostream>
 
-int main(int argc,char** argv){
+int main(int argc,char** argv){
 
-    if(argc!=2){std::cerr<<"Usage: wenuy-studio-render OUTPUT.wav\nCreates a 4-note audio engine test (not the finished studio UI).\n";return 2;}
+    if(argc!=2){std::cerr<<"Usage: wenuy-studio-render OUTPUT.wav\nCreates a 4-note audio engine test (not the finished studio UI).\n";return 2;}
 
-    try {
+    try {
 
-        wenuystudio::Project p;
+        wenuystudio::Project p;
 
-        p.sampleRate=48000;p.durationSeconds=3.0;
+        p.sampleRate=48000;p.durationSeconds=3.0;
 
-        wenuystudio::Track track;
+        wenuystudio::Track track;
 
-        track.name="Piano proof of concept";
+        track.name="Piano proof of concept";
 
-        track.notes={{60,0.0,0.6,.70f},{64,.6,.6,.70f},{67,1.2,.6,.70f},{72,1.8,1.0,.70f}};
+        track.notes={{60,0.0,0.6,.70f},{64,.6,.6,.70f},{67,1.2,.6,.70f},{72,1.8,1.0,.70f}};
 
-        p.tracks.push_back(track);
+        p.tracks.push_back(track);
 
-        wenuystudio::render(p,argv[1]);
+        wenuystudio::render(p,argv[1]);
 
-        std::cout<<"Created "<<argv[1]<<"\n";
+        std::cout<<"Created "<<argv[1]<<"\n";
 
-        return 0;
+        return 0;
 
-    }catch(const std::exception& e){std::cerr<<"Wenuy Studio render error: "<<e.what()<<"\n";return 1;}
+    }catch(const std::exception& e){std::cerr<<"Wenuy Studio render error: "<<e.what()<<"\n";return 1;}
 
 }
