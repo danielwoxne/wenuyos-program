@@ -1,0 +1,25 @@
+#pragma once
+#include "Chess.h"
+#include <cstddef>
+#include <string>
+
+namespace chess {
+struct Lesson {
+    const char* titleEn;
+    const char* titleSv;
+    const char* taskEn;
+    const char* taskSv;
+    const char* hintEn;
+    const char* hintSv;
+    const char* successEn;
+    const char* successSv;
+    const char* fen;
+    const char* solutionUci;
+};
+// A deliberately tiny, offline and completely deterministic curriculum.
+// Callers must not persist pointers to individual lessons across versions.
+std::size_t lessonCount();
+const Lesson& lesson(std::size_t index);
+bool correctLessonMove(std::size_t index, const Move& move);
+bool validateLessons(std::string* error = nullptr);
+}
