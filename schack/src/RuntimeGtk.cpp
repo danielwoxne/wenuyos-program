@@ -195,7 +195,7 @@ struct App {
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
- bool focusBoard=false;
+ bool focusBoard=false,keyboardCursor=false;
  std::uint64_t lessonMask=0; std::string hintText;
  std::size_t lessonIndex=0; unsigned epoch=0; std::string transient;
 };
@@ -276,6 +276,17 @@ void theme(){
 }
 void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=false;}
 void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
+const char* pieceName(char p) {
+ switch(std::tolower(static_cast<unsigned char>(p))) {
+ case 'p':return tr("pawn","bonde");
+ case 'n':return tr("knight","springare");
+ case 'b':return tr("bishop","löpare");
+ case 'r':return tr("rook","torn");
+ case 'q':return tr("queen","dam");
+ case 'k':return tr("king","kung");
+ default:return tr("empty square","tom ruta");
+ }
+}
 void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
@@ -295,6 +306,14 @@ void refresh(){
  else if(app.game.board().inCheck(app.game.board().white))text=tr("Check!","Schack!");
  else text=tr("Select a piece, then a square.","Klicka på en pjäs och sedan en ruta.");
  if(!app.transient.empty())text=app.transient;
+ if(app.selected>=0 && app.game.result()=="ongoing" && app.transient.empty()) {
+  const auto& b=app.game.board();
+  const auto moves=b.legalMoves();
+  const auto n=std::count_if(moves.begin(),moves.end(),[](const chess::Move& m){return m.from==app.selected;});
+  text=std::string(tr("Selected ","Vald "))+pieceName(b.squares[app.selected])+
+       " "+chess::squareName(app.selected)+" · "+std::to_string(n)+
+       tr(" legal moves"," möjliga drag");
+ }
  g.gtk_label_set_label(app.status,text.c_str());
  g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget")):tr("Game over","Partiet avslutat"));
  std::string history;
@@ -341,7 +360,7 @@ void startAI();
 void afterMove(chess::Move m,bool byComputer=false){
  if(app.game.result()!="ongoing")return;
  if(!app.game.play(m))return;
- app.selected=-1;app.transient.clear();clearHint();app.epoch++;
+ app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
  if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
  if(app.training)app.lessonSolved=true;else save();
  refresh();if(!byComputer&&!app.training)startAI();
@@ -426,7 +445,14 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
    rgba(c,1,.75,.22,.3);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
   }
   if(sq==checked){rgba(c,.89,.22,.23,.37);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
-  if(sq==app.selected){rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.35);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
+  if(sq==app.selected){
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.35);
+   cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+   // Outline, not just a colour overlay: legible on the light, dark and high-contrast themes.
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],1);
+   cairo_set_line_width(c,std::clamp(geo.s*.055,2.5,5.0));
+   cairo_rectangle(c,x+3,y+3,geo.s-6,geo.s-6);cairo_stroke(c);
+  }
   if(std::any_of(allowed.begin(),allowed.end(),[&](const chess::Move& m){return m.from==app.selected&&m.to==sq;})){
    rgba(c,.12,.27,.42,.47);cairo_new_path(c);
    if(b.squares[sq]){cairo_set_line_width(c,std::max(2.,geo.s*.075));cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.44,0,6.28318530718);cairo_stroke(c);}
@@ -437,7 +463,12 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
    cairo_rectangle(c,x+geo.s*.06,y+geo.s*.06,geo.s*.88,geo.s*.88);cairo_stroke(c);
   }
   piece(c,b.squares[sq],x,y,geo.s);
-  if(sq==app.cursor){rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.90);cairo_rectangle(c,x+1.5,y+1.5,geo.s-3,geo.s-3);cairo_set_line_width(c,1.5);cairo_stroke(c);}
+  if(app.keyboardCursor && sq==app.cursor){
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],1);
+   cairo_set_line_width(c,3);
+   cairo_rectangle(c,x+2,y+2,geo.s-4,geo.s-4);cairo_stroke(c);
+   cairo_rectangle(c,x+7,y+7,geo.s-14,geo.s-14);cairo_stroke(c);
+  }
  }
  rgba(c,app.palette==1?.10:.90,app.palette==1?.24:.94,app.palette==1?.36:1.);cairo_select_font_face(c,"Sans",0,0);cairo_set_font_size(c,std::clamp(geo.s*.19,8.,13.));
  for(int i=0;i<8;i++){
@@ -461,6 +492,7 @@ void onDragEnd(Ptr,double offsetX,double offsetY,void*){
  if(app.dragOrigin<0)return;
  const int target=hitSquare(app.dragX+offsetX,app.dragY+offsetY);
  if(target>=0&&target!=app.dragOrigin){
+  app.keyboardCursor=false;
   if(app.selected!=app.dragOrigin)chosen(app.dragOrigin);
   chosen(target);
  }
@@ -470,7 +502,7 @@ void onClick(Ptr,int n,double x,double y,void*){
  if(n!=1||app.closed)return;
  // GTK reports coordinates local to the drawing area.
  int sq=hitSquare(x,y);if(sq<0)return;
- chosen(sq);
+ app.keyboardCursor=false;chosen(sq);
  g.gtk_widget_grab_focus(app.board);
 }
 void drawRemember(Ptr p,cairo_t* c,int w,int h,void* d){boardWidth=w;boardHeight=h;draw(p,c,w,h,d);}
@@ -490,10 +522,12 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  const int f=app.cursor%8,r=app.cursor/8;int x=f,y=r,d=app.flipped?-1:1;
  if(key==0xff51)x-=d;else if(key==0xff53)x+=d;
  else if(key==0xff52)y+=d;else if(key==0xff54)y-=d;
- else if(key==0xff0d||key==0x20){chosen(app.cursor);return 1;}
+ else if(key==0xff0d||key==0x20){app.keyboardCursor=true;chosen(app.cursor);return 1;}
  else if(key==0xff1b){app.selected=-1;refresh();return 1;}
  else return 0;
- app.cursor=std::clamp(y,0,7)*8+std::clamp(x,0,7);repaint();return 1;
+ app.keyboardCursor=true;
+ app.cursor=std::clamp(y,0,7)*8+std::clamp(x,0,7);
+ repaint();return 1;
 }
 void lessonLoad(){
  app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
