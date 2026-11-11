@@ -56,8 +56,8 @@ jobs:
           fi
           if [ "${{ github.event_name }}" = pull_request ]; then base=origin/${{ github.base_ref }}; else base=${{ github.event.before }}; fi
           git cat-file -e "$base" 2>/dev/null || base=$(git rev-list --max-parents=0 HEAD | tail -1)
-          list=$(git diff --name-only "$base" HEAD | cut -d/ -f1 | sort -u | while read -r d; do [ -d "$d" ] && is_prog "$d" && echo "$d"; done | tr '\n' ' ')
-          [ "${{ github.event_name }}" = workflow_dispatch ] && list=$(for d in */; do d=${d%/}; is_prog "$d" && echo "$d"; done | tr '\n' ' ')
+          list=$(git diff --name-only "$base" HEAD | cut -d/ -f1 | sort -u | while read -r d; do if [ -d "$d" ] && is_prog "$d"; then echo "$d"; fi; done | tr '\n' ' ')
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then list=$(for d in */; do d=${d%/}; if is_prog "$d"; then echo "$d"; fi; done | tr '\n' ' '); fi
           echo "Program att prova: ${list:-inga}"; echo "list=$list" >> "$GITHUB_OUTPUT"
       - name: Prova
         if: steps.which.outputs.list != ''
