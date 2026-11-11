@@ -1,0 +1,11 @@
+name = "Wenuy Chess"
+name_sv = "Wenuy Schack"
+version = "0.3.0"
+description = "Chess, fifteen interactive lessons, smart move hints and offline opponents"
+description_sv = "Schack med fem datornivåer, dragförslag och femton interaktiva övningar"
+license = "GPL-3.0-or-later"
+exec = "bin/schack"
+requires = ["libgtk-4-1"]
+build_requires = ["libadwaita-1-dev", "libsqlite3-dev", "liblua5.4-dev", "libsodium-dev"]
+min_ram_mb = 2048
+needs_network = false
