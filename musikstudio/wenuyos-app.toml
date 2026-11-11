@@ -1,0 +1,10 @@
+name = "Wenuy Studio"
+name_sv = "Wenuy Musikstudio"
+version = "0.4.1"
+description = "Multi-track music studio with buffered callback playback, mixer and dropout monitoring (preview)"
+description_sv = "Flerspårig musikstudio med buffrad uppspelning, mixer och mätning av ljudavbrott (förhandsversion)"
+license = "GPL-3.0-or-later"
+exec = "bin/wenuy-studio"
+requires = ["libportaudio2"]
+min_ram_mb = 2048
+needs_network = false
