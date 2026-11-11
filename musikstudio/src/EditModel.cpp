@@ -64,3 +64,4 @@ bool duplicateClipTo(Project& p,std::size_t track,std::size_t clip,double second
  std::size_t count=0;for(const auto& t:p.tracks)count+=t.clips.size();if(count>=4096)return false;
  auto copy=p.tracks[track].clips[clip];copy.startSeconds=seconds;p.tracks[track].clips.push_back(std::move(copy));return true;
 }
+}
