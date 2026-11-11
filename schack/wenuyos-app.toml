@@ -1,6 +1,6 @@
 name = "Wenuy Chess"
 name_sv = "Wenuy Schack"
-version = "0.4.0"
+version = "0.5.0"
 description = "Chess, twenty interactive lessons, smart move hints and offline opponents"
 description_sv = "Schack med fem datornivåer, dragförslag och tjugo interaktiva övningar"
 license = "GPL-3.0-or-later"
