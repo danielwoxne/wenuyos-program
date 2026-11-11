@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.20)
+project(schack VERSION 0.3.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_library(schack_core STATIC src/Chess.cpp src/Lessons.cpp)
+target_include_directories(schack_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_options(schack_core PRIVATE -Wall -Wextra -Wpedantic)
+
+enable_testing()
+add_executable(schack_tests tests/test_chess.cpp)
+target_link_libraries(schack_tests PRIVATE schack_core)
+add_test(NAME chess_rules COMMAND schack_tests)
+
+find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
+pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4)
+add_executable(schack src/RuntimeGtk.cpp)
+target_link_libraries(schack PRIVATE schack_core PkgConfig::GTK4 Threads::Threads ${CMAKE_DL_LIBS})
+target_compile_options(schack PRIVATE -Wall -Wextra -Wpedantic)
+install(TARGETS schack RUNTIME DESTINATION bin)
+install(DIRECTORY data/ DESTINATION data)
