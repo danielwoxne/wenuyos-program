@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 26> lessons{{
+constexpr std::array<Lesson, 28> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -250,11 +250,48 @@ constexpr std::array<Lesson, 26> lessons{{
         "Rätt! Springaren hotar kungen på e8 och damen på h7.",
         "4k3/7q/8/3N4/8/8/8/4K3 w - - 0 1", "d5f6"
     },
+    {
+        "Plan two developing moves", "Planera två utvecklingsdrag",
+        "Develop the knight on g1, watch Black's reply, then advance your e-pawn.",
+        "Utveckla springaren på g1, se svarts svar och flytta sedan e-bonden.",
+        "First g1-f3. After Black develops a knight, find e2-e4.",
+        "Börja med g1-f3. När svart utvecklat springaren, hitta e2-e4.",
+        "Excellent: you planned two white moves while Black replied between them.",
+        "Utmärkt! Du planerade två vita drag medan svart svarade däremellan.",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "g1f3"
+    },
+    {
+        "Build a central opening", "Bygg ett centrumspel",
+        "Play e2-e4, observe Black's e-pawn, then develop the knight to f3.",
+        "Spela e2-e4, se svarts e-bonde och utveckla sedan springaren till f3.",
+        "Begin with e2-e4. After Black plays e7-e5, develop g1-f3.",
+        "Börja med e2-e4. När svart spelar e7-e5 utvecklar du g1-f3.",
+        "Good plan: you claimed space and developed a piece while Black responded.",
+        "Bra plan! Du tog plats och utvecklade en pjäs medan svart svarade.",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4"
+    },
+}};
+constexpr std::array<std::array<const char*,3>,2> extendedLines{{
+    {{"g1f3","g8f6","e2e4"}},
+    {{"e2e4","e7e5","g1f3"}}
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
 const Lesson& lesson(std::size_t index) { return lessons.at(index); }
 bool correctLessonMove(std::size_t index, const Move& m) { return uci(m) == lesson(index).solutionUci; }
+std::size_t lessonLineLength(std::size_t index) {
+    lesson(index); // range-check; preserve the existing exception behavior.
+    return index>=26?3:1;
+}
+const char* lessonLineMove(std::size_t index,std::size_t ply) {
+    const auto length=lessonLineLength(index);
+    if(ply>=length)return nullptr;
+    return index>=26?extendedLines[index-26][ply]:lesson(index).solutionUci;
+}
+bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move) {
+    const char* expected=lessonLineMove(index,ply);
+    return expected && uci(move)==expected;
+}
 std::size_t recommendedLesson(std::uint64_t completed,
                               const std::array<unsigned,64>& mistakes) {
     // Prefer unfinished exercises; among them revisit the most troublesome.
@@ -322,6 +359,23 @@ bool validateLessons(std::string* error) {
         if (std::find(legal.begin(), legal.end(), solution) == legal.end()) {
             if (error) *error = "illegal solution at index " + std::to_string(i);
             return false;
+        }
+        // Check every ply, including the scripted Black reply. Each step
+        // is required to be legal in the resulting, real chess position.
+        Board sequence=board;
+        for(std::size_t ply=0;ply<lessonLineLength(i);++ply) {
+            Move step;
+            const char* u=lessonLineMove(i,ply);
+            if(!u || !parseUci(u,step)) {
+                if(error)*error="invalid scripted ply at lesson "+std::to_string(i);
+                return false;
+            }
+            const auto moves=sequence.legalMoves();
+            if(std::find(moves.begin(),moves.end(),step)==moves.end() ||
+               !sequence.apply(step)) {
+                if(error)*error="illegal scripted ply at lesson "+std::to_string(i);
+                return false;
+            }
         }
         if (i == 7 || i == 8 || i == 14) {
             Board after = board;
