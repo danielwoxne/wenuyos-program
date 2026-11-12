@@ -40,6 +40,27 @@ int main(){
         test(sequence.moves.size()==3 && sequence.board().white==false,
              "final position waits for Black, not another forced reply");
     }
+    // Exercise both legal defensive branches, including instructional texts.
+    for(std::size_t index=26;index<lessonCount();++index){
+        test(lessonVariationCount(index)==2,"two defensive branches");
+        for(std::size_t variation=0;variation<lessonVariationCount(index);++variation){
+            Game variant;
+            test(variant.loadFen(lesson(index).fen),"variation FEN");
+            for(std::size_t ply=0;ply<lessonLineLength(index);++ply){
+                const char* source=lessonLineMoveVariant(index,ply,variation);
+                Move step;
+                test(source&&parseUci(source,step),"variation notation");
+                test(correctLessonMoveAtVariant(index,ply,variation,step),
+                     "variation matches its expected move");
+                test(variant.play(step),"every defensive reply and continuation is legal");
+            }
+            test(std::string(lessonStepFeedbackEn(index,1,variation)).size()>10 &&
+                 std::string(lessonStepFeedbackSv(index,1,variation)).size()>10,
+                 "bilingual feedback after defense");
+        }
+        test(lessonLineMoveVariant(index,1,2)==nullptr,"reject invalid variation");
+    }
+    test(lessonVariationCount(0)==1,"legacy lesson keeps single variation");
     // Adaptive practice: unfinished exercises with more missed attempts come first.
     std::array<unsigned,64> misses{};
     test(recommendedLesson(0,misses)==0,"new learner starts with lesson one");
