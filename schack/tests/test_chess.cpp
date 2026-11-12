@@ -57,7 +57,23 @@ int main(){
     test(g.loadFen(parsed.fen())&&g.result()=="material","bare kings draw");
     g.reset();for(auto m:{"g1f3","g8f6","f3g1","f6g8","g1f3","g8f6","f3g1","f6g8"})test(g.playUci(m),"repetition move");
     test(g.result()=="repetition","threefold repetition");
-    SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
+    // Explanations classify actual legal moves, without inventing tactical claims.
+    Move hintMove;
+    test(parseUci("e2e4",hintMove),"parse central move");
+    test(explainMove(Board::initial(),hintMove)==MoveReason::Center,"central square");
+    test(parseUci("g1f3",hintMove),"parse development");
+    test(explainMove(Board::initial(),hintMove)==MoveReason::Develop,"knight development");
+    test(parseUci("a1a8",hintMove),"parse illegal");
+    test(explainMove(Board::initial(),hintMove)==MoveReason::Quiet,"illegal moves never get tactical explanations");
+    Board sample;
+    test(Board::fromFen("7k/8/8/8/8/8/4q3/4K3 w - - 0 1",sample),"capture test FEN");
+    test(parseUci("e1e2",hintMove),"capture test move");
+    test(explainMove(sample,hintMove)==MoveReason::Capture,"king capture");
+    test(Board::fromFen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",sample),"castle explanation FEN");
+    test(parseUci("e1g1",hintMove) && explainMove(sample,hintMove)==MoveReason::Castle,"castle explanation");
+    test(Board::fromFen("4k3/P7/8/8/8/8/8/4K3 w - - 0 1",sample),"promotion explanation FEN");
+    test(parseUci("a7a8q",hintMove) && explainMove(sample,hintMove)==MoveReason::Promotion,"promotion explanation");
+        SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
     // Low budgets still return a legal move; incomplete iterations do not corrupt it.
     auto tiny=bestMove(Board::initial(),5,8);
     const auto initialMoves=Board::initial().legalMoves();
