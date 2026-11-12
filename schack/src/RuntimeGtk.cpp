@@ -83,6 +83,8 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_label_set_xalign,(Ptr,float)) \
  M(void,gtk_label_set_yalign,(Ptr,float)) \
  M(void,gtk_label_set_wrap,(Ptr,int)) \
+ M(void,gtk_label_set_wrap_mode,(Ptr,int)) \
+ M(void,gtk_label_set_max_width_chars,(Ptr,int)) \
  M(Ptr,gtk_button_new_with_label,(const char*)) \
  M(void,gtk_button_set_label,(Ptr,const char*)) \
  M(Ptr,gtk_drawing_area_new,()) \
@@ -108,6 +110,7 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_widget_add_css_class,(Ptr,const char*)) \
  M(Ptr,gtk_scrolled_window_new,()) \
  M(void,gtk_scrolled_window_set_child,(Ptr,Ptr)) \
+ M(void,gtk_scrolled_window_set_policy,(Ptr,int,int)) \
  M(void,gtk_widget_set_tooltip_text,(Ptr,const char*)) \
  M(void,gtk_accessible_update_property,(Ptr,int,...))
 struct GTK {
@@ -1173,10 +1176,14 @@ void activate(Ptr application,void*){
  g.gtk_widget_add_controller(app.window,windowKeys);
  // Scroll all secondary settings: nothing is clipped at a 600-pixel screen height.
  app.sidePanel=g.gtk_scrolled_window_new();
+ // Horizontal scrolling hides text on narrow screens; wrap text instead.
+ // GTK_POLICY_NEVER=2 (horizontal), GTK_POLICY_AUTOMATIC=1 (vertical).
+ g.gtk_scrolled_window_set_policy(app.sidePanel,2,1);
  g.gtk_widget_set_vexpand(app.sidePanel,1);
  g.gtk_widget_set_size_request(app.sidePanel,252,-1);
  g.gtk_box_append(main,app.sidePanel);
  Ptr side=g.gtk_box_new(1,9);
+ g.gtk_widget_set_hexpand(side,1);
  margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");
  g.gtk_scrolled_window_set_child(app.sidePanel,side);
  label(side,tr("YOUR GAME","DITT PARTI"),false,"title-3");
@@ -1215,12 +1222,15 @@ void activate(Ptr application,void*){
  app.themeBtn=button(side,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
  label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
+ g.gtk_scrolled_window_set_policy(scroll,2,1);
  g.gtk_widget_set_size_request(scroll,240,80);g.gtk_box_append(side,scroll);
  app.history=g.gtk_label_new(tr("No moves yet","Inga drag ännu"));g.gtk_label_set_xalign(app.history,0);
+ g.gtk_label_set_wrap(app.history,1);g.gtk_label_set_wrap_mode(app.history,2);
+ g.gtk_label_set_max_width_chars(app.history,28);
  g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
  g.gtk_scrolled_window_set_child(scroll,app.history);
  button(side,tr("Export game (PGN)","Exportera parti (PGN)"),10);
- label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint • Ctrl+L focus","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips • Ctrl+L fokus"),true,"wenuy-dim");
+ label(side,tr("Move: drag or click. Shortcuts: Ctrl+N new, Ctrl+Z undo. Ctrl+H hint, Ctrl+L focus.","Flytta: dra eller klicka. Genvägar: Ctrl+N nytt, Ctrl+Z ångra. Ctrl+H tips, Ctrl+L fokus."),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  connect(app.window,"notify::width",onWindowWidth,nullptr);
  theme();schack_system::applyStyle();refresh();g.gtk_window_present(app.window);responsive();
