@@ -234,7 +234,7 @@ void piece(cairo_t* c,char p,double x,double y,double s){
 }
 
 struct App {
- Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
+ Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr,undoBtn=nullptr;
  Ptr themeBtn=nullptr,hintBtn=nullptr,analyzeBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
  Ptr lanStatus=nullptr,lanEntry=nullptr,lanCodeEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
@@ -432,6 +432,7 @@ void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
  if(app.focusBtn)g.gtk_button_set_label(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
+ if(app.undoBtn)g.gtk_button_set_label(app.undoBtn,app.training?tr("Restart exercise","Starta om övningen"):tr("Undo","Ångra"));
  if(app.lanStatus)g.gtk_label_set_label(app.lanStatus,app.lanMessage.c_str());
  if(app.lanHostBtn)g.gtk_widget_set_sensitive(app.lanHostBtn,!app.lanConnecting&&!app.lanPeer);
  if(app.lanJoinBtn)g.gtk_widget_set_sensitive(app.lanJoinBtn,!app.lanConnecting&&!app.lanPeer);
@@ -1014,8 +1015,15 @@ void perform(int id){
  if(app.closed)return;
  switch(id){
  case 0:reset();break;
- case 1: // Undo
+ case 1: // Undo (normal play) or restart the entire scripted exercise
   if(app.mode==2){app.lanMessage=tr("Undo is unavailable in LAN games.","Ångra är inte tillgängligt i nätverkspartier.");refresh();break;}
+  if(app.training){
+   // Undoing a single ply would leave the scripted lessonPly out of sync.
+   lessonLoad();
+   app.transient=tr("Exercise restarted. Follow the plan from the beginning.",
+                    "Övningen har startats om. Följ planen från början.");
+   refresh();break;
+  }
   if(app.game.undo()){
    stopPieceMotion();app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;
    if(!app.training&&app.mode==0&&!app.game.moves.empty()&&app.game.board().white!=(app.human==0))app.game.undo();
@@ -1111,7 +1119,7 @@ void activate(Ptr application,void*){
  app.brand=g.gtk_label_new("♞  WENUY SCHACK");Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
- button(header,tr("New game","Nytt parti"),0,true);button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
+ button(header,tr("New game","Nytt parti"),0,true);app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
  // A separate compact toolbar keeps the game controls legible on smaller screens.
  app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;margin(tools,10,4);g.gtk_box_append(root,tools);
  button(tools,tr("Chess school","Schackskolan"),6);
