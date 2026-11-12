@@ -21,6 +21,18 @@ int main(){
         const auto legal=lessonBoard.legalMoves();
         test(std::find(legal.begin(),legal.end(),expected)!=legal.end(),"lesson move legal");
     }
+    // Adaptive practice: unfinished exercises with more missed attempts come first.
+    std::array<unsigned,64> misses{};
+    test(recommendedLesson(0,misses)==0,"new learner starts with lesson one");
+    misses[4]=3;misses[2]=1;
+    test(recommendedLesson(0,misses)==4,"revisit difficult unfinished lesson");
+    const std::uint64_t all=(std::uint64_t(1)<<lessonCount())-1;
+    test(recommendedLesson(all,misses)==4,"completed curriculum reviews weakest lesson");
+    test(recommendedLesson(all & ~(std::uint64_t(1)<<7),misses)==7,
+         "unfinished takes precedence over completed with mistakes");
+    test(std::string(lessonLevelSv(0))=="Grunder" &&
+         std::string(lessonLevelSv(11))=="Taktik" &&
+         std::string(lessonLevelEn(19))=="Practice","three bilingual sections");
     // Saved progress and lesson selector only use a 64-bit mask: guard the curriculum size.
     test(lessonCount()<=64,"lesson progress capacity");
     Board b=Board::initial();test(b.fen()=="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","initial FEN");
