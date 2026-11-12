@@ -21,6 +21,11 @@ assert 'app.lessonSuccesses[i]=std::min(count,999u);' in gui
 assert 'app.lessonSuccesses[app.lessonIndex]<999' in gui
 assert 'app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");' in gui
 assert 'app.lessonPly=0;' in gui
+assert 'app.lessonVariation=app.lessonSuccesses[app.lessonIndex]%' in gui
+assert 'chess::lessonLineMoveVariant(app.lessonIndex,app.lessonPly,' in gui
+assert 'chess::correctLessonMoveAtVariant(app.lessonIndex,app.lessonPly,app.lessonVariation,m)' in gui
+assert 'chess::lessonStepFeedbackEn(app.lessonIndex,1,app.lessonVariation)' in gui
+
 assert 'chess::correctLessonMoveAt(app.lessonIndex,app.lessonPly,m)' in gui
 assert 'const char* reply=chess::lessonLineMove(app.lessonIndex,app.lessonPly);' in gui
 assert 'app.lessonPly==chess::lessonLineLength(app.lessonIndex)' in gui
