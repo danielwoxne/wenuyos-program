@@ -1,0 +1,43 @@
+name: Matte software renderer screenshots
+on:
+  pull_request:
+    paths:
+      - 'matte/**'
+      - '.github/workflows/matte-soft.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  soft-render:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install required build and software rendering packages
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            cmake g++ make pkg-config python3 \
+            libgtk-4-dev libadwaita-1-dev libcairo2-dev libpango1.0-dev \
+            libgdk-pixbuf-2.0-dev libglib2.0-dev libsqlite3-dev \
+            liblua5.4-dev libsodium-dev \
+            xvfb xauth dbus-x11 fonts-dejavu-core adwaita-icon-theme >/dev/null
+      - name: Build and run CTest regressions
+        run: |
+          cmake -S matte -B matte/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build matte/build -j2
+          ctest --test-dir matte/build --output-on-failure
+      - name: Software renderer screenshots
+        run: |
+          sh matte/verktyg/prova-soft.sh "$PWD/matte/build/matte-soft-images"
+      - name: Save screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matte-soft-screenshots
+          path: matte/build/matte-soft-images/*.png
+          if-no-files-found: warn
