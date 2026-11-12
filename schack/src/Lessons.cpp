@@ -195,6 +195,28 @@ constexpr std::array<Lesson, 20> lessons{{
 std::size_t lessonCount() { return lessons.size(); }
 const Lesson& lesson(std::size_t index) { return lessons.at(index); }
 bool correctLessonMove(std::size_t index, const Move& m) { return uci(m) == lesson(index).solutionUci; }
+std::size_t recommendedLesson(std::uint64_t completed,
+                              const std::array<unsigned,64>& mistakes) {
+    // Prefer unfinished exercises; among them revisit the most troublesome.
+    // Ties follow the original teaching order, preserving predictable progress.
+    std::size_t next=lessonCount();
+    for(std::size_t i=0;i<lessonCount();++i){
+        if(completed & (std::uint64_t(1)<<i))continue;
+        if(next==lessonCount()||mistakes[i]>mistakes[next])next=i;
+    }
+    if(next!=lessonCount())return next;
+    // When all are finished, revisit the lesson with the most mistakes.
+    next=0;
+    for(std::size_t i=1;i<lessonCount();++i)
+        if(mistakes[i]>mistakes[next])next=i;
+    return next;
+}
+const char* lessonLevelEn(std::size_t index) {
+    return index<9?"Basics":index<15?"Tactics":"Practice";
+}
+const char* lessonLevelSv(std::size_t index) {
+    return index<9?"Grunder":index<15?"Taktik":"Fördjupning";
+}
 bool validateLessons(std::string* error) {
     for (std::size_t i = 0; i < lessonCount(); ++i) {
         Board board;
