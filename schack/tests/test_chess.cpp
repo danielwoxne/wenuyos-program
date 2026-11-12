@@ -72,7 +72,7 @@ int main(){
     test(Board::fromFen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",sample),"castle explanation FEN");
     test(parseUci("e1g1",hintMove) && explainMove(sample,hintMove)==MoveReason::Castle,"castle explanation");
     test(Board::fromFen("4k3/P7/8/8/8/8/8/4K3 w - - 0 1",sample),"promotion explanation FEN");
-    test(parseUci("a7a8q",hintMove) && explainMove(sample,hintMove)==MoveReason::Promotion,"promotion explanation");
+    test(parseUci("a7a8b",hintMove) && explainMove(sample,hintMove)==MoveReason::Promotion,"promotion explanation");
         SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
     // Low budgets still return a legal move; incomplete iterations do not corrupt it.
     auto tiny=bestMove(Board::initial(),5,8);
