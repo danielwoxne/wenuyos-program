@@ -590,7 +590,9 @@ void startLan(bool host);
 void stopLan();
 int pollLan(void*);
 int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
- if(app.lanEntry&&g.gtk_widget_has_focus(app.lanEntry))return 0;
+ // Text entry must retain arrows, Space and shortcuts while typing LAN details.
+ if((app.lanEntry&&g.gtk_widget_has_focus(app.lanEntry)) ||
+    (app.lanCodeEntry&&g.gtk_widget_has_focus(app.lanCodeEntry)))return 0;
  if(state&(1u<<2)) { // Ctrl shortcuts
   unsigned keyLower=(key>='A'&&key<='Z')?key+32:key;
   if(keyLower=='n'){perform(0);return 1;}
