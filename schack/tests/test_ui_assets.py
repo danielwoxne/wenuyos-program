@@ -11,15 +11,21 @@ root = Path(sys.argv[1])
 desktop = (root / "data/se.wenuyos.app.schack.desktop").read_text(encoding="utf-8")
 svg = root / "data/se.wenuyos.app.schack.svg"
 gui = (root / "src/RuntimeGtk.cpp").read_text(encoding="utf-8")
+lessons = (root / "src/Lessons.cpp").read_text(encoding="utf-8")
 manifest = (root / "wenuyos-app.toml").read_text(encoding="utf-8")
 integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'explanation(chess::explainMove(app.game.board(),r->result.move))' in gui
 assert 'app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);' in gui
-assert 'app.lessonMistakes[i]=std::min(count,999u);' in gui
-assert 'app.lessonSuccesses[i]=std::min(count,999u);' in gui
+assert 'parsed.mistakes[i]=std::min(value,999u);' in lessons
+assert 'parsed.successes[i]=std::min(value,999u);' in lessons
 assert 'app.lessonSuccesses[app.lessonIndex]<999' in gui
 assert 'app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");' in gui
+assert 'app.undoBtn=button(header,tr("Undo","Ångra"),1);' in gui
+assert 'if(app.undoBtn)g.gtk_button_set_label(app.undoBtn,app.training?' in gui
+assert 'tr("Restart exercise","Starta om övningen")' in gui
+assert 'app.transient=tr("Exercise restarted. Follow the plan from the beginning."' in gui
+
 assert 'app.lessonPly=0;' in gui
 assert 'std::to_string((length+1)/2)' in gui
 assert 'chess::lessonGoalSv(app.lessonIndex)' in gui
@@ -36,9 +42,11 @@ assert 'app.lessonPly==chess::lessonLineLength(app.lessonIndex)' in gui
 assert 'tr("Opponent replied.","Motspelaren har svarat.")' in gui
 
 assert 'chess::lessonGroupCount()' in gui
-assert 'std::istringstream counters(line)' in gui
+assert 'std::istringstream counts(line)' in lessons
 assert 'tr("Knowledge profile:","Kunskapsprofil:")' in gui
-assert 'out<<app.lessonMask' in gui
+assert "output<<progress.completed" in lessons
+assert 'chess::writeLessonProgress(out,progress);' in gui
+assert 'chess::readLessonProgress(input,progress)' in gui
 assert 'chess::recommendedLesson(app.lessonMask,app.lessonMistakes,app.lessonSuccesses)' in gui
 assert 'case 19:if(app.training)' in gui
 assert 'tr("Recommended practice","Rekommenderad övning")' in gui
