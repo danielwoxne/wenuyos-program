@@ -14,4 +14,8 @@ void applyStyle() {
  // WenuyOS central theme, reduced motion and light/dark preferences.
  wenuy::loadStyle();
 }
+void playMoveSound(bool gameFinished) {
+ // The system sound helper respects the user's WenuyOS sound preferences.
+ wenuy::playSound(gameFinished ? "done" : "step");
+}
 }
