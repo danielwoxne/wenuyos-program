@@ -41,7 +41,7 @@ jobs:
           def safe_unzip(archive, dest):
               if not is_zipfile(archive): raise RuntimeError('Inte en ZIP')
               with ZipFile(archive) as z:
-                  infos=z.infolist()
+                  infos=[x for x in z.infolist() if not (x.filename=='/' and x.is_dir())]
                   if len(infos)>10000 or sum(x.file_size for x in infos)>250_000_000:
                       raise RuntimeError('För stort importarkiv')
                   for e in infos:
@@ -50,7 +50,7 @@ jobs:
                           raise RuntimeError('Otillåten arkivsökväg: ' + repr(e.filename[:180]))
                       if ((e.external_attr>>16)&0o170000)==0o120000:
                           raise RuntimeError('Symlänk i källarkiv')
-                  z.extractall(dest)
+                  z.extractall(dest, members=infos)
           safe_unzip('/tmp/matte-share.zip',root)
           matches=[p.parent.parent for p in root.rglob('src/Fonster.cpp') if (p.parent.parent/'CMakeLists.txt').is_file()]
           if len(matches)!=1: raise RuntimeError(f'Förväntade exakt en Matte-källa, hittade {len(matches)}')
