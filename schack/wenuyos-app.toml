@@ -1,8 +1,8 @@
 name = "Wenuy Chess"
 name_sv = "Wenuy Schack"
 version = "0.5.0"
-description = "Chess, twenty interactive lessons, smart move hints and offline opponents"
-description_sv = "Schack med fem datornivåer, dragförslag och tjugo interaktiva övningar"
+description = "Chess with five computer levels, 31 interactive lessons, move analysis and optional local-network play"
+description_sv = "Schack med fem datornivåer, 31 interaktiva övningar, draganalys och valbart spel på lokalt nätverk"
 license = "GPL-3.0-or-later"
 exec = "bin/schack"
 requires = ["libgtk-4-1"]
