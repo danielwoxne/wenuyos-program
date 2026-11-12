@@ -30,15 +30,22 @@ bool sendAll(int fd,const std::string& data,int timeoutMs) {
  }
  return true;
 }
-bool readLine(int fd,std::string& line,int timeoutMs) {
+bool readLine(int fd,std::string& line,int timeoutMs,const std::atomic<bool>* cancel=nullptr) {
  line.clear();
  const auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(std::max(0,timeoutMs));
  for(;;) {
+  if(cancel&&cancel->load())return false;
   auto remaining=std::chrono::duration_cast<std::chrono::milliseconds>(until-std::chrono::steady_clock::now()).count();
   if(remaining<=0)return false;
+  // Poll in short slices so Cancel in the GUI also aborts an unfinished pairing
+  // handshake, not just the earlier wait-for-peer loop.
   pollfd p{fd,POLLIN,0};
-  if(::poll(&p,1,static_cast<int>(remaining))<=0||!(p.revents&POLLIN))return false;
-  char c=0;const auto n=::recv(fd,&c,1,0);
+  const int ready=::poll(&p,1,static_cast<int>(std::min<long long>(100,remaining)));
+  if(ready<0){if(errno==EINTR)continue;return false;}
+  if(ready==0)continue;
+  if(!(p.revents&POLLIN))return false;
+  char c=0;const auto n=::recv(fd,&c,1,MSG_DONTWAIT);
+  if(n<0&&(errno==EINTR||errno==EAGAIN||errno==EWOULDBLOCK))continue;
   if(n!=1)return false;
   if(c=='\n')return true;
   if(c=='\r'||static_cast<unsigned char>(c)<32||line.size()>=80)return false;
@@ -59,15 +66,17 @@ bool localIPv4(const std::string& address) {
 }
 Peer::~Peer(){close();}
 void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;incoming_.clear();peerClosed_=false;}
-bool Peer::begin(int fd,bool hosting,int timeoutMs,const std::string& pairingCode,std::string* error){
+bool Peer::begin(int fd,bool hosting,int timeoutMs,const std::string& pairingCode,
+                 std::string* error,const std::atomic<bool>* cancel){
  if(fd<0){fail(error,"Socket unavailable");return false;}
  if(!validPairingCode(pairingCode)){fail(error,"Six-digit pairing code required");::close(fd);return false;}
  std::string incoming;
- if(!sendAll(fd,hello,timeoutMs)||!readLine(fd,incoming,timeoutMs)||incoming!="WCHESS/2"){
+ if((cancel&&cancel->load())||!sendAll(fd,hello,timeoutMs)||
+    !readLine(fd,incoming,timeoutMs,cancel)||incoming!="WCHESS/2"){
   fail(error,"Protocol handshake failed");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
  }
  if(hosting){
-  if(!readLine(fd,incoming,timeoutMs)||incoming.size()!=11||incoming.compare(0,5,"PAIR ")!=0){
+  if(!readLine(fd,incoming,timeoutMs,cancel)||incoming.size()!=11||incoming.compare(0,5,"PAIR ")!=0){
    fail(error,"Invalid pairing request");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
   }
   unsigned diff=0;
@@ -78,10 +87,14 @@ bool Peer::begin(int fd,bool hosting,int timeoutMs,const std::string& pairingCod
   }
  }else{
   if(!sendAll(fd,"PAIR "+pairingCode+"\n",timeoutMs)||
-     !readLine(fd,incoming,timeoutMs)||incoming!="ACCEPT"){
+     !readLine(fd,incoming,timeoutMs,cancel)||incoming!="ACCEPT"){
    fail(error,"Pairing code rejected or peer disconnected");
    ::shutdown(fd,SHUT_RDWR);::close(fd);return false;
   }
+ }
+ if(cancel&&cancel->load()){
+  fail(error,"Cancelled");
+  ::shutdown(fd,SHUT_RDWR);::close(fd);return false;
  }
  socket_=fd;host_=hosting;incoming_.clear();peerClosed_=false;game_.reset();return true;
 }
@@ -112,7 +125,9 @@ bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::a
  ::inet_ntop(AF_INET,&remote.sin_addr,ip,sizeof(ip));
  if(!localIPv4(ip)){fail(error,"Only private IPv4 peers are allowed");::close(fd);return false;}
  if(cancel&&cancel->load()){::close(fd);fail(error,"Cancelled");return false;}
- return begin(fd,true,timeoutMs,pairingCode,error);
+ // The listener may wait up to 60 s by user choice; a connected but silent
+ // unauthenticated client must not consume that entire period.
+ return begin(fd,true,std::min(timeoutMs,5000),pairingCode,error,cancel);
 }
 bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std::string* error,const std::string& pairingCode){
  close();
