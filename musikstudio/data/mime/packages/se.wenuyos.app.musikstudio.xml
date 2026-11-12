@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-wenuy-studio">
+    <comment>Wenuy Studio project</comment>
+    <comment xml:lang="sv">Wenuy Studio-projekt</comment>
+    <glob pattern="*.wstudio" weight="85"/>
+    <magic priority="60"><match type="string" value="WENUYSTUDIO " offset="0"/></magic>
+  </mime-type>
+</mime-info>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<title>Wenuy Studio</title>
+<defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#803bd3"/><stop offset="1" stop-color="#253a8f"/></linearGradient></defs>
+<rect x="4" y="4" width="120" height="120" rx="25" fill="url(#b)" stroke="#ab8df4" stroke-width="2"/>
+<path d="M18 61h92" stroke="white" stroke-width="3" opacity=".7"/>
+<path d="M25 49v27m10-39v47m10-38v30m10-43v53m10-39v30m10-43v52m10-39v30m10-30v19" fill="none" stroke="#f7f3ff" stroke-linecap="round" stroke-width="5"/>
+<g transform="translate(20 94)"><rect width="88" height="23" rx="4" fill="#faf6ff"/><path d="M18 0v23m18-23v23m18-23v23m18-23v23" stroke="#2a2540" stroke-width="2"/><path d="M12 0h9v13h-9zm18 0h9v13h-9zm30 0h9v13h-9zm18 0h9v13h-9z" fill="#302943"/></g>
+</svg>

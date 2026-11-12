@@ -78,6 +78,15 @@ jobs:
             echo "::endgroup::"
           done
           exit $fail
+      # Osignerade förhandsfiler från PR sparas tillfälligt som Actions-artefakt, aldrig som Git-källkod.
+      - name: Testpaket för PR
+        if: github.event_name == 'pull_request' && steps.which.outputs.list != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: program-test-${{ github.event.pull_request.number }}
+          path: dist/*.wapp
+          if-no-files-found: error
+          retention-days: 7
       - name: Programnyckeln
         # bara på main, i PR och vid släpp: att hemligheten är Daniels programnyckel och kan signera utan lösenfras.
         # Visar bara fingeravtrycket och gpg:s meddelanden – aldrig nyckeln.
