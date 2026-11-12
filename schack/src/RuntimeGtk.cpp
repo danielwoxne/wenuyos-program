@@ -130,9 +130,14 @@ void outline(cairo_t* c,bool white){
  rgba(c,white?.14:.82,white?.21:.88,white?.3:.93);cairo_set_line_width(c,2.9);cairo_stroke(c);
 }
 void base(cairo_t* c,bool white){
- cairo_new_path(c);cairo_move_to(c,28,79);cairo_line_to(c,72,79);
- cairo_curve_to(c,77,79,79,83,79,88);cairo_line_to(c,21,88);
- cairo_curve_to(c,21,83,23,79,28,79);cairo_close_path(c);outline(c,white);
+ // A two-level, scale-independent plinth adds depth without textures or blur.
+ cairo_new_path(c);cairo_move_to(c,30,75);cairo_line_to(c,70,75);
+ cairo_line_to(c,74,81);cairo_line_to(c,26,81);cairo_close_path(c);outline(c,white);
+ cairo_new_path(c);cairo_move_to(c,24,81);cairo_line_to(c,76,81);
+ cairo_curve_to(c,80,81,81,86,79,89);cairo_line_to(c,21,89);
+ cairo_curve_to(c,19,86,20,81,24,81);cairo_close_path(c);outline(c,white);
+ rgba(c,white?.50:.71,white?.59:.77,white?.67:.84,.78);
+ cairo_set_line_width(c,1.9);cairo_move_to(c,27,85);cairo_line_to(c,73,85);cairo_stroke(c);
 }
 void piece(cairo_t* c,char p,double x,double y,double s){
  if(!p)return;
@@ -144,14 +149,21 @@ void piece(cairo_t* c,char p,double x,double y,double s){
  case 'p':
   cairo_new_path(c);cairo_arc(c,50,33,15,0,6.28318530718);outline(c,w);
   cairo_new_path(c);cairo_move_to(c,41,48);cairo_curve_to(c,41,59,34,70,30,79);cairo_line_to(c,70,79);
-  cairo_curve_to(c,66,70,59,59,59,48);cairo_close_path(c);outline(c,w);break;
+  cairo_curve_to(c,66,70,59,59,59,48);cairo_close_path(c);outline(c,w);
+  rgba(c,w?.61:.72,w?.67:.78,w?.74:.86,.8);
+  cairo_set_line_width(c,2.4);
+  cairo_move_to(c,40,64);cairo_curve_to(c,44,59,45,55,45,49);cairo_stroke(c);break;
  case 'r':
   cairo_new_path(c);cairo_move_to(c,27,27);cairo_line_to(c,27,17);cairo_line_to(c,37,17);
   cairo_line_to(c,37,25);cairo_line_to(c,45,25);cairo_line_to(c,45,17);
   cairo_line_to(c,55,17);cairo_line_to(c,55,25);cairo_line_to(c,63,25);
   cairo_line_to(c,63,17);cairo_line_to(c,73,17);cairo_line_to(c,73,27);
   cairo_line_to(c,69,34);cairo_line_to(c,65,75);cairo_line_to(c,35,75);
-  cairo_line_to(c,31,34);cairo_close_path(c);outline(c,w);break;
+  cairo_line_to(c,31,34);cairo_close_path(c);outline(c,w);
+  rgba(c,w?.58:.70,w?.64:.78,w?.72:.86,.84);
+  cairo_set_line_width(c,2.5);
+  cairo_move_to(c,36,37);cairo_line_to(c,64,37);cairo_stroke(c);
+  cairo_move_to(c,39,68);cairo_line_to(c,61,68);cairo_stroke(c);break;
  case 'n':
   cairo_new_path(c);cairo_move_to(c,29,78);cairo_curve_to(c,37,64,33,58,31,52);
   cairo_line_to(c,19,56);cairo_curve_to(c,13,55,13,47,17,43);
@@ -159,7 +171,11 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_curve_to(c,56,20,68,28,72,42);cairo_curve_to(c,77,53,72,65,67,78);
   cairo_close_path(c);outline(c,w);
   cairo_new_path(c);cairo_arc(c,35,38,3,0,6.28318530718);
-  rgba(c,w?.14:.94,w?.23:.96,w?.34:.98);cairo_fill(c);break;
+  rgba(c,w?.14:.94,w?.23:.96,w?.34:.98);cairo_fill(c);
+  // The mane and muzzle remain distinguishable at small square sizes.
+  rgba(c,w?.56:.76,w?.64:.81,w?.72:.87,.85);cairo_set_line_width(c,2.8);
+  cairo_move_to(c,50,29);cairo_curve_to(c,62,34,67,44,67,53);cairo_stroke(c);
+  cairo_move_to(c,24,49);cairo_line_to(c,31,49);cairo_stroke(c);break;
  case 'b':
   cairo_new_path(c);cairo_move_to(c,50,15);cairo_curve_to(c,67,31,69,43,61,54);
   cairo_curve_to(c,75,63,69,70,67,76);cairo_line_to(c,33,76);
@@ -172,7 +188,9 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_line_to(c,50,42);cairo_line_to(c,61,20);cairo_line_to(c,66,43);
   cairo_line_to(c,80,27);cairo_line_to(c,68,73);cairo_line_to(c,32,73);
   cairo_close_path(c);outline(c,w);
-  for(int xx:{20,39,61,80}){cairo_new_path(c);cairo_arc(c,xx,(xx==20||xx==80)?24:18,4.2,0,6.28318530718);outline(c,w);}break;
+  for(int xx:{20,39,61,80}){cairo_new_path(c);cairo_arc(c,xx,(xx==20||xx==80)?24:18,4.2,0,6.28318530718);outline(c,w);}
+  rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.6);
+  cairo_move_to(c,36,62);cairo_line_to(c,64,62);cairo_stroke(c);break;
  case 'k':
   cairo_new_path(c);cairo_move_to(c,47,13);cairo_line_to(c,53,13);cairo_line_to(c,53,22);
   cairo_line_to(c,62,22);cairo_line_to(c,62,28);cairo_line_to(c,53,28);
@@ -181,7 +199,9 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_close_path(c);outline(c,w);
   cairo_new_path(c);cairo_move_to(c,45,36);cairo_curve_to(c,28,40,29,57,37,65);
   cairo_line_to(c,32,76);cairo_line_to(c,68,76);cairo_line_to(c,63,65);
-  cairo_curve_to(c,71,57,72,40,55,36);cairo_close_path(c);outline(c,w);break;
+  cairo_curve_to(c,71,57,72,40,55,36);cairo_close_path(c);outline(c,w);
+  rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.5);
+  cairo_move_to(c,39,63);cairo_line_to(c,61,63);cairo_stroke(c);break;
  }
  base(c,w);cairo_restore(c);
 }
@@ -610,17 +630,17 @@ void activate(Ptr application,void*){
  if(app.window&&!app.closed){g.gtk_window_present(app.window);return;}
  app.closed=false;clearHint();
  app.window=g.gtk_application_window_new(application);
- g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,1040,760);
+ g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,960,700);
  connect(app.window,"close-request",onClose,nullptr);
  Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
- Ptr header=g.gtk_box_new(0,8);margin(header,16,12);
+ Ptr header=g.gtk_box_new(0,8);margin(header,10,8);
  g.gtk_widget_add_css_class(header,"wenuy-topbar");g.gtk_box_append(root,header);
  Ptr brand=g.gtk_label_new("♞  WENUY SCHACK");g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
  button(header,tr("New game","Nytt parti"),0,true);button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
  // A separate compact toolbar keeps the game controls legible on smaller screens.
- Ptr tools=g.gtk_box_new(0,6);margin(tools,16,6);g.gtk_box_append(root,tools);
+ Ptr tools=g.gtk_box_new(0,5);margin(tools,10,4);g.gtk_box_append(root,tools);
  button(tools,tr("Chess school","Schackskolan"),6);
  app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
  app.focusBtn=button(tools,tr("Focus on board","Fokus på brädet"),14);
@@ -628,7 +648,7 @@ void activate(Ptr application,void*){
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
  g.gtk_box_append(main,boardBox);
  app.board=g.gtk_drawing_area_new();g.gtk_widget_set_hexpand(app.board,1);g.gtk_widget_set_vexpand(app.board,1);
- g.gtk_widget_set_size_request(app.board,340,340);g.gtk_widget_set_focusable(app.board,1);
+ g.gtk_widget_set_size_request(app.board,260,260);g.gtk_widget_set_focusable(app.board,1);
  g.gtk_widget_set_tooltip_text(app.board,tr("Click two squares or drag a piece. Arrow keys and Enter also work.","Klicka på två rutor eller dra pjäsen. Piltangenter och Enter fungerar också."));
  g.gtk_drawing_area_set_draw_func(app.board,drawRemember,nullptr,nullptr);
  Ptr click=g.gtk_gesture_click_new();g.gtk_gesture_single_set_button(click,1);
@@ -644,7 +664,7 @@ void activate(Ptr application,void*){
  // Scroll all secondary settings: nothing is clipped at a 600-pixel screen height.
  app.sidePanel=g.gtk_scrolled_window_new();
  g.gtk_widget_set_vexpand(app.sidePanel,1);
- g.gtk_widget_set_size_request(app.sidePanel,280,-1);
+ g.gtk_widget_set_size_request(app.sidePanel,252,-1);
  g.gtk_box_append(main,app.sidePanel);
  Ptr side=g.gtk_box_new(1,9);
  margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");
