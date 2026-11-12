@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 extern "C" {
@@ -176,7 +177,10 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   rgba(c,w?.58:.70,w?.64:.78,w?.72:.86,.84);
   cairo_set_line_width(c,2.5);
   cairo_move_to(c,36,37);cairo_line_to(c,64,37);cairo_stroke(c);
-  cairo_move_to(c,39,68);cairo_line_to(c,61,68);cairo_stroke(c);break;
+  cairo_move_to(c,39,68);cairo_line_to(c,61,68);cairo_stroke(c);
+  // Two masonry seams sharpen the rook silhouette at small sizes.
+  cairo_set_line_width(c,1.8);cairo_move_to(c,46,38);cairo_line_to(c,46,54);
+  cairo_move_to(c,56,38);cairo_line_to(c,56,54);cairo_stroke(c);break;
  case 'n':
   cairo_new_path(c);cairo_move_to(c,29,78);cairo_curve_to(c,37,64,33,58,31,52);
   cairo_line_to(c,19,56);cairo_curve_to(c,13,55,13,47,17,43);
@@ -188,14 +192,20 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   // The mane and muzzle remain distinguishable at small square sizes.
   rgba(c,w?.56:.76,w?.64:.81,w?.72:.87,.85);cairo_set_line_width(c,2.8);
   cairo_move_to(c,50,29);cairo_curve_to(c,62,34,67,44,67,53);cairo_stroke(c);
-  cairo_move_to(c,24,49);cairo_line_to(c,31,49);cairo_stroke(c);break;
+  cairo_move_to(c,24,49);cairo_line_to(c,31,49);cairo_stroke(c);
+  // Ear and bridle are simple Cairo strokes, not filtered assets.
+  cairo_move_to(c,35,22);cairo_line_to(c,40,30);
+  cairo_move_to(c,29,52);cairo_curve_to(c,37,56,42,57,47,58);
+  cairo_stroke(c);break;
  case 'b':
   cairo_new_path(c);cairo_move_to(c,50,15);cairo_curve_to(c,67,31,69,43,61,54);
   cairo_curve_to(c,75,63,69,70,67,76);cairo_line_to(c,33,76);
   cairo_curve_to(c,31,70,25,63,39,54);cairo_curve_to(c,31,43,33,31,50,15);
   cairo_close_path(c);outline(c,w);
   cairo_new_path(c);cairo_move_to(c,58,27);cairo_line_to(c,44,54);
-  rgba(c,w?.23:.8,w?.29:.86,w?.39:.92);cairo_set_line_width(c,4);cairo_stroke(c);break;
+  rgba(c,w?.23:.8,w?.29:.86,w?.39:.92);cairo_set_line_width(c,4);cairo_stroke(c);
+  cairo_set_line_width(c,2.0);cairo_move_to(c,37,65);cairo_line_to(c,63,65);
+  cairo_stroke(c);break;
  case 'q':
   cairo_new_path(c);cairo_move_to(c,20,27);cairo_line_to(c,34,43);cairo_line_to(c,39,20);
   cairo_line_to(c,50,42);cairo_line_to(c,61,20);cairo_line_to(c,66,43);
@@ -203,7 +213,9 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_close_path(c);outline(c,w);
   for(int xx:{20,39,61,80}){cairo_new_path(c);cairo_arc(c,xx,(xx==20||xx==80)?24:18,4.2,0,6.28318530718);outline(c,w);}
   rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.6);
-  cairo_move_to(c,36,62);cairo_line_to(c,64,62);cairo_stroke(c);break;
+  cairo_move_to(c,36,62);cairo_line_to(c,64,62);cairo_stroke(c);
+  cairo_set_line_width(c,1.8);
+  cairo_move_to(c,39,56);cairo_line_to(c,61,56);cairo_stroke(c);break;
  case 'k':
   cairo_new_path(c);cairo_move_to(c,47,13);cairo_line_to(c,53,13);cairo_line_to(c,53,22);
   cairo_line_to(c,62,22);cairo_line_to(c,62,28);cairo_line_to(c,53,28);
@@ -214,7 +226,9 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_line_to(c,32,76);cairo_line_to(c,68,76);cairo_line_to(c,63,65);
   cairo_curve_to(c,71,57,72,40,55,36);cairo_close_path(c);outline(c,w);
   rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.5);
-  cairo_move_to(c,39,63);cairo_line_to(c,61,63);cairo_stroke(c);break;
+  cairo_move_to(c,39,63);cairo_line_to(c,61,63);cairo_stroke(c);
+  cairo_set_line_width(c,1.8);cairo_move_to(c,44,51);
+  cairo_curve_to(c,48,47,52,47,56,51);cairo_stroke(c);break;
  }
  base(c,w);cairo_restore(c);
 }
