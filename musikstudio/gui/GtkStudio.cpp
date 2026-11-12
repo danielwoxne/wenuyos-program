@@ -8,6 +8,7 @@
 #include "wenuystudio/Arrangement.hpp"
 #include "wenuystudio/Wave.hpp"
 #include "wenuystudio/MidiFile.hpp"
+#include "wenuystudio/PianoInput.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -15,6 +16,7 @@
 #include <cstring>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 namespace fs=std::filesystem;
@@ -32,6 +34,7 @@ struct Studio{
  std::string file,recordFile;
  double playhead=0,recordAt=0;
  unsigned selected=0;
+ std::optional<std::size_t> selectedNote;
  bool dirty=false;
  guint timer=0;
  ~Studio(){if(timer)g_source_remove(timer);playback.stop();recording.stop();}
@@ -81,12 +84,12 @@ void play(Studio* s){
 void stop(Studio* s){s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
 void newProject(Studio* s){
  stop(s);s->project=ws::Project{};ws::Track t;t.name=tr("Track 1","Spår 1");s->project.tracks.push_back(std::move(t));
- s->file.clear();s->history.clear();s->selected=0;s->playhead=0;s->dirty=false;refresh(s);
+ s->file.clear();s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
 }
 void addTrack(Studio* s){
  if(s->project.tracks.size()>=128){notice(s,tr("Maximum 128 tracks","Högst 128 spår"));return;}
  checkpoint(s);ws::Track t;t.name=std::string(tr("Track ","Spår "))+std::to_string(s->project.tracks.size()+1);
- s->project.tracks.push_back(std::move(t));s->selected=static_cast<unsigned>(s->project.tracks.size()-1);change(s);
+ s->project.tracks.push_back(std::move(t));s->selected=static_cast<unsigned>(s->project.tracks.size()-1);s->selectedNote.reset();change(s);
 }
 void addNote(Studio* s){
  if(s->selected>=s->project.tracks.size())return;
@@ -98,13 +101,13 @@ void quantize(Studio* s){
  try{checkpoint(s);if(ws::quantizeTrack(s->project,s->selected,{4,0}))change(s);}
  catch(const std::exception& e){notice(s,e.what());}
 }
-void undo(Studio* s){if(s->history.undo(s->project))change(s);}
-void redo(Studio* s){if(s->history.redo(s->project))change(s);}
+void undo(Studio* s){if(s->history.undo(s->project)){s->selectedNote.reset();change(s);}}
+void redo(Studio* s){if(s->history.redo(s->project)){s->selectedNote.reset();change(s);}}
 void fileAction(Studio* s,Pick pick,const std::string& path){
  try{
   switch(pick){
    case Pick::Open:
-    stop(s);s->project=ws::loadProject(path);s->file=path;s->history.clear();s->selected=0;s->playhead=0;s->dirty=false;refresh(s);
+    stop(s);s->project=ws::loadProject(path);s->file=path;s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
     notice(s,tr("Project opened","Projekt öppnat"));break;
    case Pick::Save:
     ws::saveProject(s->project,path);s->file=path;s->dirty=false;refresh(s);notice(s,tr("Project saved","Projekt sparat"));break;
@@ -171,7 +174,7 @@ void drawing(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user
  auto* s=static_cast<Studio*>(user);const bool piano=GTK_WIDGET(area)==s->piano;
  GdkRGBA col{.5,.5,.5,1};gtk_style_context_get_color(gtk_widget_get_style_context(GTK_WIDGET(area)),&col);
  auto color=[&](double a){cairo_set_source_rgba(cr,col.red,col.green,col.blue,a);};
- const double scale=50,left=65,bar=4*60./s->project.bpm;
+ const double scale=ws::pianoPixelsPerSecond,left=ws::pianoLeft,bar=4*60./s->project.bpm;
  for(double second=0;second<=s->project.durationSeconds+.01;second+=bar){
   const double x=left+second*scale;
   color(.18);cairo_move_to(cr,x,0);cairo_line_to(cr,x,height);cairo_stroke(cr);
@@ -180,13 +183,21 @@ void drawing(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user
  }
  if(piano){
   if(s->selected<s->project.tracks.size()){
-   for(int key=36;key<=84;++key){
-    const double y=28+(84-key)*12;color(key%12==0?.25:.07);cairo_move_to(cr,0,y);cairo_line_to(cr,width,y);cairo_stroke(cr);
+   for(int key=ws::pianoLowestKey;key<=ws::pianoHighestKey;++key){
+    const double y=ws::pianoTop+(ws::pianoHighestKey-key)*ws::pianoRowHeight;
+    color(key%12==0?.25:.07);cairo_move_to(cr,0,y);cairo_line_to(cr,width,y);cairo_stroke(cr);
     if(key%12==0){color(.75);cairo_set_font_size(cr,11);cairo_move_to(cr,5,y+11);cairo_show_text(cr,ws::pitchName(key).c_str());}
    }
-   for(const auto& n:s->project.tracks[s->selected].notes){
-    if(n.key<36||n.key>84)continue;
-    color(.72);cairo_rectangle(cr,left+n.atSeconds*scale,28+(84-n.key)*12+1,std::max(4.,n.durationSeconds*scale),10);cairo_fill(cr);
+   const auto& notes=s->project.tracks[s->selected].notes;
+   for(std::size_t i=0;i<notes.size();++i){
+    const auto& n=notes[i];
+    if(n.key<ws::pianoLowestKey||n.key>ws::pianoHighestKey)continue;
+    const double x=left+n.atSeconds*scale;
+    const double y=ws::pianoTop+(ws::pianoHighestKey-n.key)*ws::pianoRowHeight+1;
+    const double w=std::max(4.,n.durationSeconds*scale);
+    const bool active=s->selectedNote&&*s->selectedNote==i;
+    color(active?1:.65);cairo_rectangle(cr,x,y,w,10);cairo_fill(cr);
+    if(active){color(1);cairo_set_line_width(cr,1.5);cairo_rectangle(cr,x-.75,y-.75,w+1.5,11.5);cairo_stroke(cr);}
    }
   }
  }else for(std::size_t i=0;i<s->project.tracks.size();++i){
@@ -197,14 +208,78 @@ void drawing(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user
  }
  color(.9);cairo_move_to(cr,left+s->playhead*scale,0);cairo_line_to(cr,left+s->playhead*scale,height);cairo_stroke(cr);
 }
+void deleteSelectedNote(Studio* s){
+ if(!s->selectedNote||s->selected>=s->project.tracks.size())return;
+ const auto index=*s->selectedNote;
+ if(index>=s->project.tracks[s->selected].notes.size()){s->selectedNote.reset();return;}
+ checkpoint(s);
+ if(ws::removeNote(s->project,s->selected,index)){
+  s->selectedNote.reset();change(s);notice(s,tr("Note deleted","Ton borttagen"));
+ }
+}
+void moveSelectedNote(Studio* s,int pitchSteps,int timeSteps){
+ if(!s->selectedNote||s->selected>=s->project.tracks.size())return;
+ auto& notes=s->project.tracks[s->selected].notes;
+ const auto index=*s->selectedNote;
+ if(index>=notes.size()){s->selectedNote.reset();return;}
+ try{
+  const ws::MidiNote old=notes[index];
+  const int key=std::clamp(old.key+pitchSteps,ws::pianoLowestKey,ws::pianoHighestKey);
+  const ws::EditGrid grid{4,0};
+  const double step=ws::beatSeconds(s->project.bpm)/grid.subdivisions;
+  const double maximum=std::max(0.,s->project.durationSeconds-step*.01);
+  const double at=ws::snapTime(std::clamp(old.atSeconds+timeSteps*step,0.,maximum),s->project.bpm,grid);
+  if(at>=s->project.durationSeconds||(key==old.key&&std::abs(at-old.atSeconds)<1e-7))return;
+  for(std::size_t i=0;i<notes.size();++i)
+   if(i!=index&&notes[i].key==key&&std::abs(notes[i].atSeconds-at)<1e-7)return;
+  checkpoint(s);
+  if(!ws::moveNote(s->project,s->selected,index,key,at,grid))return;
+  const auto& moved=s->project.tracks[s->selected].notes;
+  for(std::size_t i=0;i<moved.size();++i)
+   if(moved[i].key==key&&std::abs(moved[i].atSeconds-at)<1e-7){s->selectedNote=i;break;}
+  s->playhead=at;change(s);
+ }catch(const std::exception& e){notice(s,std::string(tr("Cannot move note: ","Kan inte flytta tonen: "))+e.what());}
+}
 void pressed(GtkGestureClick* gesture,int,double x,double y,gpointer data){
  auto* s=static_cast<Studio*>(data);
- s->playhead=std::clamp((x-65)/50.,0.,s->project.durationSeconds);
- if(gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture))==s->timeline && y>=28){
-  auto index=static_cast<std::size_t>((y-28)/66);
-  if(index<s->project.tracks.size())s->selected=static_cast<unsigned>(index);
+ s->playhead=std::clamp((x-ws::pianoLeft)/ws::pianoPixelsPerSecond,0.,s->project.durationSeconds);
+ if(gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture))==s->piano){
+  gtk_widget_grab_focus(s->piano);
+  if(s->selected<s->project.tracks.size()){
+   const auto point=ws::pianoPositionAt(x,y,s->project.durationSeconds);
+   if(point){
+    const auto& track=s->project.tracks[s->selected];
+    if(auto found=ws::pianoNoteAt(track,*point))s->selectedNote=*found;
+    else if(auto found=ws::pianoNoteAtGrid(track,*point,s->project.bpm,{4,0}))s->selectedNote=*found;
+    else try{
+     checkpoint(s);
+     const double length=ws::beatSeconds(s->project.bpm)/4.0;
+     const auto result=ws::insertNote(s->project,s->selected,{point->key,point->seconds,length,.8f},{4,0});
+     if(result.changed){s->selectedNote=result.index;change(s);}
+    }catch(const std::exception& e){notice(s,std::string(tr("Cannot add note: ","Kan inte lägga till ton: "))+e.what());}
+   }
+  }
+  gtk_widget_queue_draw(s->piano);
+  gtk_widget_queue_draw(s->timeline);
+  return;
  }
- refresh(s);
+ if(gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture))==s->timeline&&y>=28){
+  const auto index=static_cast<std::size_t>((y-28)/66);
+  if(index<s->project.tracks.size()&&index!=s->selected){
+   s->selected=static_cast<unsigned>(index);s->selectedNote.reset();
+  }
+ }
+ // Scrubbing must not recreate all GTK mixer/track controls on every click.
+ gtk_widget_queue_draw(s->timeline);gtk_widget_queue_draw(s->piano);
+}
+void rightPressed(GtkGestureClick*,int,double x,double y,gpointer data){
+ auto* s=static_cast<Studio*>(data);
+ if(s->selected>=s->project.tracks.size())return;
+ const auto point=ws::pianoPositionAt(x,y,s->project.durationSeconds);
+ if(!point)return;
+ if(auto found=ws::pianoNoteAt(s->project.tracks[s->selected],*point)){
+  s->selectedNote=*found;deleteSelectedNote(s);
+ }
 }
 GtkWidget* area(Studio* s,bool piano){
  GtkWidget* sc=gtk_scrolled_window_new();auto* draw=gtk_drawing_area_new();
@@ -212,8 +287,35 @@ GtkWidget* area(Studio* s,bool piano){
  gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(draw),piano?630:300);
  gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(draw),drawing,s,nullptr);
  GtkGesture* click=gtk_gesture_click_new();
+ gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),GDK_BUTTON_PRIMARY);
  g_signal_connect(click,"pressed",G_CALLBACK(pressed),s);
  gtk_widget_add_controller(draw,GTK_EVENT_CONTROLLER(click));
+ if(piano){
+  gtk_widget_set_focusable(draw,TRUE);
+  gtk_accessible_update_property(GTK_ACCESSIBLE(draw),GTK_ACCESSIBLE_PROPERTY_LABEL,
+   tr("Piano roll – click to add or select notes","Pianorulle – klicka för att lägga till eller välja toner"),-1);
+  GtkGesture* secondary=gtk_gesture_click_new();
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(secondary),GDK_BUTTON_SECONDARY);
+  g_signal_connect(secondary,"pressed",G_CALLBACK(rightPressed),s);
+  gtk_widget_add_controller(draw,GTK_EVENT_CONTROLLER(secondary));
+  GtkEventController* keys=gtk_event_controller_key_new();
+  g_signal_connect(keys,"key-pressed",G_CALLBACK(+[](GtkEventControllerKey*,guint keyval,guint,
+      GdkModifierType modifiers,gpointer data)->gboolean{
+   if(modifiers&(GDK_CONTROL_MASK|GDK_ALT_MASK|GDK_SUPER_MASK))return FALSE;
+   auto* st=static_cast<Studio*>(data);
+   switch(keyval){
+    case GDK_KEY_Delete:case GDK_KEY_BackSpace:
+     if(!st->selectedNote)return FALSE;
+     deleteSelectedNote(st);return TRUE;
+    case GDK_KEY_Up:moveSelectedNote(st,1,0);return TRUE;
+    case GDK_KEY_Down:moveSelectedNote(st,-1,0);return TRUE;
+    case GDK_KEY_Left:moveSelectedNote(st,0,-1);return TRUE;
+    case GDK_KEY_Right:moveSelectedNote(st,0,1);return TRUE;
+    default:return FALSE;
+   }
+  }),s);
+  gtk_widget_add_controller(draw,keys);
+ }
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(sc),draw);
  if(piano)s->piano=draw;else s->timeline=draw;
  return sc;
@@ -387,6 +489,13 @@ void activate(GApplication* application,gpointer){
  button(pianoBar,s,tr("Add C4 note","Lägg till C4-ton"),addNote);
  button(pianoBar,s,tr("Quantize","Kvantisera"),quantize);
  gtk_box_append(GTK_BOX(pianoPage),pianoBar);
+ auto* hint=gtk_label_new(tr("Click: add/select note · Right-click/Delete: remove · Arrows: move",
+                          "Klick: lägg till/välj ton · Högerklick/Delete: ta bort · Pilar: flytta"));
+ gtk_label_set_wrap(GTK_LABEL(hint),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(hint),0);
+ gtk_widget_set_margin_start(hint,10);gtk_widget_set_margin_end(hint,10);
+ gtk_widget_add_css_class(hint,"dim-label");
+ gtk_box_append(GTK_BOX(pianoPage),hint);
  auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
  gtk_box_append(GTK_BOX(pianoPage),pianoArea);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));
