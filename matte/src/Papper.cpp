@@ -1,5 +1,6 @@
 // Räknepappret – se Papper.h
 #include "Papper.h"
+#include "Penntryck.h"
 
 #include <Wenuy.h>
 #include <adwaita.h>
@@ -19,12 +20,13 @@ using wenuy::tr;
 
 struct Cell { std::string t, liten; };
 struct Streck { int rad, fran, till; };
+struct Pennpunkt { double first, second, tryck = 1.0; bool tryckFinns = false; };
 
 struct Papper {
     GtkWidget* w = nullptr;
     std::map<std::pair<int, int>, Cell> c;            // (rad, kolumn)
     std::vector<Streck> streck;                       // linje under en rad (summastrecket)
-    std::vector<std::vector<std::pair<double, double>>> drag;   // pennans streck, i rutor
+    std::vector<std::vector<Pennpunkt>> drag;   // pennans streck, tryck och rutor
     int rad = 1, kol = 2, start = 2;                  // markören och var raden började (Enter går dit)
     int lage = 0;                                     // 0 skriv, 1 penna, 2 sudda
     bool liten = false, vanster = false;              // nästa siffra som minnessiffra · skriv åt vänster
@@ -33,6 +35,7 @@ struct Papper {
     std::string uppgift;
     GtkWidget *lageK[3] = {}, *litenK = nullptr, *vansterK = nullptr, *stallK = nullptr;
     bool synkar = false;
+    bool stylusAktiv = false;
     double ruta() const { return 34 * zoom; }
 };
 
@@ -132,13 +135,24 @@ void rita(GtkDrawingArea* da, cairo_t* cr, int b, int h, gpointer data) {
     cairo_stroke(cr);
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-    cairo_set_line_width(cr, std::max(2.0, r / 13));
+    const double basBredd = std::max(2.0, r / 13);
     for (auto& d : p->drag) {
         if (d.empty()) continue;
-        cairo_move_to(cr, d[0].first * r, d[0].second * r);
-        if (d.size() == 1) cairo_line_to(cr, d[0].first * r + 0.1, d[0].second * r);
-        for (size_t i = 1; i < d.size(); ++i) cairo_line_to(cr, d[i].first * r, d[i].second * r);
-        cairo_stroke(cr);
+        if (d.size() == 1) {
+            cairo_arc(cr, d[0].first * r, d[0].second * r,
+                pennbredd(basBredd, d[0].tryck, d[0].tryckFinns) / 2.0, 0, 2 * M_PI);
+            cairo_fill(cr);
+            continue;
+        }
+        for (size_t i = 1; i < d.size(); ++i) {
+            const auto& prev = d[i - 1];
+            const auto& pt = d[i];
+            cairo_set_line_width(cr, pennbredd(basBredd, (prev.tryck + pt.tryck) * 0.5,
+                                              prev.tryckFinns && pt.tryckFinns));
+            cairo_move_to(cr, prev.first * r, prev.second * r);
+            cairo_line_to(cr, pt.first * r, pt.second * r);
+            cairo_stroke(cr);
+        }
     }
     cairo_restore(cr);
     cairo_set_source_rgba(cr, 0, 0, 0, 0.12);
@@ -240,8 +254,15 @@ void suddaVid(Papper* p, double x, double y) {
     }), p->drag.end());
 }
 
-void dragBorjar(GtkGestureDrag*, double x, double y, gpointer data) {
+bool arStylus(GdkDevice* d) {
+    if (!d) return false;
+    auto src = gdk_device_get_source(d);
+    return src == GDK_SOURCE_PEN || src == GDK_SOURCE_ERASER;
+}
+
+void dragBorjar(GtkGestureDrag* g, double x, double y, gpointer data) {
     Papper* p = static_cast<Papper*>(data);
+    if (arStylus(gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(g)))) return;
     gtk_widget_grab_focus(p->w);
     if (p->lage == 1) p->drag.push_back({{x / p->ruta(), y / p->ruta()}});
     else if (p->lage == 2) suddaVid(p, x, y);
@@ -251,6 +272,7 @@ void dragBorjar(GtkGestureDrag*, double x, double y, gpointer data) {
 
 void dragFlyttas(GtkGestureDrag* g, double dx, double dy, gpointer data) {
     Papper* p = static_cast<Papper*>(data);
+    if (arStylus(gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(g)))) return;
     double sx, sy;
     if (p->lage == 0 || !gtk_gesture_drag_get_start_point(g, &sx, &sy)) return;
     double x = sx + dx, y = sy + dy;
@@ -259,7 +281,43 @@ void dragFlyttas(GtkGestureDrag* g, double dx, double dy, gpointer data) {
     gtk_widget_queue_draw(p->w);
 }
 
-void dragSlut(GtkGestureDrag*, double, double, gpointer data) { uppdatera(static_cast<Papper*>(data)); }
+void dragSlut(GtkGestureDrag* g, double, double, gpointer data) {
+    if (arStylus(gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(g)))) return;
+    uppdatera(static_cast<Papper*>(data));
+}
+
+// GTK4 stylus events are separate from generic mouse/touch drag events.
+void stylusNer(GtkGestureStylus* g, double x, double y, gpointer data) {
+    Papper* p = static_cast<Papper*>(data);
+    gtk_widget_grab_focus(p->w);
+    p->stylusAktiv = true;
+    if (p->lage == 0) p->lage = 1;
+    double pressure = 1.0;
+    bool has = gtk_gesture_stylus_get_axis(g, GDK_AXIS_PRESSURE, &pressure);
+    if (p->lage == 1) p->drag.push_back({{x / p->ruta(), y / p->ruta(), penntryck(pressure, has), has}});
+    else if (p->lage == 2) suddaVid(p, x, y);
+    gtk_gesture_set_state(GTK_GESTURE(g), GTK_EVENT_SEQUENCE_CLAIMED);
+    uppdatera(p);
+}
+void stylusRor(GtkGestureStylus* g, double x, double y, gpointer data) {
+    Papper* p = static_cast<Papper*>(data);
+    if (!p->stylusAktiv) return;
+    double pressure = 1.0;
+    bool has = gtk_gesture_stylus_get_axis(g, GDK_AXIS_PRESSURE, &pressure);
+    if (p->lage == 1 && !p->drag.empty()) {
+        auto& points = p->drag.back();
+        const double px = x / p->ruta(), py = y / p->ruta();
+        if (points.size() >= 10000) return;
+        if (!points.empty() && std::hypot(points.back().first - px, points.back().second - py) < .004) return;
+        points.push_back({px, py, penntryck(pressure, has), has});
+    } else if (p->lage == 2) suddaVid(p, x, y);
+    gtk_widget_queue_draw(p->w);
+}
+void stylusUpp(GtkGestureStylus*, double, double, gpointer data) {
+    Papper* p = static_cast<Papper*>(data);
+    p->stylusAktiv = false;
+    uppdatera(p);
+}
 
 GtkWidget* knapp(GtkWidget* rad, const char* text, const char* tips, bool toggle) {
     GtkWidget* b = toggle ? gtk_toggle_button_new_with_label(text) : gtk_button_new_with_label(text);
@@ -314,6 +372,12 @@ GtkWidget* raknepapper_new() {
     g_signal_connect(d, "drag-update", G_CALLBACK(dragFlyttas), p);
     g_signal_connect(d, "drag-end", G_CALLBACK(dragSlut), p);
     gtk_widget_add_controller(w, GTK_EVENT_CONTROLLER(d));
+    GtkGesture* stylus = gtk_gesture_stylus_new();
+    gtk_gesture_stylus_set_stylus_only(GTK_GESTURE_STYLUS(stylus), TRUE);
+    g_signal_connect(stylus, "down", G_CALLBACK(stylusNer), p);
+    g_signal_connect(stylus, "motion", G_CALLBACK(stylusRor), p);
+    g_signal_connect(stylus, "up", G_CALLBACK(stylusUpp), p);
+    gtk_widget_add_controller(w, GTK_EVENT_CONTROLLER(stylus));
     GtkEventController* f = gtk_event_controller_focus_new();
     g_signal_connect_swapped(f, "enter", G_CALLBACK(gtk_widget_queue_draw), w);
     g_signal_connect_swapped(f, "leave", G_CALLBACK(gtk_widget_queue_draw), w);
@@ -384,7 +448,7 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
 void raknepapper_rensa(GtkWidget* w) {
     Papper* p = av(w);
     if (!p) return;
-    p->c.clear(); p->streck.clear(); p->drag.clear();
+    p->c.clear(); p->streck.clear(); p->drag.clear(); p->stylusAktiv = false;
     p->rad = 1; p->kol = p->start = 2; p->liten = p->vanster = false; p->lage = 0;
     uppdatera(p);
 }
