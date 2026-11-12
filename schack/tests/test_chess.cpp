@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==26,"twenty-six lessons");
+    test(lessonCount()==28,"twenty-eight lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -20,6 +20,25 @@ int main(){
         test(!correctLessonMove(i,{0,0,0}),"lesson rejects wrong move");
         const auto legal=lessonBoard.legalMoves();
         test(std::find(legal.begin(),legal.end(),expected)!=legal.end(),"lesson move legal");
+    }
+    // Two three-ply lessons preserve all prior one-ply lessons.
+    test(lessonLineLength(0)==1 && lessonLineLength(26)==3 &&
+         lessonLineLength(27)==3,"lesson move counts");
+    test(lessonLineMove(26,3)==nullptr && lessonLineMove(0,1)==nullptr,
+         "script end is explicit");
+    for(std::size_t idx=26;idx<lessonCount();++idx){
+        Game sequence;
+        test(sequence.loadFen(lesson(idx).fen),"script starting FEN");
+        for(std::size_t ply=0;ply<lessonLineLength(idx);++ply){
+            const char* expected=lessonLineMove(idx,ply);
+            Move step;
+            test(expected && parseUci(expected,step),"parse scripted step");
+            test(correctLessonMoveAt(idx,ply,step),"accept correct step");
+            test(!correctLessonMoveAt(idx,ply,{0,0,0}),"reject wrong scripted step");
+            test(sequence.play(step),"scripted step is legal on actual board");
+        }
+        test(sequence.moves.size()==3 && sequence.board().white==false,
+             "final position waits for Black, not another forced reply");
     }
     // Adaptive practice: unfinished exercises with more missed attempts come first.
     std::array<unsigned,64> misses{};
@@ -136,5 +155,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: twenty-six lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: twenty-eight lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
