@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <iosfwd>
 
 namespace chess {
 struct Lesson {
@@ -42,6 +43,15 @@ const char* lessonStepHintEn(std::size_t index,std::size_t ply,std::size_t varia
 const char* lessonStepHintSv(std::size_t index,std::size_t ply,std::size_t variation);
 const char* lessonGoalEn(std::size_t index);
 const char* lessonGoalSv(std::size_t index);
+// One compact on-disk format for the original mask, mistake counts and
+// successful repetitions. Readers accept 1/2/3-line historical versions.
+struct LessonProgress {
+    std::uint64_t completed=0;
+    std::array<unsigned,64> mistakes{};
+    std::array<unsigned,64> successes{};
+};
+bool readLessonProgress(std::istream& input,LessonProgress& out);
+void writeLessonProgress(std::ostream& output,const LessonProgress& progress);
 // Preserve completion bits from 0.4; track missed attempts independently.
 std::size_t recommendedLesson(std::uint64_t completed,
                               const std::array<unsigned,64>& mistakes);
