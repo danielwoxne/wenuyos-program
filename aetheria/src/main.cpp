@@ -3,6 +3,10 @@
 #include "MiniSDL.h"
 #include "Scene3D.h"
 #include "Sound.h"
+#include "ScreenshotPixels.h"
+#ifdef AETHERIA_WITH_DATATYPES
+#include "DatatypeCapture.h"
+#endif
 #ifdef AETHERIA_WITH_WENUYGFX
 #include "GfxPresentation.h"
 #endif
@@ -739,6 +743,16 @@ struct App {
     if(SDL_RenderReadPixels(renderer,nullptr,SDL_PIXELFORMAT_ARGB8888,pixels.data(),SW*4)!=0) {
       std::cerr<<SDL_GetError()<<'\n';return false;
     }
+#ifdef AETHERIA_WITH_DATATYPES
+    if(std::filesystem::path(path).extension()!=".ppm")
+      return aetheria::saveScreenshotDatatypes(path,pixels.data(),SW,SH);
+#else
+    if(std::filesystem::path(path).extension()!=".ppm") {
+      std::cerr<<tr("Image format requires WenuyOS Datatyper\\n",
+                    "Bildformatet kräver WenuyOS Datatyper\\n");
+      return false;
+    }
+#endif
     std::ofstream out(path,std::ios::binary);
     if(!out) return false;
     out<<"P6\n"<<SW<<' '<<SH<<"\n255\n";
