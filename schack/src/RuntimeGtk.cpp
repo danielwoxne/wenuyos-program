@@ -102,6 +102,7 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_widget_queue_draw,(Ptr)) \
  M(void,gtk_widget_set_focusable,(Ptr,int)) \
  M(int,gtk_widget_grab_focus,(Ptr)) \
+ M(int,gtk_widget_has_focus,(Ptr)) \
  M(void,gtk_widget_add_css_class,(Ptr,const char*)) \
  M(Ptr,gtk_scrolled_window_new,()) \
  M(void,gtk_scrolled_window_set_child,(Ptr,Ptr)) \
@@ -377,6 +378,7 @@ void refresh(){
   std::string summary=(board.white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget"));
   if(app.game.result()!="ongoing")summary=tr("Game finished","Partiet avslutat");
   summary+=" · "+text;
+  if(app.mode==2)summary+=" · "+tr("LAN game","Nätverksparti");
   if(app.keyboardCursor)summary+=" · "+chess::squareName(app.cursor);
   g.gtk_label_set_label(app.boardSummary,summary.c_str());
  }
@@ -581,6 +583,7 @@ void onClick(Ptr,int n,double x,double y,void*){
 void drawRemember(Ptr p,cairo_t* c,int w,int h,void* d){boardWidth=w;boardHeight=h;draw(p,c,w,h,d);}
 void perform(int id);
 int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
+ if(app.lanEntry&&g.gtk_widget_has_focus(app.lanEntry))return 0;
  if(state&(1u<<2)) { // Ctrl shortcuts
   unsigned keyLower=(key>='A'&&key<='Z')?key+32:key;
   if(keyLower=='n'){perform(0);return 1;}
@@ -652,6 +655,9 @@ void perform(int id){
  case 12:suggestMove();break;
  case 13:app.palette=(app.palette+1)%4;theme();save();refresh();break;
  case 14:app.focusBoard=!app.focusBoard;refresh();g.gtk_widget_grab_focus(app.board);break;
+ case 15:startLan(true);break;
+ case 16:startLan(false);break;
+ case 17:stopLan();break;
  case 11: {
   const std::string choices="qrnb";auto pos=choices.find(app.promotion);
   app.promotion=choices[(pos+1)%choices.size()];refresh();break;
@@ -680,7 +686,9 @@ void margin(Ptr w,int x,int y){
  g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
  g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
 }
-int onClose(Ptr,void*){app.closed=true;app.epoch++;app.cssProvider=nullptr;save();return 0;}
+int onClose(Ptr,void*){app.closed=true;app.epoch++;app.cssProvider=nullptr;
+ if(app.lanCancel)app.lanCancel->store(true);
+ if(app.lanPeer)app.lanPeer->close();app.lanPeer.reset();save();return 0;}
 void activate(Ptr application,void*){
  if(app.window&&!app.closed){g.gtk_window_present(app.window);return;}
  app.closed=false;clearHint();
@@ -736,6 +744,15 @@ void activate(Ptr application,void*){
  app.turn=label(side,"",false,"heading");
  app.status=label(side,"",true);
  app.material=label(side,"",false,"wenuy-dim");
+ label(side,tr("LAN GAME","NÄTVERKSPARTI"),false,"heading");
+ label(side,tr("Trusted local network only. Unencrypted connection. Never open a router port.","Endast betrott lokalt nätverk. Okrypterad anslutning. Öppna aldrig en port i routern."),true,"wenuy-dim");
+ app.lanEntry=g.gtk_entry_new();
+ g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
+ g.gtk_box_append(side,app.lanEntry);
+ app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);
+ app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);
+ app.lanStopBtn=button(side,tr("Disconnect / Cancel","Koppla från / Avbryt"),17);
+ app.lanStatus=label(side,tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik."),true,"wenuy-dim");
  app.modeBtn=button(side,tr("Mode: vs computer","Läge: mot datorn"),3);
  app.levelBtn=button(side,tr("Level: 2 / 5","Nivå: 2 / 5"),4);
  app.sideBtn=button(side,tr("You play: White","Du spelar: vit"),5);
@@ -759,7 +776,8 @@ void activate(Ptr application,void*){
  label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint • Ctrl+L focus","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips • Ctrl+L fokus"),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  connect(app.window,"notify::width",onWindowWidth,nullptr);
- theme();refresh();g.gtk_window_present(app.window);responsive();startAI();
+ theme();refresh();g.gtk_window_present(app.window);responsive();
+ g_timeout_add(120,pollLan,nullptr);startAI();
 }
 } // namespace
 
