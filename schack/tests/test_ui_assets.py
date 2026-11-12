@@ -41,6 +41,11 @@ for marker in (
 
     "g.gtk_widget_set_size_request(app.board,260,260);",
     "g.gtk_widget_set_size_request(app.sidePanel,252,-1);",
+    'app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);',
+    'app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);',
+    'g_timeout_add(120,pollLan,nullptr);startAI();',
+    'if(app.mode==2&&(!app.lanPeer||!app.lanPeer->myTurn()))return;',
+    'if(app.lanCancel)app.lanCancel->store(true);',
     "// A two-level, scale-independent plinth adds depth",
     "if(keyLower=='l'){perform(14);return 1;}",
     'bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;',
