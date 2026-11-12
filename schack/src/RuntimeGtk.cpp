@@ -231,6 +231,11 @@ struct App {
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
  bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;
  bool lanConnecting=false;
+ // 160 ms linear piece travel; no extra surfaces, textures or worker thread.
+ bool movingPiece=false;
+ int motionFrom=-1,motionTo=-1;
+ char motionGlyph=0;
+ std::chrono::steady_clock::time_point motionStarted{};
  std::string lanMessage;
  std::shared_ptr<chess::lan::Peer> lanPeer;
  std::shared_ptr<std::atomic<bool>> lanCancel;
@@ -333,6 +338,26 @@ void onWindowWidth(Ptr,Ptr,void*){responsive();}
 const char* lanErrorText(const std::string& error);
 void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=false;}
 void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
+void stopPieceMotion(){app.movingPiece=false;}
+int motionFrame(void*){
+ if(app.closed||!app.movingPiece)return 0;
+ constexpr auto duration=std::chrono::milliseconds(160);
+ if(std::chrono::steady_clock::now()-app.motionStarted>=duration){
+  stopPieceMotion();repaint();return 0;
+ }
+ repaint();return 1;
+}
+void startPieceMotion(const chess::Move& move,char moving){
+ stopPieceMotion();
+ if(!schack_system::allowBoardMotion() || !moving ||
+    move.from<0||move.from>=64||move.to<0||move.to>=64||move.from==move.to)return;
+ app.motionFrom=move.from;app.motionTo=move.to;
+ // Use the *resulting* piece for promotion; the board already has legal state.
+ app.motionGlyph=app.game.board().squares[move.to];
+ app.motionStarted=std::chrono::steady_clock::now();
+ app.movingPiece=true;
+ g_timeout_add(16,motionFrame,nullptr);
+}
 const char* pieceName(char p) {
  switch(std::tolower(static_cast<unsigned char>(p))) {
  case 'p':return tr("pawn","bonde");
@@ -446,7 +471,7 @@ void refresh(){
  }
  repaint();
 }
-void reset(){if(app.mode==2){app.lanMessage=tr("Disconnect before starting a new game.","Koppla från innan du startar nytt parti.");refresh();return;}app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;app.game.reset();
+void reset(){if(app.mode==2){app.lanMessage=tr("Disconnect before starting a new game.","Koppla från innan du startar nytt parti.");refresh();return;}app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;stopPieceMotion();app.game.reset();
  app.flipped=app.mode==0&&app.human==1;app.selected=-1;app.transient.clear();save();refresh();}
 void startAI();
 void afterMove(chess::Move m,bool byComputer=false){
@@ -458,7 +483,9 @@ void afterMove(chess::Move m,bool byComputer=false){
    refresh();return;
   }
  }
+ const char moving=app.game.board().squares[m.from];
  if(!app.game.play(m))return;
+ startPieceMotion(m,moving);
  app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
  if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
  if(app.training)app.lessonSolved=true;else save();
@@ -563,13 +590,28 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
    rgba(c,.08,.82,.72,.92);cairo_set_line_width(c,std::max(2.5,geo.s*.075));
    cairo_rectangle(c,x+geo.s*.06,y+geo.s*.06,geo.s*.88,geo.s*.88);cairo_stroke(c);
   }
-  piece(c,b.squares[sq],x,y,geo.s);
+  // While a move animates, paint its destination only once at interpolated coordinates.
+  if(!(app.movingPiece&&sq==app.motionTo))piece(c,b.squares[sq],x,y,geo.s);
   if(app.keyboardCursor && sq==app.cursor){
    rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],1);
    cairo_set_line_width(c,3);
    cairo_rectangle(c,x+2,y+2,geo.s-4,geo.s-4);cairo_stroke(c);
    cairo_rectangle(c,x+7,y+7,geo.s-14,geo.s-14);cairo_stroke(c);
   }
+ }
+ if(app.movingPiece&&app.motionFrom>=0&&app.motionTo>=0){
+  constexpr double totalMs=160.;
+  const double elapsed=std::chrono::duration<double,std::milli>(
+      std::chrono::steady_clock::now()-app.motionStarted).count();
+  const double t=std::clamp(elapsed/totalMs,0.,1.);
+  const auto xy=[&](int sq){
+   const int f=sq%8,r=sq/8;
+   return std::pair<double,double>{geo.x+(app.flipped?7-f:f)*geo.s,
+       geo.y+(app.flipped?r:7-r)*geo.s};
+  };
+  const auto a=xy(app.motionFrom),z=xy(app.motionTo);
+  piece(c,app.motionGlyph,a.first+(z.first-a.first)*t,
+        a.second+(z.second-a.second)*t,geo.s);
  }
  rgba(c,app.palette==1?.10:.90,app.palette==1?.24:.94,app.palette==1?.36:1.);cairo_select_font_face(c,"Sans",0,0);cairo_set_font_size(c,std::clamp(geo.s*.19,8.,13.));
  for(int i=0;i<8;i++){
@@ -641,7 +683,7 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
 }
 void lessonLoad(){
  app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
- app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
+ stopPieceMotion();app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
 }
 // The only network entry points are the two visible Host/Join buttons.
 std::string localLanAddress(){
@@ -678,7 +720,7 @@ int deliverLan(void* data){
  app.mode=2;app.human=r->host?0:1;app.flipped=!r->host;
  app.training=false;app.lessonSolved=false;
  app.selected=-1;app.keyboardCursor=false;app.epoch++;
- clearHint();app.game.reset();
+ clearHint();stopPieceMotion();app.game.reset();
  app.lanMessage=r->host?tr("LAN game connected. You play White.","LAN-anslutning upprättad. Du spelar vit."):
                             tr("LAN game connected. You play Black.","LAN-anslutning upprättad. Du spelar svart.");
  refresh();return 0;
@@ -780,10 +822,15 @@ int pollLan(void*){
  const auto state=app.lanPeer->pollMove(move,&error);
  if(state==chess::lan::Peer::Incoming::Move){
   // The transport already validated the move; repeat validation on the UI game.
+  const auto before=app.game.board();
+  const auto candidates=before.legalMoves();
+  const auto match=std::find_if(candidates.begin(),candidates.end(),
+      [&](const chess::Move& candidate){return chess::uci(candidate)==move;});
   if(!app.game.playUci(move)){
    app.lanMessage=tr("The boards differ. Connection closed.","Brädena skiljer sig åt. Anslutningen har stängts.");
    app.lanPeer->close();app.lanPeer.reset();app.mode=1;
   }else{
+   if(match!=candidates.end())startPieceMotion(*match,before.squares[match->from]);
    app.selected=-1;app.keyboardCursor=false;clearHint();app.epoch++;
    app.lanMessage=std::string(tr("Opponent played ","Motspelaren spelade "))+move;
    schack_system::playMoveSound(app.game.result()!="ongoing");
@@ -805,11 +852,11 @@ void perform(int id){
  case 1: // Undo
   if(app.mode==2){app.lanMessage=tr("Undo is unavailable in LAN games.","Ångra är inte tillgängligt i nätverkspartier.");refresh();break;}
   if(app.game.undo()){
-   app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;
+   stopPieceMotion();app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;
    if(!app.training&&app.mode==0&&!app.game.moves.empty()&&app.game.board().white!=(app.human==0))app.game.undo();
    app.selected=-1;app.transient.clear();save();refresh();startAI();
   }break;
- case 2:app.flipped=!app.flipped;app.transient.clear();save();refresh();break;
+ case 2:stopPieceMotion();app.flipped=!app.flipped;app.transient.clear();save();refresh();break;
  case 3:if(app.mode==2){app.lanMessage=tr("Disconnect from LAN first.","Koppla från nätverkspartiet först.");refresh();break;}app.mode=1-app.mode;reset();startAI();break;
  case 4:app.skill=1+(app.skill%5);app.transient.clear();save();refresh();break;
  case 5:if(app.mode==2){app.lanMessage=tr("Sides cannot change in a LAN game.","Sidorna kan inte bytas i nätverkspartier.");refresh();break;}app.human=1-app.human;reset();startAI();break;
@@ -818,7 +865,7 @@ void perform(int id){
   if(!app.training){
    save();app.savedGame=app.game;app.training=true;app.lessonIndex=0;lessonLoad();
   }else{
-   app.training=false;app.lessonSolved=false;app.game=app.savedGame;
+   stopPieceMotion();app.training=false;app.lessonSolved=false;app.game=app.savedGame;
    app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
   }break;
  case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
@@ -875,7 +922,7 @@ void margin(Ptr w,int x,int y){
  g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
  g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
 }
-int onClose(Ptr,void*){app.closed=true;app.epoch++;app.cssProvider=nullptr;
+int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
  if(app.lanCancel)app.lanCancel->store(true);
  if(app.lanPeer)app.lanPeer->close();
  app.lanPeer.reset();save();return 0;}
