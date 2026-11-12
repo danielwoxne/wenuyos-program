@@ -37,7 +37,7 @@ for marker in (
     'schack_system::initI18n();',
     'return schack_system::translate(en,sv);',
     'theme();schack_system::applyStyle();refresh();',
-    'schack_system::playMoveSound(app.game.result()!="ongoing");'
+    'schack_system::playMoveSound(app.game.result()!="ongoing");',
     'tr("High contrast","Hög kontrast")',
     "app.palette=(app.palette+1)%4",
     'connect(app.window,"notify::width",onWindowWidth,nullptr);',
