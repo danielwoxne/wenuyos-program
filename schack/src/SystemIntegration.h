@@ -5,4 +5,5 @@ namespace schack_system {
 void initI18n();
 const char* translate(const char* english,const char* swedish);
 void applyStyle();
+void playMoveSound(bool gameFinished);
 }
