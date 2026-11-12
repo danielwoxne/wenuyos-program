@@ -63,6 +63,7 @@ for marker in (
     'bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;',
     'if(app.keyboardCursor && sq==app.cursor)',
     'app.keyboardCursor=false;chosen(sq);',
+    'app.lanCodeEntry&&g.gtk_widget_has_focus(app.lanCodeEntry)',
     'tr("Selected ","Vald ")',
     'tr(" legal moves"," möjliga drag")',
 ):
