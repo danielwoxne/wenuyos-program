@@ -20,6 +20,12 @@ assert 'app.lessonMistakes[i]=std::min(count,999u);' in gui
 assert 'app.lessonSuccesses[i]=std::min(count,999u);' in gui
 assert 'app.lessonSuccesses[app.lessonIndex]<999' in gui
 assert 'app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");' in gui
+assert 'app.lessonPly=0;' in gui
+assert 'chess::correctLessonMoveAt(app.lessonIndex,app.lessonPly,m)' in gui
+assert 'const char* reply=chess::lessonLineMove(app.lessonIndex,app.lessonPly);' in gui
+assert 'app.lessonPly==chess::lessonLineLength(app.lessonIndex)' in gui
+assert 'tr("Opponent replied.","Motspelaren har svarat.")' in gui
+
 assert 'chess::lessonGroupCount()' in gui
 assert 'std::istringstream counters(line)' in gui
 assert 'tr("Knowledge profile:","Kunskapsprofil:")' in gui
