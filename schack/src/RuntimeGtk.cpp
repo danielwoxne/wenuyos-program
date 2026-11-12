@@ -621,8 +621,10 @@ void chosen(int sq){
    if(app.training&&!chess::correctLessonMove(app.lessonIndex,m)){
     if(app.lessonMistakes[app.lessonIndex]<999)++app.lessonMistakes[app.lessonIndex];
     saveProgress();
-    app.transient=tr("Not quite. Try again: check the squares your piece controls, or use the hint.",
-                     "Inte riktigt. Försök igen: se vilka rutor pjäsen kontrollerar, eller använd ledtråden.");
+    app.transient=app.lessonMistakes[app.lessonIndex]>=2?
+      tr(chess::lesson(app.lessonIndex).hintEn,chess::lesson(app.lessonIndex).hintSv):
+      tr("Not quite. Try again: check the squares your piece controls, or use the hint.",
+         "Inte riktigt. Försök igen: se vilka rutor pjäsen kontrollerar, eller använd ledtråden.");
     refresh();return;
    }
    afterMove(m);return;
