@@ -582,6 +582,9 @@ void onClick(Ptr,int n,double x,double y,void*){
 }
 void drawRemember(Ptr p,cairo_t* c,int w,int h,void* d){boardWidth=w;boardHeight=h;draw(p,c,w,h,d);}
 void perform(int id);
+void startLan(bool host);
+void stopLan();
+int pollLan(void*);
 int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  if(app.lanEntry&&g.gtk_widget_has_focus(app.lanEntry))return 0;
  if(state&(1u<<2)) { // Ctrl shortcuts
@@ -609,6 +612,106 @@ void lessonLoad(){
  app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
  app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
 }
+// The only network entry points are the two visible Host/Join buttons.
+std::string localLanAddress(){
+ ifaddrs* interfaces=nullptr;
+ if(::getifaddrs(&interfaces)!=0)return tr("See network settings","Se nätverksinställningar");
+ std::string address;
+ for(auto* a=interfaces;a;a=a->ifa_next){
+  if(!a->ifa_addr||a->ifa_addr->sa_family!=AF_INET)continue;
+  char text[INET_ADDRSTRLEN]{};
+  ::inet_ntop(AF_INET,&reinterpret_cast<sockaddr_in*>(a->ifa_addr)->sin_addr,text,sizeof(text));
+  if(chess::lan::localIPv4(text)&&std::string(text).rfind("127.",0)!=0){
+   address=text;break;
+  }
+ }
+ ::freeifaddrs(interfaces);
+ return address.empty()?tr("See network settings","Se nätverksinställningar"):address;
+}
+struct LanResult {
+ unsigned epoch;
+ bool host=false;
+ std::shared_ptr<chess::lan::Peer> peer;
+ std::shared_ptr<std::atomic<bool>> cancel;
+ std::string error;
+};
+int deliverLan(void* data){
+ std::unique_ptr<LanResult> r(static_cast<LanResult*>(data));
+ if(app.closed||r->cancel->load()||r->epoch!=app.epoch)return 0;
+ app.lanConnecting=false;
+ if(!r->peer){
+  app.lanMessage=std::string(tr("LAN connection failed: ","Nätverksanslutningen misslyckades: "))+r->error;
+  refresh();return 0;
+ }
+ app.lanPeer=std::move(r->peer);
+ app.mode=2;app.human=r->host?0:1;app.flipped=!r->host;
+ app.training=false;app.lessonSolved=false;
+ app.selected=-1;app.keyboardCursor=false;app.epoch++;
+ clearHint();app.game.reset();
+ app.lanMessage=r->host?tr("LAN game connected. You play White.","LAN-anslutning upprättad. Du spelar vit."):
+                            tr("LAN game connected. You play Black.","LAN-anslutning upprättad. Du spelar svart.");
+ refresh();return 0;
+}
+void startLan(bool host){
+ if(app.closed||app.lanConnecting||app.lanPeer)return;
+ std::string address;
+ if(!host){
+  const char* ip=g.gtk_editable_get_text(app.lanEntry);
+  address=ip?ip:"";
+  if(!chess::lan::localIPv4(address)){
+   app.lanMessage=tr("Enter the other computer's private IPv4 address.","Ange den andra datorns privata IPv4-adress.");
+   refresh();return;
+  }
+ }
+ auto cancel=std::make_shared<std::atomic<bool>>(false);
+ app.lanCancel=cancel;app.lanConnecting=true;
+ const unsigned epoch=++app.epoch;
+ if(host)app.lanMessage=std::string(tr("Waiting for opponent at ","Väntar på motspelare på "))+localLanAddress()+":47777";
+ else app.lanMessage=tr("Connecting to the local computer…","Ansluter till den lokala datorn…");
+ refresh();
+ std::thread([host,address,epoch,cancel]{
+  auto peer=std::make_shared<chess::lan::Peer>();
+  std::string error;
+  const bool ok=host?peer->host(chess::lan::defaultPort,60000,&error,cancel.get()):
+                    peer->join(address,chess::lan::defaultPort,5000,&error);
+  if(cancel->load())return;
+  auto* result=new LanResult{epoch,host,ok?peer:nullptr,cancel,error};
+  g_idle_add(deliverLan,result);
+ }).detach();
+}
+void stopLan(){
+ if(app.lanCancel)app.lanCancel->store(true);
+ if(app.lanPeer)app.lanPeer->close();
+ app.lanPeer.reset();app.lanConnecting=false;app.epoch++;
+ if(app.mode==2){app.mode=1;app.human=0;}
+ app.lanMessage=tr("Disconnected. The board remains available for local play.",
+                   "Frånkopplad. Brädet går att fortsätta spela på lokalt.");
+ refresh();
+}
+int pollLan(void*){
+ if(app.closed)return 0;
+ if(!app.lanPeer||app.mode!=2)return 1;
+ std::string move,error;
+ const auto state=app.lanPeer->pollMove(move,&error);
+ if(state==chess::lan::Peer::Incoming::Move){
+  // The transport already validated the move; repeat validation on the UI game.
+  if(!app.game.playUci(move)){
+   app.lanMessage=tr("The boards differ. Connection closed.","Brädena skiljer sig åt. Anslutningen har stängts.");
+   app.lanPeer->close();app.lanPeer.reset();app.mode=1;
+  }else{
+   app.selected=-1;app.keyboardCursor=false;clearHint();app.epoch++;
+   app.lanMessage=std::string(tr("Opponent played ","Motspelaren spelade "))+move;
+  }
+  refresh();
+ }else if(state==chess::lan::Peer::Incoming::Closed){
+  app.lanPeer.reset();app.mode=1;app.lanConnecting=false;app.epoch++;
+  app.lanMessage=tr("Opponent disconnected. Continue locally or start a new LAN game.",
+                    "Motspelaren kopplade från. Fortsätt lokalt eller starta nytt nätverksparti.");
+  refresh();
+ }
+ return 1;
+}
+
 void perform(int id){
  if(app.closed)return;
  switch(id){
