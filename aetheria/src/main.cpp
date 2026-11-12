@@ -748,8 +748,8 @@ struct App {
       return aetheria::saveScreenshotDatatypes(path,pixels.data(),SW,SH);
 #else
     if(std::filesystem::path(path).extension()!=".ppm") {
-      std::cerr<<tr("Image format requires WenuyOS Datatyper\\n",
-                    "Bildformatet kräver WenuyOS Datatyper\\n");
+      std::cerr<<tr("Image format requires WenuyOS Datatyper\n",
+                    "Bildformatet kräver WenuyOS Datatyper\n");
       return false;
     }
 #endif
