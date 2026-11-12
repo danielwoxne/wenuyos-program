@@ -1,6 +1,8 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Etapp 14: Två nya flerstegsövningar utökar kursen till 28. Spelaren planerar två egna utvecklingsdrag med ett förutbestämt lagligt svar från svart däremellan. Endast båda korrekta spelardragen ger slutförande och sparad progression. Skriptade drag kontrolleras på varje mellanposition; de tidigare 26 enstegsövningarna och sparfilens index är oförändrade. Kör helt offline utan extra sökbelastning.
+
 - Etapp 13: Tre nya kombinationsövningar (torngaffel, dubbelhot med dam och springargaffel) utökar schackskolan till 26 tvåspråkiga övningar. Varje lösning får ett regel- och hotprov.
 - Kunskapsprofil visar fyra områdens avklarade övningar, lyckade repetitioner och fel. Rekommendationerna prioriterar fortfarande oavklarade övningar, men för avslutade moment vägs tidigare misstag mot lyckade repetitioner.
 - `progress.txt` lagrar lyckade repetitioner på en egen tredje rad. Läsaren hanterar också äldre en- eller tvåradiga sparfiler och äldre övningsantal genom att läsa varje rad separat. Programmet arbetar helt lokalt, utan nya tjänster, extra grafikytor eller nätverksanrop.
