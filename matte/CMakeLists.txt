@@ -4,6 +4,7 @@
 # oavsett hur gammal WenuyOS-datorns libwenuy är.
 cmake_minimum_required(VERSION 3.16)
 project(matte VERSION 1.3.0 LANGUAGES CXX)
+enable_testing()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -62,8 +63,16 @@ target_link_libraries(matte-rita PUBLIC matte-karna PkgConfig::RITA)
 add_library(matte-utskrift STATIC src/Utskrift.cpp)
 target_link_libraries(matte-utskrift PUBLIC matte-rita)
 
-add_executable(matte-test EXCLUDE_FROM_ALL src/Test.cpp)
+add_executable(matte-test src/Test.cpp)
 target_link_libraries(matte-test PRIVATE matte-utskrift)
+# Test actual answer checking, learning support, all lesson variants, and PDFs.
+# Runs without a graphical display; can be invoked with ctest --test-dir build.
+add_test(NAME matte-regression
+  COMMAND $<TARGET_FILE:matte-test>
+    "${CMAKE_CURRENT_SOURCE_DIR}/tester"
+    "${CMAKE_CURRENT_BINARY_DIR}/matte-share/se.wenuyos.app.matte")
+set_tests_properties(matte-regression PROPERTIES TIMEOUT 180)
+
 
 # libwenuy (WenuyOS bibliotek: fönstergrund, tema, mätning) – källkoden ligger i common/
 add_library(wenuy-static STATIC  common/WenuyIcon.cpp common/WenuyWidgets.cpp common/WenuyDoc.cpp common/WenuyCanvas.cpp common/WenuyText.cpp common/WenuySheet.cpp common/WenuyTimeline.cpp common/WenuyWindow.cpp common/WenuyObjects.cpp common/WenuyData.cpp common/WenuyJobs.cpp common/WenuyTheme.cpp common/WenuyScript.cpp common/WenuyMotionIcon.cpp common/WenuyDiag.cpp common/WenuyBackdrop.cpp common/WenuyShell.cpp common/WenuySafe.cpp common/WenuyCalc.cpp common/WenuyMemory.cpp)
