@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 20> lessons{{
+constexpr std::array<Lesson, 23> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -190,6 +190,36 @@ constexpr std::array<Lesson, 20> lessons{{
         "Precis! Kom ihåg att svart går nedåt på brädet.",
         "4k3/8/8/8/3p4/2P5/8/4K3 b - - 0 1", "d4c3"
     },
+    {
+        "Discovered check", "Avdragsschack",
+        "Move your bishop to reveal a rook check on the king.",
+        "Flytta löparen så att tornet ger schack på kungen.",
+        "Your bishop on e2 is blocking the rook on e1. Move it to f3.",
+        "Löparen på e2 står framför tornet på e1. Flytta den till f3.",
+        "Correct! Moving one piece opened a line for another piece to check.",
+        "Rätt! När du flyttade en pjäs öppnades en linje så att en annan gav schack.",
+        "4k3/8/8/8/8/8/4B3/K3R3 w - - 0 1", "e2f3"
+    },
+    {
+        "Pin the knight", "Bind springaren",
+        "Place the bishop so the knight cannot move without exposing its king.",
+        "Placera löparen så att springaren inte kan flytta utan att blotta kungen.",
+        "From f1, move your bishop to g2. Follow the diagonal to the king on b7.",
+        "Flytta löparen från f1 till g2. Följ diagonalen mot kungen på b7.",
+        "Great! The knight is pinned to its king and cannot legally move away.",
+        "Bra! Springaren är bunden till kungen och får inte lämna linjen.",
+        "8/1k6/8/3n4/8/8/8/4KB2 w - - 0 1", "f1g2"
+    },
+    {
+        "Skewer the king and queen", "Spetsa kung och dam",
+        "Give a bishop check that also attacks the queen behind the king.",
+        "Ge schack med löparen och hota samtidigt damen bakom kungen.",
+        "Your bishop on f3 can move to e4 and aim along f5, g6 and h7.",
+        "Din löpare på f3 kan flytta till e4 och sikta via f5, g6 och h7.",
+        "Well played! The king must escape check, exposing the queen behind it.",
+        "Bra! Kungen måste undan från schacken och lämnar damen bakom sig.",
+        "8/7q/6k1/8/8/5B2/8/K7 w - - 0 1", "f3e4"
+    },
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
@@ -212,10 +242,10 @@ std::size_t recommendedLesson(std::uint64_t completed,
     return next;
 }
 const char* lessonLevelEn(std::size_t index) {
-    return index<9?"Basics":index<15?"Tactics":"Practice";
+    return index<9?"Basics":index<15?"Tactics":index<20?"Practice":"Advanced tactics";
 }
 const char* lessonLevelSv(std::size_t index) {
-    return index<9?"Grunder":index<15?"Taktik":"Fördjupning";
+    return index<9?"Grunder":index<15?"Taktik":index<20?"Fördjupning":"Avancerad taktik";
 }
 bool validateLessons(std::string* error) {
     for (std::size_t i = 0; i < lessonCount(); ++i) {
