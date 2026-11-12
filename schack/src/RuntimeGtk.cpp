@@ -253,7 +253,7 @@ struct App {
  std::string lanMessage;
  std::shared_ptr<chess::lan::Peer> lanPeer;
  std::shared_ptr<std::atomic<bool>> lanCancel;
- std::uint64_t lessonMask=0; std::string hintText;
+ std::uint64_t lessonMask=0; std::array<unsigned,64> lessonMistakes{}; std::string hintText;
  std::size_t lessonIndex=0; unsigned epoch=0; std::string transient;
 };
 App app;
@@ -267,13 +267,21 @@ void saveProgress(){
   std::filesystem::create_directories(userDir());
   const std::string path=userDir()+"/progress.txt";
   const std::string tmp=path+".tmp";
-  {std::ofstream out(tmp,std::ios::trunc);out<<app.lessonMask<<'\n';if(!out) return;}
+  {std::ofstream out(tmp,std::ios::trunc);out<<app.lessonMask<<'\n';
+   for(std::size_t i=0;i<chess::lessonCount();++i)out<<app.lessonMistakes[i]<<' ';
+   out<<'\n';if(!out)return;}
   std::filesystem::rename(tmp,path);
  }catch(const std::exception& e){std::fprintf(stderr,"Schack: kunde inte spara övningar: %s\n",e.what());}
 }
 void loadProgress(){
  std::ifstream input(userDir()+"/progress.txt");
- std::uint64_t n=0;if(input>>n)app.lessonMask=n;
+ std::uint64_t n=0;if(input>>n){app.lessonMask=n;
+  // Old save files contain only the completion mask; missing counts mean zero.
+  for(std::size_t i=0;i<chess::lessonCount();++i){
+   unsigned mistakes=0;if(!(input>>mistakes))break;
+   app.lessonMistakes[i]=std::min(mistakes,999u);
+  }
+ }
 }
 void save(){
  if(app.training||app.mode==2)return;
@@ -478,10 +486,10 @@ void refresh(){
  g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);
  if(app.training){
   const auto& l=chess::lesson(app.lessonIndex);
-  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" – "+tr(l.titleEn,l.titleSv)).c_str());
+  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" · "+tr(chess::lessonLevelEn(app.lessonIndex),chess::lessonLevelSv(app.lessonIndex))+" – "+tr(l.titleEn,l.titleSv)).c_str());
   unsigned completed=0;
   for(std::size_t i=0;i<chess::lessonCount();++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
-  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))).c_str());
+  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))+" · "+std::to_string(app.lessonMistakes[app.lessonIndex])+tr(" mistakes"," fel")).c_str());
   g.gtk_label_set_label(app.lessonTask,tr(l.taskEn,l.taskSv));
   g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):tr("Make the move on the board. A hint is available below.","Gör draget på brädet. Ledtråd finns nedan."));
  }
@@ -611,7 +619,10 @@ void chosen(int sq){
    if(m.from!=app.selected||m.to!=sq)continue;
    if(m.promotion)m.promotion=app.promotion;
    if(app.training&&!chess::correctLessonMove(app.lessonIndex,m)){
-    app.transient=tr("Not quite – try again or use the hint.","Inte riktigt – försök igen eller använd ledtråden.");
+    if(app.lessonMistakes[app.lessonIndex]<999)++app.lessonMistakes[app.lessonIndex];
+    saveProgress();
+    app.transient=tr("Not quite. Try again: check the squares your piece controls, or use the hint.",
+                     "Inte riktigt. Försök igen: se vilka rutor pjäsen kontrollerar, eller använd ledtråden.");
     refresh();return;
    }
    afterMove(m);return;
@@ -930,7 +941,8 @@ void perform(int id){
  case 6: // Schackskola toggle
   if(app.mode==2){app.lanMessage=tr("Disconnect before opening lessons.","Koppla från innan du öppnar schackskolan.");refresh();break;}
   if(!app.training){
-   save();app.savedGame=app.game;app.training=true;app.lessonIndex=0;lessonLoad();
+   save();app.savedGame=app.game;app.training=true;
+   app.lessonIndex=chess::recommendedLesson(app.lessonMask,app.lessonMistakes);lessonLoad();
   }else{
    stopPieceMotion();app.analysisBusy=false;app.training=false;app.lessonSolved=false;app.game=app.savedGame;
    app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
@@ -938,6 +950,7 @@ void perform(int id){
  case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
  case 8:if(app.training){app.transient=tr(chess::lesson(app.lessonIndex).hintEn,chess::lesson(app.lessonIndex).hintSv);refresh();}break;
  case 9:if(app.training&&app.lessonIndex+1<chess::lessonCount()){app.lessonIndex++;lessonLoad();}break;
+ case 19:if(app.training){app.lessonIndex=chess::recommendedLesson(app.lessonMask,app.lessonMistakes);lessonLoad();}break;
  case 10: { // Export PGN
   try{
    std::filesystem::create_directories(userDir());
@@ -1080,6 +1093,7 @@ void activate(Ptr application,void*){
  app.lessonFeedback=label(app.lessonBox,"",true);
  Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
  button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
+ button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
  button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
  label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
