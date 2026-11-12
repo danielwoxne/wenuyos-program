@@ -17,6 +17,10 @@ assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'wenuy::tr(english,swedish)' in integration
 assert 'wenuy::loadStyle()' in integration
 assert 'wenuy::playSound(gameFinished ? "done" : "step")' in integration
+assert 'wenuy::userSetting("motion","on")!="off"' in integration
+assert '!wenuy::lowProfile()' in integration
+assert 'std::strcmp(perf,"low")==0' in integration
+
 
 for entry in (
     "Name=Wenuy Chess",
@@ -72,9 +76,20 @@ for marker in (
     'g.gtk_accessible_update_property(app.lanCodeEntry,4,',
     '(!app.board || !g.gtk_widget_has_focus(app.board))',
     'refresh();return 1;',
+    'constexpr auto duration=std::chrono::milliseconds(160);',
+    'g_timeout_add(16,motionFrame,nullptr);',
+    'schack_system::allowBoardMotion()',
+    'startPieceMotion(m,moving);',
+    'startPieceMotion(*match,before.squares[match->from]);',
+    'if(!(app.movingPiece&&sq==app.motionTo))piece(',
+    'stopPieceMotion();app.game.reset();',
+    'case 2:stopPieceMotion();app.flipped=!app.flipped;',
+    '// Two masonry seams sharpen the rook silhouette at small sizes.',
+    '// Ear and bridle are simple Cairo strokes, not filtered assets.',
+
 
     'tr("Selected ","Vald ")',
     'tr(" legal moves"," möjliga drag")',
 ):
     assert marker in gui, f"Missing UI functionality: {marker}"
-print("OK: bilingual launcher, SVG, focus mode, scrolling panel and contrast palette")
+print("OK: bilingual launcher, accessible GTK4, responsive board, motion policy and Cairo details")
