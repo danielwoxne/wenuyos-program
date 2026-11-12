@@ -1,7 +1,6 @@
 #include "LanChess.h"
 #include <arpa/inet.h>
 #include <cerrno>
-#include <cstring>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -36,7 +35,7 @@ bool readLine(int fd,std::string& line,int timeoutMs) {
  const auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(std::max(0,timeoutMs));
  for(;;) {
   auto remaining=std::chrono::duration_cast<std::chrono::milliseconds>(until-std::chrono::steady_clock::now()).count();
-  if(remaining<0)return false;
+  if(remaining<=0)return false;
   pollfd p{fd,POLLIN,0};
   if(::poll(&p,1,static_cast<int>(remaining))<=0||!(p.revents&POLLIN))return false;
   char c=0;const auto n=::recv(fd,&c,1,0);
@@ -46,7 +45,8 @@ bool readLine(int fd,std::string& line,int timeoutMs) {
   line.push_back(c);
  }
 }
-}
+} // namespace
+
 bool localIPv4(const std::string& address) {
  in_addr addr{};
  if(::inet_pton(AF_INET,address.c_str(),&addr)!=1)return false;
@@ -55,16 +55,16 @@ bool localIPv4(const std::string& address) {
         (v>>16)==0xA9FE || (v>>24)==127;
 }
 Peer::~Peer(){close();}
-void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;}
+void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;incoming_.clear();}
 bool Peer::begin(int fd,bool hosting,int timeoutMs,std::string* error){
  if(fd<0){fail(error,"Socket unavailable");return false;}
  std::string incoming;
  if(!sendAll(fd,hello,timeoutMs)||!readLine(fd,incoming,timeoutMs)||incoming!="WCHESS/1"){
   fail(error,"Protocol handshake failed");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
  }
- socket_=fd;host_=hosting;game_.reset();return true;
+ socket_=fd;host_=hosting;incoming_.clear();game_.reset();return true;
 }
-bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error){
+bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::atomic<bool>* cancel){
  close();
  if(port==0||timeoutMs<=0){fail(error,"Invalid port or timeout");return false;}
  const int server=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC,0);
@@ -76,15 +76,28 @@ bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error){
   fail(error,"Could not listen on port");::close(server);return false;
  }
  pollfd p{server,POLLIN,0};
- const bool ready=::poll(&p,1,timeoutMs)>0&&(p.revents&POLLIN);
- sockaddr_in remote{};socklen_t remoteLen=sizeof(remote);\n int fd=-1;if(ready)fd=::accept4(server,reinterpret_cast<sockaddr*>(&remote),&remoteLen,SOCK_CLOEXEC);\n if(fd>=0){char ip[INET_ADDRSTRLEN]{};::inet_ntop(AF_INET,&remote.sin_addr,ip,sizeof(ip));\n  if(!localIPv4(ip)){::close(fd);fd=-1;fail(error,"Only local IPv4 peers are allowed");}}
+ sockaddr_in remote{};socklen_t remoteLen=sizeof(remote);
+ int fd=-1;
+ for(int elapsed=0;elapsed<timeoutMs && !(cancel&&cancel->load());elapsed+=100){
+  const int wait=std::min(100,timeoutMs-elapsed);
+  if(::poll(&p,1,wait)>0&&(p.revents&POLLIN)){
+   fd=::accept4(server,reinterpret_cast<sockaddr*>(&remote),&remoteLen,SOCK_CLOEXEC);
+   break;
+  }
+ }
  ::close(server);
- if(fd<0){fail(error,"Waiting for a player timed out");return false;}
+ if(fd<0){fail(error,"Waiting for a player timed out or cancelled");return false;}
+ char ip[INET_ADDRSTRLEN]{};
+ ::inet_ntop(AF_INET,&remote.sin_addr,ip,sizeof(ip));
+ if(!localIPv4(ip)){fail(error,"Only private IPv4 peers are allowed");::close(fd);return false;}
+ if(cancel&&cancel->load()){::close(fd);fail(error,"Cancelled");return false;}
  return begin(fd,true,timeoutMs,error);
 }
 bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std::string* error){
  close();
- if(!localIPv4(address)||port==0||timeoutMs<=0){fail(error,"Use a private IPv4 network address");return false;}
+ if(!localIPv4(address)||port==0||timeoutMs<=0){
+  fail(error,"Use a private IPv4 network address");return false;
+ }
  const int fd=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK,0);
  if(fd<0){fail(error,"Cannot create socket");return false;}
  sockaddr_in remote{};remote.sin_family=AF_INET;remote.sin_port=htons(port);
@@ -103,27 +116,55 @@ bool Peer::sendMove(const std::string& notation,std::string* error){
  if(!connected()||!myTurn()){fail(error,"Not your turn");return false;}
  Move move{};
  if(!parseUci(notation,move)){fail(error,"Invalid move notation");return false;}
- // Validate before transmitting. Never apply an untrusted move.
  Game next=game_;
  if(game_.result()!="ongoing"||!next.play(move)){fail(error,"Illegal move");return false;}
  const std::string line="MOVE "+std::to_string(game_.moves.size())+" "+notation+"\n";
  if(!sendAll(socket_,line,5000)){fail(error,"Connection lost");close();return false;}
  game_=std::move(next);return true;
 }
+Peer::Incoming Peer::pollMove(std::string& notation,std::string* error){
+ notation.clear();
+ if(!connected()){fail(error,"Not connected");return Incoming::Closed;}
+ char chunk[128];
+ for(;;){
+  const auto n=::recv(socket_,chunk,sizeof(chunk),MSG_DONTWAIT);
+  if(n>0){
+   incoming_.append(chunk,static_cast<std::size_t>(n));
+   if(incoming_.size()>128){fail(error,"Network message too long");close();return Incoming::Closed;}
+  } else if(n==0){fail(error,"Peer disconnected");close();return Incoming::Closed;}
+  else if(errno==EINTR)continue;
+  else if(errno==EAGAIN||errno==EWOULDBLOCK)break;
+  else{fail(error,"Connection lost");close();return Incoming::Closed;}
+ }
+ const auto pos=incoming_.find('\n');
+ if(pos==std::string::npos)return Incoming::Waiting;
+ const std::string line=incoming_.substr(0,pos);
+ incoming_.erase(0,pos+1);
+ const std::string expected="MOVE "+std::to_string(game_.moves.size())+" ";
+ if(myTurn()||line.compare(0,expected.size(),expected)!=0||
+    line.size()>expected.size()+5||line.size()<=expected.size()){
+  fail(error,"Unexpected network message");close();return Incoming::Closed;
+ }
+ const std::string move=line.substr(expected.size());
+ Game next=game_;
+ if(game_.result()!="ongoing"||!next.playUci(move)){
+  fail(error,"Remote player sent an illegal move");close();return Incoming::Closed;
+ }
+ game_=std::move(next);notation=move;return Incoming::Move;
+}
 bool Peer::receiveMove(int timeoutMs,std::string* error){
  if(!connected()||myTurn()){fail(error,"No remote move expected");return false;}
- std::string line;
- if(!readLine(socket_,line,timeoutMs)){
-  fail(error,"No move received or peer disconnected");close();return false;
+ const auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(std::max(0,timeoutMs));
+ std::string notation;
+ while(std::chrono::steady_clock::now()<until){
+  const auto status=pollMove(notation,error);
+  if(status==Incoming::Move)return true;
+  if(status==Incoming::Closed)return false;
+  pollfd p{socket_,POLLIN,0};
+  const auto remaining=std::chrono::duration_cast<std::chrono::milliseconds>(until-std::chrono::steady_clock::now()).count();
+  if(remaining<=0)break;
+  ::poll(&p,1,static_cast<int>(std::min<long long>(100,remaining)));
  }
- const std::string expected="MOVE "+std::to_string(game_.moves.size())+" ";
- if(line.compare(0,expected.size(),expected)!=0||line.size()>expected.size()+5){
-  fail(error,"Unexpected network message");close();return false;
- }
- Game next=game_;
- if(game_.result()!="ongoing"||!next.playUci(line.substr(expected.size()))){
-  fail(error,"Remote player sent an illegal move");close();return false;
- }
- game_=std::move(next);return true;
+ fail(error,"Waiting for move timed out");return false;
 }
 } // namespace chess::lan
