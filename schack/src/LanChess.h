@@ -2,6 +2,7 @@
 // An explicitly opt-in, local-network-only chess transport. Never starts sockets on construction.
 #include "Chess.h"
 #include <cstdint>
+#include <atomic>
 #include <string>
 
 namespace chess::lan {
@@ -20,7 +21,8 @@ public:
     ~Peer();
 
     // Both calls are blocking and require direct user action in the GUI.
-    bool host(std::uint16_t port, int timeoutMs, std::string* error = nullptr);
+    bool host(std::uint16_t port, int timeoutMs, std::string* error = nullptr,
+              const std::atomic<bool>* cancel = nullptr);
     bool join(const std::string& address, std::uint16_t port, int timeoutMs,
               std::string* error = nullptr);
     void close();
@@ -29,10 +31,13 @@ public:
     bool myTurn() const { return connected() && game_.board().white == host_; }
     const Game& game() const { return game_; }
     bool sendMove(const std::string& uci, std::string* error = nullptr);
+    enum class Incoming { Waiting, Move, Closed };
+    Incoming pollMove(std::string& notation, std::string* error = nullptr);
     bool receiveMove(int timeoutMs, std::string* error = nullptr);
 private:
     int socket_ = -1;
     bool host_ = false;
+    std::string incoming_;
     Game game_;
     bool begin(int fd, bool hosting, int timeoutMs, std::string* error);
 };
