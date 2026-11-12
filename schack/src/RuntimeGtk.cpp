@@ -254,7 +254,7 @@ struct App {
  std::shared_ptr<chess::lan::Peer> lanPeer;
  std::shared_ptr<std::atomic<bool>> lanCancel;
  std::uint64_t lessonMask=0; std::array<unsigned,64> lessonMistakes{},lessonSuccesses{}; std::string hintText;
- std::size_t lessonIndex=0,lessonPly=0; unsigned epoch=0; std::string transient;
+ std::size_t lessonIndex=0,lessonPly=0,lessonVariation=0; unsigned epoch=0; std::string transient;
 };
 App app;
 
@@ -532,7 +532,12 @@ void refresh(){
    if(app.lessonPly>0)task+=" · "+std::string(tr("Opponent replied.","Motspelaren har svarat."));
   }
   g.gtk_label_set_label(app.lessonTask,task.c_str());
-  g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):tr("Make the move on the board. A hint is available below.","Gör draget på brädet. Ledtråd finns nedan."));
+  const char* coaching=app.lessonPly>=2?
+    tr(chess::lessonStepFeedbackEn(app.lessonIndex,1,app.lessonVariation),
+       chess::lessonStepFeedbackSv(app.lessonIndex,1,app.lessonVariation)):
+    tr("Make the move on the board. A hint is available below.",
+       "Gör draget på brädet. Ledtråd finns nedan.");
+  g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):coaching);
  }
  repaint();
 }
@@ -559,8 +564,13 @@ void afterMove(chess::Move m,bool byComputer=false){
   // move or network action. The player must still make the final move.
   if(app.lessonPly<chess::lessonLineLength(app.lessonIndex) &&
      (app.lessonPly%2)==1) {
-   const char* reply=chess::lessonLineMove(app.lessonIndex,app.lessonPly);
-   if(reply && app.game.playUci(reply))++app.lessonPly;
+   const char* reply=chess::lessonLineMoveVariant(app.lessonIndex,app.lessonPly,
+                                                          app.lessonVariation);
+   if(reply && app.game.playUci(reply)){
+    app.transient=tr(chess::lessonStepFeedbackEn(app.lessonIndex,app.lessonPly,app.lessonVariation),
+                     chess::lessonStepFeedbackSv(app.lessonIndex,app.lessonPly,app.lessonVariation));
+    ++app.lessonPly;
+   }
    else {
     app.transient=tr("Lesson reply could not be played. Restart this exercise.",
                      "Övningens svarsdrag kunde inte spelas. Starta om övningen.");
@@ -677,7 +687,7 @@ void chosen(int sq){
   for(auto m:board.legalMoves()){
    if(m.from!=app.selected||m.to!=sq)continue;
    if(m.promotion)m.promotion=app.promotion;
-   if(app.training&&!chess::correctLessonMoveAt(app.lessonIndex,app.lessonPly,m)){
+   if(app.training&&!chess::correctLessonMoveAtVariant(app.lessonIndex,app.lessonPly,app.lessonVariation,m)){
     if(app.lessonMistakes[app.lessonIndex]<999)++app.lessonMistakes[app.lessonIndex];
     saveProgress();
     app.transient=app.lessonMistakes[app.lessonIndex]>=2?
@@ -821,7 +831,10 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  refresh();return 1;
 }
 void lessonLoad(){
- app.epoch++;app.busy=false;app.analysisBusy=false;clearHint();app.lessonSolved=false;app.lessonPly=0;app.selected=-1;app.transient.clear();
+ app.epoch++;app.busy=false;app.analysisBusy=false;clearHint();app.lessonSolved=false;app.lessonPly=0;
+ app.lessonVariation=app.lessonSuccesses[app.lessonIndex]%
+                      chess::lessonVariationCount(app.lessonIndex);
+ app.selected=-1;app.transient.clear();
  stopPieceMotion();app.analysisBusy=false;app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
 }
 // The only network entry points are the two visible Host/Join buttons.
