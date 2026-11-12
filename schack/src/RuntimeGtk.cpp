@@ -1113,7 +1113,14 @@ Ptr button(Ptr container,const char* label,int id,bool primary=false){
 }
 Ptr label(Ptr box,const char* text,bool wrap=false,const char* cls=nullptr){
  Ptr l=g.gtk_label_new(text);g.gtk_label_set_xalign(l,0);g.gtk_label_set_yalign(l,0);
- if(wrap)g.gtk_label_set_wrap(l,1);
+ if(wrap){
+  // Limit natural width so the GtkScrolledWindow does not demand a wide
+  // child before it can wrap; keep word-char fallback for long SAN/URLs.
+  g.gtk_label_set_wrap(l,1);
+  g.gtk_label_set_wrap_mode(l,2); // PANGO_WRAP_WORD_CHAR
+  g.gtk_label_set_max_width_chars(l,26);
+  g.gtk_widget_set_hexpand(l,1);
+ }
  if(cls)g.gtk_widget_add_css_class(l,cls);
  g.gtk_box_append(box,l);return l;
 }
