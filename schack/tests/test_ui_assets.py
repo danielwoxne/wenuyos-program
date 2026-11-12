@@ -14,6 +14,8 @@ gui = (root / "src/RuntimeGtk.cpp").read_text(encoding="utf-8")
 manifest = (root / "wenuyos-app.toml").read_text(encoding="utf-8")
 integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
+assert 'explanation(chess::explainMove(app.game.board(),r->result.move))' in gui
+assert 'tr("This move gives check.","Draget ger schack.")' in gui
 assert 'wenuy::tr(english,swedish)' in integration
 assert 'wenuy::loadStyle()' in integration
 assert 'wenuy::playSound(gameFinished ? "done" : "step")' in integration
