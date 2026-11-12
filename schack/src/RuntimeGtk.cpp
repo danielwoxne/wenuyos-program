@@ -277,18 +277,26 @@ void saveProgress(){
 }
 void loadProgress(){
  std::ifstream input(userDir()+"/progress.txt");
- std::uint64_t n=0;if(input>>n){app.lessonMask=n;
-  // Old save files contain only the completion mask; missing counts mean zero.
+ std::string line;
+ if(!std::getline(input,line))return;
+ std::istringstream header(line);
+ std::uint64_t mask=0;
+ if(!(header>>mask))return;
+ app.lessonMask=mask;
+ // Each version adds new exercises at the end. Read each set of counters
+ // on its own line so a shorter older list cannot swallow the next list.
+ if(std::getline(input,line)){
+  std::istringstream counters(line);
   for(std::size_t i=0;i<chess::lessonCount();++i){
-   unsigned mistakes=0;if(!(input>>mistakes))break;
-   app.lessonMistakes[i]=std::min(mistakes,999u);
+   unsigned count=0;if(!(counters>>count))break;
+   app.lessonMistakes[i]=std::min(count,999u);
   }
-  // Successful repetitions were introduced later; older files contain
-  // only the completion mask or the mistake counts.
-  input.clear();
+ }
+ if(std::getline(input,line)){
+  std::istringstream counters(line);
   for(std::size_t i=0;i<chess::lessonCount();++i){
-   unsigned successes=0;if(!(input>>successes))break;
-   app.lessonSuccesses[i]=std::min(successes,999u);
+   unsigned count=0;if(!(counters>>count))break;
+   app.lessonSuccesses[i]=std::min(count,999u);
   }
  }
 }
@@ -509,7 +517,7 @@ void refresh(){
      if(app.lessonMask & (std::uint64_t(1)<<i))++done;
      solved+=app.lessonSuccesses[i];errors+=app.lessonMistakes[i];
     }
-    profile+="\\n";
+    profile+="\n";
     profile+=tr(chess::lessonLevelEn(group==0?0:group==1?9:group==2?15:20),
                 chess::lessonLevelSv(group==0?0:group==1?9:group==2?15:20));
     profile+=": "+std::to_string(done)+"/"+std::to_string(total);
