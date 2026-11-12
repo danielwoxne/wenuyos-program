@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 29> lessons{{
+constexpr std::array<Lesson, 31> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -280,12 +280,35 @@ constexpr std::array<Lesson, 29> lessons{{
         "Utmärkt! Du tvingade kungen att svara på schacken och vann damen med nästa drag.",
         "4k3/7q/8/3N4/8/8/8/4K3 w - - 0 1", "d5f6"
     },
+    {
+        "Win the queen with a bishop skewer", "Vinn damen med en löparspets",
+        "Check with the bishop. After the king escapes, win the queen behind it.",
+        "Ge schack med löparen. När kungen går undan ska du vinna damen bakom den.",
+        "From f3, place the bishop on e4. The king must leave the diagonal to h7.",
+        "Flytta löparen från f3 till e4. Kungen måste lämna diagonalen mot h7.",
+        "You used a skewer: the king had to move and the queen became available to capture.",
+        "Du gjorde en spets: kungen tvingades undan och damen kunde sedan slås.",
+        "8/7q/6k1/8/8/5B2/8/K7 w - - 0 1", "f3e4"
+    },
+    {
+        "Plan three moves against two defences", "Planera tre drag mot två försvar",
+        "Build an opening plan over three of your moves while Black responds twice.",
+        "Bygg en öppningsplan med tre egna drag medan svart svarar två gånger.",
+        "Start with e2-e4. Develop your knight, then adapt your third move to Black's defence.",
+        "Börja med e2-e4. Utveckla springaren och anpassa tredje draget efter svarts försvar.",
+        "Good planning! You adapted your development to the opponent's chosen pawn structure.",
+        "Bra planerat! Du anpassade utvecklingen efter motståndarens val av bondestruktur.",
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4"
+    },
 }};
-// Two deterministic, legal replies for each multi-move lesson.
-constexpr std::array<std::array<std::array<const char*,3>,2>,3> extendedLines{{
-    {{{"g1f3","g8f6","e2e4"},{"g1f3","b8c6","e2e4"}}},
-    {{{"e2e4","e7e5","g1f3"},{"e2e4","c7c5","g1f3"}}},
-    {{{"d5f6","e8d8","f6h7"},{"d5f6","e8f8","f6h7"}}}
+// Two fully legal defensive branches for each scripted lesson. Trailing
+// nullptrs are absent moves, never silently skipped during validation.
+constexpr std::array<std::array<std::array<const char*,5>,2>,5> extendedLines{{
+    {{{"g1f3","g8f6","e2e4",nullptr,nullptr},{"g1f3","b8c6","e2e4",nullptr,nullptr}}},
+    {{{"e2e4","e7e5","g1f3",nullptr,nullptr},{"e2e4","c7c5","g1f3",nullptr,nullptr}}},
+    {{{"d5f6","e8d8","f6h7",nullptr,nullptr},{"d5f6","e8f8","f6h7",nullptr,nullptr}}},
+    {{{"f3e4","g6f7","e4h7",nullptr,nullptr},{"f3e4","g6h5","e4h7",nullptr,nullptr}}},
+    {{{"e2e4","e7e5","g1f3","b8c6","f1c4"},{"e2e4","c7c5","g1f3","d7d6","d2d4"}}}
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
@@ -293,7 +316,7 @@ const Lesson& lesson(std::size_t index) { return lessons.at(index); }
 bool correctLessonMove(std::size_t index, const Move& m) { return uci(m) == lesson(index).solutionUci; }
 std::size_t lessonLineLength(std::size_t index) {
     lesson(index); // range-check; preserve the existing exception behavior.
-    return index>=26?3:1;
+    return index==30?5:index>=26?3:1;
 }
 std::size_t lessonVariationCount(std::size_t index) {
     lesson(index); // preserve range checks
