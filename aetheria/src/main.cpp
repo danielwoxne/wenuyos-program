@@ -497,8 +497,27 @@ struct App {
     for(const auto& e:world.enemies) if(e.alive) point(e.pos,{231,123,133},large?3:2);
     for(const auto& herb:world.herbs) if(!herb.taken) point(herb.pos,{141,241,139},large?4:2);
     for(const auto& n:world.npcs) point(n.pos,{252,213,135},large?5:3);
+    const auto target=aetheria::nearestQuestTarget(world);
+    if(target.valid()) {
+      const int mx=x+(static_cast<int>(target.point.x)-cx+tiles/2)*cell+cell/2;
+      const int my=y+(static_cast<int>(target.point.y)-cy+tiles/2)*cell+cell/2;
+      if(mx>=x&&mx<x+tiles*cell&&my>=y&&my<y+tiles*cell) {
+        render::circle(renderer,mx,my,large?6:4,{255,224,125});
+        ring(renderer,mx,my,large?10:7,{255,245,181});
+      }
+    }
     point(world.hero.pos,white,large?6:4);
     render::rect(renderer,x-9,y-9,size+18,3,{200,199,174});
+  }
+  const char* targetName(aetheria::GoalKind kind) const {
+    switch(kind) {
+      case aetheria::GoalKind::Crystal:return tr("CRYSTAL","KRISTALL");
+      case aetheria::GoalKind::Guard:return tr("GUARD","VAKT");
+      case aetheria::GoalKind::Shrine:return tr("SHRINE","ALTARE");
+      case aetheria::GoalKind::Elder:return tr("ELDER ARIN","ÄLDSTE ARIN");
+      case aetheria::GoalKind::Herb:return tr("HEALING HERB","LÄKEÖRT");
+      default:return tr("EXPLORE","UTFORSKA");
+    }
   }
   void uiButton(const ui::Rect& r,Color fill,Color edge) {
     render::rect(renderer,r.x,r.y,r.w,r.h,edge);
@@ -578,8 +597,31 @@ struct App {
     drawText(r,mode3d?(lowDetail?tr("F2: SIMPLE GRAPHICS","F2: ENKEL GRAFIK"):
                                  tr("F2: HIGH DETAIL","F2: HÖG DETALJ")):
                       tr("V: 3D VIEW","V: 3D VY"),351,96,1,sub);
-    drawText(r,tr("Z/C ROTATE  V CHANGE","Z/C VRID  V VÄXLA"),351,112,1,sub);
+    drawText(r,tr("Z/C / RIGHT-DRAG: TURN  WHEEL: ZOOM",
+                  "Z/C / HÖGERDRAG: VRID  HJUL: ZOOMA"),351,112,1,sub);
     minimap(817,26,118);
+    const auto target=aetheria::nearestQuestTarget(world);
+    if(target.valid()) {
+      render::rect(r,352,148,430,53,{13,36,51,229});
+      render::rect(r,352,148,4,53,{243,206,119});
+      drawText(r,tr("NEAREST OBJECTIVE","NÄRMASTE MÅL"),366,154,1,{232,211,153});
+      drawText(r,targetName(target.kind),366,176,2,white);
+      drawText(r,std::to_string(static_cast<int>(std::round(target.distance)))+
+                  tr(" M"," M"),620,176,2,{255,228,157});
+      const float angle=aetheria::directionToTarget(world.hero.pos,target.point,cameraYaw);
+      const int cx=755,cy=176;
+      const int tipx=cx+static_cast<int>(std::round(std::sin(angle)*16.f));
+      const int tipy=cy-static_cast<int>(std::round(std::cos(angle)*16.f));
+      const int stemx=cx+static_cast<int>(std::round(std::sin(angle)*6.f));
+      const int stemy=cy-static_cast<int>(std::round(std::cos(angle)*6.f));
+      render::line(r,cx,cy,tipx,tipy,{255,230,154});
+      render::line(r,tipx,tipy,
+                   stemx+static_cast<int>(std::round(std::cos(angle)*5.f)),
+                   stemy+static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+      render::line(r,tipx,tipy,
+                   stemx-static_cast<int>(std::round(std::cos(angle)*5.f)),
+                   stemy-static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+    }
     drawText(r,tr("NORTH","NORR"),847,154,1,sub);
     drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):
               world.daylight()<.72f?tr("DUSK","SKYMNING"):tr("DAY","DAG"),821,176,1,white);
@@ -678,7 +720,7 @@ struct App {
         tr("WASD / ARROWS   WALK","WASD / PILAR    GÅ"),
         tr("SHIFT           SPRINT (STAMINA)","SHIFT           SPRING (ORK)"),
         tr("F / HOLD G      JUMP / GLIDE","F / HÅLL G      HOPPA / GLID"),
-        tr("Z / C / V       CAMERA / 3D OR 2D","Z / C / V       KAMERA / 3D ELLER 2D"),
+        tr("Z/C/RMB + WHEEL CAMERA / ZOOM","Z/C/HÖGER + HJUL KAMERA / ZOOM"),
         tr("F2              DETAIL LEVEL","F2              DETALJNIVÅ"),
         tr("J / SPACE / CLICK   SWORD ATTACK","J / MELLANSLAG / KLICK   SLÅ"),
         tr("Q               CHANGE ELEMENT","Q               BYT ELEMENT"),
