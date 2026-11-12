@@ -73,7 +73,11 @@ int main(){
     test(parseUci("e1g1",hintMove) && explainMove(sample,hintMove)==MoveReason::Castle,"castle explanation");
     test(Board::fromFen("4k3/P7/8/8/8/8/8/4K3 w - - 0 1",sample),"promotion explanation FEN");
     test(parseUci("a7a8b",hintMove) && explainMove(sample,hintMove)==MoveReason::Promotion,"promotion explanation");
-        SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
+        // A beginner still returns a legal move, including in positions with a single legal choice.
+    const auto novice=bestMove(Board::initial(),1,0);
+    const auto noviceLegals=Board::initial().legalMoves();
+    test(std::find(noviceLegals.begin(),noviceLegals.end(),novice.move)!=noviceLegals.end(),"beginner legal move");
+    SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
     // Low budgets still return a legal move; incomplete iterations do not corrupt it.
     auto tiny=bestMove(Board::initial(),5,8);
     const auto initialMoves=Board::initial().legalMoves();
