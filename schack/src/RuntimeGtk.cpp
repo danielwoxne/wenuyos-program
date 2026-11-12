@@ -440,6 +440,7 @@ void afterMove(chess::Move m,bool byComputer=false){
  app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
  if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
  if(app.training)app.lessonSolved=true;else save();
+ schack_system::playMoveSound(app.game.result()!="ongoing");
  refresh();if(!byComputer&&!app.training)startAI();
 }
 struct AIResult{unsigned epoch; chess::SearchResult result; bool hint=false;};
@@ -758,6 +759,7 @@ int pollLan(void*){
   }else{
    app.selected=-1;app.keyboardCursor=false;clearHint();app.epoch++;
    app.lanMessage=std::string(tr("Opponent played ","Motspelaren spelade "))+move;
+   schack_system::playMoveSound(app.game.result()!="ongoing");
   }
   refresh();
  }else if(state==chess::lan::Peer::Incoming::Closed){
