@@ -34,6 +34,17 @@
 - [ ] Full spelprovsrunda i Debian 13 med installerad `libsdl2-dev` och faktiskt SDL2-fönster.
 - [ ] Skärmbildstest för svenska/engelska, 960×600, 1024×600 och lägre upplösningar.
 - [ ] Fysisk 2 GB WenuyOS utan GPU-drivrutin, input/fps/RSS/30 minuter.
-- [ ] **Obligatorisk före merge:** jämför och återför Aetheria 0.6.0-källkodens musnavigering, kamerazoom, autosparning och uppdragsvisare. PR får **inte** godkännas eller publiceras som en återgång till 0.5.0.
+- [x] Återskapat funktionerna i ny C++17-kod på GitHub: mål/riktning/avstånd/kartmarkör, högerdrag/mushjul, ~90 s autosparning och klickbara UI-kontroller.
+- [ ] **Före merge:** verifiera samma beteende mot den tidigare 0.6.0-specifikationen i riktig spelkörning och försäkra att ingen befintlig funktion gått förlorad. Den försvunna zip-filen behöver inte vara en blockerare när beteendet är provat, men får inte påstås vara identisk källa.
 
 **Avsiktlig avgränsning:** inga ändringar i WenuyGFX, inget nätverk i spelet, ingen ny persistent spelinställning eller ändring av sparfilsformat. CI-blockeringen i det gemensamma arbetsflödet åtgärdas av den som ansvarar för Program-CI, inte genom att Aetheria laddar paket eller nätverksresurser vid körning.
+
+### Återuppbyggd 0.6-etapp (13 nov 2026)
+
+- `src/GameplayAssist.h`: `nearestQuestTarget` väljer faktisk målposition utan scenallokering; `directionToTarget` är kamera-relativ. `CameraControl` begränsar zoom/högerdrag. `AutoSaveClock` räknar **bara aktiv** speltid.
+- `src/main.cpp`: målpanel och målmarkering i liten/stor karta, höger musknapp + mushjul, svenska/engelska ledtexter, autosparning via befintlig `World::save` och separat manuellt F5/F9.
+- `src/Scene3D.cpp`: kameraavstånd kan ändras utan att 2D-renderaren påverkas. `src/MiniSDL.h` deklarerar SDL2:s mus- och hjulevent i fallbackläget.
+- `tests/test_stage6.cpp`: regressionsfall för uppdragsprecision, vinkel, zoomgränser, 90 aktiva sekunder, paus, felsparningsretry och kompatibel `World::save/load`.
+- **Utfört utanför GitHub:** en isolerad C++17/ASan/UBSan-smokekörning med en förenklad testmodell för navigerings-/zoom-/autosparningsalgoritmerna passerade. Detta **är inte** ett bygge av den riktiga Aetheria-modellen.
+- **Ej verifierat:** ny Stage6-testsvit mot verklig `Model.cpp`, komplett `wenuyos verify` och 30 minuter på WenuyOS, eftersom GitHubs Program-CI saknar SDL2 (#16).
+- **Före merge:** granska och återbasera det stackade WenuyGFX-/Datatyper-PR:et #15 så att 0.6-funktionerna inte försvinner där.
