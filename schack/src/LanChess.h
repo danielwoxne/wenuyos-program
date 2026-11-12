@@ -38,6 +38,7 @@ private:
     int socket_ = -1;
     bool host_ = false;
     std::string incoming_;
+    bool peerClosed_ = false;
     Game game_;
     bool begin(int fd, bool hosting, int timeoutMs, std::string* error);
 };
