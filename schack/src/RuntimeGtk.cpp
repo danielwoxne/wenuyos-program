@@ -361,6 +361,7 @@ void refresh(){
  else if(app.busy)text=tr("Computer is thinking…","Datorn tänker…");
  else if(app.thinkingHint)text=tr("Analysing a move… you can keep playing.","Analyserar ett drag… du kan fortsätta spela.");
  else if(!app.hintText.empty())text=app.hintText;
+ else if(app.mode==2&&app.lanPeer&&!app.lanPeer->myTurn())text=tr("Waiting for opponent…","Väntar på motspelaren…");
  else if(app.game.board().inCheck(app.game.board().white))text=tr("Check!","Schack!");
  else text=tr("Select a piece, then a square.","Klicka på en pjäs och sedan en ruta.");
  if(!app.transient.empty())text=app.transient;
@@ -791,10 +792,12 @@ void margin(Ptr w,int x,int y){
 }
 int onClose(Ptr,void*){app.closed=true;app.epoch++;app.cssProvider=nullptr;
  if(app.lanCancel)app.lanCancel->store(true);
- if(app.lanPeer)app.lanPeer->close();app.lanPeer.reset();save();return 0;}
+ if(app.lanPeer)app.lanPeer->close();
+ app.lanPeer.reset();save();return 0;}
 void activate(Ptr application,void*){
  if(app.window&&!app.closed){g.gtk_window_present(app.window);return;}
  app.closed=false;clearHint();
+ if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
  g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,960,700);
  connect(app.window,"close-request",onClose,nullptr);
