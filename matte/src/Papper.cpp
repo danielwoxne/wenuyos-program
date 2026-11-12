@@ -257,7 +257,7 @@ void suddaVid(Papper* p, double x, double y) {
 bool arStylus(GdkDevice* d) {
     if (!d) return false;
     auto src = gdk_device_get_source(d);
-    return src == GDK_SOURCE_PEN || src == GDK_SOURCE_ERASER;
+    return src == GDK_SOURCE_PEN;  // GTK4 distinguishes the eraser via GdkDeviceTool, not device source
 }
 
 void dragBorjar(GtkGestureDrag* g, double x, double y, gpointer data) {
