@@ -267,38 +267,24 @@ void saveProgress(){
   std::filesystem::create_directories(userDir());
   const std::string path=userDir()+"/progress.txt";
   const std::string tmp=path+".tmp";
-  {std::ofstream out(tmp,std::ios::trunc);out<<app.lessonMask<<'\n';
-   for(std::size_t i=0;i<chess::lessonCount();++i)out<<app.lessonMistakes[i]<<' ';
-   out<<'\n';
-   for(std::size_t i=0;i<chess::lessonCount();++i)out<<app.lessonSuccesses[i]<<' ';
-   out<<'\n';if(!out)return;}
+  const chess::LessonProgress progress{app.lessonMask,app.lessonMistakes,app.lessonSuccesses};
+  {
+   std::ofstream out(tmp,std::ios::trunc);
+   chess::writeLessonProgress(out,progress);
+   if(!out)return;
+  }
   std::filesystem::rename(tmp,path);
- }catch(const std::exception& e){std::fprintf(stderr,"Schack: kunde inte spara övningar: %s\n",e.what());}
+ }catch(const std::exception& e){
+  std::fprintf(stderr,"Schack: kunde inte spara övningar: %s\n",e.what());
+ }
 }
 void loadProgress(){
  std::ifstream input(userDir()+"/progress.txt");
- std::string line;
- if(!std::getline(input,line))return;
- std::istringstream header(line);
- std::uint64_t mask=0;
- if(!(header>>mask))return;
- app.lessonMask=mask;
- // Each version adds new exercises at the end. Read each set of counters
- // on its own line so a shorter older list cannot swallow the next list.
- if(std::getline(input,line)){
-  std::istringstream counters(line);
-  for(std::size_t i=0;i<chess::lessonCount();++i){
-   unsigned count=0;if(!(counters>>count))break;
-   app.lessonMistakes[i]=std::min(count,999u);
-  }
- }
- if(std::getline(input,line)){
-  std::istringstream counters(line);
-  for(std::size_t i=0;i<chess::lessonCount();++i){
-   unsigned count=0;if(!(counters>>count))break;
-   app.lessonSuccesses[i]=std::min(count,999u);
-  }
- }
+ chess::LessonProgress progress;
+ if(!chess::readLessonProgress(input,progress))return;
+ app.lessonMask=progress.completed;
+ app.lessonMistakes=progress.mistakes;
+ app.lessonSuccesses=progress.successes;
 }
 void save(){
  if(app.training||app.mode==2)return;
