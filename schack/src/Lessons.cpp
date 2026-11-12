@@ -1,6 +1,8 @@
 #include "Lessons.h"
 #include <algorithm>
 #include <array>
+#include <sstream>
+#include <string>
 
 namespace chess {
 namespace {
@@ -312,6 +314,47 @@ constexpr std::array<std::array<std::array<const char*,5>,2>,5> extendedLines{{
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
+bool readLessonProgress(std::istream& input,LessonProgress& out){
+    std::string line;
+    if(!std::getline(input,line))return false;
+    std::istringstream header(line);
+    std::uint64_t mask=0;
+    std::string extra;
+    if(!(header>>mask)||(header>>extra))return false;
+    LessonProgress parsed;
+    parsed.completed=mask;
+    // A file from 0.4 has only the mask. The 0.5 early releases have
+    // 20/23/26/28/29 counts on the second line. Do not let a short older
+    // list consume the next version's line of counters.
+    if(std::getline(input,line)){
+        std::istringstream counts(line);
+        for(std::size_t i=0;i<lessonCount();++i){
+            unsigned value=0;
+            if(!(counts>>value))break;
+            parsed.mistakes[i]=std::min(value,999u);
+        }
+    }
+    if(std::getline(input,line)){
+        std::istringstream counts(line);
+        for(std::size_t i=0;i<lessonCount();++i){
+            unsigned value=0;
+            if(!(counts>>value))break;
+            parsed.successes[i]=std::min(value,999u);
+        }
+    }
+    out=parsed;
+    return true;
+}
+void writeLessonProgress(std::ostream& output,const LessonProgress& progress){
+    output<<progress.completed<<'\n';
+    for(std::size_t i=0;i<lessonCount();++i)
+        output<<std::min(progress.mistakes[i],999u)<<' ';
+    output<<'\n';
+    for(std::size_t i=0;i<lessonCount();++i)
+        output<<std::min(progress.successes[i],999u)<<' ';
+    output<<'\n';
+}
+
 const Lesson& lesson(std::size_t index) { return lessons.at(index); }
 bool correctLessonMove(std::size_t index, const Move& m) { return uci(m) == lesson(index).solutionUci; }
 std::size_t lessonLineLength(std::size_t index) {
