@@ -30,4 +30,18 @@ for old in ("gui/XStudio.cpp", "tools/build-wapp.sh", "tools/make-wapp.py"):
 # Reviewer #4: test artifacts must be unique across all program pull requests.
 workflow=(root.parent/".github"/"workflows"/"program.yml").read_text(encoding="utf-8")
 assert 'name: program-test-${{ github.event.pull_request.number }}' in workflow
-print("Desktop, MIME, native file open, icon and compact layout PASS")
+
+# Protect every destructive entry point, including shell/file-manager open and window close.
+assert '#include "wenuystudio/ProjectGuard.hpp"' in code
+assert 'ws::ProjectGuard guard{}' in code
+assert 'requestProtected(st,{ws::ProjectActionKind::New,{}})' in code
+assert 'requestProtected(s,{ws::ProjectActionKind::Open,path})' in code
+assert 'requestProtected(st,{ws::ProjectActionKind::Close,{}})' in code
+assert 'g_signal_connect(s->window,"close-request"' in code
+assert 'adw_message_dialog_new(GTK_WINDOW(s->window)' in code
+assert 'st->guard.beginSave()' in code
+assert 's->guard.finishedSave(true)' in code
+assert 's->guard.finishedSave(false)' in code
+assert 'ws::Project loaded=ws::loadProject(action.path)' in code
+assert code.index('ws::Project loaded=ws::loadProject(action.path)') < code.index('s->project=std::move(loaded)')
+print("Desktop, MIME, project guard, icon and compact layout PASS")
