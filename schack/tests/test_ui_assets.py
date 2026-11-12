@@ -24,7 +24,7 @@ for entry in (
 
 ET.parse(svg)
 assert 'version = "0.5.0"' in manifest
-assert 'needs_network = false' in manifest
+assert 'needs_network = true' in manifest
 for marker in (
     "case 14:app.focusBoard=!app.focusBoard",
     "g.gtk_scrolled_window_set_child(app.sidePanel,side)",
