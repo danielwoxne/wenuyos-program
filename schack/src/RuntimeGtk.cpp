@@ -433,7 +433,7 @@ void afterMove(chess::Move m,bool byComputer=false){
  if(app.mode==2){
   std::string error;
   if(!app.lanPeer || !app.lanPeer->myTurn() || !app.lanPeer->sendMove(chess::uci(m),&error)){
-   app.lanMessage=tr("Network move failed: ","Nätverksdrag misslyckades: ")+error;
+   app.lanMessage=tr("Network move failed: ","Nätverksdrag misslyckades: ")+lanErrorText(error);
    refresh();return;
   }
  }
@@ -644,7 +644,7 @@ int deliverLan(void* data){
  if(app.closed||r->cancel->load()||r->epoch!=app.epoch)return 0;
  app.lanConnecting=false;
  if(!r->peer){
-  app.lanMessage=std::string(tr("LAN connection failed: ","Nätverksanslutningen misslyckades: "))+r->error;
+  app.lanMessage=std::string(tr("LAN connection failed: ","Nätverksanslutningen misslyckades: "))+lanErrorText(r->error);
   refresh();return 0;
  }
  app.lanPeer=std::move(r->peer);
@@ -662,6 +662,38 @@ std::string freshPairingCode(){
  std::ostringstream out;
  out<<std::setw(6)<<std::setfill('0')<<(randomValue%1000000U);
  return out.str();
+}
+const char* lanErrorText(const std::string& error) {
+ struct Translation {const char* en;const char* sv;};
+ static const Translation translations[]={
+  {"Pairing code rejected","Parningskoden godkändes inte"},
+  {"Pairing code rejected or peer disconnected","Parningskoden godkändes inte eller motspelaren kopplade från"},
+  {"Protocol handshake failed","Datorerna använder olika nätverksprotokoll eller anslutningen avbröts"},
+  {"Invalid pairing request","Ogiltig parningsförfrågan"},
+  {"Six-digit pairing code required","En sexsiffrig parningskod behövs"},
+  {"Invalid port, timeout or pairing code","Ogiltig port, tidsgräns eller parningskod"},
+  {"Use a private IPv4 network address","Ange en privat IPv4-adress på det lokala nätverket"},
+  {"Could not listen on port","Det gick inte att starta nätverksvärden"},
+  {"Cannot create listener","Det gick inte att öppna en lyssnande nätverksanslutning"},
+  {"Waiting for a player timed out or cancelled","Väntan på motspelare avbröts eller tog för lång tid"},
+  {"Connection timed out","Anslutningen tog för lång tid"},
+  {"Connection failed","Anslutningen misslyckades"},
+  {"Peer unavailable","Motspelaren gick inte att nå"},
+  {"Cannot create socket","Nätverksanslutningen kunde inte öppnas"},
+  {"Only private IPv4 peers are allowed","Bara datorer med privata IPv4-adresser tillåts"},
+  {"No move received or peer disconnected","Inget drag togs emot eller motspelaren kopplade från"},
+  {"Peer disconnected","Motspelaren kopplade från"},
+  {"Connection lost","Anslutningen bröts"},
+  {"Not your turn","Det är inte din tur"},
+  {"Illegal move","Otillåtet drag"},
+  {"Invalid move notation","Ogiltig dragnotation"},
+  {"Remote player sent an illegal move","Motspelaren skickade ett otillåtet drag"},
+  {"Unexpected network message","Oväntat nätverksmeddelande"},
+  {"Network message too long","Nätverksmeddelandet är för långt"},
+  {"Cancelled","Avbrutet"}
+ };
+ for(const auto& t:translations)if(error==t.en)return tr(t.en,t.sv);
+ return tr("Network connection error","Fel i nätverksanslutningen");
 }
 void startLan(bool host){
  if(app.closed||app.lanConnecting||app.lanPeer)return;
@@ -876,7 +908,7 @@ void activate(Ptr application,void*){
  app.status=label(side,"",true);
  app.material=label(side,"",false,"wenuy-dim");
  label(side,tr("LAN GAME","NÄTVERKSPARTI"),false,"heading");
- label(side,tr("Trusted local network only. Unencrypted connection. Never open a router port.","Endast betrott lokalt nätverk. Okrypterad anslutning. Öppna aldrig en port i routern."),true,"wenuy-dim");
+ label(side,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
  app.lanEntry=g.gtk_entry_new();
  g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
  g.gtk_box_append(side,app.lanEntry);
