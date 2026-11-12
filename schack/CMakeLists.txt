@@ -25,8 +25,9 @@ add_test(NAME ui_assets COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_u
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4)
+pkg_check_modules(WENUY REQUIRED IMPORTED_TARGET wenuy)
 add_executable(schack src/RuntimeGtk.cpp)
-target_link_libraries(schack PRIVATE schack_lan PkgConfig::GTK4 Threads::Threads ${CMAKE_DL_LIBS})
+target_link_libraries(schack PRIVATE schack_lan PkgConfig::GTK4 PkgConfig::WENUY Threads::Threads ${CMAKE_DL_LIBS})
 target_compile_options(schack PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS schack RUNTIME DESTINATION bin)
 install(DIRECTORY data/ DESTINATION data)
