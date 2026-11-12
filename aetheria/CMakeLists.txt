@@ -44,3 +44,8 @@ add_executable(aetheria-stage5-tests tests/test_stage5.cpp)
 target_link_libraries(aetheria-stage5-tests PRIVATE aetheria-model)
 target_compile_options(aetheria-stage5-tests PRIVATE -UNDEBUG)
 add_test(NAME aetheria-stage5 COMMAND aetheria-stage5-tests)
+
+# Pure headless UI geometry and mouse interaction regressions (C++17, no SDL).
+add_executable(aetheria-ui-layout-tests tests/test_ui_layout.cpp)
+target_include_directories(aetheria-ui-layout-tests PRIVATE src)
+add_test(NAME aetheria-ui-layout COMMAND aetheria-ui-layout-tests)
