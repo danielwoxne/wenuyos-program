@@ -1,9 +1,9 @@
 name = "Wenuy Studio"
 name_sv = "Wenuy Musikstudio"
-version = "0.8.1"
+version = "0.9.0"
 id = "se.wenuyos.app.musikstudio"
-description = "GTK4 music studio with MIDI, mixing, effects and audio recording (test)"
-description_sv = "GTK4-musikstudio med MIDI, mixer, effekter och ljudinspelning (test)"
+description = "GTK4 music studio with MIDI, mixing, effects and audio recording (0.9 preview)"
+description_sv = "GTK4-musikstudio med MIDI, mixer, effekter och ljudinspelning (förhandsversion 0.9)"
 license = "GPL-3.0-or-later"
 exec = "bin/wenuy-studio"
 requires = ["libportaudio2"]
