@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==28,"twenty-eight lessons");
+    test(lessonCount()==29,"twenty-nine lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -23,7 +23,7 @@ int main(){
     }
     // Two three-ply lessons preserve all prior one-ply lessons.
     test(lessonLineLength(0)==1 && lessonLineLength(26)==3 &&
-         lessonLineLength(27)==3,"lesson move counts");
+         lessonLineLength(27)==3 && lessonLineLength(28)==3,"lesson move counts");
     test(lessonLineMove(26,3)==nullptr && lessonLineMove(0,1)==nullptr,
          "script end is explicit");
     for(std::size_t idx=26;idx<lessonCount();++idx){
@@ -57,6 +57,23 @@ int main(){
             test(std::string(lessonStepFeedbackEn(index,1,variation)).size()>10 &&
                  std::string(lessonStepFeedbackSv(index,1,variation)).size()>10,
                  "bilingual feedback after defense");
+        }
+        if(index==28){
+            for(std::size_t variation=0;variation<lessonVariationCount(index);++variation){
+                Game tactical;
+                test(tactical.loadFen(lesson(index).fen),"fork lesson starting position");
+                const auto first=lessonLineMoveVariant(index,0,variation);
+                const auto reply=lessonLineMoveVariant(index,1,variation);
+                const auto last=lessonLineMoveVariant(index,2,variation);
+                test(tactical.playUci(first)&&tactical.board().inCheck(false),
+                     "first knight move forces a check response");
+                test(tactical.playUci(reply)&&tactical.playUci(last),
+                     "king escape followed by legal queen capture");
+                test(tactical.board().squares[55]=='N' &&
+                     std::count(tactical.board().squares.begin(),
+                                tactical.board().squares.end(),'q')==0,
+                     "knight captures queen on h7");
+            }
         }
         test(lessonLineMoveVariant(index,1,2)==nullptr,"reject invalid variation");
     }
@@ -176,5 +193,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: twenty-eight lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: twenty-nine lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
