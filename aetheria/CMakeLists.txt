@@ -49,3 +49,9 @@ add_test(NAME aetheria-stage5 COMMAND aetheria-stage5-tests)
 add_executable(aetheria-ui-layout-tests tests/test_ui_layout.cpp)
 target_include_directories(aetheria-ui-layout-tests PRIVATE src)
 add_test(NAME aetheria-ui-layout COMMAND aetheria-ui-layout-tests)
+
+# Restored 0.6 gameplay: navigation/zoom/autosave, independent of SDL.
+add_executable(aetheria-stage6-tests tests/test_stage6.cpp)
+target_link_libraries(aetheria-stage6-tests PRIVATE aetheria-model)
+target_compile_options(aetheria-stage6-tests PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)
+add_test(NAME aetheria-stage6-restored-controls COMMAND aetheria-stage6-tests)
