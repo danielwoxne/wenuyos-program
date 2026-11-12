@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==29,"twenty-nine lessons");
+    test(lessonCount()==31,"thirty-one lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -23,7 +23,8 @@ int main(){
     }
     // Two three-ply lessons preserve all prior one-ply lessons.
     test(lessonLineLength(0)==1 && lessonLineLength(26)==3 &&
-         lessonLineLength(27)==3 && lessonLineLength(28)==3,"lesson move counts");
+         lessonLineLength(27)==3 && lessonLineLength(28)==3 &&
+         lessonLineLength(29)==3 && lessonLineLength(30)==5,"mixed 1/3/5-ply curriculum");
     test(lessonLineMove(26,3)==nullptr && lessonLineMove(0,1)==nullptr,
          "script end is explicit");
     for(std::size_t idx=26;idx<lessonCount();++idx){
@@ -37,8 +38,8 @@ int main(){
             test(!correctLessonMoveAt(idx,ply,{0,0,0}),"reject wrong scripted step");
             test(sequence.play(step),"scripted step is legal on actual board");
         }
-        test(sequence.moves.size()==3 && sequence.board().white==false,
-             "final position waits for Black, not another forced reply");
+        test(sequence.moves.size()==lessonLineLength(idx) && sequence.board().white==false,
+             "script finishes after last player move");
     }
     // Exercise both legal defensive branches, including instructional texts.
     for(std::size_t index=26;index<lessonCount();++index){
@@ -52,7 +53,20 @@ int main(){
                 test(source&&parseUci(source,step),"variation notation");
                 test(correctLessonMoveAtVariant(index,ply,variation,step),
                      "variation matches its expected move");
+                test(lessonAcceptsMove(index,ply,variation,variant.board(),step)==(ply%2==0),
+                     "student goals accepted; opponent moves reserved for scripted engine");
                 test(variant.play(step),"every defensive reply and continuation is legal");
+            }
+            if(index==29){
+                test(variant.board().squares[55]=='B' &&
+                     std::count(variant.board().squares.begin(),
+                                variant.board().squares.end(),'q')==0,
+                     "bishop skewer captures actual queen after either king defence");
+            }
+            if(index==30){
+                test(variant.moves.size()==5 &&
+                     variant.board().squares[variation==0?26:27]==(variation==0?'B':'P'),
+                     "five-ply opening branch reaches its planned final white move");
             }
             test(std::string(lessonStepFeedbackEn(index,1,variation)).size()>10 &&
                  std::string(lessonStepFeedbackSv(index,1,variation)).size()>10,
@@ -76,8 +90,30 @@ int main(){
             }
         }
         test(lessonLineMoveVariant(index,1,2)==nullptr,"reject invalid variation");
+        test(std::string(lessonStepHintEn(index,lessonLineLength(index)-1,0)).size()>5 &&
+             std::string(lessonStepHintSv(index,lessonLineLength(index)-1,0)).size()>5,
+             "last-step hint is bilingual");
+        if(index==30){
+            test(std::string(lessonLineMoveVariant(30,4,0))=="f1c4" &&
+                 std::string(lessonLineMoveVariant(30,4,1))=="d2d4",
+                 "third student move adapts to Black's second defence");
+            test(std::string(lessonStepFeedbackEn(30,3,0)).size()>10 &&
+                 std::string(lessonStepFeedbackSv(30,3,1)).size()>10,
+                 "second opponent reply has tailored feedback in both languages");
+        }
     }
     test(lessonVariationCount(0)==1,"legacy lesson keeps single variation");
+    test(std::string(lessonGoalEn(29)).size()>5 &&
+         std::string(lessonGoalSv(28)).size()>5 &&
+         std::string(lessonGoalSv(30)).size()>5,
+         "new tactical and planning objectives are bilingual");
+    Move normal;
+    test(parseUci("g1f3",normal) &&
+         lessonAcceptsMove(0,0,0,Board::initial(),normal),
+         "old one-ply lesson remains supported");
+    test(!lessonAcceptsMove(29,0,0,Board::initial(),normal),
+         "tactical lesson move is position-checked");
+
     // Adaptive practice: unfinished exercises with more missed attempts come first.
     std::array<unsigned,64> misses{};
     test(recommendedLesson(0,misses)==0,"new learner starts with lesson one");
@@ -193,5 +229,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: twenty-nine lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: thirty-one lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
