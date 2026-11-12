@@ -10,7 +10,7 @@
 
 namespace chess::lan {
 namespace {
-constexpr const char* hello = "WCHESS/1\n";
+constexpr const char* hello = "WCHESS/2\n";
 void fail(std::string* error, const char* message) { if(error)*error=message; }
 void shutdownFd(int& fd) {
  if(fd>=0){::shutdown(fd,SHUT_RDWR);::close(fd);fd=-1;}
@@ -47,6 +47,9 @@ bool readLine(int fd,std::string& line,int timeoutMs) {
 }
 } // namespace
 
+bool validPairingCode(const std::string& code) {
+ return code.size()==6 && std::all_of(code.begin(),code.end(),[](char c){return c>='0'&&c<='9';});
+}
 bool localIPv4(const std::string& address) {
  in_addr addr{};
  if(::inet_pton(AF_INET,address.c_str(),&addr)!=1)return false;
@@ -56,17 +59,35 @@ bool localIPv4(const std::string& address) {
 }
 Peer::~Peer(){close();}
 void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;incoming_.clear();peerClosed_=false;}
-bool Peer::begin(int fd,bool hosting,int timeoutMs,std::string* error){
+bool Peer::begin(int fd,bool hosting,int timeoutMs,const std::string& pairingCode,std::string* error){
  if(fd<0){fail(error,"Socket unavailable");return false;}
+ if(!validPairingCode(pairingCode)){fail(error,"Six-digit pairing code required");::close(fd);return false;}
  std::string incoming;
- if(!sendAll(fd,hello,timeoutMs)||!readLine(fd,incoming,timeoutMs)||incoming!="WCHESS/1"){
+ if(!sendAll(fd,hello,timeoutMs)||!readLine(fd,incoming,timeoutMs)||incoming!="WCHESS/2"){
   fail(error,"Protocol handshake failed");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
+ }
+ if(hosting){
+  if(!readLine(fd,incoming,timeoutMs)||incoming.size()!=11||incoming.compare(0,5,"PAIR ")!=0){
+   fail(error,"Invalid pairing request");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
+  }
+  unsigned diff=0;
+  for(std::size_t i=0;i<6;i++)diff|=static_cast<unsigned char>(incoming[5+i]^pairingCode[i]);
+  const bool correct=diff==0;
+  if(!sendAll(fd,correct?"ACCEPT\n":"REJECT\n",timeoutMs)||!correct){
+   fail(error,"Pairing code rejected");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
+  }
+ }else{
+  if(!sendAll(fd,"PAIR "+pairingCode+"\n",timeoutMs)||
+     !readLine(fd,incoming,timeoutMs)||incoming!="ACCEPT"){
+   fail(error,"Pairing code rejected or peer disconnected");
+   ::shutdown(fd,SHUT_RDWR);::close(fd);return false;
+  }
  }
  socket_=fd;host_=hosting;incoming_.clear();peerClosed_=false;game_.reset();return true;
 }
-bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::atomic<bool>* cancel){
+bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::atomic<bool>* cancel,const std::string& pairingCode){
  close();
- if(port==0||timeoutMs<=0){fail(error,"Invalid port or timeout");return false;}
+ if(port==0||timeoutMs<=0||!validPairingCode(pairingCode)){fail(error,"Invalid port, timeout or pairing code");return false;}
  const int server=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC,0);
  if(server<0){fail(error,"Cannot create listener");return false;}
  int yes=1;::setsockopt(server,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes));
@@ -91,11 +112,11 @@ bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::a
  ::inet_ntop(AF_INET,&remote.sin_addr,ip,sizeof(ip));
  if(!localIPv4(ip)){fail(error,"Only private IPv4 peers are allowed");::close(fd);return false;}
  if(cancel&&cancel->load()){::close(fd);fail(error,"Cancelled");return false;}
- return begin(fd,true,timeoutMs,error);
+ return begin(fd,true,timeoutMs,pairingCode,error);
 }
-bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std::string* error){
+bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std::string* error,const std::string& pairingCode){
  close();
- if(!localIPv4(address)||port==0||timeoutMs<=0){
+ if(!localIPv4(address)||port==0||timeoutMs<=0||!validPairingCode(pairingCode)){
   fail(error,"Use a private IPv4 network address");return false;
  }
  const int fd=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK,0);
@@ -110,7 +131,7 @@ bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std:
  if(::getsockopt(fd,SOL_SOCKET,SO_ERROR,&socketError,&size)<0||socketError){
   fail(error,"Peer unavailable");::close(fd);return false;
  }
- return begin(fd,false,timeoutMs,error);
+ return begin(fd,false,timeoutMs,pairingCode,error);
 }
 bool Peer::sendMove(const std::string& notation,std::string* error){
  if(!connected()||!myTurn()){fail(error,"Not your turn");return false;}
