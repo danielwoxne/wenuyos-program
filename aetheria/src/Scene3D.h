@@ -10,6 +10,6 @@ struct SceneStats { int terrainTiles=0, triangles=0; };
 class Scene3D {
  public:
   SceneStats render(SDL_Renderer* renderer, const legends::World& world,
-                    float cameraYaw, bool lowDetail, int width, int height);
+                    float cameraYaw, bool lowDetail, int width, int height, float zoom=1.f);
 };
 }
