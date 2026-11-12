@@ -11,6 +11,7 @@
 #include "GfxPresentation.h"
 #endif
 #include "UiLayout.h"
+#include "GameplayAssist.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -65,6 +66,9 @@ struct App {
   aetheria::SceneStats sceneStats{};
   aetheria::Sound sound;
   bool audioEnabled=true,inventory=false,showSideQuest=true;
+  bool rightDragging=false;
+  aetheria::CameraControl cameraControl;
+  aetheria::AutoSaveClock autosaveClock;
   Input input{};
   bool mode3d=true,lowDetail=true,rotateLeft=false,rotateRight=false;
   float cameraYaw=-.785398f;
@@ -89,7 +93,7 @@ struct App {
   ~App() {
     sound.stop();
 #ifdef AETHERIA_WITH_WENUYGFX
-    gfxPresentation.reset(); // SDL textures must die before the renderer.
+    gfxPresentation.reset();
 #endif
     if(renderer) SDL_DestroyRenderer(renderer);
     if(window) SDL_DestroyWindow(window);
@@ -116,11 +120,14 @@ struct App {
   void save() {
     if(savePath.empty()) {world.message="HOME NOT AVAILABLE";world.messageSeconds=2;return;}
     bool ok=world.save(savePath);
+    if(ok)autosaveClock.reset();
     world.message=ok?"GAME SAVED":"SAVE FAILED";world.messageSeconds=2;
   }
   void load() {
     bool ok=!savePath.empty() && world.load(savePath);
-    if(!ok) {world.message="NO VALID SAVE";world.messageSeconds=2;}
+    if(ok) {
+      autosaveClock.reset();input={};rightDragging=false;
+    }else {world.message="NO VALID SAVE";world.messageSeconds=2;}
   }
   void mouseClick(int x,int y) {
     const ui::State state{inventory,help,bigMap,world.activeNpc>=0,world.paused,
@@ -172,6 +179,25 @@ struct App {
   }
   void event(const SDL_Event& e) {
     if(e.type==SDL_QUIT) {quit=true;return;}
+    if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==SDL_BUTTON_RIGHT) {
+      rightDragging=mode3d&&!inventory&&!help&&!bigMap&&!world.paused&&
+                    world.activeNpc<0&&!world.won&&!world.lost;
+      return;
+    }
+    if(e.type==SDL_MOUSEBUTTONUP && e.button.button==SDL_BUTTON_RIGHT) {
+      rightDragging=false;return;
+    }
+    if(e.type==SDL_MOUSEMOTION) {
+      if(rightDragging&&mode3d&&!inventory&&!help&&!bigMap&&
+         !world.paused&&world.activeNpc<0&&!world.won&&!world.lost)
+        cameraYaw=aetheria::CameraControl::dragYaw(cameraYaw,static_cast<float>(e.motion.xrel));
+      return;
+    }
+    if(e.type==SDL_MOUSEWHEEL) {
+      if(mode3d&&!inventory&&!help&&!bigMap&&!world.paused&&
+         world.activeNpc<0&&!world.won&&!world.lost) cameraControl.wheel(e.wheel.y);
+      return;
+    }
     if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==1) {
       mouseClick(e.button.x,e.button.y);return;
     }
@@ -218,7 +244,7 @@ struct App {
         useWenuyGfx=!useWenuyGfx;
         if(!useWenuyGfx)gfxPresentation.reset();
         world.message=useWenuyGfx?"WENUYGFX ENABLED":"SDL GRAPHICS";
-        world.messageSeconds=2;
+        world.messageSeconds=2.f;
         break;
 #endif
       case 'k': if(world.skill())sound.play(aetheria::Sound::Cue::Magic);break;
@@ -235,7 +261,7 @@ struct App {
                         SDL_SetWindowFullscreen(window,fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0);break;
       case SDLK_F5: save();break;
       case SDLK_F9: load();break;
-      case 'n': if(world.lost||world.won) world.reset();break;
+      case 'n': if(world.lost||world.won) {world.reset();autosaveClock.reset();}break;
       default: break;
     }
   }
@@ -453,10 +479,12 @@ struct App {
     if(s=="LEVEL UP!") return "NY NIVÅ!";
     if(s=="GAME SAVED") return "SPELET SPARAT";
     if(s=="GAME LOADED") return "SPELET INLÄST";
-    if(s=="SAVE FAILED") return "KUNDE INTE SPARA";
+    if(s=="AUTO SAVED") return "AUTOMATISKT SPARAT";
+    if(s=="AUTO SAVE FAILED") return "AUTOSPARANDE MISSLYCKADES";
     if(s=="WENUYGFX ENABLED") return "WENUYGFX AKTIVERAD";
     if(s=="SDL GRAPHICS") return "SDL-GRAFIK";
     if(s=="WENUYGFX FALLBACK") return "WENUYGFX KUNDE INTE RITA";
+    if(s=="SAVE FAILED") return "KUNDE INTE SPARA";
     if(s=="NO VALID SAVE") return "INGEN GILTIG SPARFIL";
     if(s=="HOME NOT AVAILABLE") return "HEMMAPP SAKNAS";
     if(s=="HEALING HERB FOUND")return "LÄKEÖRT HITTAD";
@@ -494,8 +522,27 @@ struct App {
     for(const auto& e:world.enemies) if(e.alive) point(e.pos,{231,123,133},large?3:2);
     for(const auto& herb:world.herbs) if(!herb.taken) point(herb.pos,{141,241,139},large?4:2);
     for(const auto& n:world.npcs) point(n.pos,{252,213,135},large?5:3);
+    const auto target=aetheria::nearestQuestTarget(world);
+    if(target.valid()) {
+      const int mx=x+(static_cast<int>(target.point.x)-cx+tiles/2)*cell+cell/2;
+      const int my=y+(static_cast<int>(target.point.y)-cy+tiles/2)*cell+cell/2;
+      if(mx>=x&&mx<x+tiles*cell&&my>=y&&my<y+tiles*cell) {
+        render::circle(renderer,mx,my,large?6:4,{255,224,125});
+        ring(renderer,mx,my,large?10:7,{255,245,181});
+      }
+    }
     point(world.hero.pos,white,large?6:4);
     render::rect(renderer,x-9,y-9,size+18,3,{200,199,174});
+  }
+  const char* targetName(aetheria::GoalKind kind) const {
+    switch(kind) {
+      case aetheria::GoalKind::Crystal:return tr("CRYSTAL","KRISTALL");
+      case aetheria::GoalKind::Guard:return tr("GUARD","VAKT");
+      case aetheria::GoalKind::Shrine:return tr("SHRINE","ALTARE");
+      case aetheria::GoalKind::Elder:return tr("ELDER ARIN","ÄLDSTE ARIN");
+      case aetheria::GoalKind::Herb:return tr("HEALING HERB","LÄKEÖRT");
+      default:return tr("EXPLORE","UTFORSKA");
+    }
   }
   void uiButton(const ui::Rect& r,Color fill,Color edge) {
     render::rect(renderer,r.x,r.y,r.w,r.h,edge);
@@ -575,12 +622,37 @@ struct App {
     drawText(r,mode3d?(lowDetail?tr("F2: SIMPLE GRAPHICS","F2: ENKEL GRAFIK"):
                                  tr("F2: HIGH DETAIL","F2: HÖG DETALJ")):
                       tr("V: 3D VIEW","V: 3D VY"),351,96,1,sub);
-    drawText(r,tr("Z/C ROTATE  V CHANGE","Z/C VRID  V VÄXLA"),351,112,1,sub);
 #ifdef AETHERIA_WITH_WENUYGFX
+    drawText(r,tr("Z/C / RMB TURN  WHEEL ZOOM","Z/C / HÖGER VRID  HJUL ZOOM"),351,112,1,sub);
     drawText(r,useWenuyGfx?tr("F3: WENUYGFX ON","F3: WENUYGFX PÅ"):
-                           tr("F3: WENUYGFX OFF","F3: WENUYGFX AV"),556,112,1,sub);
+                           tr("F3: WENUYGFX OFF","F3: WENUYGFX AV"),584,112,1,sub);
+#else
+    drawText(r,tr("Z/C / RIGHT-DRAG: TURN  WHEEL: ZOOM",
+                  "Z/C / HÖGERDRAG: VRID  HJUL: ZOOMA"),351,112,1,sub);
 #endif
     minimap(817,26,118);
+    const auto target=aetheria::nearestQuestTarget(world);
+    if(target.valid()) {
+      render::rect(r,352,148,430,53,{13,36,51,229});
+      render::rect(r,352,148,4,53,{243,206,119});
+      drawText(r,tr("NEAREST OBJECTIVE","NÄRMASTE MÅL"),366,154,1,{232,211,153});
+      drawText(r,targetName(target.kind),366,176,2,white);
+      drawText(r,std::to_string(static_cast<int>(std::round(target.distance)))+
+                  tr(" M"," M"),620,176,2,{255,228,157});
+      const float angle=aetheria::directionToTarget(world.hero.pos,target.point,cameraYaw);
+      const int cx=755,cy=176;
+      const int tipx=cx+static_cast<int>(std::round(std::sin(angle)*16.f));
+      const int tipy=cy-static_cast<int>(std::round(std::cos(angle)*16.f));
+      const int stemx=cx+static_cast<int>(std::round(std::sin(angle)*6.f));
+      const int stemy=cy-static_cast<int>(std::round(std::cos(angle)*6.f));
+      render::line(r,cx,cy,tipx,tipy,{255,230,154});
+      render::line(r,tipx,tipy,
+                   stemx+static_cast<int>(std::round(std::cos(angle)*5.f)),
+                   stemy+static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+      render::line(r,tipx,tipy,
+                   stemx-static_cast<int>(std::round(std::cos(angle)*5.f)),
+                   stemy-static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+    }
     drawText(r,tr("NORTH","NORR"),847,154,1,sub);
     drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):
               world.daylight()<.72f?tr("DUSK","SKYMNING"):tr("DAY","DAG"),821,176,1,white);
@@ -679,9 +751,9 @@ struct App {
         tr("WASD / ARROWS   WALK","WASD / PILAR    GÅ"),
         tr("SHIFT           SPRINT (STAMINA)","SHIFT           SPRING (ORK)"),
         tr("F / HOLD G      JUMP / GLIDE","F / HÅLL G      HOPPA / GLID"),
-        tr("Z / C / V       CAMERA / 3D OR 2D","Z / C / V       KAMERA / 3D ELLER 2D"),
+        tr("Z/C/RMB + WHEEL CAMERA / ZOOM","Z/C/HÖGER + HJUL KAMERA / ZOOM"),
 #ifdef AETHERIA_WITH_WENUYGFX
-        tr("F2 / F3         DETAIL / WENUYGFX","F2 / F3         DETALJ / WENUYGFX"),
+        tr("F2/F3       DETAIL / WENUYGFX","F2/F3       DETALJ / WENUYGFX"),
 #else
         tr("F2              DETAIL LEVEL","F2              DETALJNIVÅ"),
 #endif
@@ -724,15 +796,17 @@ struct App {
     if(mode3d) {
 #ifdef AETHERIA_WITH_WENUYGFX
       if(useWenuyGfx) {
-        if(!gfxPresentation.draw(renderer,world,scene3d,cameraYaw,lowDetail,SW,SH,sceneStats)) {
-          // Renderer failure must never interrupt the user's journey or save.
+        if(!gfxPresentation.draw(renderer,world,scene3d,cameraYaw,lowDetail,
+                                 SW,SH,sceneStats,cameraControl.zoom())) {
           useWenuyGfx=false;gfxPresentation.reset();
-          world.message="WENUYGFX FALLBACK";world.messageSeconds=3;
-          sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
+          world.message="WENUYGFX FALLBACK";world.messageSeconds=3.f;
+          sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH,
+                                    cameraControl.zoom());
         }
       } else
 #endif
-      sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
+      sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH,
+                                cameraControl.zoom());
     } else {terrain();objects();}
     hud();
     if(help||bigMap||inventory||world.paused||world.won||world.lost||world.activeNpc>=0) overlay();
@@ -817,6 +891,14 @@ struct App {
       const int killsBefore=world.defeated;
       const float hpBefore=world.hero.hp, swingBefore=world.strikePulse;
       world.update(dt,movement);
+      const bool active=!world.paused && world.activeNpc<0 && !inventory &&
+                        !help && !bigMap && !world.won && !world.lost;
+      if(!screenshotMode && !savePath.empty() && autosaveClock.advance(dt,active)) {
+        const bool saved=world.save(savePath);
+        autosaveClock.complete(saved);
+        world.message=saved?"AUTO SAVED":"AUTO SAVE FAILED";
+        world.messageSeconds=2.f;
+      }
       if(world.collected>gemsBefore||world.herbsCollected>herbsBefore)sound.play(aetheria::Sound::Cue::Crystal);
       else if(world.defeated>killsBefore)sound.play(aetheria::Sound::Cue::Crystal);
       if(world.hero.hp<hpBefore)sound.play(aetheria::Sound::Cue::Damage);
