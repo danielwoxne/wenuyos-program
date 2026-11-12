@@ -857,7 +857,7 @@ void startLan(bool host){
   }
  }
  auto cancel=std::make_shared<std::atomic<bool>>(false);
- app.lanCancel=cancel;app.lanConnecting=true;
+ app.analysisBusy=false;app.lanCancel=cancel;app.lanConnecting=true;
  const unsigned epoch=++app.epoch;
  if(host)app.lanMessage=std::string(tr("Waiting for opponent at ","Väntar på motspelare på "))+localLanAddress()+":47777"+
   tr(" · Pairing code: "," · Parningskod: ")+code;
@@ -876,7 +876,7 @@ void startLan(bool host){
 void stopLan(){
  if(app.lanCancel)app.lanCancel->store(true);
  if(app.lanPeer)app.lanPeer->close();
- app.lanPeer.reset();app.lanConnecting=false;app.epoch++;
+ app.lanPeer.reset();app.lanConnecting=false;app.analysisBusy=false;app.epoch++;
  if(app.mode==2){app.mode=1;app.human=0;}
  app.lanMessage=tr("Disconnected. The board remains available for local play.",
                    "Frånkopplad. Brädet går att fortsätta spela på lokalt.");
@@ -996,7 +996,7 @@ int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProv
  app.lanPeer.reset();save();return 0;}
 void activate(Ptr application,void*){
  if(app.window&&!app.closed){g.gtk_window_present(app.window);return;}
- app.closed=false;clearHint();
+ app.closed=false;app.analysisBusy=false;clearHint();
  if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
  g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,960,700);
