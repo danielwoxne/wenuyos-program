@@ -10,6 +10,8 @@ constexpr std::uint16_t defaultPort = 47777;
 
 // Restrict connection targets to RFC1918/link-local/loopback IPv4 by default.
 bool localIPv4(const std::string& address);
+// Six ASCII digits. It limits accidental/uninvited joins, but is NOT encryption.
+bool validPairingCode(const std::string& code);
 
 // One TCP peer, one chess game. Protocol: "WCHESS/1" then MOVE <ply> <uci>.
 // A received move is validated with the same chess rules as a local move.
@@ -22,9 +24,11 @@ public:
 
     // Both calls are blocking and require direct user action in the GUI.
     bool host(std::uint16_t port, int timeoutMs, std::string* error = nullptr,
-              const std::atomic<bool>* cancel = nullptr);
+              const std::atomic<bool>* cancel = nullptr,
+              const std::string& pairingCode = {});
     bool join(const std::string& address, std::uint16_t port, int timeoutMs,
-              std::string* error = nullptr);
+              std::string* error = nullptr,
+              const std::string& pairingCode = {});
     void close();
     bool connected() const { return socket_ >= 0; }
     bool hostSide() const { return host_; }
@@ -40,6 +44,7 @@ private:
     std::string incoming_;
     bool peerClosed_ = false;
     Game game_;
-    bool begin(int fd, bool hosting, int timeoutMs, std::string* error);
+    bool begin(int fd, bool hosting, int timeoutMs, const std::string& pairingCode,
+               std::string* error);
 };
 } // namespace chess::lan
