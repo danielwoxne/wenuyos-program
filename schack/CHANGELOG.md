@@ -1,6 +1,9 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Första spelbara LAN-läget: två WenuyOS-datorer på samma betrodda nät, värd vit och ansluten svart. Inget nätverk aktiveras utan knapptryck.
+- TCP/IPv4 med privat adressfilter, protokollversion, lagliga drag och åtgärder för att avbryta eller koppla från; okrypterad testfunktion.
+- Automatiskt test av två nätverksparter över loopback och separata instruktioner i `docs/LAN-050.md`.
 - Nytt fokusläge för brädet med knapp och Ctrl+L, utan att dölja viktiga spelkontroller.
 - Sidopanelen rullbar på små skärmar; flyttade sekundära verktyg till egen rad.
 - Fjärde brädtema med hög kontrast.
