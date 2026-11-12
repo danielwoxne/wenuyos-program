@@ -1,16 +1,35 @@
-# Matte 1.2 (C++)
+# Matte 1.3 (C++ – utvecklingsversion)
 
 Ett lärande matematikprogram från förskola till gymnasium för **WenuyOS** – nu i C++
 (GTK 4.18, libadwaita 1.7, libwenuy statiskt länkat). Samma fönstergrund, sidopanel, statusrad
 och tema som Filer och Rita. Allt på engelska och svenska, går på 2 GB-datorer.
 
-**Installera:** dubbelklicka på `matte-1.2.0.wapp` i Filer → *Installera programmet*
-(eller `wenuyos install matte-1.2.0.wapp`). Kontrollera utan att installera:
-`wenuyos-get --check matte-1.2.0.wapp`. Programmet hamnar i `~/Program/Matte/` och startas med
+**Installera:** dubbelklicka på `matte-1.3.0.wapp` i Filer → *Installera programmet*
+(eller `wenuyos install matte-1.3.0.wapp`). Kontrollera utan att installera:
+`wenuyos-get --check matte-1.3.0.wapp`. Programmet hamnar i `~/Program/Matte/` och startas med
 `bin/matte`; det hittar sina data i `share/se.wenuyos.app.matte/` bredvid.
 
 Elevdata sparas i `~/.local/share/se.wenuyos.app.matte/<elev>.json` – **samma format som
 Python-versionen 0.4**, så elevernas framsteg följer med.
+
+> **Utveckling:** 1.3.0 finns i utkast-PR #10 och är inte godkänd för släpp.
+> CI måste verifiera byggnad, innehåll, 2 GB-programprofil och eventuell grafikstart
+> innan installation rekommenderas. Elevdata från äldre versioner ska bevaras.
+
+## Ren källkod och prov
+
+En ny checkout kan byggas med:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build -j2
+ctest --test-dir build --output-on-failure
+```
+
+CMake förbereder saknade reservikoner och uppgiftsdata automatiskt. Skapade PNG/JSON
+är byggresultat och ska inte läggas i Git. Testerna innehåller bland annat bråk/procent,
+tolerans för stavfel, omkastade siffror, facit, figurer och utskrifter.
+Prov på riktig WenuyOS-hårdvara återstår.
 
 ## Hur det hänger ihop
 
@@ -61,7 +80,7 @@ Programmet räknar aldrig Python – mallarna är förberäknade (upp till 40 va
 
 ```
 sudo apt install cmake g++ pkg-config libadwaita-1-dev libsqlite3-dev liblua5.4-dev libsodium-dev
-verktyg/bygg-wapp.sh            # → ../matte-1.2.0.wapp
+verktyg/bygg-wapp.sh            # → ../matte-1.3.0.wapp
 cmake -S . -B build && cmake --build build && MATTE_DATA=$PWD/share/se.wenuyos.app.matte ./build/matte
 ```
 
