@@ -437,6 +437,15 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
     g_signal_connect(p->stallK, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
         Papper* p = static_cast<Papper*>(d); raknepapper_stall_upp(p->w, p->uppgift); gtk_widget_grab_focus(p->w);
     }), p);
+    GtkWidget* undo = knapp(rad, tr("Undo pen stroke", "Ångra pennstreck"),
+                            tr("Remove your most recent handwritten stroke", "Ta bort det senaste handskrivna strecket"), false);
+    g_signal_connect(undo, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
+        Papper* p = static_cast<Papper*>(d);
+        if (!p->drag.empty()) p->drag.pop_back();
+        p->stylusAktiv = false;
+        gtk_widget_grab_focus(p->w);
+        uppdatera(p);
+    }), p);
     GtkWidget* re = knapp(rad, tr("Clear", "Rensa"), tr("An empty paper", "Ett tomt papper"), false);
     g_signal_connect(re, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
         Papper* p = static_cast<Papper*>(d); raknepapper_rensa(p->w); gtk_widget_grab_focus(p->w);
