@@ -77,7 +77,7 @@ bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error){
  }
  pollfd p{server,POLLIN,0};
  const bool ready=::poll(&p,1,timeoutMs)>0&&(p.revents&POLLIN);
- int fd=-1;if(ready)fd=::accept4(server,nullptr,nullptr,SOCK_CLOEXEC);
+ sockaddr_in remote{};socklen_t remoteLen=sizeof(remote);\n int fd=-1;if(ready)fd=::accept4(server,reinterpret_cast<sockaddr*>(&remote),&remoteLen,SOCK_CLOEXEC);\n if(fd>=0){char ip[INET_ADDRSTRLEN]{};::inet_ntop(AF_INET,&remote.sin_addr,ip,sizeof(ip));\n  if(!localIPv4(ip)){::close(fd);fd=-1;fail(error,"Only local IPv4 peers are allowed");}}
  ::close(server);
  if(fd<0){fail(error,"Waiting for a player timed out");return false;}
  return begin(fd,true,timeoutMs,error);
@@ -105,7 +105,7 @@ bool Peer::sendMove(const std::string& notation,std::string* error){
  if(!parseUci(notation,move)){fail(error,"Invalid move notation");return false;}
  // Validate before transmitting. Never apply an untrusted move.
  Game next=game_;
- if(!next.play(move)){fail(error,"Illegal move");return false;}
+ if(game_.result()!="ongoing"||!next.play(move)){fail(error,"Illegal move");return false;}
  const std::string line="MOVE "+std::to_string(game_.moves.size())+" "+notation+"\n";
  if(!sendAll(socket_,line,5000)){fail(error,"Connection lost");close();return false;}
  game_=std::move(next);return true;
@@ -121,7 +121,7 @@ bool Peer::receiveMove(int timeoutMs,std::string* error){
   fail(error,"Unexpected network message");close();return false;
  }
  Game next=game_;
- if(!next.playUci(line.substr(expected.size()))){
+ if(game_.result()!="ongoing"||!next.playUci(line.substr(expected.size()))){
   fail(error,"Remote player sent an illegal move");close();return false;
  }
  game_=std::move(next);return true;
