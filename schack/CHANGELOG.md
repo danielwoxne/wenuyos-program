@@ -1,6 +1,10 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Etapp 13: Tre nya kombinationsövningar (torngaffel, dubbelhot med dam och springargaffel) utökar schackskolan till 26 tvåspråkiga övningar. Varje lösning får ett regel- och hotprov.
+- Kunskapsprofil visar fyra områdens avklarade övningar, lyckade repetitioner och fel. Rekommendationerna prioriterar fortfarande oavklarade övningar, men för avslutade moment vägs tidigare misstag mot lyckade repetitioner.
+- `progress.txt` lagrar lyckade repetitioner på en egen tredje rad. Läsaren hanterar också äldre en- eller tvåradiga sparfiler och äldre övningsantal genom att läsa varje rad separat. Programmet arbetar helt lokalt, utan nya tjänster, extra grafikytor eller nätverksanrop.
+
 - Etapp 12: Schackskolan delar in 23 övningar (20 befintliga och tre nya) i Grunder, Taktik och Fördjupning. Fel per övning sparas efter den äldre avslutsmasken i `progress.txt` och gamla sparfiler kan fortfarande läsas. Rekommenderad övning väljer först olösta moment med flest misstag; när alla klarats repeteras svagaste momentet. Efter två misstag visas en uppgiftsspecifik ledtråd. Tre taktiska övningar tillkommer: avdragsschack, bindning och spetstaktik, med uppgiftsbeskrivning, ledtråd och återkoppling på båda språken. Inga nya grafik- eller nätverksberoenden.
 
 - Etapp 11: ny knapp för att granska det senast spelade draget. En bakgrundstråd söker maximalt 8 000 positioner från föregående ställning; resultatet visar dragets observerbara egenskaper och eventuellt ett annat alternativ, utan att kalla draget ett bevisat misstag. Svenska och engelska.
