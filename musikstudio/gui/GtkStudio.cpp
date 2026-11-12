@@ -147,8 +147,12 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
     startTick(s);notice(s,tr("Recording – press Stop to finish","Spelar in – tryck Stoppa för att avsluta"));break;
   }
  }catch(const std::exception& e){
-  if(pick==Pick::Save)(void)s->guard.finishedSave(false);
-  notice(s,std::string(tr("Error: ","Fel: "))+e.what());
+  if(pick==Pick::Save){
+   (void)s->guard.finishedSave(false);
+   g_warning("Project save failed: %s",e.what());
+   notice(s,tr("Could not save the project. Check disk space and permissions.",
+               "Kunde inte spara projektet. Kontrollera ledigt utrymme och behörigheter."));
+  }else notice(s,std::string(tr("Error: ","Fel: "))+e.what());
  }
 }
 void choose(Studio* s,Pick pick){
@@ -210,7 +214,9 @@ void performProtected(Studio* s,const ws::ProjectAction& action){
     s->closeAllowed=true;gtk_window_close(GTK_WINDOW(s->window));break;
   }
  }catch(const std::exception& e){
-  notice(s,std::string(tr("Cannot open project: ","Kan inte öppna projektet: "))+e.what());
+  g_warning("Project open failed: %s",e.what());
+  notice(s,tr("Could not open the project. Check the file format and permissions.",
+              "Kunde inte öppna projektet. Kontrollera filformat och behörigheter."));
  }
 }
 void requestProtected(Studio* s,ws::ProjectAction action){
