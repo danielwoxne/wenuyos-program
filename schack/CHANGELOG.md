@@ -6,6 +6,8 @@
 - Fjärde brädtema med hög kontrast.
 - Tydligare markeringsram kring vald pjäs och separat tangentbordsmarkör.
 - Statusfältet berättar vilken pjäs som är vald och antalet lagliga drag, på svenska eller engelska.
+- Förfinade sex vektorritade pjästyper med konturlinjer, detaljer och en tydligare bas, utan rasterbilder eller oskärpa.
+- Mindre minsta bräd- och sidopanelstorlek, mer kompakt standardfönster och verktygsmarginaler.
 - Nya regressionstester för GUI-resurser och installationsmetadata.
 
 
