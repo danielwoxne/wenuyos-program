@@ -27,6 +27,13 @@ bool correctLessonMove(std::size_t index, const Move& move);
 // player move, deterministic opponent reply, then player move.
 std::size_t lessonLineLength(std::size_t index);
 const char* lessonLineMove(std::size_t index,std::size_t ply);
+std::size_t lessonVariationCount(std::size_t index);
+const char* lessonLineMoveVariant(std::size_t index,std::size_t ply,std::size_t variation);
+// Feedback describes the observed move, not a deep engine evaluation.
+const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t variation);
+const char* lessonStepFeedbackSv(std::size_t index,std::size_t ply,std::size_t variation);
+bool correctLessonMoveAtVariant(std::size_t index,std::size_t ply,
+                                std::size_t variation,const Move& move);
 bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move);
 // Preserve completion bits from 0.4; track missed attempts independently.
 std::size_t recommendedLesson(std::uint64_t completed,
