@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 28> lessons{{
+constexpr std::array<Lesson, 29> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -270,11 +270,22 @@ constexpr std::array<Lesson, 28> lessons{{
         "Bra plan! Du tog plats och utvecklade en pjäs medan svart svarade.",
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4"
     },
+    {
+        "Win the queen with a knight fork", "Vinn damen med en springargaffel",
+        "Give check with the knight, respond to Black's king move, then capture the queen.",
+        "Ge schack med springaren, se vart svarts kung flyttar och slå sedan damen.",
+        "From d5 the knight forks king and queen on f6. After the king escapes, capture on h7.",
+        "Springaren från d5 hotar både kung och dam från f6. När kungen flyttar kan du slå på h7.",
+        "Great! You forced the king to respond to check and won the queen on your next move.",
+        "Utmärkt! Du tvingade kungen att svara på schacken och vann damen med nästa drag.",
+        "4k3/7q/8/3N4/8/8/8/4K3 w - - 0 1", "d5f6"
+    },
 }};
 // Two deterministic, legal replies for each multi-move lesson.
-constexpr std::array<std::array<std::array<const char*,3>,2>,2> extendedLines{{
+constexpr std::array<std::array<std::array<const char*,3>,2>,3> extendedLines{{
     {{{"g1f3","g8f6","e2e4"},{"g1f3","b8c6","e2e4"}}},
-    {{{"e2e4","e7e5","g1f3"},{"e2e4","c7c5","g1f3"}}}
+    {{{"e2e4","e7e5","g1f3"},{"e2e4","c7c5","g1f3"}}},
+    {{{"d5f6","e8d8","f6h7"},{"d5f6","e8f8","f6h7"}}}
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
@@ -306,6 +317,13 @@ bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move) {
 }
 const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t variation) {
     if(index<26||variation>=lessonVariationCount(index))return "";
+    if(index==28){
+      if(ply==0)return "Your knight gives check and simultaneously threatens the queen.";
+      if(ply==1)return variation==0?
+        "The king retreats to d8. Your knight can now capture the queen on h7.":
+        "The king retreats to f8. The queen on h7 remains under attack.";
+      return "";
+    }
     if(ply==0)return index==26?
       "Your knight is developed. Notice how Black chooses to defend before advancing the pawn.":
       "Your pawn occupies the centre. Watch how Black contests it before developing the knight.";
@@ -318,6 +336,13 @@ const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t v
 }
 const char* lessonStepFeedbackSv(std::size_t index,std::size_t ply,std::size_t variation) {
     if(index<26||variation>=lessonVariationCount(index))return "";
+    if(index==28){
+      if(ply==0)return "Springaren ger schack och hotar samtidigt damen.";
+      if(ply==1)return variation==0?
+        "Kungen går till d8. Springaren kan nu slå damen på h7.":
+        "Kungen går till f8. Damen på h7 är fortfarande hotad.";
+      return "";
+    }
     if(ply==0)return index==26?
       "Du har utvecklat springaren. Se hur svart svarar innan du går fram med bonden.":
       "Din bonde tar plats i centrum. Se hur svart utmanar den innan du utvecklar springaren.";
