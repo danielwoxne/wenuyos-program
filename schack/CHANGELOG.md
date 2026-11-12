@@ -8,6 +8,9 @@
 - Statusfältet berättar vilken pjäs som är vald och antalet lagliga drag, på svenska eller engelska.
 - Förfinade sex vektorritade pjästyper med konturlinjer, detaljer och en tydligare bas, utan rasterbilder eller oskärpa.
 - Mindre minsta bräd- och sidopanelstorlek, mer kompakt standardfönster och verktygsmarginaler.
+- Responsiv layout som staplar bräde och rullbar sidopanel under 780 px fönsterbredd; kompakt verktygsrad under 520 px.
+- Färger för programfönster och panel följer GTK/WenuyOS temat; brädfärgerna behåller användarens val.
+- Kort brädstatus visas även när sidopanelen är dold, med text som kan läsas av hjälpmedel.
 - Nya regressionstester för GUI-resurser och installationsmetadata.
 
 
