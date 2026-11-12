@@ -338,8 +338,85 @@ bool correctLessonMoveAtVariant(std::size_t index,std::size_t ply,
 bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move) {
     return correctLessonMoveAtVariant(index,ply,0,move);
 }
+bool lessonAcceptsMove(std::size_t index,std::size_t ply,std::size_t variation,
+                       const Board& position,const Move& move) {
+    // A legal student move must meet the current lesson goal; position-based
+    // capture goals accept another legal capture of the same required piece.
+    if(ply>=lessonLineLength(index) || variation>=lessonVariationCount(index) ||
+       move.from<0||move.from>=64||move.to<0||move.to>=64)
+        return false;
+    if(index>=26 && (ply%2)==1)return false; // opponent reply is automatic
+    const auto legal=position.legalMoves();
+    if(std::find(legal.begin(),legal.end(),move)==legal.end())return false;
+    if((index==28||index==29)&&ply==2)
+        return position.squares[move.from]==(index==28?'N':'B') &&
+               position.squares[move.to]=='q'; // win the actual black queen
+    return correctLessonMoveAtVariant(index,ply,variation,move);
+}
+const char* lessonStepHintEn(std::size_t index,std::size_t ply,std::size_t variation) {
+    if(ply>=lessonLineLength(index) || variation>=lessonVariationCount(index))return "";
+    if(ply==0)return lesson(index).hintEn;
+    if(index==28&&ply==2)return "Your knight on f6 can capture the queen on h7.";
+    if(index==29&&ply==2)return "The king has moved. Your bishop on e4 can now take the queen on h7.";
+    if(index==30){
+        if(ply==2)return "Develop your knight from g1 to f3 after Black's pawn move.";
+        if(ply==4)return variation==0?
+          "Against ...Nc6, move the bishop from f1 to c4.":
+          "Against ...d6, advance the d-pawn from d2 to d4.";
+    }
+    if(index==26&&ply==2)return "Advance the pawn from e2 to e4 now.";
+    if(index==27&&ply==2)return "Develop the knight from g1 to f3 now.";
+    return lesson(index).hintEn;
+}
+const char* lessonStepHintSv(std::size_t index,std::size_t ply,std::size_t variation) {
+    if(ply>=lessonLineLength(index) || variation>=lessonVariationCount(index))return "";
+    if(ply==0)return lesson(index).hintSv;
+    if(index==28&&ply==2)return "Din springare på f6 kan slå damen på h7.";
+    if(index==29&&ply==2)return "Kungen har gått undan. Löparen på e4 kan nu slå damen på h7.";
+    if(index==30){
+        if(ply==2)return "Utveckla springaren från g1 till f3 efter svarts bondedrag.";
+        if(ply==4)return variation==0?
+          "Mot ...Sc6 flyttar du löparen från f1 till c4.":
+          "Mot ...d6 flyttar du bonden från d2 till d4.";
+    }
+    if(index==26&&ply==2)return "Flytta bonden från e2 till e4 nu.";
+    if(index==27&&ply==2)return "Utveckla springaren från g1 till f3 nu.";
+    return lesson(index).hintSv;
+}
+const char* lessonGoalEn(std::size_t index) {
+    lesson(index);
+    if(index==28)return "Win the queen by a knight fork";
+    if(index==29)return "Win the queen by a bishop skewer";
+    if(index==30)return "Complete three moves against Black's defence";
+    return "";
+}
+const char* lessonGoalSv(std::size_t index) {
+    lesson(index);
+    if(index==28)return "Vinn damen med springargaffel";
+    if(index==29)return "Vinn damen med löparspets";
+    if(index==30)return "Genomför tre drag mot svarts försvar";
+    return "";
+}
 const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t variation) {
     if(index<26||variation>=lessonVariationCount(index))return "";
+    if(index==29){
+      if(ply==0)return "Your bishop checks the king; the queen stands behind it on the same diagonal.";
+      if(ply==1)return variation==0?
+        "The king retreats to f7, revealing the queen on h7 for your bishop.":
+        "The king moves to h5, leaving the diagonal to the queen open.";
+      return "";
+    }
+    if(index==30){
+      if(ply==0)return "Your pawn has claimed e4. Watch how Black challenges the centre.";
+      if(ply==1)return variation==0?
+        "Black meets e4 with e5. Develop a knight before bringing your bishop into play.":
+        "Black attacks the centre with c5. Your knight can develop before a pawn break.";
+      if(ply==2)return "The knight on f3 supports your central plan.";
+      if(ply==3)return variation==0?
+        "Black developed to c6. With your e-pawn advanced, your bishop has a diagonal to c4.":
+        "Black supports the c5 pawn with d6. Your d-pawn can challenge the central squares.";
+      return "";
+    }
     if(index==28){
       if(ply==0)return "Your knight gives check and simultaneously threatens the queen.";
       if(ply==1)return variation==0?
@@ -359,6 +436,24 @@ const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t v
 }
 const char* lessonStepFeedbackSv(std::size_t index,std::size_t ply,std::size_t variation) {
     if(index<26||variation>=lessonVariationCount(index))return "";
+    if(index==29){
+      if(ply==0)return "Löparen ger schack; damen står bakom kungen på samma diagonal.";
+      if(ply==1)return variation==0?
+        "Kungen går till f7 och öppnar vägen för löparen mot damen på h7.":
+        "Kungen går till h5 och lämnar diagonalen till damen fri.";
+      return "";
+    }
+    if(index==30){
+      if(ply==0)return "Din bonde har tagit e4. Se hur svart utmanar centrum.";
+      if(ply==1)return variation==0?
+        "Svart svarar med e5. Utveckla springaren innan löparen kommer ut.":
+        "Svart angriper centrum med c5. Utveckla springaren före bondestriden.";
+      if(ply==2)return "Springaren på f3 hjälper din centrumplan.";
+      if(ply==3)return variation==0?
+        "Svart utvecklar springaren till c6. När e-bonden flyttat har löparen en diagonal mot c4.":
+        "Svart stödjer c5-bonden med d6. Din d-bonde kan utmana centrum.";
+      return "";
+    }
     if(index==28){
       if(ply==0)return "Springaren ger schack och hotar samtidigt damen.";
       if(ply==1)return variation==0?
