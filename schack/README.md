@@ -37,4 +37,4 @@ wenuyos install github.com/danielwoxne/wenuyos-program#schack
 Spelet har `se.wenuyos.app.schack.desktop` med `Categories=Game;BoardGame;`, svensk/engelsk metadata och en SVG-programikon.
 
 ## Status
-**0.5.0 förbereds för oberoende granskning i PR #8.** Den tidigare publicerade versionen fortsätter att gälla tills den nya versionen granskats, godkänts, sammanfogats och signerats som ett GitHub-släpp. Kontrollera `Program`-CI och `wenuyos verify` för varje revision och prova därefter på verklig WenuyOS-hårdvara med mjukvarurendering. Inga byggda `.wapp`-filer hör hemma i Git.
+**0.5.0 är publicerad. Version 0.5.1 granskas i PR #12** och får inte ersätta den publicerade utgåvan förrän Daniel godkänt sammanslagning och en ny signerad release. Kontrollera `Program`-CI och `wenuyos verify` för varje revision och prova därefter på verklig WenuyOS-hårdvara med mjukvarurendering. Inga byggda `.wapp`-filer hör hemma i Git.
