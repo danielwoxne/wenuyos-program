@@ -3,6 +3,7 @@
 ## 0.5.0 (under utveckling)
 - Språkstöd flyttat till WenuyOS egna libwenuy/gettext-domän och standardiserat ljust/mörkt tema via `wenuy::loadStyle()`.
 - Nya CTest-kontroller av svenska/engelska och engelskt reservspråk när översättningsfil saknas.
+- Drag och avslutade partier använder WenuyOS valda systemljud även vid LAN-spel.
 - Ny sexsiffrig parningskod i LAN-läget: slumpas på värddatorn och måste anges av motspelaren; okrypterat och inte kryptografiskt säkert.
 - Första spelbara LAN-läget: två WenuyOS-datorer på samma betrodda nät, värd vit och ansluten svart. Inget nätverk aktiveras utan knapptryck.
 - TCP/IPv4 med privat adressfilter, protokollversion, lagliga drag och åtgärder för att avbryta eller koppla från; okrypterad testfunktion.
