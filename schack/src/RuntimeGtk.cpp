@@ -527,14 +527,23 @@ void refresh(){
    g.gtk_label_set_label(app.lessonProfile,profile.c_str());
   }
   std::string task=tr(l.taskEn,l.taskSv);
-  if(chess::lessonLineLength(app.lessonIndex)>1&&!app.lessonSolved){
-   task+=" · "+std::string(tr("Your move ","Ditt drag "))+std::to_string(app.lessonPly/2+1)+"/2";
+  const char* goalEn=chess::lessonGoalEn(app.lessonIndex);
+  if(*goalEn){
+   task+=" · "+std::string(tr("Goal: ","Mål: "))+
+         tr(goalEn,chess::lessonGoalSv(app.lessonIndex));
+  }
+  const auto length=chess::lessonLineLength(app.lessonIndex);
+  if(length>1&&!app.lessonSolved){
+   task+=" · "+std::string(tr("Your move ","Ditt drag "))+std::to_string(app.lessonPly/2+1)+
+         "/"+std::to_string((length+1)/2);
    if(app.lessonPly>0)task+=" · "+std::string(tr("Opponent replied.","Motspelaren har svarat."));
   }
   g.gtk_label_set_label(app.lessonTask,task.c_str());
+  // After each opponent reply, explain that exact continuation, not ply 1
+  // repeatedly when a five-ply lesson reaches the second defensive reply.
   const char* coaching=app.lessonPly>=2?
-    tr(chess::lessonStepFeedbackEn(app.lessonIndex,1,app.lessonVariation),
-       chess::lessonStepFeedbackSv(app.lessonIndex,1,app.lessonVariation)):
+    tr(chess::lessonStepFeedbackEn(app.lessonIndex,app.lessonPly-1,app.lessonVariation),
+       chess::lessonStepFeedbackSv(app.lessonIndex,app.lessonPly-1,app.lessonVariation)):
     tr("Make the move on the board. A hint is available below.",
        "Gör draget på brädet. Ledtråd finns nedan.");
   g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):coaching);
@@ -566,6 +575,9 @@ void afterMove(chess::Move m,bool byComputer=false){
      (app.lessonPly%2)==1) {
    const char* reply=chess::lessonLineMoveVariant(app.lessonIndex,app.lessonPly,
                                                           app.lessonVariation);
+   // The board has already advanced to Black's reply, so do not keep
+   // animating a now-outdated white-only snapshot.
+   stopPieceMotion();
    if(reply && app.game.playUci(reply)){
     app.transient=tr(chess::lessonStepFeedbackEn(app.lessonIndex,app.lessonPly,app.lessonVariation),
                      chess::lessonStepFeedbackSv(app.lessonIndex,app.lessonPly,app.lessonVariation));
@@ -687,11 +699,12 @@ void chosen(int sq){
   for(auto m:board.legalMoves()){
    if(m.from!=app.selected||m.to!=sq)continue;
    if(m.promotion)m.promotion=app.promotion;
-   if(app.training&&!chess::correctLessonMoveAtVariant(app.lessonIndex,app.lessonPly,app.lessonVariation,m)){
+   if(app.training&&!chess::lessonAcceptsMove(app.lessonIndex,app.lessonPly,app.lessonVariation,board,m)){
     if(app.lessonMistakes[app.lessonIndex]<999)++app.lessonMistakes[app.lessonIndex];
     saveProgress();
     app.transient=app.lessonMistakes[app.lessonIndex]>=2?
-      tr(chess::lesson(app.lessonIndex).hintEn,chess::lesson(app.lessonIndex).hintSv):
+      tr(chess::lessonStepHintEn(app.lessonIndex,app.lessonPly,app.lessonVariation),
+         chess::lessonStepHintSv(app.lessonIndex,app.lessonPly,app.lessonVariation)):
       tr("Not quite. Try again: check the squares your piece controls, or use the hint.",
          "Inte riktigt. Försök igen: se vilka rutor pjäsen kontrollerar, eller använd ledtråden.");
     refresh();return;
@@ -1022,7 +1035,11 @@ void perform(int id){
    app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
   }break;
  case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
- case 8:if(app.training){app.transient=tr(chess::lesson(app.lessonIndex).hintEn,chess::lesson(app.lessonIndex).hintSv);refresh();}break;
+ case 8:if(app.training){
+  app.transient=tr(chess::lessonStepHintEn(app.lessonIndex,app.lessonPly,app.lessonVariation),
+                   chess::lessonStepHintSv(app.lessonIndex,app.lessonPly,app.lessonVariation));
+  refresh();
+ }break;
  case 9:if(app.training&&app.lessonIndex+1<chess::lessonCount()){app.lessonIndex++;lessonLoad();}break;
  case 19:if(app.training){app.lessonIndex=chess::recommendedLesson(app.lessonMask,app.lessonMistakes,app.lessonSuccesses);lessonLoad();}break;
  case 10: { // Export PGN
