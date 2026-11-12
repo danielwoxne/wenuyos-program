@@ -1,6 +1,9 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+## 0.5.0 (under utveckling)
+- Etapp 10: knappen för dragförslag ger en kort tvåspråkig pedagogisk förklaring av observerbara egenskaper (schack, matt, slag, rockad, bondeförvandling, pjäsutveckling och centrum). Förklaringen är ingen garanti för att draget är optimalt. Schackmotorns sökbudget och fem nivåer är oförändrade.
+
 - Etapp 9: pjäserna har ytterligare läsbara Cairo-vektordetaljer, och drag kan glida 160 ms utan extra bildytor. Rörelse stängs av vid WenuyOS `motion=off`, lågprestandaprofil eller `WENUYOS_PERF=low`; animation omfattar också LAN-drag och avbryts vid återställning/ångra.
 - Etapp 8: dynamiskt tillgänglighetsnamn för brädet (ruta, pjäs, färg, vald ruta), tydlig GTK-beskrivning av tangentbordet samt tillgängliga LAN-fältnamn.
 
