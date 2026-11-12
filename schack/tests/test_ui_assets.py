@@ -12,6 +12,10 @@ desktop = (root / "data/se.wenuyos.app.schack.desktop").read_text(encoding="utf-
 svg = root / "data/se.wenuyos.app.schack.svg"
 gui = (root / "src/RuntimeGtk.cpp").read_text(encoding="utf-8")
 manifest = (root / "wenuyos-app.toml").read_text(encoding="utf-8")
+integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
+assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
+assert 'wenuy::tr(english,swedish)' in integration
+assert 'wenuy::loadStyle()' in integration
 
 for entry in (
     "Name=Wenuy Chess",
@@ -29,9 +33,9 @@ for marker in (
     "case 14:app.focusBoard=!app.focusBoard",
     "g.gtk_scrolled_window_set_child(app.sidePanel,side)",
     'tr("Focus on board","Fokus på brädet")',
-    'wenuy::i18nInit("se.wenuyos.app.schack");',
-    'return wenuy::tr(en,sv);',
-    'theme();wenuy::loadStyle();refresh();',
+    'schack_system::initI18n();',
+    'return schack_system::translate(en,sv);',
+    'theme();schack_system::applyStyle();refresh();',
     'tr("High contrast","Hög kontrast")',
     "app.palette=(app.palette+1)%4",
     'connect(app.window,"notify::width",onWindowWidth,nullptr);',
