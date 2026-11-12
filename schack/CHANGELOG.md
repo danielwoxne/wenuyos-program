@@ -1,6 +1,8 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Etapp 15: en ny **flerstegsövning med springargaffel** utökar schackskolan till **29 övningar**. Spelaren ger schack med springaren, svart försvarar kungen genom ett av två lagliga drag och spelaren slår sedan den hotade damen. Svenska/engelska kommentarer efter motdraget och tester som verifierar att damen faktiskt försvinner från ställningen. Befintliga öppningsövningar får dessutom två alternerande lagliga svartsvar vardera, med en relevant kommentar för varje variant.
+
 - Etapp 15: två varierande lagliga försvarssvar i var och en av de två flerstegsövningarna (springare på kungs- eller damflygeln; e-bonde eller c-bonde). Nästa repetition alternerar försvar med räknaren för tidigare lyckade försök. Varje svar ger en svensk/engelsk pedagogisk förklaring i gränssnittet. Samtliga fyra draglinjer valideras från startpositionen i regelmotorns test. Endast förutbestämda lokala drag, ingen ny söktråd, nätverksanslutning eller sparfiländring.
 
 - Etapp 14: Två nya flerstegsövningar utökar kursen till 28. Spelaren planerar två egna utvecklingsdrag med ett förutbestämt lagligt svar från svart däremellan. Endast båda korrekta spelardragen ger slutförande och sparad progression. Skriptade drag kontrolleras på varje mellanposition; de tidigare 26 enstegsövningarna och sparfilens index är oförändrade. Kör helt offline utan extra sökbelastning.
