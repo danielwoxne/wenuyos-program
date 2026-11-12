@@ -271,9 +271,10 @@ constexpr std::array<Lesson, 28> lessons{{
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4"
     },
 }};
-constexpr std::array<std::array<const char*,3>,2> extendedLines{{
-    {{"g1f3","g8f6","e2e4"}},
-    {{"e2e4","e7e5","g1f3"}}
+// Two deterministic, legal replies for each multi-move lesson.
+constexpr std::array<std::array<std::array<const char*,3>,2>,2> extendedLines{{
+    {{{"g1f3","g8f6","e2e4"},{"g1f3","b8c6","e2e4"}}},
+    {{{"e2e4","e7e5","g1f3"},{"e2e4","c7c5","g1f3"}}}
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
@@ -283,14 +284,49 @@ std::size_t lessonLineLength(std::size_t index) {
     lesson(index); // range-check; preserve the existing exception behavior.
     return index>=26?3:1;
 }
-const char* lessonLineMove(std::size_t index,std::size_t ply) {
+std::size_t lessonVariationCount(std::size_t index) {
+    lesson(index); // preserve range checks
+    return index>=26?2:1;
+}
+const char* lessonLineMoveVariant(std::size_t index,std::size_t ply,std::size_t variation) {
     const auto length=lessonLineLength(index);
-    if(ply>=length)return nullptr;
-    return index>=26?extendedLines[index-26][ply]:lesson(index).solutionUci;
+    if(ply>=length||variation>=lessonVariationCount(index))return nullptr;
+    return index>=26?extendedLines[index-26][variation][ply]:lesson(index).solutionUci;
+}
+const char* lessonLineMove(std::size_t index,std::size_t ply) {
+    return lessonLineMoveVariant(index,ply,0);
+}
+bool correctLessonMoveAtVariant(std::size_t index,std::size_t ply,
+                                std::size_t variation,const Move& move) {
+    const char* expected=lessonLineMoveVariant(index,ply,variation);
+    return expected && uci(move)==expected;
 }
 bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move) {
-    const char* expected=lessonLineMove(index,ply);
-    return expected && uci(move)==expected;
+    return correctLessonMoveAtVariant(index,ply,0,move);
+}
+const char* lessonStepFeedbackEn(std::size_t index,std::size_t ply,std::size_t variation) {
+    if(index<26||variation>=lessonVariationCount(index))return "";
+    if(ply==0)return index==26?
+      "Your knight is developed. Notice how Black chooses to defend before advancing the pawn.":
+      "Your pawn occupies the centre. Watch how Black contests it before developing the knight.";
+    if(ply==1)return index==26?
+      (variation==0?"Black develops the kingside knight. The centre remains available.":
+                    "Black develops the queenside knight. Keep your central plan.") :
+      (variation==0?"Black contests the centre with e5. Develop a piece while defending e4.":
+                    "Black challenges the centre with c5. Develop your knight before choosing a plan.");
+    return "";
+}
+const char* lessonStepFeedbackSv(std::size_t index,std::size_t ply,std::size_t variation) {
+    if(index<26||variation>=lessonVariationCount(index))return "";
+    if(ply==0)return index==26?
+      "Du har utvecklat springaren. Se hur svart svarar innan du går fram med bonden.":
+      "Din bonde tar plats i centrum. Se hur svart utmanar den innan du utvecklar springaren.";
+    if(ply==1)return index==26?
+      (variation==0?"Svart utvecklar kungsflygelns springare. Centrum är fortfarande öppet.":
+                    "Svart utvecklar damflygelns springare. Håll fast vid din centrumplan.") :
+      (variation==0?"Svart utmanar centrum med e5. Utveckla en pjäs och försvara e4.":
+                    "Svart utmanar centrum med c5. Utveckla springaren innan du väljer plan.");
+    return "";
 }
 std::size_t recommendedLesson(std::uint64_t completed,
                               const std::array<unsigned,64>& mistakes) {
@@ -362,19 +398,21 @@ bool validateLessons(std::string* error) {
         }
         // Check every ply, including the scripted Black reply. Each step
         // is required to be legal in the resulting, real chess position.
-        Board sequence=board;
-        for(std::size_t ply=0;ply<lessonLineLength(i);++ply) {
-            Move step;
-            const char* u=lessonLineMove(i,ply);
-            if(!u || !parseUci(u,step)) {
-                if(error)*error="invalid scripted ply at lesson "+std::to_string(i);
-                return false;
-            }
-            const auto moves=sequence.legalMoves();
-            if(std::find(moves.begin(),moves.end(),step)==moves.end() ||
-               !sequence.apply(step)) {
-                if(error)*error="illegal scripted ply at lesson "+std::to_string(i);
-                return false;
+        for(std::size_t variation=0;variation<lessonVariationCount(i);++variation) {
+            Board sequence=board;
+            for(std::size_t ply=0;ply<lessonLineLength(i);++ply) {
+                Move step;
+                const char* u=lessonLineMoveVariant(i,ply,variation);
+                if(!u || !parseUci(u,step)) {
+                    if(error)*error="invalid scripted ply at lesson "+std::to_string(i);
+                    return false;
+                }
+                const auto moves=sequence.legalMoves();
+                if(std::find(moves.begin(),moves.end(),step)==moves.end() ||
+                   !sequence.apply(step)) {
+                    if(error)*error="illegal scripted ply at lesson "+std::to_string(i);
+                    return false;
+                }
             }
         }
         if (i == 7 || i == 8 || i == 14) {
