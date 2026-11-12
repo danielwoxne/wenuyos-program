@@ -1,6 +1,8 @@
 #pragma once
 #include "Chess.h"
 #include <cstddef>
+#include <array>
+#include <cstdint>
 #include <string>
 
 namespace chess {
@@ -21,5 +23,10 @@ struct Lesson {
 std::size_t lessonCount();
 const Lesson& lesson(std::size_t index);
 bool correctLessonMove(std::size_t index, const Move& move);
+// Preserve completion bits from 0.4; track missed attempts independently.
+std::size_t recommendedLesson(std::uint64_t completed,
+                              const std::array<unsigned,64>& mistakes);
+const char* lessonLevelEn(std::size_t index);
+const char* lessonLevelSv(std::size_t index);
 bool validateLessons(std::string* error = nullptr);
 }
