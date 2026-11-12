@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==23,"twenty-three lessons");
+    test(lessonCount()==26,"twenty-six lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -49,6 +49,28 @@ int main(){
     test(Board::fromFen(lesson(22).fen,tactic) &&
          parseUci(lesson(22).solutionUci,m),"skewer setup");
     test(tactic.apply(m) && tactic.inCheck(false),"skewer checks king");
+    // Advanced combinations must really check the king AND threaten material.
+    for(std::size_t index=23;index<=25;++index){
+        Board before;Move move;
+        test(Board::fromFen(lesson(index).fen,before) &&
+             parseUci(lesson(index).solutionUci,move),"combination setup");
+        const auto legal=before.legalMoves();
+        test(std::find(legal.begin(),legal.end(),move)!=legal.end(),
+             "combination solution legal");
+        Board after=before;
+        test(after.apply(move)&&after.inCheck(false),"combination delivers check");
+        const int target=index==23?56:index==24?56:55; // a8, a8, h7
+        test(after.isAttacked(target,true),"combination also threatens material");
+    }
+    std::array<unsigned,64> wins{};
+    test(recommendedLesson(0,misses,wins)==4,"weakest unfinished repeated");
+    wins[4]=10; // Previously difficult lesson is now repeatedly solved.
+    test(recommendedLesson(all,misses,wins)==2,
+         "successful repetition lowers old weakness priority");
+    test(recommendedLesson(all & ~(std::uint64_t(1)<<7),misses,wins)==7,
+         "all unfinished lessons take precedence over mastered ones");
+    test(lessonGroupCount()==4 && lessonGroup(25)==3,
+         "new advanced combinations share the advanced knowledge category");
     // Saved progress and lesson selector only use a 64-bit mask: guard the curriculum size.
     test(lessonCount()<=64,"lesson progress capacity");
     Board b=Board::initial();test(b.fen()=="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","initial FEN");
@@ -114,5 +136,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: twenty-three lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: twenty-six lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
