@@ -13,7 +13,7 @@ public:
   GfxPresentation& operator=(const GfxPresentation&)=delete;
   bool draw(SDL_Renderer* renderer,const legends::World& world,
             Scene3D& source,float yaw,bool lowDetail,
-            int logicalWidth,int logicalHeight,SceneStats& stats);
+            int logicalWidth,int logicalHeight,SceneStats& stats,float cameraZoom=1.f);
   void reset() noexcept; // call before SDL renderer/window is destroyed
 private:
   wenuygfx::SoftwareRenderer software_;

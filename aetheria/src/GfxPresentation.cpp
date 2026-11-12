@@ -15,7 +15,7 @@ void GfxPresentation::reset() noexcept {
 }
 bool GfxPresentation::draw(SDL_Renderer* renderer,const legends::World& world,
           Scene3D& source,float yaw,bool lowDetail,
-          int logicalWidth,int logicalHeight,SceneStats& stats){
+          int logicalWidth,int logicalHeight,SceneStats& stats,float cameraZoom){
   if(!renderer||logicalWidth<32||logicalHeight<32)return false;
   // Fixed low resolution means bounded CPU cost and <2 MB for colour+depth.
   // Keep the original aspect ratio even when switching renderers.
@@ -23,7 +23,7 @@ bool GfxPresentation::draw(SDL_Renderer* renderer,const legends::World& world,
   const int height=static_cast<int>(static_cast<int64_t>(width)*logicalHeight/logicalWidth);
   if(height<16||height>480)return false;
   const auto next=source.collectWenuyGfx(world,yaw,lowMemory_||lowDetail,
-                     logicalWidth,logicalHeight,scene_,camera_);
+                     logicalWidth,logicalHeight,scene_,camera_,cameraZoom);
   if(scene_.triangles.empty()||scene_.triangles.size()>26000u)return false;
   auto visuals=wenuygfx::visualsForHour(14.f*std::clamp(world.daylight(),0.f,1.f));
   visuals.timeSeconds=world.time;

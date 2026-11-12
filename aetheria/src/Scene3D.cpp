@@ -49,11 +49,13 @@ Color biome(Tile t,uint32_t h){
 struct Camera {
  V3 pos,right,up,forward;
  float focal,cx,cy;
- Camera(const World& w,float yaw,int sw,int sh) {
+ Camera(const World& w,float yaw,int sw,int sh,float zoom) {
+   const float range=std::clamp(zoom,.70f,1.65f);
    V3 focus={w.hero.pos.x+std::cos(yaw)*3.9f,
              w.hero.pos.y+std::sin(yaw)*3.9f,w.height(w.hero.pos.x,w.hero.pos.y)+1.25f};
-   pos={w.hero.pos.x-std::cos(yaw)*6.7f,
-        w.hero.pos.y-std::sin(yaw)*6.7f,w.height(w.hero.pos.x,w.hero.pos.y)+5.25f};
+   pos={w.hero.pos.x-std::cos(yaw)*(6.7f*range),
+        w.hero.pos.y-std::sin(yaw)*(6.7f*range),
+        w.height(w.hero.pos.x,w.hero.pos.y)+1.25f+4.f*range};
    forward=norm(focus-pos);right=norm(cross(forward,{0,0,1}));up=norm(cross(right,forward));
    focal=static_cast<float>(sh)*1.06f;cx=sw*.5f;cy=sh*.46f;
  }
@@ -430,9 +432,9 @@ void objects(const World& w,Painter& p,float yaw,bool low) {
 }
 } // namespace
 SceneStats Scene3D::render(SDL_Renderer* renderer,const legends::World& world,float yaw,
-                           bool lowDetail,int width,int height) {
+                           bool lowDetail,int width,int height,float zoom) {
  sky(renderer,width,height,yaw,world.daylight(),world.time);
- Camera cam(world,yaw,width,height);
+ Camera cam(world,yaw,width,height,zoom);
  Painter painter(cam,width,height,world.daylight());
  SceneStats stats;
  terrain(world,painter,lowDetail,stats);
@@ -443,9 +445,9 @@ SceneStats Scene3D::render(SDL_Renderer* renderer,const legends::World& world,fl
 #ifdef AETHERIA_WITH_WENUYGFX
 SceneStats Scene3D::collectWenuyGfx(const legends::World& world,float yaw,
                         bool lowDetail,int width,int height,
-                        wenuygfx::Scene& scene,wenuygfx::Camera& outputCamera) {
+                        wenuygfx::Scene& scene,wenuygfx::Camera& outputCamera,float zoom) {
  if(width<16||height<16||width>4096||height>4096)return {};
- Camera cam(world,yaw,width,height);
+ Camera cam(world,yaw,width,height,zoom);
  // Original simulation is read-only. The same source builds either renderer.
  scene.triangles.clear();
  scene.triangles.reserve(lowDetail?7000u:18000u);
