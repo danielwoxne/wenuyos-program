@@ -131,9 +131,9 @@ bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::a
 }
 bool Peer::join(const std::string& address,std::uint16_t port,int timeoutMs,std::string* error,const std::string& pairingCode){
  close();
- if(!localIPv4(address)||port==0||timeoutMs<=0||!validPairingCode(pairingCode)){
-  fail(error,"Use a private IPv4 network address");return false;
- }
+ if(!localIPv4(address)){fail(error,"Use a private IPv4 network address");return false;}
+ if(!validPairingCode(pairingCode)){fail(error,"Six-digit pairing code required");return false;}
+ if(port==0||timeoutMs<=0){fail(error,"Invalid port, timeout or pairing code");return false;}
  const int fd=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK,0);
  if(fd<0){fail(error,"Cannot create socket");return false;}
  sockaddr_in remote{};remote.sin_family=AF_INET;remote.sin_port=htons(port);

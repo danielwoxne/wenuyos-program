@@ -137,4 +137,23 @@ for marker in (
     'tr(" legal moves"," möjliga drag")',
 ):
     assert marker in gui, f"Missing UI functionality: {marker}"
+# Claude review (12 Nov): the chess-school panel must come before the LAN section, so its task and buttons are
+# visible without scrolling, and the first window must fit the screen (1024x600, 1280x720 with the panel).
+lesson_at = gui.index("app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);")
+lan_at = gui.index('label(side,tr("LAN GAME","NÄTVERKSPARTI")')
+status_at = gui.index('app.material=label(side,"",false,"wenuy-dim");')
+assert status_at < lesson_at < lan_at, "Chess school must be right under the game status, before the LAN section"
+assert "g.gtk_window_set_default_size(app.window,960,700)" not in gui, "Fixed 960x700 window overflows small screens"
+assert "const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);" in gui
+import re as _re
+fit = gui[gui.index("std::pair<int,int> fitWindow("):]
+fit = fit[:fit.index("\n}\n")]
+assert "w=std::min(w,std::max(480,screenW-32))" in fit and "h=std::min(h,std::max(400,screenH-112))" in fit
+def fit_py(sw, sh):
+    w, h = 960, 700
+    if sw > 0 and sh > 0:
+        w, h = min(w, max(480, sw - 32)), min(h, max(400, sh - 112))
+    return w, h
+assert fit_py(0, 0) == (960, 700) and fit_py(1920, 1080) == (960, 700)
+assert fit_py(1024, 600) == (960, 488) and fit_py(1280, 720) == (960, 608) and fit_py(800, 480) == (768, 400)
 print("OK: bilingual launcher, accessible GTK4, responsive board, motion policy and Cairo details")

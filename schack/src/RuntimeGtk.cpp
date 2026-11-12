@@ -119,6 +119,14 @@ struct GTK {
  void (*gtk_css_provider_load_from_data)(Ptr,const char*,long) = nullptr;
  Ptr (*gtk_widget_get_display)(Ptr) = nullptr;
  void (*gtk_style_context_add_provider_for_display)(Ptr,Ptr,unsigned) = nullptr;
+ // Optional: the monitor size, so the first window fits on small screens (1024×600).
+ struct Rect { int x,y,width,height; };
+ Ptr (*gdk_display_get_default)() = nullptr;
+ Ptr (*gdk_display_get_monitors)(Ptr) = nullptr;
+ unsigned (*g_list_model_get_n_items)(Ptr) = nullptr;
+ Ptr (*g_list_model_get_item)(Ptr,unsigned) = nullptr;
+ void (*gdk_monitor_get_geometry)(Ptr,Rect*) = nullptr;
+ void (*g_object_unref)(Ptr) = nullptr;
  bool load() {
    lib=dlopen("libgtk-4.so.1",RTLD_NOW|RTLD_LOCAL);
    if(!lib){std::fprintf(stderr,"Wenuy Schack: GTK4-biblioteket saknas: %s\n",dlerror());return false;}
@@ -130,11 +138,33 @@ struct GTK {
    gtk_css_provider_load_from_data=reinterpret_cast<decltype(gtk_css_provider_load_from_data)>(dlsym(lib,"gtk_css_provider_load_from_data"));
    gtk_widget_get_display=reinterpret_cast<decltype(gtk_widget_get_display)>(dlsym(lib,"gtk_widget_get_display"));
    gtk_style_context_add_provider_for_display=reinterpret_cast<decltype(gtk_style_context_add_provider_for_display)>(dlsym(lib,"gtk_style_context_add_provider_for_display"));
+   gdk_display_get_default=reinterpret_cast<decltype(gdk_display_get_default)>(dlsym(lib,"gdk_display_get_default"));
+   gdk_display_get_monitors=reinterpret_cast<decltype(gdk_display_get_monitors)>(dlsym(lib,"gdk_display_get_monitors"));
+   g_list_model_get_n_items=reinterpret_cast<decltype(g_list_model_get_n_items)>(dlsym(lib,"g_list_model_get_n_items"));
+   g_list_model_get_item=reinterpret_cast<decltype(g_list_model_get_item)>(dlsym(lib,"g_list_model_get_item"));
+   gdk_monitor_get_geometry=reinterpret_cast<decltype(gdk_monitor_get_geometry)>(dlsym(lib,"gdk_monitor_get_geometry"));
+   g_object_unref=reinterpret_cast<decltype(g_object_unref)>(dlsym(lib,"g_object_unref"));
    return true;
  }
 } g;
 #undef GTK_SYMBOLS
 
+// 960×700 as before, but never larger than the screen: on 1024×600 (and 1280×720 with the WenuyOS panel) the
+// window used to reach below the panel. The margins leave room for the panel and the title bar.
+std::pair<int,int> fitWindow(int screenW,int screenH){
+ int w=960,h=700;
+ if(screenW>0&&screenH>0){w=std::min(w,std::max(480,screenW-32));h=std::min(h,std::max(400,screenH-112));}
+ return {w,h};
+}
+std::pair<int,int> firstWindowSize(){
+ if(!g.gdk_display_get_default||!g.gdk_display_get_monitors||!g.g_list_model_get_n_items||
+    !g.g_list_model_get_item||!g.gdk_monitor_get_geometry)return fitWindow(0,0);
+ Ptr display=g.gdk_display_get_default();Ptr monitors=display?g.gdk_display_get_monitors(display):nullptr;
+ if(!monitors||g.g_list_model_get_n_items(monitors)==0)return fitWindow(0,0);
+ Ptr monitor=g.g_list_model_get_item(monitors,0);GTK::Rect r{0,0,0,0};
+ if(monitor){g.gdk_monitor_get_geometry(monitor,&r);if(g.g_object_unref)g.g_object_unref(monitor);}
+ return fitWindow(r.width,r.height);
+}
 template <typename Fn> void connect(Ptr obj,const char* signal,Fn callback,void* data){
  g_signal_connect_data(obj,signal,reinterpret_cast<void(*)()>(callback),data,nullptr,0);
 }
@@ -1097,7 +1127,8 @@ void activate(Ptr application,void*){
  app.closed=false;app.analysisBusy=false;clearHint();
  if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
- g.gtk_window_set_title(app.window,"Wenuy Schack");g.gtk_window_set_default_size(app.window,960,700);
+ g.gtk_window_set_title(app.window,"Wenuy Schack");
+ {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);}
  connect(app.window,"close-request",onClose,nullptr);
  Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
  Ptr header=g.gtk_box_new(0,8);margin(header,10,8);
@@ -1152,6 +1183,17 @@ void activate(Ptr application,void*){
  app.turn=label(side,"",false,"heading");
  app.status=label(side,"",true);
  app.material=label(side,"",false,"wenuy-dim");
+ // Chess school right under the game status: the task and Next/Hint are visible without scrolling.
+ app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
+ app.lessonTitle=label(app.lessonBox,"",true,"heading");
+ app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
+ app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");
+ app.lessonTask=label(app.lessonBox,"",true);
+ app.lessonFeedback=label(app.lessonBox,"",true);
+ Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
+ button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
+ button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
+ button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
  label(side,tr("LAN GAME","NÄTVERKSPARTI"),false,"heading");
  label(side,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
  app.lanEntry=g.gtk_entry_new();
@@ -1171,16 +1213,6 @@ void activate(Ptr application,void*){
  app.sideBtn=button(side,tr("You play: White","Du spelar: vit"),5);
  app.promoteBtn=button(side,tr("Promotion: Queen","Bondeförvandling: Dam"),11);
  app.themeBtn=button(side,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
- app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
- app.lessonTitle=label(app.lessonBox,"",true,"heading");
- app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
- app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");
- app.lessonTask=label(app.lessonBox,"",true);
- app.lessonFeedback=label(app.lessonBox,"",true);
- Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
- button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
- button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
- button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
  label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
  g.gtk_widget_set_size_request(scroll,240,80);g.gtk_box_append(side,scroll);

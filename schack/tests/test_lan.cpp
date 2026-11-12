@@ -25,6 +25,11 @@ int main(){
  check(chess::lan::validPairingCode("004259"),"valid leading-zero code");
  check(!chess::lan::validPairingCode("4259"),"short pairing code rejected");
  check(!chess::lan::validPairingCode("12345x"),"non-digit pairing code rejected");
+ {// Claude review: a bad pairing code must say so, not blame the address
+  Peer p;std::string err;
+  check(!p.join("192.168.1.5",48790,100,&err,"123")&&err=="Six-digit pairing code required","join reports bad pairing code");
+  err.clear();check(!p.join("8.8.8.8",48790,100,&err,"123456")&&err=="Use a private IPv4 network address","join reports public address");
+ }
  constexpr const char* pairing="004259";
  constexpr unsigned short port=48791;
  std::atomic<bool> success{true};
