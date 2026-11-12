@@ -4,7 +4,7 @@
 
 namespace chess {
 namespace {
-constexpr std::array<Lesson, 23> lessons{{
+constexpr std::array<Lesson, 26> lessons{{
     {
         "The knight's first step", "Springarens första steg",
         "Move the white knight from g1 to f3.", "Flytta den vita springaren från g1 till f3.",
@@ -220,6 +220,36 @@ constexpr std::array<Lesson, 23> lessons{{
         "Bra! Kungen måste undan från schacken och lämnar damen bakom sig.",
         "8/7q/6k1/8/8/5B2/8/K7 w - - 0 1", "f3e4"
     },
+    {
+        "Rook fork", "Torngaffel",
+        "Check the king and attack the queen with the same rook move.",
+        "Ge schack med tornet och hota samtidigt damen.",
+        "Look along the eighth rank from e8 after moving your rook.",
+        "Titta längs åttonde raden från e8 när du flyttat tornet.",
+        "Excellent! Your rook checks the king and attacks the queen.",
+        "Utmärkt! Tornet ger schack och hotar damen.",
+        "q5k1/8/8/8/8/8/8/4R1K1 w - - 0 1", "e1e8"
+    },
+    {
+        "Queen double attack", "Dubbelhot med damen",
+        "Give check with the queen and threaten the rook at a8.",
+        "Ge schack med damen och hota tornet på a8.",
+        "Move your queen from d1 to d5, then follow both diagonals.",
+        "Flytta damen från d1 till d5 och följ båda diagonalerna.",
+        "Great! The queen checks the king and simultaneously attacks the rook.",
+        "Bra! Damen ger schack och hotar samtidigt tornet.",
+        "r5k1/8/8/8/8/8/8/3QK3 w - - 0 1", "d1d5"
+    },
+    {
+        "Knight fork under pressure", "Springargaffel under press",
+        "Use your knight to check the king and threaten the queen.",
+        "Använd springaren för att ge schack och samtidigt hota damen.",
+        "From d5, a knight can jump to f6. Which pieces does it attack?",
+        "Från d5 kan springaren hoppa till f6. Vilka pjäser hotar den?",
+        "Correct! The knight attacks the king on e8 and queen on h7.",
+        "Rätt! Springaren hotar kungen på e8 och damen på h7.",
+        "4k3/7q/8/3N4/8/8/8/4K3 w - - 0 1", "d5f6"
+    },
 }};
 } // namespace
 std::size_t lessonCount() { return lessons.size(); }
@@ -241,11 +271,44 @@ std::size_t recommendedLesson(std::uint64_t completed,
         if(mistakes[i]>mistakes[next])next=i;
     return next;
 }
+std::size_t lessonGroup(std::size_t index) {
+    return index<9?0:index<15?1:index<20?2:3;
+}
+std::size_t lessonGroupCount() { return 4; }
+std::size_t recommendedLesson(std::uint64_t completed,
+                              const std::array<unsigned,64>& mistakes,
+                              const std::array<unsigned,64>& successes) {
+    // Unfinished tasks always outrank completed tasks. The recorded number
+    // of successful repetitions reduces the urgency of reviewing a lesson.
+    std::size_t best=lessonCount();
+    for(std::size_t i=0;i<lessonCount();++i) {
+        if(best==lessonCount()){best=i;continue;}
+        const bool aDone=(completed & (std::uint64_t(1)<<i))!=0;
+        const bool bDone=(completed & (std::uint64_t(1)<<best))!=0;
+        if(aDone!=bDone){if(!aDone)best=i;continue;}
+        // Compare fractions using 64-bit integer multiplication; no floating
+        // point, divisions, heap allocations or engine search.
+        const std::uint64_t lhs=std::uint64_t(mistakes[i])*(1u+successes[best]);
+        const std::uint64_t rhs=std::uint64_t(mistakes[best])*(1u+successes[i]);
+        if(lhs>rhs)best=i;
+    }
+    return best;
+}
 const char* lessonLevelEn(std::size_t index) {
-    return index<9?"Basics":index<15?"Tactics":index<20?"Practice":"Advanced tactics";
+    switch(lessonGroup(index)){
+    case 0:return "Basics";
+    case 1:return "Tactics";
+    case 2:return "Practice";
+    default:return "Advanced tactics";
+    }
 }
 const char* lessonLevelSv(std::size_t index) {
-    return index<9?"Grunder":index<15?"Taktik":index<20?"Fördjupning":"Avancerad taktik";
+    switch(lessonGroup(index)){
+    case 0:return "Grunder";
+    case 1:return "Taktik";
+    case 2:return "Fördjupning";
+    default:return "Avancerad taktik";
+    }
 }
 bool validateLessons(std::string* error) {
     for (std::size_t i = 0; i < lessonCount(); ++i) {
