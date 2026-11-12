@@ -506,6 +506,19 @@ void afterMove(chess::Move m,bool byComputer=false){
  schack_system::playMoveSound(app.game.result()!="ongoing");
  refresh();if(!byComputer&&!app.training)startAI();
 }
+const char* explanation(chess::MoveReason reason){
+ switch(reason){
+ case chess::MoveReason::Checkmate:return tr("This move delivers checkmate.","Draget ger schack matt.");
+ case chess::MoveReason::Check:return tr("This move gives check.","Draget ger schack.");
+ case chess::MoveReason::Promotion:return tr("A pawn becomes a stronger piece.","En bonde förvandlas till en starkare pjäs.");
+ case chess::MoveReason::Castle:return tr("Castling helps protect the king.","Rockad hjälper till att skydda kungen.");
+ case chess::MoveReason::Capture:return tr("This move captures an opponent's piece.","Draget slår en av motståndarens pjäser.");
+ case chess::MoveReason::Develop:return tr("Developing a piece brings it into the game.","Att utveckla en pjäs får den i spel.");
+ case chess::MoveReason::Center:return tr("This move occupies a central square.","Draget tar en ruta i centrum.");
+ default:return tr("A legal suggestion from the computer; consider your opponent's reply.",
+                   "Ett lagligt förslag från datorn. Fundera på motståndarens svar.");
+ }
+}
 struct AIResult{unsigned epoch; chess::SearchResult result; bool hint=false;};
 int deliverAI(void* data){
  std::unique_ptr<AIResult> r(static_cast<AIResult*>(data));
@@ -516,7 +529,8 @@ int deliverAI(void* data){
    if(r->result.move.from>=0){
     app.hintFrom=r->result.move.from;app.hintTo=r->result.move.to;
     app.hintText=std::string(tr("Suggestion: ","Förslag: "))+chess::san(app.game.board(),r->result.move)
-      +" ("+chess::squareName(app.hintFrom)+" → "+chess::squareName(app.hintTo)+")";
+      +" ("+chess::squareName(app.hintFrom)+" → "+chess::squareName(app.hintTo)+") · "+
+      explanation(chess::explainMove(app.game.board(),r->result.move));
    }
    refresh();return 0;
   }
