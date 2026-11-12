@@ -16,6 +16,7 @@ integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'wenuy::tr(english,swedish)' in integration
 assert 'wenuy::loadStyle()' in integration
+assert 'wenuy::playSound(gameFinished ? "done" : "step")' in integration
 
 for entry in (
     "Name=Wenuy Chess",
@@ -36,6 +37,7 @@ for marker in (
     'schack_system::initI18n();',
     'return schack_system::translate(en,sv);',
     'theme();schack_system::applyStyle();refresh();',
+    'schack_system::playMoveSound(app.game.result()!="ongoing");'
     'tr("High contrast","Hög kontrast")',
     "app.palette=(app.palette+1)%4",
     'connect(app.window,"notify::width",onWindowWidth,nullptr);',
