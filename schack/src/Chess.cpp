@@ -315,8 +315,17 @@ SearchResult bestMove(const Board& b,int skill,uint64_t maxNodes){
     SearchResult answer;auto ms=b.legalMoves();if(ms.empty())return answer;
     answer.move=ms.front();
     if(skill<=1){
+        // Beginner: use a cheap one-ply evaluation, choosing randomly among
+        // the four strongest candidates. Still fallible, but not arbitrary.
+        // Avoid extra search nodes/threads on a 2 GB soft-rendering machine.
+        std::stable_sort(ms.begin(),ms.end(),[&](const Move& a,const Move& c){
+            Board x=b,y=b;x.apply(a);y.apply(c);
+            return evaluate(x)<evaluate(y);
+        });
         std::mt19937 rng(uint32_t(std::random_device{}()));
-        std::shuffle(ms.begin(),ms.end(),rng);answer.move=ms.front();return answer;
+        const unsigned n=static_cast<unsigned>(std::min<std::size_t>(4,ms.size()));
+        std::uniform_int_distribution<unsigned> choose(0,n-1);
+        answer.move=ms[choose(rng)];return answer;
     }
     const int targetDepth=std::clamp(skill,2,5)-1+(skill>=5?1:0);
     if(!maxNodes)return answer;
