@@ -10,7 +10,7 @@ I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator o
 ## Språk och systemtema
 Schack använder nu WenuyOS:s gemensamma `wenuy::i18nInit("se.wenuyos.app.schack")` och `wenuy::tr()`. Svenska och engelska finns inbyggda. För ytterligare språk behövs motsvarande översättningar för Schacks engelska texter i `se.wenuyos.app.schack.mo` enligt WenuyOS:s språkdomän; bara ett språkpaket för själva operativsystemet ger **inte** automatiskt översatta schacktexter.
 
-På en WenuyOS-utvecklingsmaskin kan `wenuyos app translate de` användas för att skapa ett tyskt `.po`-underlag som sedan översätts och installeras enligt SDK:s rutiner. Saknas en översättning visas engelska. Vid nästa programstart väljs systemspråket. Dialoger och kontroller får WenuyOS gemensamma GTK-tema genom `wenuy::loadStyle()`, medan schackbrädets fyra särskilda paletter finns kvar.
+På en WenuyOS-utvecklingsmaskin kan `wenuyos app translate de` användas för att skapa ett tyskt `.po`-underlag som sedan översätts och installeras enligt SDK:s rutiner. Saknas en översättning visas engelska. Vid nästa programstart väljs systemspråket. Dialoger och kontroller får WenuyOS gemensamma GTK-tema genom `wenuy::loadStyle()`, medan schackbrädets fyra särskilda paletter finns kvar. Schack använder också WenuyOS valda systemljud för drag och avslutade partier. Ljuden följer systemets ljudinställningar.
 
 ## Bygg och testa
 I WenuyOS SDK / Debian 13 med GTK4:s utvecklingspaket:
