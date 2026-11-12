@@ -6,6 +6,8 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/random.h>
+#include <iomanip>
 #include "Lessons.h"
 #include <algorithm>
 #include <atomic>
@@ -77,6 +79,7 @@ const char* tr(const char* en,const char* sv){
  M(Ptr,gtk_entry_new,()) \
  M(void,gtk_entry_set_placeholder_text,(Ptr,const char*)) \
  M(const char*,gtk_editable_get_text,(Ptr)) \
+ M(void,gtk_editable_set_text,(Ptr,const char*)) \
  M(void,gtk_label_set_label,(Ptr,const char*)) \
  M(void,gtk_label_set_xalign,(Ptr,float)) \
  M(void,gtk_label_set_yalign,(Ptr,float)) \
@@ -221,7 +224,7 @@ struct App {
  Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
  Ptr themeBtn=nullptr,hintBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
- Ptr lanStatus=nullptr,lanEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
+ Ptr lanStatus=nullptr,lanEntry=nullptr,lanCodeEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,promoteBtn=nullptr;
  chess::Game game, savedGame;
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
@@ -653,10 +656,31 @@ int deliverLan(void* data){
                             tr("LAN game connected. You play Black.","LAN-anslutning upprättad. Du spelar svart.");
  refresh();return 0;
 }
+std::string freshPairingCode(){
+ std::uint32_t randomValue=0;
+ if(::getrandom(&randomValue,sizeof(randomValue),0)!=sizeof(randomValue))return {};
+ std::ostringstream out;
+ out<<std::setw(6)<<std::setfill('0')<<(randomValue%1000000U);
+ return out.str();
+}
 void startLan(bool host){
  if(app.closed||app.lanConnecting||app.lanPeer)return;
  std::string address;
- if(!host){
+ std::string code;
+ if(host){
+  code=freshPairingCode();
+  if(code.empty()){
+   app.lanMessage=tr("Could not generate a pairing code.","Det gick inte att skapa en parningskod.");
+   refresh();return;
+  }
+ }else{
+  const char* typed=g.gtk_editable_get_text(app.lanCodeEntry);
+  code=typed?typed:"";
+  if(!chess::lan::validPairingCode(code)){
+   app.lanMessage=tr("Enter the six-digit pairing code shown by the host.","Ange den sexsiffriga parningskoden som värden visar.");
+   refresh();return;
+  }
+  g.gtk_editable_set_text(app.lanCodeEntry,"");
   const char* ip=g.gtk_editable_get_text(app.lanEntry);
   address=ip?ip:"";
   if(!chess::lan::localIPv4(address)){
@@ -667,14 +691,15 @@ void startLan(bool host){
  auto cancel=std::make_shared<std::atomic<bool>>(false);
  app.lanCancel=cancel;app.lanConnecting=true;
  const unsigned epoch=++app.epoch;
- if(host)app.lanMessage=std::string(tr("Waiting for opponent at ","Väntar på motspelare på "))+localLanAddress()+":47777";
+ if(host)app.lanMessage=std::string(tr("Waiting for opponent at ","Väntar på motspelare på "))+localLanAddress()+":47777"+
+  tr(" · Pairing code: "," · Parningskod: ")+code;
  else app.lanMessage=tr("Connecting to the local computer…","Ansluter till den lokala datorn…");
  refresh();
- std::thread([host,address,epoch,cancel]{
+ std::thread([host,address,code,epoch,cancel]{
   auto peer=std::make_shared<chess::lan::Peer>();
   std::string error;
-  const bool ok=host?peer->host(chess::lan::defaultPort,60000,&error,cancel.get()):
-                    peer->join(address,chess::lan::defaultPort,5000,&error);
+  const bool ok=host?peer->host(chess::lan::defaultPort,60000,&error,cancel.get(),code):
+                    peer->join(address,chess::lan::defaultPort,5000,&error,code);
   if(cancel->load())return;
   auto* result=new LanResult{epoch,host,ok?peer:nullptr,cancel,error};
   g_idle_add(deliverLan,result);
@@ -855,6 +880,9 @@ void activate(Ptr application,void*){
  app.lanEntry=g.gtk_entry_new();
  g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
  g.gtk_box_append(side,app.lanEntry);
+ app.lanCodeEntry=g.gtk_entry_new();
+ g.gtk_entry_set_placeholder_text(app.lanCodeEntry,tr("Six-digit pairing code","Sexsiffrig parningskod"));
+ g.gtk_box_append(side,app.lanCodeEntry);
  app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);
  app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);
  app.lanStopBtn=button(side,tr("Disconnect / Cancel","Koppla från / Avbryt"),17);
