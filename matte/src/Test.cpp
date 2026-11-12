@@ -129,9 +129,59 @@ static void testaFlytt() {
     g_free(tmp);
 }
 
+// Ladda en elevprofil i det redan publicerade 1.2-formatet, utan att starta GTK.
+// Ändra aldrig originalprofilen vid provet: allt sker i en tillfällig XDG-datamapp.
+static void testaUppgraderingFran12() {
+    gchar* temp = g_dir_make_tmp("matte-upgrade-XXXXXX", nullptr);
+    KOLLA(temp != nullptr, "tillfällig datamapp för uppgraderingsprov");
+    if (!temp) return;
+    std::string root = temp;
+    std::string appDir = root + "/se.wenuyos.app.matte";
+    g_mkdir_with_parents(appDir.c_str(), 0700);
+    const std::string profil = R"JSON({
+      "namn":"elev12","visningsnamn":"Elev från 1.2",
+      "placerad":true,"lekläge":false,"lättläst":true,"sifferknappar":true,"zoom":1.4,
+      "kort":{"brak-delar":{"lage":2,"ratt_i_rad":4,"steg":3,
+        "nasta":"2026-11-20","antal":16,"antal_ratt":12,"senast":"2026-11-10",
+        "historik":[0,1,1],"feltankar":["gammal-feltanke"],
+        "feltanke_antal":{"0|fel":2},"feltanke_totalt":{"0|fel":3}}},
+      "regelbok":["brak-delar"],
+      "dagens":{"klar":"2026-11-10","svit":4},
+      "ritningar":[{"kort":"brak-delar","fil":"skiss.png","fraga":"Rita bråket","tid":"2026-11-10 12:00"}]
+    })JSON";
+    bool written = g_file_set_contents((appDir + "/elev12.json").c_str(), profil.c_str(), -1, nullptr);
+    KOLLA(written, "profil 1.2 kan skapas för uppgraderingsprov");
+    if (written) {
+        g_setenv("XDG_DATA_HOME", root.c_str(), TRUE);
+        Elev e = Elev::ladda("elev12");
+        auto it = e.kort.find("brak-delar");
+        bool loaded = it != e.kort.end() && it->second.lage == BEHARSKAR &&
+            it->second.antal == 16 && it->second.antalRatt == 12 &&
+            it->second.nasta == "2026-11-20" && it->second.feltankeTotalt["0|fel"] == 3 &&
+            e.lattlast && e.sifferknappar && e.zoom > 1.39 && e.zoom < 1.41 &&
+            e.dagensSvit == 4 && e.regelbok.size() == 1 && e.ritningar.size() == 1;
+        KOLLA(loaded, "1.2: framsteg, fellogik, repetition, lässtöd, textstorlek och ritning läses");
+        bool saved = e.spara();
+        Elev again = Elev::ladda("elev12");
+        auto second = again.kort.find("brak-delar");
+        KOLLA(saved && second != again.kort.end() &&
+            second->second.antalRatt == 12 && second->second.steg == 3 &&
+            second->second.feltankeTotalt["0|fel"] == 3 &&
+            again.lattlast && again.sifferknappar && again.regelbok.size() == 1 &&
+            again.ritningar.size() == 1 && again.dagensKlar == "2026-11-10",
+            "1.2 -> 1.3: sparning/återläsning bevarar elevens historik och stöd");
+        g_unsetenv("XDG_DATA_HOME");
+    }
+    g_remove((appDir + "/elev12.json").c_str());
+    g_rmdir(appDir.c_str());
+    g_rmdir(root.c_str());
+    g_free(temp);
+}
+
 int main(int argc, char** argv) {
     std::string mapp = argc > 1 ? argv[1] : "tester";
     testaFlytt();
+    testaUppgraderingFran12();
     testaStavningOchSiffror();
     testaBrak();
     testaJson();
