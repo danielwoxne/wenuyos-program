@@ -64,6 +64,15 @@ for marker in (
     'if(app.keyboardCursor && sq==app.cursor)',
     'app.keyboardCursor=false;chosen(sq);',
     'app.lanCodeEntry&&g.gtk_widget_has_focus(app.lanCodeEntry)',
+    'M(void,gtk_accessible_update_property,(Ptr,int,...))',
+    'void updateBoardAccessibility(){',
+    'g.gtk_accessible_update_property(app.board,4,label.c_str(),-1);',
+    'g.gtk_accessible_update_property(app.board,1,',
+    'g.gtk_accessible_update_property(app.lanEntry,4,',
+    'g.gtk_accessible_update_property(app.lanCodeEntry,4,',
+    '(!app.board || !g.gtk_widget_has_focus(app.board))',
+    'refresh();return 1;',
+
     'tr("Selected ","Vald ")',
     'tr(" legal moves"," möjliga drag")',
 ):
