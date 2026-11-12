@@ -2,6 +2,10 @@
 // build host without GTK development packages. GTK4 is a runtime dependency
 // of WenuyOS; only stable GTK4/GIO entry points are used.
 #include "Chess.h"
+#include "LanChess.h"
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include "Lessons.h"
 #include <algorithm>
 #include <atomic>
@@ -31,6 +35,7 @@ unsigned long g_signal_connect_data(void*, const char*, void (*)(), void*, void 
 int g_application_run(void*, int, char**);
 void g_object_unref(void*);
 unsigned int g_idle_add(int (*)(void*),void*);
+unsigned int g_timeout_add(unsigned int,int (*)(void*),void*);
 // Cairo 1.x public ABI; the runtime uses GTK4's Cairo drawing surface.
 struct _cairo; typedef _cairo cairo_t;
 void cairo_save(cairo_t*); void cairo_restore(cairo_t*);
@@ -69,6 +74,9 @@ const char* tr(const char* en,const char* sv){
  M(int,gtk_widget_get_width,(Ptr)) \
  M(void,gtk_box_append,(Ptr,Ptr)) \
  M(Ptr,gtk_label_new,(const char*)) \
+ M(Ptr,gtk_entry_new,()) \
+ M(void,gtk_entry_set_placeholder_text,(Ptr,const char*)) \
+ M(const char*,gtk_editable_get_text,(Ptr)) \
  M(void,gtk_label_set_label,(Ptr,const char*)) \
  M(void,gtk_label_set_xalign,(Ptr,float)) \
  M(void,gtk_label_set_yalign,(Ptr,float)) \
@@ -212,12 +220,17 @@ struct App {
  Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
  Ptr themeBtn=nullptr,hintBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
+ Ptr lanStatus=nullptr,lanEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,promoteBtn=nullptr;
  chess::Game game, savedGame;
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
  bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;
+ bool lanConnecting=false;
+ std::string lanMessage;
+ std::shared_ptr<chess::lan::Peer> lanPeer;
+ std::shared_ptr<std::atomic<bool>> lanCancel;
  std::uint64_t lessonMask=0; std::string hintText;
  std::size_t lessonIndex=0; unsigned epoch=0; std::string transient;
 };
@@ -241,7 +254,7 @@ void loadProgress(){
  std::uint64_t n=0;if(input>>n)app.lessonMask=n;
 }
 void save(){
- if(app.training)return;
+ if(app.training||app.mode==2)return;
  try {
   std::filesystem::create_directories(userDir());
   std::ofstream o(userDir()+"/session.txt.tmp",std::ios::trunc);
@@ -331,6 +344,10 @@ void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
  if(app.focusBtn)g.gtk_button_set_label(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
+ if(app.lanStatus)g.gtk_label_set_label(app.lanStatus,app.lanMessage.c_str());
+ if(app.lanHostBtn)g.gtk_widget_set_sensitive(app.lanHostBtn,!app.lanConnecting&&!app.lanPeer);
+ if(app.lanJoinBtn)g.gtk_widget_set_sensitive(app.lanJoinBtn,!app.lanConnecting&&!app.lanPeer);
+ if(app.lanStopBtn)g.gtk_widget_set_sensitive(app.lanStopBtn,app.lanConnecting||!!app.lanPeer);
  const std::string result=app.game.result();
  std::string text;
  if(result=="checkmate-white")text=tr("Checkmate – White wins","Schack matt – vit vinner");
@@ -402,11 +419,18 @@ void refresh(){
  }
  repaint();
 }
-void reset(){app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;app.game.reset();
+void reset(){if(app.mode==2){app.lanMessage=tr("Disconnect before starting a new game.","Koppla från innan du startar nytt parti.");refresh();return;}app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;app.game.reset();
  app.flipped=app.mode==0&&app.human==1;app.selected=-1;app.transient.clear();save();refresh();}
 void startAI();
 void afterMove(chess::Move m,bool byComputer=false){
  if(app.game.result()!="ongoing")return;
+ if(app.mode==2){
+  std::string error;
+  if(!app.lanPeer || !app.lanPeer->myTurn() || !app.lanPeer->sendMove(chess::uci(m),&error)){
+   app.lanMessage=tr("Network move failed: ","Nätverksdrag misslyckades: ")+error;
+   refresh();return;
+  }
+ }
  if(!app.game.play(m))return;
  app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
  if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
@@ -458,6 +482,7 @@ void chosen(int sq){
  if(sq<0||app.game.result()!="ongoing")return;
  if(app.training&&app.lessonSolved)return;
  if(!app.training&&app.mode==0&&(app.busy||app.game.board().white!=(app.human==0)))return;
+ if(app.mode==2&&(!app.lanPeer||!app.lanPeer->myTurn()))return;
  const auto board=app.game.board();
  if(app.selected>=0&&app.selected!=sq){
   for(auto m:board.legalMoves()){
@@ -586,16 +611,18 @@ void perform(int id){
  switch(id){
  case 0:reset();break;
  case 1: // Undo
+  if(app.mode==2){app.lanMessage=tr("Undo is unavailable in LAN games.","Ångra är inte tillgängligt i nätverkspartier.");refresh();break;}
   if(app.game.undo()){
    app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;
    if(!app.training&&app.mode==0&&!app.game.moves.empty()&&app.game.board().white!=(app.human==0))app.game.undo();
    app.selected=-1;app.transient.clear();save();refresh();startAI();
   }break;
  case 2:app.flipped=!app.flipped;app.transient.clear();save();refresh();break;
- case 3:app.mode=1-app.mode;reset();startAI();break;
+ case 3:if(app.mode==2){app.lanMessage=tr("Disconnect from LAN first.","Koppla från nätverkspartiet först.");refresh();break;}app.mode=1-app.mode;reset();startAI();break;
  case 4:app.skill=1+(app.skill%5);app.transient.clear();save();refresh();break;
- case 5:app.human=1-app.human;reset();startAI();break;
+ case 5:if(app.mode==2){app.lanMessage=tr("Sides cannot change in a LAN game.","Sidorna kan inte bytas i nätverkspartier.");refresh();break;}app.human=1-app.human;reset();startAI();break;
  case 6: // Schackskola toggle
+  if(app.mode==2){app.lanMessage=tr("Disconnect before opening lessons.","Koppla från innan du öppnar schackskolan.");refresh();break;}
   if(!app.training){
    save();app.savedGame=app.game;app.training=true;app.lessonIndex=0;lessonLoad();
   }else{
