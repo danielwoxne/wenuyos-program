@@ -4,6 +4,9 @@ Ett offline-schackspel för WenuyOS, byggt i C++17. Spela mot datorn på fem niv
 
 0.5.0 introducerar fokusläge (Ctrl+L), rullbar sidopanel och ett högkontrasttema. Spelregler och sparfiler är oförändrade.
 
+## Spela mot en annan WenuyOS-dator (0.5.0-test)
+I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator och *Anslut* på en annan. Ange värdens privata IPv4-adress och använd TCP-port 47777. Endast på **betrodda lokala nätverk**: trafiken är inte krypterad eller autentiserad, och ingen anslutning startar utan knapptryck. Läs [LAN-instruktionerna](docs/LAN-050.md). Två fysiska WenuyOS-datorer behöver fortfarande provas innan funktionen kan bedömas färdig.
+
 ## Bygg och testa
 I WenuyOS SDK / Debian 13 med GTK4:s utvecklingspaket:
 
