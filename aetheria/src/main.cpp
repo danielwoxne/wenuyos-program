@@ -3,6 +3,9 @@
 #include "MiniSDL.h"
 #include "Scene3D.h"
 #include "Sound.h"
+#ifdef AETHERIA_WITH_WENUYGFX
+#include "GfxPresentation.h"
+#endif
 #include "UiLayout.h"
 #include <algorithm>
 #include <cmath>
@@ -51,6 +54,10 @@ struct App {
   SDL_Renderer* renderer=nullptr;
   World world;
   aetheria::Scene3D scene3d;
+#ifdef AETHERIA_WITH_WENUYGFX
+  aetheria::GfxPresentation gfxPresentation;
+  bool useWenuyGfx=false;
+#endif
   aetheria::SceneStats sceneStats{};
   aetheria::Sound sound;
   bool audioEnabled=true,inventory=false,showSideQuest=true;
@@ -77,6 +84,9 @@ struct App {
   }
   ~App() {
     sound.stop();
+#ifdef AETHERIA_WITH_WENUYGFX
+    gfxPresentation.reset(); // SDL textures must die before the renderer.
+#endif
     if(renderer) SDL_DestroyRenderer(renderer);
     if(window) SDL_DestroyWindow(window);
     SDL_Quit();
@@ -199,6 +209,14 @@ struct App {
       case 'q': world.cycleElement();break;
       case 'v': mode3d=!mode3d;break;
       case SDLK_F2: lowDetail=!lowDetail;break;
+#ifdef AETHERIA_WITH_WENUYGFX
+      case SDLK_F3:
+        useWenuyGfx=!useWenuyGfx;
+        if(!useWenuyGfx)gfxPresentation.reset();
+        world.message=useWenuyGfx?"WENUYGFX ENABLED":"SDL GRAPHICS";
+        world.messageSeconds=2;
+        break;
+#endif
       case 'k': if(world.skill())sound.play(aetheria::Sound::Cue::Magic);break;
       case 'e': if(world.interact())sound.play(aetheria::Sound::Cue::Dialogue);break;
       case 'r': if(world.potion())sound.play(aetheria::Sound::Cue::Healing);break;
@@ -432,6 +450,9 @@ struct App {
     if(s=="GAME SAVED") return "SPELET SPARAT";
     if(s=="GAME LOADED") return "SPELET INLÄST";
     if(s=="SAVE FAILED") return "KUNDE INTE SPARA";
+    if(s=="WENUYGFX ENABLED") return "WENUYGFX AKTIVERAD";
+    if(s=="SDL GRAPHICS") return "SDL-GRAFIK";
+    if(s=="WENUYGFX FALLBACK") return "WENUYGFX KUNDE INTE RITA";
     if(s=="NO VALID SAVE") return "INGEN GILTIG SPARFIL";
     if(s=="HOME NOT AVAILABLE") return "HEMMAPP SAKNAS";
     if(s=="HEALING HERB FOUND")return "LÄKEÖRT HITTAD";
@@ -551,6 +572,10 @@ struct App {
                                  tr("F2: HIGH DETAIL","F2: HÖG DETALJ")):
                       tr("V: 3D VIEW","V: 3D VY"),351,96,1,sub);
     drawText(r,tr("Z/C ROTATE  V CHANGE","Z/C VRID  V VÄXLA"),351,112,1,sub);
+#ifdef AETHERIA_WITH_WENUYGFX
+    drawText(r,useWenuyGfx?tr("F3: WENUYGFX ON","F3: WENUYGFX PÅ"):
+                           tr("F3: WENUYGFX OFF","F3: WENUYGFX AV"),556,112,1,sub);
+#endif
     minimap(817,26,118);
     drawText(r,tr("NORTH","NORR"),847,154,1,sub);
     drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):
@@ -651,7 +676,11 @@ struct App {
         tr("SHIFT           SPRINT (STAMINA)","SHIFT           SPRING (ORK)"),
         tr("F / HOLD G      JUMP / GLIDE","F / HÅLL G      HOPPA / GLID"),
         tr("Z / C / V       CAMERA / 3D OR 2D","Z / C / V       KAMERA / 3D ELLER 2D"),
+#ifdef AETHERIA_WITH_WENUYGFX
+        tr("F2 / F3         DETAIL / WENUYGFX","F2 / F3         DETALJ / WENUYGFX"),
+#else
         tr("F2              DETAIL LEVEL","F2              DETALJNIVÅ"),
+#endif
         tr("J / SPACE / CLICK   SWORD ATTACK","J / MELLANSLAG / KLICK   SLÅ"),
         tr("Q               CHANGE ELEMENT","Q               BYT ELEMENT"),
         tr("K               ELEMENTAL SKILL","K               ELEMENTKRAFT"),
@@ -688,8 +717,19 @@ struct App {
   }
   void draw(bool present=true) {
     SDL_SetRenderDrawColor(renderer,39,75,103,255);SDL_RenderClear(renderer);
-    if(mode3d) sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
-    else {terrain();objects();}
+    if(mode3d) {
+#ifdef AETHERIA_WITH_WENUYGFX
+      if(useWenuyGfx) {
+        if(!gfxPresentation.draw(renderer,world,scene3d,cameraYaw,lowDetail,SW,SH,sceneStats)) {
+          // Renderer failure must never interrupt the user's journey or save.
+          useWenuyGfx=false;gfxPresentation.reset();
+          world.message="WENUYGFX FALLBACK";world.messageSeconds=3;
+          sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
+        }
+      } else
+#endif
+      sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
+    } else {terrain();objects();}
     hud();
     if(help||bigMap||inventory||world.paused||world.won||world.lost||world.activeNpc>=0) overlay();
     if(present) SDL_RenderPresent(renderer);
@@ -720,6 +760,9 @@ struct App {
       if(std::string(argv[i])=="--preview-inventory")previewInventory=true;
       if(std::string(argv[i])=="--preview-gear")previewGear=true;
       if(std::string(argv[i])=="--no-audio")audioEnabled=false;
+#ifdef AETHERIA_WITH_WENUYGFX
+      if(std::string(argv[i])=="--wenuygfx")useWenuyGfx=true;
+#endif
     }
     for(int i=1;i<argc;++i) {
       if(std::string(argv[i])=="--2d") mode3d=false;
