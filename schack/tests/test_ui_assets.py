@@ -43,7 +43,7 @@ for marker in (
     "g.gtk_widget_set_size_request(app.sidePanel,252,-1);",
     "// A two-level, scale-independent plinth adds depth",
     "if(keyLower=='l'){perform(14);return 1;}",
-    'bool focusBoard=false,keyboardCursor=false;',
+    'bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;',
     'if(app.keyboardCursor && sq==app.cursor)',
     'app.keyboardCursor=false;chosen(sq);',
     'tr("Selected ","Vald ")',
