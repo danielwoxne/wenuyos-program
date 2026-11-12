@@ -47,7 +47,7 @@ jobs:
                   for e in infos:
                       p=PurePosixPath(e.filename)
                       if p.is_absolute() or '..' in p.parts or e.filename.startswith('\\'):
-                          raise RuntimeError('Otillåten arkivsökväg')
+                          raise RuntimeError('Otillåten arkivsökväg: ' + repr(e.filename[:180]))
                       if ((e.external_attr>>16)&0o170000)==0o120000:
                           raise RuntimeError('Symlänk i källarkiv')
                   z.extractall(dest)
