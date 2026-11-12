@@ -16,6 +16,13 @@ integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'explanation(chess::explainMove(app.game.board(),r->result.move))' in gui
 assert 'app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);' in gui
+assert 'app.lessonMistakes[i]=std::min(mistakes,999u);' in gui
+assert 'out<<app.lessonMask' in gui
+assert 'chess::recommendedLesson(app.lessonMask,app.lessonMistakes)' in gui
+assert 'case 19:if(app.training)' in gui
+assert 'tr("Recommended practice","Rekommenderad övning")' in gui
+assert 'tr("Not quite. Try again: check the squares your piece controls, or use the hint."' in gui
+
 assert 'case 18:analyzeLastMove();break;' in gui
 assert 'chess::bestMove(before,3,8000)' in gui
 assert 'g_idle_add(deliverMoveReview,r);' in gui
