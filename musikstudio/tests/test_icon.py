@@ -23,4 +23,11 @@ assert "gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu)" in code
 assert "adw_header_bar_pack_end" in code
 assert "buttonScroll" not in code
 assert "gtk_widget_set_size_request(s->window,690,480)" in code
+
+# Reviewer #3: abandoned X11/duplicate WAPP packagers must not ship.
+for old in ("gui/XStudio.cpp", "tools/build-wapp.sh", "tools/make-wapp.py"):
+    assert not (root/old).exists(), f"Obsolete file should be removed: {old}"
+# Reviewer #4: test artifacts must be unique across all program pull requests.
+workflow=(root.parent/".github"/"workflows"/"program.yml").read_text(encoding="utf-8")
+assert 'name: program-test-${{ github.event.pull_request.number }}' in workflow
 print("Desktop, MIME, native file open, icon and compact layout PASS")
