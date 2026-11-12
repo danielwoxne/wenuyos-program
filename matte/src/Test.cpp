@@ -3,6 +3,7 @@
 #include <glib/gstdio.h>
 #include "Bedom.h"
 #include "Data.h"
+#include "Penntryck.h"
 #include "Framsteg.h"
 #include "Json.h"
 #include "Rita.h"
@@ -48,6 +49,16 @@ static void testaTolkning(const std::string& mapp) {
         }
     }
     KOLLA(skillnad == 0, "%d av %zu texter tolkas annorlunda än i Python", skillnad, fall.storlek());
+}
+
+// Pen pressure must never generate NaN, negative widths, or thick mouse strokes.
+static void testaPenntryck() {
+    KOLLA(penntryck(.25, true) == .25, "stylus pressure");
+    KOLLA(penntryck(-2, true) == 0 && penntryck(4, true) == 1, "pressure clamp");
+    KOLLA(penntryck(NAN, true) == 1, "invalid pressure fallback");
+    KOLLA(pennbredd(3, .5, false) == 3, "mouse and touch retain constant width");
+    KOLLA(pennbredd(3, 0, true) > 0 && pennbredd(3, 1, true) > pennbredd(3, 0, true),
+          "pressure controls visual stroke thickness");
 }
 
 static void testaBrak() {
@@ -184,6 +195,7 @@ int main(int argc, char** argv) {
     testaUppgraderingFran12();
     testaStavningOchSiffror();
     testaBrak();
+    testaPenntryck();
     testaJson();
     testaTolkning(mapp);
     if (argc > 2) {   // data-mappen: alla uppgifter bedöms rätt med sitt eget facit
