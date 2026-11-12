@@ -1,7 +1,7 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
-- Etapp 12: Schackskolan delar in befintliga 20 övningar i Grunder, Taktik och Fördjupning. Fel per övning sparas efter den äldre avslutsmasken i `progress.txt` och gamla sparfiler kan fortfarande läsas. Rekommenderad övning väljer först olösta moment med flest misstag; när alla klarats repeteras svagaste momentet. Efter två misstag visas en uppgiftsspecifik ledtråd. Inga nya grafik- eller nätverksberoenden.
+- Etapp 12: Schackskolan delar in 23 övningar (20 befintliga och tre nya) i Grunder, Taktik och Fördjupning. Fel per övning sparas efter den äldre avslutsmasken i `progress.txt` och gamla sparfiler kan fortfarande läsas. Rekommenderad övning väljer först olösta moment med flest misstag; när alla klarats repeteras svagaste momentet. Efter två misstag visas en uppgiftsspecifik ledtråd. Tre taktiska övningar tillkommer: avdragsschack, bindning och spetstaktik, med uppgiftsbeskrivning, ledtråd och återkoppling på båda språken. Inga nya grafik- eller nätverksberoenden.
 
 - Etapp 11: ny knapp för att granska det senast spelade draget. En bakgrundstråd söker maximalt 8 000 positioner från föregående ställning; resultatet visar dragets observerbara egenskaper och eventuellt ett annat alternativ, utan att kalla draget ett bevisat misstag. Svenska och engelska.
 - Nybörjarnivån väljer slumpmässigt bland högst fyra drag som föredras av en billig positionsbedömning, i stället för bland samtliga lagliga drag. Övriga nivåer och deras sökbudgetar oförändrade.
