@@ -4,6 +4,7 @@
 #include "Scene3D.h"
 #include "Sound.h"
 #include "UiLayout.h"
+#include "GameplayAssist.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -54,6 +55,9 @@ struct App {
   aetheria::SceneStats sceneStats{};
   aetheria::Sound sound;
   bool audioEnabled=true,inventory=false,showSideQuest=true;
+  bool rightDragging=false;
+  aetheria::CameraControl cameraControl;
+  aetheria::AutoSaveClock autosaveClock;
   Input input{};
   bool mode3d=true,lowDetail=true,rotateLeft=false,rotateRight=false;
   float cameraYaw=-.785398f;
@@ -102,11 +106,14 @@ struct App {
   void save() {
     if(savePath.empty()) {world.message="HOME NOT AVAILABLE";world.messageSeconds=2;return;}
     bool ok=world.save(savePath);
+    if(ok)autosaveClock.reset();
     world.message=ok?"GAME SAVED":"SAVE FAILED";world.messageSeconds=2;
   }
   void load() {
     bool ok=!savePath.empty() && world.load(savePath);
-    if(!ok) {world.message="NO VALID SAVE";world.messageSeconds=2;}
+    if(ok) {
+      autosaveClock.reset();input={};rightDragging=false;
+    }else {world.message="NO VALID SAVE";world.messageSeconds=2;}
   }
   void mouseClick(int x,int y) {
     const ui::State state{inventory,help,bigMap,world.activeNpc>=0,world.paused,
@@ -158,6 +165,25 @@ struct App {
   }
   void event(const SDL_Event& e) {
     if(e.type==SDL_QUIT) {quit=true;return;}
+    if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==SDL_BUTTON_RIGHT) {
+      rightDragging=mode3d&&!inventory&&!help&&!bigMap&&!world.paused&&
+                    world.activeNpc<0&&!world.won&&!world.lost;
+      return;
+    }
+    if(e.type==SDL_MOUSEBUTTONUP && e.button.button==SDL_BUTTON_RIGHT) {
+      rightDragging=false;return;
+    }
+    if(e.type==SDL_MOUSEMOTION) {
+      if(rightDragging&&mode3d&&!inventory&&!help&&!bigMap&&
+         !world.paused&&world.activeNpc<0&&!world.won&&!world.lost)
+        cameraYaw=aetheria::CameraControl::dragYaw(cameraYaw,static_cast<float>(e.motion.xrel));
+      return;
+    }
+    if(e.type==SDL_MOUSEWHEEL) {
+      if(mode3d&&!inventory&&!help&&!bigMap&&!world.paused&&
+         world.activeNpc<0&&!world.won&&!world.lost) cameraControl.wheel(e.wheel.y);
+      return;
+    }
     if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==1) {
       mouseClick(e.button.x,e.button.y);return;
     }
@@ -213,7 +239,7 @@ struct App {
                         SDL_SetWindowFullscreen(window,fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0);break;
       case SDLK_F5: save();break;
       case SDLK_F9: load();break;
-      case 'n': if(world.lost||world.won) world.reset();break;
+      case 'n': if(world.lost||world.won) {world.reset();autosaveClock.reset();}break;
       default: break;
     }
   }
@@ -431,6 +457,8 @@ struct App {
     if(s=="LEVEL UP!") return "NY NIVÅ!";
     if(s=="GAME SAVED") return "SPELET SPARAT";
     if(s=="GAME LOADED") return "SPELET INLÄST";
+    if(s=="AUTO SAVED") return "AUTOMATISKT SPARAT";
+    if(s=="AUTO SAVE FAILED") return "AUTOSPARANDE MISSLYCKADES";
     if(s=="SAVE FAILED") return "KUNDE INTE SPARA";
     if(s=="NO VALID SAVE") return "INGEN GILTIG SPARFIL";
     if(s=="HOME NOT AVAILABLE") return "HEMMAPP SAKNAS";
@@ -688,7 +716,8 @@ struct App {
   }
   void draw(bool present=true) {
     SDL_SetRenderDrawColor(renderer,39,75,103,255);SDL_RenderClear(renderer);
-    if(mode3d) sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH);
+    if(mode3d) sceneStats=scene3d.render(renderer,world,cameraYaw,lowDetail,SW,SH,
+                                       cameraControl.zoom());
     else {terrain();objects();}
     hud();
     if(help||bigMap||inventory||world.paused||world.won||world.lost||world.activeNpc>=0) overlay();
@@ -760,6 +789,14 @@ struct App {
       const int killsBefore=world.defeated;
       const float hpBefore=world.hero.hp, swingBefore=world.strikePulse;
       world.update(dt,movement);
+      const bool active=!world.paused && world.activeNpc<0 && !inventory &&
+                        !help && !bigMap && !world.won && !world.lost;
+      if(!screenshotMode && !savePath.empty() && autosaveClock.advance(dt,active)) {
+        const bool saved=world.save(savePath);
+        autosaveClock.complete(saved);
+        world.message=saved?"AUTO SAVED":"AUTO SAVE FAILED";
+        world.messageSeconds=2.f;
+      }
       if(world.collected>gemsBefore||world.herbsCollected>herbsBefore)sound.play(aetheria::Sound::Cue::Crystal);
       else if(world.defeated>killsBefore)sound.play(aetheria::Sound::Cue::Crystal);
       if(world.hero.hp<hpBefore)sound.play(aetheria::Sound::Cue::Damage);
