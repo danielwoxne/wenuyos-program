@@ -7,6 +7,11 @@ Ett offline-schackspel för WenuyOS, byggt i C++17. Spela mot datorn på fem niv
 ## Spela mot en annan WenuyOS-dator (0.5.0-test)
 I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator och *Anslut* på en annan. Ange värdens privata IPv4-adress och använd TCP-port 47777. Endast på **betrodda lokala nätverk**: trafiken är inte krypterad eller autentiserad, och ingen anslutning startar utan knapptryck. Läs [LAN-instruktionerna](docs/LAN-050.md). Två fysiska WenuyOS-datorer behöver fortfarande provas innan funktionen kan bedömas färdig.
 
+## Språk och systemtema
+Schack använder nu WenuyOS:s gemensamma `wenuy::i18nInit("se.wenuyos.app.schack")` och `wenuy::tr()`. Svenska och engelska finns inbyggda. För ytterligare språk behövs motsvarande översättningar för Schacks engelska texter i `se.wenuyos.app.schack.mo` enligt WenuyOS:s språkdomän; bara ett språkpaket för själva operativsystemet ger **inte** automatiskt översatta schacktexter.
+
+På en WenuyOS-utvecklingsmaskin kan `wenuyos app translate de` användas för att skapa ett tyskt `.po`-underlag som sedan översätts och installeras enligt SDK:s rutiner. Saknas en översättning visas engelska. Vid nästa programstart väljs systemspråket. Dialoger och kontroller får WenuyOS gemensamma GTK-tema genom `wenuy::loadStyle()`, medan schackbrädets fyra särskilda paletter finns kvar.
+
 ## Bygg och testa
 I WenuyOS SDK / Debian 13 med GTK4:s utvecklingspaket:
 
