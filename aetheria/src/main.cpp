@@ -3,6 +3,7 @@
 #include "MiniSDL.h"
 #include "Scene3D.h"
 #include "Sound.h"
+#include "UiLayout.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -10,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -51,7 +53,7 @@ struct App {
   aetheria::Scene3D scene3d;
   aetheria::SceneStats sceneStats{};
   aetheria::Sound sound;
-  bool audioEnabled=true,inventory=false;
+  bool audioEnabled=true,inventory=false,showSideQuest=true;
   Input input{};
   bool mode3d=true,lowDetail=true,rotateLeft=false,rotateRight=false;
   float cameraYaw=-.785398f;
@@ -106,11 +108,58 @@ struct App {
     bool ok=!savePath.empty() && world.load(savePath);
     if(!ok) {world.message="NO VALID SAVE";world.messageSeconds=2;}
   }
+  void mouseClick(int x,int y) {
+    const ui::State state{inventory,help,bigMap,world.activeNpc>=0,world.paused,
+                          world.won||world.lost,world.nearestNpc()>=0};
+    const ui::Action action=ui::hitTest(x,y,state);
+    switch(action) {
+      case ui::Action::Inventory:
+        inventory=true;input={};world.paused=true;return;
+      case ui::Action::Map:
+        bigMap=true;input={};world.paused=true;return;
+      case ui::Action::Help:
+        help=true;input={};world.paused=true;return;
+      case ui::Action::QuestToggle:
+        showSideQuest=!showSideQuest;return;
+      case ui::Action::Element:
+        world.cycleElement();return;
+      case ui::Action::Attack:
+        if(world.attack())sound.play(aetheria::Sound::Cue::Strike);return;
+      case ui::Action::Skill:
+        if(world.skill())sound.play(aetheria::Sound::Cue::Magic);return;
+      case ui::Action::Potion:
+        if(world.potion())sound.play(aetheria::Sound::Cue::Healing);return;
+      case ui::Action::Interact:
+        if(world.interact())sound.play(aetheria::Sound::Cue::Dialogue);return;
+      case ui::Action::CraftSword:
+      case ui::Action::CraftCharm:
+        sound.play(world.craft(action==ui::Action::CraftSword?1:2)
+                   ?aetheria::Sound::Cue::Craft:aetheria::Sound::Cue::Error);return;
+      case ui::Action::DialogueFirst:
+      case ui::Action::DialogueSecond:
+        if(world.chooseDialogue(action==ui::Action::DialogueSecond?1:0))
+          sound.play(aetheria::Sound::Cue::Dialogue);
+        return;
+      case ui::Action::Resume:
+        world.paused=false;return;
+      case ui::Action::Close:
+        if(inventory){inventory=false;world.paused=help||bigMap;}
+        else if(world.activeNpc>=0)world.closeDialogue();
+        else if(help){help=false;world.paused=bigMap||inventory;}
+        else if(bigMap){bigMap=false;world.paused=help||inventory;}
+        return;
+      case ui::Action::None:break;
+    }
+    // UI backgrounds and every modal swallow clicks; never attack through a menu.
+    if(state.inventory||state.help||state.map||state.dialogue||state.paused||
+       state.ended||ui::status.contains(x,y)||ui::quest.contains(x,y)||
+       (x>=340&&x<795&&y<135))return;
+    if(world.attack())sound.play(aetheria::Sound::Cue::Strike);
+  }
   void event(const SDL_Event& e) {
     if(e.type==SDL_QUIT) {quit=true;return;}
     if(e.type==SDL_MOUSEBUTTONDOWN && e.button.button==1) {
-      if(!inventory && !help && !bigMap && world.attack())sound.play(aetheria::Sound::Cue::Strike);
-      return;
+      mouseClick(e.button.x,e.button.y);return;
     }
     if(e.type!=SDL_KEYDOWN && e.type!=SDL_KEYUP) return;
     bool down=e.type==SDL_KEYDOWN;
@@ -154,6 +203,7 @@ struct App {
       case 'e': if(world.interact())sound.play(aetheria::Sound::Cue::Dialogue);break;
       case 'r': if(world.potion())sound.play(aetheria::Sound::Cue::Healing);break;
       case 'i': inventory=!inventory;input={};world.paused=help||bigMap||inventory;break;
+      case 't': showSideQuest=!showSideQuest;break;
       case 'h': help=!help;input={};world.paused=help||bigMap||inventory;break;
       case SDLK_TAB: bigMap=!bigMap;input={};world.paused=help||bigMap||inventory;break;
       case SDLK_ESCAPE: if(help||bigMap||inventory) {help=bigMap=inventory=false;world.paused=false;}
@@ -422,62 +472,115 @@ struct App {
     point(world.hero.pos,white,large?6:4);
     render::rect(renderer,x-9,y-9,size+18,3,{200,199,174});
   }
+  void uiButton(const ui::Rect& r,Color fill,Color edge) {
+    render::rect(renderer,r.x,r.y,r.w,r.h,edge);
+    render::rect(renderer,r.x+2,r.y+2,r.w-4,r.h-4,fill);
+  }
+  void wrappedText(const std::string& s,int x,int y,int maxWidth,int maxLines,
+                   int scale,Color color) {
+    std::istringstream words(s);std::string word,line;
+    int drawn=0;
+    while(words>>word) {
+      std::string next=line.empty()?word:line+" "+word;
+      if(render::textWidth(next,scale)<=maxWidth) {line=std::move(next);continue;}
+      if(!line.empty()) {
+        drawText(renderer,line,x,y+drawn*21,scale,color);
+        if(++drawn>=maxLines)return;
+      }
+      line=std::move(word);
+    }
+    if(!line.empty()&&drawn<maxLines)
+      drawText(renderer,line,x,y+drawn*21,scale,color);
+  }
   void hud() {
     SDL_Renderer* r=renderer;
-    render::rect(r,17,14,345,123,{14,35,50,218});
-    render::rect(r,17,14,4,123,{81,188,199});
-    drawText(r,"AETHERIA",34,28,3,{235,230,206});
-    drawText(r,std::string(tr("LEVEL","NIVÅ"))+" "+std::to_string(world.hero.level),35,57,2,sub);
-    bar(34,82,214,14,world.hero.hp/100,{218,107,107});
-    bar(34,102,214,10,world.hero.stamina/100,{103,196,163});
-    drawText(r,std::to_string(static_cast<int>(world.hero.hp))+"/100",260,82,2,white);
-    drawText(r,tr("HP","HP"),258,104,1,sub);
-    render::rect(r,17,145,345,67,{16,39,51,215});
-    if(world.questStage()==0) {
-      drawText(r,tr("QUEST: FIND THE CRYSTALS","UPPDRAG: HITTA KRISTALLER"),31,155,2,white);
-      drawText(r,std::to_string(world.collected)+" / 5",31,183,2,{161,241,218});
-    } else if(world.questStage()==1) {
-      drawText(r,tr("QUEST: DEFEAT THE GUARDS","UPPDRAG: BESEGRA VAKTER"),31,155,2,white);
-      drawText(r,std::to_string(world.defeated)+" / 4",31,183,2,{248,181,159});
-    } else if(world.questStage()==2) {
-      drawText(r,tr("QUEST: ACTIVATE THE SHRINE","UPPDRAG: AKTIVERA ALTARET"),31,155,2,white);
-      drawText(r,tr("PRESS E NEAR THE SHRINE","TRYCK E VID ALTARET"),31,183,2,{161,241,218});
-    } else drawText(r,tr("QUEST COMPLETED!","UPPDRAG KLART!"),31,165,3,{161,241,218});
-    // Optional side quest is independent of the main quest and persists across saves.
-    render::rect(r,17,219,345,65,{16,39,51,215});
-    drawText(r,tr("SIDE QUEST: HEALING HERBS","SIDOUPPDRAG: LÄKEÖRTER"),31,229,2,{229,219,170});
-    if(world.sideQuest==0)
-      drawText(r,tr("TALK TO ELDER ARIN","PRATA MED ÄLDSTE ARIN"),31,257,2,sub);
-    else if(world.sideQuest==1)
-      drawText(r,std::to_string(world.herbsCollected)+" / 3",31,257,2,{169,236,158});
-    else if(world.sideQuest==2)
-      drawText(r,tr("RETURN TO ARIN","ÅTERVÄND TILL ARIN"),31,257,2,{169,236,158});
-    else drawText(r,tr("COMPLETED +2 POTIONS","KLART +2 DRYCKER"),31,257,2,{169,236,158});
-    minimap(799,30,138);
-    drawText(r,mode3d?"3D  [Z/C] CAMERA  [V] 2D":"2D  [V] 3D",406,20,2,{233,241,226});
-    if(mode3d) drawText(r,lowDetail?"[F2] MORE DETAIL":"[F2] LOW DETAIL",434,44,1,{221,238,217});
-    drawText(r,tr("[I] INVENTORY  [M] SOUND","[I] VÄSKA  [M] LJUD"),415,72,2,{226,234,205});
-    if(mode3d) drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):
-                            world.daylight()<.72f?tr("DUSK","SKYMNING"):
-                                               tr("DAY","DAG"),595,44,1,{232,233,203});
-    drawText(r,tr("NORTH","NORR"),818,185,1,sub);
-    render::rect(r,17,516,926,67,{12,33,49,230});
-    render::rect(r,31,527,205,43,{28,58,70,245});
-    drawText(r,"[Q]  "+elementName(),42,537,2,elementColor());
-    render::rect(r,248,527,230,43,{28,58,70,245});
-    drawText(r,tr("[J]  ATTACK","[J]  ATTACK"),259,538,2,white);
-    render::rect(r,491,527,220,43,{28,58,70,245});
-    const int remaining=static_cast<int>(std::ceil(world.hero.skillCooldown));
-    drawText(r,"[K] "+elementName()+" " +(remaining?std::to_string(remaining)+"S":"OK"),500,538,2,elementColor());
-    render::rect(r,723,527,205,43,{28,58,70,245});
-    drawText(r,"[R] "+std::to_string(world.hero.potions)+" "+tr("POTIONS","DRYCKER"),735,537,2,white);
-    drawText(r,tr("H = HELP   I = INVENTORY   E = INTERACT","H = HJÄLP   I = VÄSKA   E = PRATA"),28,488,2,white);
-    if(world.activeNpc<0 && world.nearestNpc()>=0)
-      drawText(r,tr("[E] TALK TO VILLAGER","[E] PRATA MED BYBO"),350,468,2,{253,220,164});
-    if(world.messageSeconds>0 && world.activeNpc<0) {
-      std::string m=localMessage();int width=render::textWidth(m,2);
-      render::rect(r,SW/2-width/2-16,337,width+32,35,{17,43,58,228});
-      drawText(r,m,SW/2-width/2,347,2,{227,237,210});
+    render::rect(r,ui::status.x,ui::status.y,ui::status.w,ui::status.h,{14,35,49,230});
+    render::rect(r,ui::status.x,ui::status.y,4,ui::status.h,{80,185,198});
+    drawText(r,"AETHERIA",31,24,3,{239,233,207});
+    drawText(r,std::string(tr("LV","NIV"))+" "+std::to_string(world.hero.level),218,30,2,sub);
+    drawText(r,"HP",34,67,1,white);
+    bar(61,64,176,16,world.hero.hp/100.f,{224,111,116});
+    drawText(r,std::to_string(static_cast<int>(world.hero.hp))+"/100",244,67,1,white);
+    drawText(r,tr("SP","ORK"),34,94,1,white);
+    bar(61,90,176,13,world.hero.stamina/100.f,{105,203,163});
+    drawText(r,std::to_string(static_cast<int>(world.hero.stamina))+"/100",244,94,1,white);
+
+    render::rect(r,ui::quest.x,ui::quest.y,ui::quest.w,ui::quest.h,{14,35,49,222});
+    render::rect(r,ui::quest.x,ui::quest.y,3,ui::quest.h,{87,183,186});
+    drawText(r,tr("MAIN QUEST","HUVUDUPPDRAG"),31,146,1,{164,232,216});
+    std::string goal,progress;
+    switch(world.questStage()) {
+      case 0:goal=tr("FIND FIVE CRYSTALS","HITTA FEM KRISTALLER");
+             progress=std::to_string(world.collected)+" / 5";break;
+      case 1:goal=tr("DEFEAT FOUR GUARDS","BESEGRA FYRA VAKTER");
+             progress=std::to_string(world.defeated)+" / 4";break;
+      case 2:goal=tr("ACTIVATE THE SHRINE","AKTIVERA ALTARET");
+             progress=tr("USE E NEAR THE SHRINE","TRYCK E VID ALTARET");break;
+      default:goal=tr("MISSION COMPLETED","UPPDRAG KLART");
+              progress=tr("THE VALLEY IS SAFE","DALEN ÄR BEFRIAD");break;
+    }
+    drawText(r,goal,31,165,2,white);
+    drawText(r,progress,32,190,1,{168,235,220});
+
+    if(showSideQuest) {
+      render::rect(r,ui::sideQuest.x,ui::sideQuest.y,ui::sideQuest.w,ui::sideQuest.h,{14,35,49,219});
+      render::rect(r,ui::sideQuest.x,ui::sideQuest.y,3,ui::sideQuest.h,{218,189,126});
+      drawText(r,tr("SIDE QUEST","SIDOUPPDRAG"),32,217,1,{245,219,162});
+      drawText(r,tr("[T] HIDE","[T] DÖLJ"),259,217,1,sub);
+      drawText(r,tr("HEALING HERBS","LÄKEÖRTER"),32,231,2,white);
+      std::string secondary;
+      if(world.sideQuest==0)secondary=tr("TALK TO ELDER ARIN","PRATA MED ÄLDSTE ARIN");
+      else if(world.sideQuest==1)secondary=std::to_string(world.herbsCollected)+" / 3";
+      else if(world.sideQuest==2)secondary=tr("RETURN TO ARIN","ÅTERVÄND TILL ARIN");
+      else secondary=tr("COMPLETE +2 POTIONS","KLART +2 DRYCKER");
+      drawText(r,secondary,32,257,1,{188,221,193});
+    }else {
+      render::rect(r,16,211,322,37,{14,35,49,217});
+      drawText(r,tr("[T] SHOW SIDE QUEST","[T] VISA SIDOUPPDRAG"),31,222,2,sub);
+    }
+
+    uiButton(ui::inventoryTab,{27,56,68,232},{81,149,158});
+    uiButton(ui::mapTab,{27,56,68,232},{81,149,158});
+    uiButton(ui::helpTab,{27,56,68,232},{81,149,158});
+    drawText(r,tr("[I] BAG","[I] VÄSKA"),365,28,2,white);
+    drawText(r,tr("[TAB] MAP","[TAB] KARTA"),500,28,2,white);
+    drawText(r,tr("[H] GUIDE","[H] HJÄLP"),649,28,2,white);
+
+    drawText(r,mode3d?tr("3D VIEW","3D VY"):tr("2D VIEW","2D VY"),351,72,2,white);
+    drawText(r,mode3d?(lowDetail?tr("F2: SIMPLE GRAPHICS","F2: ENKEL GRAFIK"):
+                                 tr("F2: HIGH DETAIL","F2: HÖG DETALJ")):
+                      tr("V: 3D VIEW","V: 3D VY"),351,96,1,sub);
+    drawText(r,tr("Z/C ROTATE  V CHANGE","Z/C VRID  V VÄXLA"),351,112,1,sub);
+    minimap(817,26,118);
+    drawText(r,tr("NORTH","NORR"),847,154,1,sub);
+    drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):
+              world.daylight()<.72f?tr("DUSK","SKYMNING"):tr("DAY","DAG"),821,176,1,white);
+
+    render::rect(r,16,516,928,68,{12,33,49,231});
+    render::rect(r,16,516,928,3,{98,175,183});
+    uiButton(ui::elementalAction,{28,56,70,247},{64,139,153});
+    uiButton(ui::attackAction,{28,56,70,247},{64,139,153});
+    const int seconds=static_cast<int>(std::ceil(world.hero.skillCooldown));
+    uiButton(ui::skillAction,seconds?Color{34,51,58,247}:Color{28,56,70,247},
+             seconds?Color{83,105,110}:Color{64,139,153});
+    uiButton(ui::potionAction,{28,56,70,247},{64,139,153});
+    drawText(r,"[Q] "+elementName(),43,546,2,elementColor());
+    drawText(r,tr("[J] ATTACK","[J] ATTACK"),272,546,2,white);
+    drawText(r,"[K] "+elementName()+" "+(seconds?std::to_string(seconds)+"S":"OK"),
+             499,546,2,seconds?sub:elementColor());
+    drawText(r,"[R] "+std::to_string(world.hero.potions)+" "+tr("POTIONS","DRYCKER"),
+             730,546,2,white);
+    render::rect(r,16,486,262,25,{14,35,49,215});
+    drawText(r,tr("WASD MOVE   H HELP","WASD GÅ   H HJÄLP"),25,493,1,white);
+
+    if(world.activeNpc<0 && world.nearestNpc()>=0) {
+      uiButton(ui::interactPrompt,{55,57,52,237},{226,190,131});
+      drawText(r,tr("[E] TALK TO VILLAGER","[E] PRATA MED BYBO"),352,474,2,{255,228,171});
+    }
+    if(world.messageSeconds>0&&world.activeNpc<0) {
+      const auto m=localMessage();const int width=render::textWidth(m,2);
+      render::rect(r,SW/2-width/2-16,351,width+32,37,{17,43,58,230});
+      drawText(r,m,SW/2-width/2,362,2,{235,241,213});
     }
   }
   void overlayBase(const std::string& title,int x,int y,int w,int h) {
@@ -492,6 +595,12 @@ struct App {
       overlayBase(tr("EXPLORER'S INVENTORY","ÄVENTYRARENS VÄSKA"),111,50,738,497);
       render::rect(r,137,113,324,362,{16,38,54,248});
       render::rect(r,476,113,344,362,{19,45,59,248});
+      uiButton(ui::inventoryClose,{38,65,74,250},{101,172,177});
+      drawText(r,tr("CLOSE","STÄNG"),743,85,2,white);
+      uiButton(ui::inventorySword,world.hero.weapon?Color{29,44,51,247}:Color{42,65,64,247},
+               {114,168,151});
+      uiButton(ui::inventoryCharm,world.hero.charm?Color{29,44,51,247}:Color{42,65,64,247},
+               {114,168,151});
       drawText(r,tr("MATERIALS","MATERIAL"),158,130,3,{161,228,207});
       drawText(r,tr("CRYSTAL SHARDS","KRISTALLSKÄRVOR"),158,188,2,white);
       drawText(r,std::to_string(world.crystalShards),386,188,2,{154,246,232});
@@ -519,18 +628,24 @@ struct App {
       drawText(r,tr("[I / ESC] CLOSE","[I / ESC] STÄNG"),344,498,2,{170,223,217});
     }else if(world.activeNpc>=0 && !help && !bigMap) {
       render::rect(r,0,0,SW,SH,{7,15,25,118});
-      render::rect(r,85,344,790,163,{14,34,48,246});
-      render::rect(r,85,344,790,5,{182,169,116});
-      drawText(r,world.dialogueSpeaker(swedish),111,366,3,{246,220,153});
-      drawText(r,world.dialogueText(swedish),111,411,2,white);
+      render::rect(r,85,326,790,216,{14,34,48,247});
+      render::rect(r,85,326,790,5,{182,169,116});
+      uiButton(ui::dialogueClose,{38,65,74,250},{124,156,164});
+      drawText(r,"X",811,350,2,white);
+      drawText(r,world.dialogueSpeaker(swedish),111,350,3,{246,220,153});
+      wrappedText(world.dialogueText(swedish),111,388,703,3,2,white);
       const auto choices=world.dialogueChoices(swedish);
       if(choices.size()>=2) {
-        drawText(r,choices[0],111,450,2,{174,238,215});
-        drawText(r,choices[1],490,450,2,{222,208,173});
+        uiButton(ui::dialogueFirst,{29,67,68,249},{100,195,173});
+        uiButton(ui::dialogueSecond,{51,56,62,249},{185,174,121});
+        wrappedText(choices[0],116,454,325,2,2,{194,246,220});
+        wrappedText(choices[1],489,454,325,2,2,{246,220,170});
       }
-      drawText(r,tr("[E] FIRST CHOICE     [ESC] CLOSE","[E] FÖRSTA VALET     [ESC] STÄNG"),111,478,1,sub);
+      drawText(r,tr("[1]/[2] CHOOSE   [ESC] CLOSE","[1]/[2] VÄLJ   [ESC] STÄNG"),111,517,1,sub);
     } else if(help) {
       overlayBase(tr("EXPLORER'S GUIDE","ÄVENTYRARENS GUIDE"),170,70,620,455);
+      uiButton(ui::helpClose,{38,65,74,249},{108,171,173});
+      drawText(r,tr("CLOSE","STÄNG"),673,98,2,white);
       const std::vector<std::string> labels={
         tr("WASD / ARROWS   WALK","WASD / PILAR    GÅ"),
         tr("SHIFT           SPRINT (STAMINA)","SHIFT           SPRING (ORK)"),
@@ -543,7 +658,7 @@ struct App {
         tr("E               TALK / USE SHRINE","E               PRATA / ANVÄND ALTARE"),
         tr("R               HEALING POTION","R               HÄLSODRYCK"),
         tr("I / 1 / 2       INVENTORY / CRAFT","I / 1 / 2       VÄSKA / TILLVERKA"),
-        tr("M               TOGGLE SOUND","M               LJUD AV/PÅ"),
+        tr("T/M             SIDE QUEST / SOUND","T/M             SIDOUPPDRAG / LJUD"),
         tr("TAB             LARGE MAP","TAB             STOR KARTA"),
         tr("F5 / F9         SAVE / LOAD","F5 / F9         SPARA / LÄS IN"),
         tr("ESC / F11       PAUSE / FULLSCREEN","ESC / F11       PAUS / HELSKÄRM")
@@ -552,14 +667,17 @@ struct App {
       drawText(r,tr("PRESS H TO RETURN","TRYCK H FÖR ATT ÅTERVÄNDA"),290,497,2,{152,225,211});
     } else if(bigMap) {
       overlayBase(tr("EXPLORATION MAP","UTFORSKNINGSKARTA"),125,32,710,540);
+      uiButton(ui::mapClose,{38,65,74,249},{108,171,173});
+      drawText(r,tr("CLOSE","STÄNG"),704,59,2,white);
       minimap(324,78,310,true);
       drawText(r,tr("WHITE = YOU  CYAN = CRYSTAL  GREEN = HERB","VIT = DU  TURKOS = KRISTALL  GRÖN = ÖRT"),180,425,2,white);
       drawText(r,tr("RED = ENEMY  GOLD = VILLAGER","RÖD = FIENDE  GULD = BYBO"),180,456,2,white);
       drawText(r,tr("TAB = CLOSE","TAB = STÄNG"),400,510,2,{144,223,208});
     } else if(world.paused) {
       overlayBase(tr("PAUSED","PAUSAT"),278,194,400,190);
-      drawText(r,tr("ESC TO CONTINUE","ESC FÖR ATT FORTSÄTTA"),322,275,2,white);
-      drawText(r,tr("F5 TO SAVE GAME","F5 FÖR ATT SPARA"),330,323,2,sub);
+      uiButton(ui::pauseResume,{38,65,74,250},{105,178,175});
+      drawText(r,tr("[ESC] CONTINUE","[ESC] FORTSÄTT"),363,286,2,white);
+      drawText(r,tr("F5 TO SAVE GAME","F5 FÖR ATT SPARA"),330,336,2,sub);
     } else if(world.won||world.lost) {
       overlayBase(world.won?tr("VALLEY RESTORED!","DALEN ÄR BEFRIAD!"):
                 tr("THE JOURNEY ENDS","ÄVENTYRET ÄR SLUT"),192,185,570,225);
