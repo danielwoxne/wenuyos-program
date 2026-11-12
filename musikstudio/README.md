@@ -1,7 +1,7 @@
 # Wenuy Studio – Musikstudio
 
 **Senaste godkända släpp:** [0.8.1](https://github.com/danielwoxne/wenuyos-program/releases/tag/musikstudio-v0.8.1) (signerad `musikstudio.wapp`, 12 november 2026).
-**Nästa version under utveckling:** 0.9.0 i [PR #18](https://github.com/danielwoxne/wenuyos-program/pull/18) – **inte publicerad**. All källkod finns i `musikstudio/` i `danielwoxne/wenuyos-program`. En ny version gäller först när Daniel godkänt och den slagits samman med `main`.
+**Nästa version under utveckling:** 0.9.0. Pianorullen från [PR #18](https://github.com/danielwoxne/wenuyos-program/pull/18) är sammanslagen med `main`; skydd för osparat arbete utvecklas i [PR #19](https://github.com/danielwoxne/wenuyos-program/pull/19). **0.9 har ännu inte publicerats som `.wapp`.** All källkod finns i `musikstudio/` i `danielwoxne/wenuyos-program`.
 
 C++17, GTK4/libadwaita (native Wayland), PortAudio, licens GPL-3.0-or-later. Programmet använder inga nätverkstjänster eller nedladdningar. Kräver inte XWayland. Målet är WenuyOS på Debian 13, även på 2 GB utan grafikdrivrutin.
 
@@ -52,8 +52,8 @@ wenuy-studio-cli drums song.wstudio with-drums.wstudio beat.wav 4
 
 - Fysiskt ljud in/ut och långtidsprestanda vid 2 GB med många spår är inte fullt provade.
 - Vissa feltexter från den äldre ljud- och projektkärnan kommer ännu bara på engelska.
-- `Nytt`, `Öppna` och stängning skyddar inte ännu osparat arbete med en särskild bekräftelseruta; det är nästa steg i [ärende #17](https://github.com/danielwoxne/wenuyos-program/issues/17). Spara innan byte av projekt.
+- I utvecklings-PR #19 frågar Musikstudion vid osparad musik när du väljer **Nytt**, **Öppna** (även via Filer) eller **Stäng**: **Avbryt**, **Kasta ändringar** eller **Spara**. Valet **Spara** fortsätter först efter lyckad lagring. Om den namnlösa låten kräver **Spara som** går det att avbryta utan att stänga eller byta projekt. Skyddet ingår ännu **inte** i publicerade 0.8.1.
 - För effekter kan ändringar under pågående uppspelning kräva omstart av uppspelningen.
 - Inget LV2/VST-hoststöd eller instrumentpaket från tredje part ingår.
 
-Se `docs/STARTFIX_0.8.1.md` och `docs/PLAN_0.9.0.md` för bakgrund och verifieringskrav.
+Se `docs/STARTFIX_0.8.1.md`, `docs/PLAN_0.9.0.md` och `docs/PLAN_PROJEKTSKYDD.md` för bakgrund och verifieringskrav.
