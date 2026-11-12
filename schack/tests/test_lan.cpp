@@ -1,4 +1,8 @@
 #include "LanChess.h"
+#include <arpa/inet.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <atomic>
 #include <chrono>
 #include <iostream>
@@ -63,5 +67,35 @@ int main(){
  guard.join();
  check(rejected.load(),"host also rejects mismatched pairing code");
  check(!stranger.connected(),"stranger never enters a game");
- std::cout<<"OK: private-address filter, explicit pairing, legal moves, sync and disconnect\n";
+ // A connected but silent peer must not defeat the visible Cancel button.
+ // This test explicitly reaches the handshake and then cancels the host.
+ std::atomic<bool> cancelHandshake{false}, rejectedSilentPeer{false};
+ std::thread stalledHost([&]{
+  Peer listener;std::string stalledError;
+  rejectedSilentPeer=!listener.host(static_cast<std::uint16_t>(port+1),
+                                     5000,&stalledError,&cancelHandshake,pairing) &&
+                     !listener.connected();
+ });
+ std::this_thread::sleep_for(std::chrono::milliseconds(70));
+ const int silent=::socket(AF_INET,SOCK_STREAM|SOCK_CLOEXEC,0);
+ check(silent>=0,"create silent loopback peer");
+ sockaddr_in target{};
+ target.sin_family=AF_INET;target.sin_port=htons(port+1);
+ target.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
+ check(::connect(silent,reinterpret_cast<sockaddr*>(&target),sizeof(target))==0,
+       "connect silent peer");
+ pollfd waitGreeting{silent,POLLIN,0};
+ check(::poll(&waitGreeting,1,1000)>0 && (waitGreeting.revents&POLLIN),
+       "host entered pairing handshake");
+ char greeting[16]{};
+ check(::recv(silent,greeting,sizeof(greeting),0)>0,"host sent protocol greeting");
+ const auto cancelledAt=std::chrono::steady_clock::now();
+ cancelHandshake.store(true);
+ stalledHost.join();
+ const auto cancelLatency=std::chrono::duration_cast<std::chrono::milliseconds>(
+     std::chrono::steady_clock::now()-cancelledAt).count();
+ ::shutdown(silent,SHUT_RDWR);::close(silent);
+ check(rejectedSilentPeer.load(),"silent handshake does not become a game");
+ check(cancelLatency<1500,"cancel interrupts silent pairing in bounded time");
+ std::cout<<"OK: private-address filter, explicit pairing, legal moves, sync, disconnect and handshake cancel\n";
 }
