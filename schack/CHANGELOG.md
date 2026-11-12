@@ -1,6 +1,10 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Etapp 11: ny knapp för att granska det senast spelade draget. En bakgrundstråd söker maximalt 8 000 positioner från föregående ställning; resultatet visar dragets observerbara egenskaper och eventuellt ett annat alternativ, utan att kalla draget ett bevisat misstag. Svenska och engelska.
+- Nybörjarnivån väljer slumpmässigt bland högst fyra drag som föredras av en billig positionsbedömning, i stället för bland samtliga lagliga drag. Övriga nivåer och deras sökbudgetar oförändrade.
+- Rättat regressionstest för bondeförvandling: provet använder nu löparförvandling eftersom damförvandlingen i testställningen samtidigt gav schack.
+
 ## 0.5.0 (under utveckling)
 - Etapp 10: knappen för dragförslag ger en kort tvåspråkig pedagogisk förklaring av observerbara egenskaper (schack, matt, slag, rockad, bondeförvandling, pjäsutveckling och centrum). Förklaringen är ingen garanti för att draget är optimalt. Schackmotorns sökbudget och fem nivåer är oförändrade.
 
