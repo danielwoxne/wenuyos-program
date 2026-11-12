@@ -378,7 +378,7 @@ void refresh(){
   std::string summary=(board.white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget"));
   if(app.game.result()!="ongoing")summary=tr("Game finished","Partiet avslutat");
   summary+=" · "+text;
-  if(app.mode==2)summary+=" · "+tr("LAN game","Nätverksparti");
+  if(app.mode==2){summary+=" · ";summary+=tr("LAN game","Nätverksparti");}
   if(app.keyboardCursor)summary+=" · "+chess::squareName(app.cursor);
   g.gtk_label_set_label(app.boardSummary,summary.c_str());
  }
