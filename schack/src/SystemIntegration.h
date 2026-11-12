@@ -6,4 +6,6 @@ void initI18n();
 const char* translate(const char* english,const char* swedish);
 void applyStyle();
 void playMoveSound(bool gameFinished);
+// Honour WenuyOS motion preference and low-memory/CPU performance profile.
+bool allowBoardMotion();
 }
