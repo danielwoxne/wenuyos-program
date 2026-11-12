@@ -8,4 +8,4 @@ exec = "bin/schack"
 requires = ["libgtk-4-1"]
 build_requires = ["libadwaita-1-dev", "libsqlite3-dev", "liblua5.4-dev", "libsodium-dev"]
 min_ram_mb = 2048
-needs_network = false
+needs_network = true
