@@ -331,6 +331,7 @@ void responsive(){
  }
 }
 void onWindowWidth(Ptr,Ptr,void*){responsive();}
+const char* lanErrorText(const std::string& error);
 void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=false;}
 void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
 const char* pieceName(char p) {
