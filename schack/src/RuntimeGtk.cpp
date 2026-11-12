@@ -107,7 +107,8 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_widget_add_css_class,(Ptr,const char*)) \
  M(Ptr,gtk_scrolled_window_new,()) \
  M(void,gtk_scrolled_window_set_child,(Ptr,Ptr)) \
- M(void,gtk_widget_set_tooltip_text,(Ptr,const char*))
+ M(void,gtk_widget_set_tooltip_text,(Ptr,const char*)) \
+ M(void,gtk_accessible_update_property,(Ptr,int,...))
 struct GTK {
  void* lib=nullptr;
  #define DECL(ret,name,args) ret (*name) args = nullptr;
@@ -343,6 +344,26 @@ const char* pieceName(char p) {
  default:return tr("empty square","tom ruta");
  }
 }
+// The Cairo board is one GTK widget; provide a changing accessible name
+// describing the focused square and selected piece, not merely a static tooltip.
+void updateBoardAccessibility(){
+ if(!app.board)return;
+ const auto& b=app.game.board();
+ const int square=std::clamp(app.cursor,0,63);
+ const char pc=b.squares[square];
+ std::string label=std::string(tr("Chessboard. ", "Schackbräde. "))+
+    chess::squareName(square)+": ";
+ if(pc){
+  label+=(std::isupper(static_cast<unsigned char>(pc))?tr("White ","Vit "):tr("Black ","Svart "));
+  label+=pieceName(pc);
+ }else label+=tr("empty square","tom ruta");
+ if(app.selected>=0){
+  label+=tr(". Selected: ",". Vald: ");
+  label+=chess::squareName(app.selected);
+ }
+ if(b.inCheck(b.white))label+=tr(". Check."," . Schack.");
+ g.gtk_accessible_update_property(app.board,4,label.c_str(),-1); // GtkAccessibleProperty LABEL
+}
 void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
@@ -384,6 +405,7 @@ void refresh(){
   if(app.mode==2){summary+=" · ";summary+=tr("LAN game","Nätverksparti");}
   if(app.keyboardCursor)summary+=" · "+chess::squareName(app.cursor);
   g.gtk_label_set_label(app.boardSummary,summary.c_str());
+  updateBoardAccessibility();
  }
  g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget")):tr("Game over","Partiet avslutat"));
  std::string history;
@@ -593,6 +615,9 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  // Text entry must retain arrows, Space and shortcuts while typing LAN details.
  if((app.lanEntry&&g.gtk_widget_has_focus(app.lanEntry)) ||
     (app.lanCodeEntry&&g.gtk_widget_has_focus(app.lanCodeEntry)))return 0;
+ // Arrow keys and Enter move pieces only when the board has focus.
+ // Global Ctrl shortcuts remain available from ordinary buttons.
+ if(!(state&(1u<<2)) && (!app.board || !g.gtk_widget_has_focus(app.board)))return 0;
  if(state&(1u<<2)) { // Ctrl shortcuts
   unsigned keyLower=(key>='A'&&key<='Z')?key+32:key;
   if(keyLower=='n'){perform(0);return 1;}
@@ -612,7 +637,7 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  else return 0;
  app.keyboardCursor=true;
  app.cursor=std::clamp(y,0,7)*8+std::clamp(x,0,7);
- repaint();return 1;
+ refresh();return 1;
 }
 void lessonLoad(){
  app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
@@ -880,6 +905,9 @@ void activate(Ptr application,void*){
  g.gtk_widget_set_size_request(app.board,260,260);g.gtk_widget_set_focusable(app.board,1);
  g.gtk_widget_set_tooltip_text(app.board,tr("Click two squares or drag a piece. Arrow keys and Enter also work.","Klicka på två rutor eller dra pjäsen. Piltangenter och Enter fungerar också."));
  g.gtk_drawing_area_set_draw_func(app.board,drawRemember,nullptr,nullptr);
+ g.gtk_accessible_update_property(app.board,1,
+   tr("Use arrow keys to navigate, Enter to select or move, Escape to cancel.",
+      "Använd piltangenterna för att navigera, Enter för att välja eller flytta, Escape för att avbryta."),-1); // DESCRIPTION
  Ptr click=g.gtk_gesture_click_new();g.gtk_gesture_single_set_button(click,1);
  connect(click,"pressed",onClick,nullptr);g.gtk_widget_add_controller(app.board,click);
  Ptr drag=g.gtk_gesture_drag_new();g.gtk_gesture_single_set_button(drag,1);
@@ -914,9 +942,11 @@ void activate(Ptr application,void*){
  label(side,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
  app.lanEntry=g.gtk_entry_new();
  g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
+ g.gtk_accessible_update_property(app.lanEntry,4,tr("Host IPv4 address","Värdens IPv4-adress"),-1);
  g.gtk_box_append(side,app.lanEntry);
  app.lanCodeEntry=g.gtk_entry_new();
  g.gtk_entry_set_placeholder_text(app.lanCodeEntry,tr("Six-digit pairing code","Sexsiffrig parningskod"));
+ g.gtk_accessible_update_property(app.lanCodeEntry,4,tr("Six-digit pairing code","Sexsiffrig parningskod"),-1);
  g.gtk_box_append(side,app.lanCodeEntry);
  app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);
  app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);
