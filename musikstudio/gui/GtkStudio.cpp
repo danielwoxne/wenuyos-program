@@ -9,6 +9,7 @@
 #include "wenuystudio/Wave.hpp"
 #include "wenuystudio/MidiFile.hpp"
 #include "wenuystudio/PianoInput.hpp"
+#include "wenuystudio/ProjectGuard.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -31,17 +32,22 @@ struct Studio{
  ws::Playback playback{};
  ws::Recording recording{};
  ws::EditHistory history{};
+ ws::ProjectGuard guard{};
  std::string file,recordFile;
  double playhead=0,recordAt=0;
  unsigned selected=0;
  std::optional<std::size_t> selectedNote;
  bool dirty=false;
+ bool closeAllowed=false,chooserOpen=false;
  guint timer=0;
  ~Studio(){if(timer)g_source_remove(timer);playback.stop();recording.stop();}
 };
 struct Request{Studio* s;Pick pick;};
 struct Indexed{Studio* s;std::size_t index;};
 void refresh(Studio*);
+void requestProtected(Studio*,ws::ProjectAction);
+void performProtected(Studio*,const ws::ProjectAction&);
+void save(Studio*);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
@@ -107,10 +113,12 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
  try{
   switch(pick){
    case Pick::Open:
-    stop(s);s->project=ws::loadProject(path);s->file=path;s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
-    notice(s,tr("Project opened","Projekt öppnat"));break;
+    requestProtected(s,{ws::ProjectActionKind::Open,path});break;
    case Pick::Save:
-    ws::saveProject(s->project,path);s->file=path;s->dirty=false;refresh(s);notice(s,tr("Project saved","Projekt sparat"));break;
+    ws::saveProject(s->project,path);
+    s->file=path;s->dirty=false;refresh(s);notice(s,tr("Project saved","Projekt sparat"));
+    if(auto next=s->guard.finishedSave(true))performProtected(s,*next);
+    break;
    case Pick::ImportWav:{
     if(s->project.tracks.size()>=128)throw std::runtime_error("Maximum 128 tracks");
     ws::WaveReader r(path);double len=double(r.frames())/r.rate();
@@ -138,9 +146,21 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
     s->playback.stop();s->recordAt=s->playhead;s->recordFile=path;s->recording.start(path,s->project.sampleRate);
     startTick(s);notice(s,tr("Recording – press Stop to finish","Spelar in – tryck Stoppa för att avsluta"));break;
   }
- }catch(const std::exception& e){notice(s,std::string(tr("Error: ","Fel: "))+e.what());}
+ }catch(const std::exception& e){
+  if(pick==Pick::Save){
+   (void)s->guard.finishedSave(false);
+   g_warning("Project save failed: %s",e.what());
+   notice(s,tr("Could not save the project. Check disk space and permissions.",
+               "Kunde inte spara projektet. Kontrollera ledigt utrymme och behörigheter."));
+  }else notice(s,std::string(tr("Error: ","Fel: "))+e.what());
+ }
 }
 void choose(Studio* s,Pick pick){
+ if(s->chooserOpen){
+  notice(s,tr("Finish the current file dialog first","Avsluta den pågående fildialogen först"));
+  return;
+ }
+ s->chooserOpen=true;
  const bool save=pick==Pick::Save||pick==Pick::ExportWav||pick==Pick::ExportMidi||pick==Pick::Record;
  const char* title=pick==Pick::Open?tr("Open project","Öppna projekt"):
  pick==Pick::Save?tr("Save project","Spara projekt"):
@@ -156,15 +176,81 @@ void choose(Studio* s,Pick pick){
  auto* req=new Request{s,pick};
  g_signal_connect(dialog,"response",G_CALLBACK(+[](GtkNativeDialog* dlg,int response,gpointer data){
   std::unique_ptr<Request> req(static_cast<Request*>(data));
+  Studio* st=req->s;
+  st->chooserOpen=false;
+  bool acted=false;
   if(response==GTK_RESPONSE_ACCEPT){
    GFile* file=gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dlg));
-   if(file){char* path=g_file_get_path(file);if(path){fileAction(req->s,req->pick,path);g_free(path);}g_object_unref(file);}
+   if(file){
+    char* path=g_file_get_path(file);
+    if(path){acted=true;fileAction(st,req->pick,path);g_free(path);}
+    else notice(st,tr("Only local files are supported","Endast lokala filer stöds"));
+    g_object_unref(file);
+   }
   }
+  // Cancelled Save As (or an inaccessible URI) never releases a pending New/Open/Close.
+  if(!acted&&req->pick==Pick::Save)(void)st->guard.finishedSave(false);
   g_object_unref(dlg);
  }),req);
  gtk_native_dialog_show(GTK_NATIVE_DIALOG(dialog));
 }
 void save(Studio* s){if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);}
+
+// Executes only AFTER the dirty guard allows the action, and only commits a
+// loaded file after its full parse/validation succeeded.
+void performProtected(Studio* s,const ws::ProjectAction& action){
+ try{
+  switch(action.kind){
+   case ws::ProjectActionKind::New:newProject(s);break;
+   case ws::ProjectActionKind::Open:{
+    ws::Project loaded=ws::loadProject(action.path);
+    stop(s);
+    s->project=std::move(loaded);
+    s->file=action.path;s->history.clear();s->selected=0;s->selectedNote.reset();
+    s->playhead=0;s->dirty=false;refresh(s);
+    notice(s,tr("Project opened","Projekt öppnat"));break;
+   }
+   case ws::ProjectActionKind::Close:
+    s->closeAllowed=true;gtk_window_close(GTK_WINDOW(s->window));break;
+  }
+ }catch(const std::exception& e){
+  g_warning("Project open failed: %s",e.what());
+  notice(s,tr("Could not open the project. Check the file format and permissions.",
+              "Kunde inte öppna projektet. Kontrollera filformat och behörigheter."));
+ }
+}
+void requestProtected(Studio* s,ws::ProjectAction action){
+ const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen;
+ const auto result=s->guard.request(action,s->dirty,blocked);
+ if(result==ws::GuardDecision::Busy){
+  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty())?
+   tr("Stop recording before switching projects or closing",
+      "Avsluta inspelningen innan du byter projekt eller stänger"):
+   tr("Finish the current dialog first","Avsluta den pågående dialogen först"));
+  return;
+ }
+ if(result==ws::GuardDecision::Proceed){performProtected(s,action);return;}
+ auto* dialog=ADW_MESSAGE_DIALOG(adw_message_dialog_new(GTK_WINDOW(s->window),
+  tr("Save changes?","Spara ändringarna?"),
+  tr("Your music contains unsaved changes. What would you like to do?",
+     "Musiken innehåller osparade ändringar. Vad vill du göra?")));
+ adw_message_dialog_add_responses(dialog,
+  "cancel",tr("Cancel","Avbryt"),
+  "discard",tr("Discard changes","Kasta ändringar"),
+  "save",tr("Save","Spara"),nullptr);
+ adw_message_dialog_set_response_appearance(dialog,"discard",ADW_RESPONSE_DESTRUCTIVE);
+ adw_message_dialog_set_default_response(dialog,"cancel");
+ adw_message_dialog_set_close_response(dialog,"cancel");
+ g_signal_connect(dialog,"response",G_CALLBACK(+[](AdwMessageDialog*,const char* response,gpointer user){
+  auto* st=static_cast<Studio*>(user);
+  if(g_strcmp0(response,"discard")==0){
+   if(auto next=st->guard.discard())performProtected(st,*next);
+  }else if(g_strcmp0(response,"save")==0){
+   if(st->guard.beginSave())save(st);
+  }else st->guard.cancel();
+ }),s);
+ gtk_window_present(GTK_WINDOW(dialog));
+}
 void record(Studio* s){if(s->recording.active())finishRecord(s);else choose(s,Pick::Record);}
 GtkWidget* button(GtkWidget* box,Studio* s,const char* label,void(*callback)(Studio*)){
  GtkWidget* b=gtk_button_new_with_label(label);gtk_box_append(GTK_BOX(box),b);
@@ -403,6 +489,13 @@ void activate(GApplication* application,gpointer){
  auto* s=new Studio();
  g_object_set_data_full(G_OBJECT(application),"studio",s,[](gpointer p){delete static_cast<Studio*>(p);});
  s->window=adw_application_window_new(GTK_APPLICATION(application));
+ g_signal_connect(s->window,"close-request",G_CALLBACK(+[](GtkWindow*,gpointer user)->gboolean{
+  auto* st=static_cast<Studio*>(user);
+  if(st->closeAllowed)return FALSE;
+  if(!st->dirty&&!st->recording.active()&&st->recordFile.empty()&&!st->chooserOpen&&!st->guard.hasPending())return FALSE;
+  requestProtected(st,{ws::ProjectActionKind::Close,{}});
+  return TRUE;
+ }),s);
  gtk_window_set_default_size(GTK_WINDOW(s->window),960,700);
  gtk_widget_set_size_request(s->window,690,480);
  auto* toolbar=adw_toolbar_view_new();
@@ -430,7 +523,7 @@ void activate(GApplication* application,gpointer){
   auto* act=g_simple_action_new(id,nullptr);
   g_signal_connect(act,"activate",G_CALLBACK(+[](GSimpleAction* a,GVariant*,gpointer user){
    auto* st=static_cast<Studio*>(user);const char* action=g_action_get_name(G_ACTION(a));
-   if(g_strcmp0(action,"new")==0)newProject(st);
+   if(g_strcmp0(action,"new")==0)requestProtected(st,{ws::ProjectActionKind::New,{}});
    else if(g_strcmp0(action,"open")==0)choose(st,Pick::Open);
    else if(g_strcmp0(action,"save")==0)save(st);
    else if(g_strcmp0(action,"import-wav")==0)choose(st,Pick::ImportWav);
