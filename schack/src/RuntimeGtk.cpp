@@ -3,8 +3,7 @@
 // of WenuyOS; only stable GTK4/GIO entry points are used.
 #include "Chess.h"
 #include "LanChess.h"
-#include <Wenuy.h>
-#include <clocale>
+#include "SystemIntegration.h"
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -60,7 +59,7 @@ using Ptr=void*;
 // Use WenuyOS's shared gettext domain (and Swedish/English fallbacks).
 // Other locales read se.wenuyos.app.schack.mo when installed by the system.
 const char* tr(const char* en,const char* sv){
- return wenuy::tr(en,sv);
+ return schack_system::translate(en,sv);
 }
 
 #define GTK_SYMBOLS(M) \
@@ -942,15 +941,14 @@ void activate(Ptr application,void*){
  label(side,tr("Drag or click pieces • Ctrl+N new • Ctrl+Z undo • Ctrl+H hint • Ctrl+L focus","Dra eller klicka pjäser • Ctrl+N nytt • Ctrl+Z ångra • Ctrl+H tips • Ctrl+L fokus"),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  connect(app.window,"notify::width",onWindowWidth,nullptr);
- theme();wenuy::loadStyle();refresh();g.gtk_window_present(app.window);responsive();
+ theme();schack_system::applyStyle();refresh();g.gtk_window_present(app.window);responsive();
  g_timeout_add(120,pollLan,nullptr);startAI();
 }
 } // namespace
 
 int main(int argc,char** argv){
  // This is needed for gettext to honour LANG/LC_MESSAGES/LANGUAGE at process start.
- std::setlocale(LC_ALL,"");
- wenuy::i18nInit("se.wenuyos.app.schack");
+ schack_system::initI18n();
  if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
   std::fprintf(stderr,"%s\n",tr("Wenuy Chess requires GTK4. Install libgtk-4-1.","Wenuy Schack kräver GTK4. Installera paketet libgtk-4-1."));
