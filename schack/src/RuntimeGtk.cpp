@@ -497,7 +497,7 @@ void afterMove(chess::Move m,bool byComputer=false){
    refresh();return;
   }
  }
- const char moving=app.game.board().squares[m.from];
+ const char moving=(m.from>=0&&m.from<64)?app.game.board().squares[m.from]:0;
  if(!app.game.play(m))return;
  startPieceMotion(m,moving);
  app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
