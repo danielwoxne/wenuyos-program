@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 using namespace chess;
 namespace {
 void test(bool ok,const char* msg){if(!ok){std::cerr<<"FAIL: "<<msg<<'\n';std::exit(1);}}
@@ -220,6 +221,54 @@ int main(){
     const auto novice=bestMove(Board::initial(),1,0);
     const auto noviceLegals=Board::initial().legalMoves();
     test(std::find(noviceLegals.begin(),noviceLegals.end(),novice.move)!=noviceLegals.end(),"beginner legal move");
+    // Exercise all three historical progress formats, including an older
+    // shortened mistake line followed by a separate new success line.
+    LessonProgress stored;
+    {
+        std::istringstream legacy("5\n");
+        test(readLessonProgress(legacy,stored),"read 0.4 mask-only progress");
+        test(stored.completed==5 && stored.mistakes[0]==0 &&
+             stored.successes[30]==0,"legacy progress defaults to zero counts");
+    }
+    {
+        std::ostringstream old;
+        old<<"9\n";
+        for(int i=0;i<20;++i)old<<(i+1)<<' ';
+        old<<'\n';
+        std::istringstream twoLine(old.str());
+        test(readLessonProgress(twoLine,stored),"read older 20-lesson progress");
+        test(stored.completed==9 && stored.mistakes[19]==20 &&
+             stored.mistakes[20]==0 && stored.successes[0]==0,
+             "shortened legacy counters stay on their own line");
+    }
+    {
+        LessonProgress original;
+        original.completed=0x15;
+        original.mistakes[3]=1234;
+        original.successes[3]=24;
+        original.successes[30]=5;
+        std::ostringstream written;
+        writeLessonProgress(written,original);
+        std::istringstream threeLine(written.str());
+        test(readLessonProgress(threeLine,stored),"read current three-line progress");
+        test(stored.completed==0x15 && stored.mistakes[3]==999 &&
+             stored.successes[3]==24 && stored.successes[30]==5,
+             "current progress roundtrip and counter clamping");
+        std::istringstream corrupted("not-a-mask\n1 2 3\n");
+        test(!readLessonProgress(corrupted,stored) &&
+             stored.completed==0x15,"invalid progress does not overwrite memory");
+    }
+    // Move generation and search must remain bounded over many turns.
+    Game smoke;
+    for(int ply=0;ply<24 && smoke.result()=="ongoing";++ply){
+        const auto legal=smoke.board().legalMoves();
+        const auto searched=bestMove(smoke.board(),2+(ply%4),500);
+        test(searched.nodes<=500,"engine never exceeds its node budget");
+        test(std::find(legal.begin(),legal.end(),searched.move)!=legal.end(),
+             "AI always chooses a legal move");
+        test(smoke.play(searched.move),"AI stress move accepted by actual game");
+    }
+    test(!smoke.moves.empty(),"bounded AI sequence completed");
     SearchResult sr=bestMove(Board::initial(),3,3000);test(sr.move.from>=0&&sr.nodes>0&&sr.depth>=1,"AI search");
     // Low budgets still return a legal move; incomplete iterations do not corrupt it.
     auto tiny=bestMove(Board::initial(),5,8);
