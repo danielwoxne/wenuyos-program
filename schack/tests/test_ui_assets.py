@@ -15,6 +15,13 @@ manifest = (root / "wenuyos-app.toml").read_text(encoding="utf-8")
 integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'explanation(chess::explainMove(app.game.board(),r->result.move))' in gui
+assert 'app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);' in gui
+assert 'case 18:analyzeLastMove();break;' in gui
+assert 'chess::bestMove(before,3,8000)' in gui
+assert 'g_idle_add(deliverMoveReview,r);' in gui
+assert 'not a proven improvement' in gui
+assert 'app.analysisBusy' in gui
+
 assert 'tr("This move gives check.","Draget ger schack.")' in gui
 assert 'wenuy::tr(english,swedish)' in integration
 assert 'wenuy::loadStyle()' in integration
