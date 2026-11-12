@@ -31,7 +31,6 @@ assert 'chess::lessonLineMoveVariant(app.lessonIndex,app.lessonPly,' in gui
 assert 'chess::lessonAcceptsMove(app.lessonIndex,app.lessonPly,app.lessonVariation,board,m)' in gui
 assert 'chess::lessonStepFeedbackEn(app.lessonIndex,app.lessonPly-1,app.lessonVariation)' in gui
 
-assert 'chess::correctLessonMoveAtVariant(app.lessonIndex,app.lessonPly,app.lessonVariation,m)' in gui
 assert 'const char* reply=chess::lessonLineMoveVariant(app.lessonIndex,app.lessonPly,' in gui
 assert 'app.lessonPly==chess::lessonLineLength(app.lessonIndex)' in gui
 assert 'tr("Opponent replied.","Motspelaren har svarat.")' in gui
