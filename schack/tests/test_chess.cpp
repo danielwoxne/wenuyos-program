@@ -12,7 +12,7 @@ uint64_t perft(const Board& b,int depth){if(depth==0)return 1;uint64_t result=0;
 }
 int main(){
     std::string lessonError;test(validateLessons(&lessonError),lessonError.c_str());
-    test(lessonCount()==20,"twenty beginner lessons");
+    test(lessonCount()==23,"twenty-three lessons");
     for(size_t i=0;i<lessonCount();++i){
         Board lessonBoard;test(Board::fromFen(lesson(i).fen,lessonBoard),"lesson FEN");
         Move expected;test(parseUci(lesson(i).solutionUci,expected),"lesson UCI");
@@ -32,7 +32,23 @@ int main(){
          "unfinished takes precedence over completed with mistakes");
     test(std::string(lessonLevelSv(0))=="Grunder" &&
          std::string(lessonLevelSv(11))=="Taktik" &&
-         std::string(lessonLevelEn(19))=="Practice","three bilingual sections");
+         std::string(lessonLevelEn(19))=="Practice" &&
+         std::string(lessonLevelSv(22))=="Avancerad taktik","four bilingual sections");
+    // Validate semantics beyond move legality for the three new tactics.
+    Board tactic;Move m;
+    test(Board::fromFen(lesson(20).fen,tactic) &&
+         parseUci(lesson(20).solutionUci,m),"discovered check setup");
+    test(!tactic.inCheck(false),"discovered check starts without check");
+    test(tactic.apply(m) && tactic.inCheck(false),"discovered rook check");
+    test(Board::fromFen(lesson(21).fen,tactic) &&
+         parseUci(lesson(21).solutionUci,m),"pin setup");
+    test(tactic.apply(m),"pin move");
+    const auto pinnedMoves=tactic.legalMoves();
+    test(std::none_of(pinnedMoves.begin(),pinnedMoves.end(),
+         [](const Move& move){return move.from==35;}),"pinned knight cannot move");
+    test(Board::fromFen(lesson(22).fen,tactic) &&
+         parseUci(lesson(22).solutionUci,m),"skewer setup");
+    test(tactic.apply(m) && tactic.inCheck(false),"skewer checks king");
     // Saved progress and lesson selector only use a 64-bit mask: guard the curriculum size.
     test(lessonCount()<=64,"lesson progress capacity");
     Board b=Board::initial();test(b.fen()=="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","initial FEN");
@@ -98,5 +114,5 @@ int main(){
     auto aiMate=bestMove(mateBoard,5,120000);
     Board afterMate=mateBoard;test(afterMate.apply(aiMate.move)&&afterMate.inCheck(false)
       &&afterMate.legalMoves().empty(),"AI finds mate in one");
-    std::cout<<"OK: twenty lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
+    std::cout<<"OK: twenty-three lessons, rules, FEN, SAN, PGN, perft(1..4), castling, e.p., promotion, 50-move/draw, AI\n";
 }
