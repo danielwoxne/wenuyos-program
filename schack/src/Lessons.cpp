@@ -552,8 +552,27 @@ bool validateLessons(std::string* error) {
                 }
                 const auto moves=sequence.legalMoves();
                 if(std::find(moves.begin(),moves.end(),step)==moves.end() ||
+                   ((ply%2)==0&&!lessonAcceptsMove(i,ply,variation,sequence,step)) ||
                    !sequence.apply(step)) {
-                    if(error)*error="illegal scripted ply at lesson "+std::to_string(i);
+                    if(error)*error="illegal move or unmet goal at lesson "+std::to_string(i);
+                    return false;
+                }
+            }
+        }
+        // Validate the tactical objective rather than accepting only matching
+        // notation: the knight/bishop must truly capture Black's queen.
+        if(i==28||i==29) {
+            for(std::size_t variation=0;variation<lessonVariationCount(i);++variation){
+                Board actual=board;
+                for(std::size_t ply=0;ply<lessonLineLength(i);++ply){
+                    Move step;
+                    if(!parseUci(lessonLineMoveVariant(i,ply,variation),step)||
+                       !actual.apply(step))return false;
+                }
+                const char expected=i==28?'N':'B';
+                if(actual.squares[55]!=expected ||
+                   std::find(actual.squares.begin(),actual.squares.end(),'q')!=actual.squares.end()){
+                    if(error)*error="tactic did not capture queen at lesson "+std::to_string(i);
                     return false;
                 }
             }
