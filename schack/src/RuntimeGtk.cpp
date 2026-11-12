@@ -434,7 +434,7 @@ void afterMove(chess::Move m,bool byComputer=false){
  if(app.mode==2){
   std::string error;
   if(!app.lanPeer || !app.lanPeer->myTurn() || !app.lanPeer->sendMove(chess::uci(m),&error)){
-   app.lanMessage=tr("Network move failed: ","Nätverksdrag misslyckades: ")+lanErrorText(error);
+   app.lanMessage=std::string(tr("Network move failed: ","Nätverksdrag misslyckades: "))+lanErrorText(error);
    refresh();return;
   }
  }
