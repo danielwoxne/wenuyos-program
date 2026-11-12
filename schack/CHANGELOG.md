@@ -1,6 +1,7 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Ny sexsiffrig parningskod i LAN-läget: slumpas på värddatorn och måste anges av motspelaren; okrypterat och inte kryptografiskt säkert.
 - Första spelbara LAN-läget: två WenuyOS-datorer på samma betrodda nät, värd vit och ansluten svart. Inget nätverk aktiveras utan knapptryck.
 - TCP/IPv4 med privat adressfilter, protokollversion, lagliga drag och åtgärder för att avbryta eller koppla från; okrypterad testfunktion.
 - Automatiskt test av två nätverksparter över loopback och separata instruktioner i `docs/LAN-050.md`.
