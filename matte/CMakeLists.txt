@@ -3,7 +3,7 @@
 # libwenuy följer med som källkod och länkas in statiskt – som Rita – så att Matte fungerar
 # oavsett hur gammal WenuyOS-datorns libwenuy är.
 cmake_minimum_required(VERSION 3.16)
-project(matte VERSION 1.2.0 LANGUAGES CXX)
+project(matte VERSION 1.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +11,29 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)   # funktionsnamnen kvar för `wenuyos prestanda`
 endif()
 add_compile_options(-Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter)
+
+# Generate lesson data and missing fallback icons during configure.
+# This allows clean CI and AI Studio builds without an external setup script.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+execute_process(
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/generera-saknade-ikoner.py" "${CMAKE_CURRENT_SOURCE_DIR}"
+  RESULT_VARIABLE MATTE_ICONS_RC
+  OUTPUT_VARIABLE MATTE_ICONS_LOG
+  ERROR_VARIABLE MATTE_ICONS_ERROR)
+if(NOT MATTE_ICONS_RC EQUAL 0)
+  message(FATAL_ERROR "Matte icon preparation failed: ${MATTE_ICONS_ERROR}")
+endif()
+message(STATUS "${MATTE_ICONS_LOG}")
+execute_process(
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/expandera.py"
+          "${CMAKE_CURRENT_SOURCE_DIR}/innehall" "${CMAKE_CURRENT_BINARY_DIR}/matte-share/se.wenuyos.app.matte"
+  RESULT_VARIABLE MATTE_DATA_RC
+  OUTPUT_VARIABLE MATTE_DATA_LOG
+  ERROR_VARIABLE MATTE_DATA_ERROR)
+if(NOT MATTE_DATA_RC EQUAL 0)
+  message(FATAL_ERROR "Matte content preparation failed: ${MATTE_DATA_ERROR}")
+endif()
+message(STATUS "${MATTE_DATA_LOG}")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ADW REQUIRED IMPORTED_TARGET libadwaita-1 gtk4 gio-unix-2.0)
@@ -52,4 +75,4 @@ target_link_libraries(matte PRIVATE matte-utskrift wenuy-static)
 
 include(GNUInstallDirs)
 install(TARGETS matte RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY share/ DESTINATION ${CMAKE_INSTALL_DATADIR})
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/matte-share/" DESTINATION ${CMAKE_INSTALL_DATADIR})
