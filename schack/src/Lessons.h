@@ -23,6 +23,11 @@ struct Lesson {
 std::size_t lessonCount();
 const Lesson& lesson(std::size_t index);
 bool correctLessonMove(std::size_t index, const Move& move);
+// One-ply lessons expose one scripted move. Multi-ply lessons expose
+// player move, deterministic opponent reply, then player move.
+std::size_t lessonLineLength(std::size_t index);
+const char* lessonLineMove(std::size_t index,std::size_t ply);
+bool correctLessonMoveAt(std::size_t index,std::size_t ply,const Move& move);
 // Preserve completion bits from 0.4; track missed attempts independently.
 std::size_t recommendedLesson(std::uint64_t completed,
                               const std::array<unsigned,64>& mistakes);
