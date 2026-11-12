@@ -1,0 +1,189 @@
+id = "forskola-rakna"
+titel = "Hur många?"
+omrade = "tal"
+ikon = "apple"
+bild = "applen-fat-brada.jpg"
+bildtext = "Fem äpplen på fatet och två på brädan. Räkna dem tillsammans: ett, två, tre …"
+sager = "Räkna en sak i taget. Det sista talet du säger är hur många det är."
+galler = "Alltid. Det spelar ingen roll om du börjar från vänster eller höger, eller om sakerna ligger tätt eller glest – antalet är detsamma."
+galler_inte = "Räkna aldrig samma sak två gånger, och hoppa inte över någon. Peka eller flytta varje sak när du räknar den – då håller du ordning."
+kalla = "Räkneprinciperna (Gelman & Gallistel): ett tal per sak, alltid samma ordning, det sista talet är antalet. Subitisering – se små antal direkt (Clements). Konkret material först: tioramen och dina egna fingrar."
+
+[[rad]]
+sager = "ett"
+figur = { typ = "ikoner", namn = "apple", antal = 1 }
+skriver = ["1"]
+
+[[rad]]
+sager = "två"
+figur = { typ = "ikoner", namn = "apple", antal = 2 }
+skriver = ["2"]
+
+[[rad]]
+sager = "tre"
+figur = { typ = "ikoner", namn = "apple", antal = 3 }
+skriver = ["3"]
+
+[[rad]]
+sager = "fyra"
+figur = { typ = "ikoner", namn = "apple", antal = 4 }
+skriver = ["4"]
+
+[[rad]]
+sager = "fem"
+figur = { typ = "ikoner", namn = "apple", antal = 5 }
+skriver = ["5"]
+
+[[exempel]]
+rubrik = "Så räknar vi fem äpplen"
+figur = { typ = "ikoner", namn = "apple", antal = 5 }
+steg = [
+  "Peka på det första äpplet och säg: ett.",
+  "Peka på nästa och säg: två. Varje äpple får ett eget tal.",
+  "Fortsätt: tre, fyra, fem. Inget äpple räknas två gånger.",
+  "Det sista talet du sa var fem. Alltså är det fem äpplen.",
+]
+
+[[exempel]]
+rubrik = "En full rad är fem"
+text = "I tioramen får fem brickor plats på en rad. Ser du en full rad vet du att det är fem – utan att räkna."
+figur = { typ = "tioram", fyllda = 5, extra = 2 }
+steg = [
+  "Den blå raden är full: fem.",
+  "Sedan två gula till: sex, sju.",
+  "Sju brickor.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "klick"
+fraga = "Klicka på varje äpple och räkna. Hur många är det?"
+figur = { typ = "ikoner", namn = "apple", antal = "{n}", d = 64 }
+svar = "{n}"
+var = { n = "1..5" }
+ledtrad = "Klicka på ett äpple i taget och säg talet högt."
+losning = ["Klicka på ett äpple i taget.", "Säg ett tal för varje äpple: ett, två …", "Det sista talet är svaret: {n}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "dra"
+fraga = "Dra {n} brickor till tioramen."
+figur = { typ = "tioram", fyllda = 0 }
+svar = "{n}"
+var = { n = "2..5" }
+ledtrad = "Dra en bricka i taget och räkna: ett, två …"
+feltankar = { "{n+1}" = "En för mycket. Dra tillbaka en bricka.", "{n-1}" = "En till!" }
+losning = ["Dra en bricka och säg: ett.", "Fortsätt tills du säger {n}.", "Sluta där – nu ligger det {n} brickor."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Titta snabbt. Hur många brickor ligger i tioramen?"
+figur = { typ = "tioram", fyllda = "{n}" }
+alternativ = ["{n-1}", "{n}", "{n+1}"]
+svar = "{n}"
+var = { n = "2..5" }
+ledtrad = "En full rad är fem. Hur många rutor är tomma på raden?"
+losning = ["Raden har plats för fem.", "{5-n} rutor är tomma.", "Fem minus de tomma: {n} brickor."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Klicka på alla äpplen som ligger på brädan."
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560, omraden = [[0.1971, 0.1971, 0.1286, 0.2285], [0.3514, 0.1971, 0.1286, 0.2285], [0.1259, 0.4756, 0.1286, 0.2285], [0.2676, 0.4809, 0.1286, 0.2285], [0.4082, 0.4756, 0.1286, 0.2285], [0.6295, 0.3374, 0.1286, 0.2285], [0.77, 0.3374, 0.1286, 0.2285]], namn = ["fat", "fat", "fat", "fat", "fat", "bräda", "bräda"] }
+svar = "bräda,bräda"
+ledtrad = "Brädan är fyrkantig och ligger till höger. Fatet är runt."
+feltankar = { "fat,fat,fat,fat,fat" = "De där ligger på det runda fatet. Brädan är den fyrkantiga till höger." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "dra"
+fraga = "Dra {n} brickor till tioramen. Fyll den första raden först."
+figur = { typ = "tioram", fyllda = 0 }
+svar = "{n}"
+var = { n = "6..10" }
+ledtrad = "En full rad är fem. Sedan behöver du {n-5} till."
+feltankar = { "{n+1}" = "En för mycket. Dra tillbaka en bricka.", "{n-1}" = "En till!", "5" = "Den första raden är full – det är fem. Du behöver {n-5} till på nästa rad." }
+losning = ["Fyll den första raden: fem brickor.", "Räkna vidare på nästa rad: {', '.join(str(i) for i in range(6, n+1))}.", "Nu ligger det {n} brickor."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många äpplen ligger på fatet?"
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560 }
+alternativ = ["4", "5", "7"]
+svar = "5"
+ledtrad = "Räkna bara äpplena på det runda fatet."
+feltankar = { "7" = "Sju är alla äpplen – både på fatet och brädan. Frågan gällde bara fatet.", "4" = "Räkna igen och peka på varje äpple. Missade du något?" }
+losning = ["Titta bara på det runda fatet.", "Peka och räkna: ett, två, tre, fyra, fem.", "Fem äpplen."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "klick"
+fraga = "Klicka på varje jordgubbe och räkna. Hur många är det?"
+figur = { typ = "ikoner", namn = "jordgubbe", antal = "{n}", d = 56 }
+svar = "{n}"
+var = { n = "5..9" }
+ledtrad = "Den första raden har fem. Räkna vidare på nästa rad."
+losning = ["Den första raden har fem jordgubbar.", "Räkna vidare på nästa rad: {', '.join(str(i) for i in range(6, n+1))}.", "Det sista talet är svaret: {n}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Räkna jordgubbarna. Klicka på siffran som visar hur många."
+figur = { typ = "ikonval", fore_namn = "jordgubbe", fore_antal = "{n}", ikoner = ["siffra-{n-1}", "siffra-{n}", "siffra-{n+1}"] }
+svar = "siffra-{n}"
+var = { n = "2..6" }
+ledtrad = "Räkna jordgubbarna en i taget."
+feltankar = { "siffra-{n+1}" = "En för mycket. Peka på varje jordgubbe en gång.", "siffra-{n-1}" = "En för lite. Räkna igen – missade du någon?" }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Räkna med mig. Klicka på siffran som kommer sist."
+steg = ["{', '.join(str(i) for i in range(1, n))}, …"]
+figur = { typ = "ikonval", fore_namn = "apple", fore_antal = "{n}", ikoner = ["siffra-{n+1}", "siffra-{n}", "siffra-{n-1}"] }
+svar = "siffra-{n}"
+var = { n = "3..7" }
+ledtrad = "Säg talen högt och peka på ett äpple för varje tal. Vilket tal säger du vid det sista äpplet?"
+feltankar = { "siffra-{n-1}" = "Det är talet före det sista. Det finns ett äpple till.", "siffra-{n+1}" = "Det blev ett för mycket. Peka på varje äpple bara en gång." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Hur många äpplen finns det på bilden tillsammans?"
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560 }
+alternativ = ["5", "6", "7", "8"]
+svar = "7"
+ledtrad = "Räkna äpplena på fatet först. Räkna sedan vidare på brädan."
+feltankar = { "5" = "Fem ligger på fatet. Räkna vidare på brädan: sex, sju.", "2" = "Två ligger på brädan. Räkna fatet också." }
+losning = ["Räkna fatet: ett, två, tre, fyra, fem.", "Börja inte om! Räkna vidare på brädan: sex, sju.", "Sju äpplen tillsammans."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla {n} prickar röda."
+figur = { typ = "prickar", antal = 8, per_rad = 4, d = 40, farg = "#ffffff" }
+svar = "röd:{n}"
+var = { n = "2..6" }
+ledtrad = "Säg ett tal för varje prick du målar: ett, två …"
+feltankar = { "röd:{n+1}" = "En för mycket. Klicka på en röd prick igen för att sudda den.", "röd:{n-1}" = "En till!" }
+losning = ["Måla en prick och säg: ett.", "Fortsätt tills du säger {n}.", "Sluta där – nu är {n} prickar röda."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "mala"
+fraga = "Måla äpplena på brädan röda och äpplena på fatet gröna."
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560, omraden = [[0.1971, 0.1971, 0.1286, 0.2285], [0.3514, 0.1971, 0.1286, 0.2285], [0.1259, 0.4756, 0.1286, 0.2285], [0.2676, 0.4809, 0.1286, 0.2285], [0.4082, 0.4756, 0.1286, 0.2285], [0.6295, 0.3374, 0.1286, 0.2285], [0.77, 0.3374, 0.1286, 0.2285]], namn = ["fat", "fat", "fat", "fat", "fat", "bräda", "bräda"], farger = ["röd", "grön"] }
+svar = "grön|grön|grön|grön|grön|röd|röd"
+ledtrad = "Fatet är runt. Brädan är fyrkantig och ligger till höger."
+feltankar = { "röd|röd|röd|röd|röd|grön|grön" = "Du har bytt färgerna. Äpplena på det runda fatet ska vara gröna, de på brädan röda." }
+losning = ["Titta på brädan till höger – där ligger två äpplen. Måla dem röda.", "Titta på det runda fatet – där ligger fem äpplen. Måla dem gröna."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "rita"
+fraga = "Rita {n} bollar."
+var = { n = "2..5" }
+ledtrad = "Rita en boll i taget och räkna högt."
+losning = ["Rita en boll och säg: ett.", "Fortsätt tills du har ritat {n} bollar."]

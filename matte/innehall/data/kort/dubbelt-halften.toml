@@ -1,0 +1,146 @@
+# Regelkort: dubbelt och hälften – Lgr22 åk 1–3, "proportionella samband, däribland dubbelt och hälften".
+
+id = "dubbelt-halften"
+titel = "Dubbelt och hälften"
+omrade = "samband"
+ikon = "halvor"
+sager = "Dubbelt betyder två gånger så mycket. Hälften betyder att dela i två lika stora delar. De tar ut varandra: hälften av dubbelt 6 är 6."
+galler = "Alltid. Även udda tal har en hälft – men den blir ett tal med en halv: hälften av 7 är 3,5."
+galler_inte = "”Dubbelt” betyder inte ”två till”. Dubbelt så många som 5 är 10, inte 7. Och hälften av 10 är 5 – inte 8."
+forkunskap = ["addition-tiotalsovergang"]
+kalla = "Multiplikativt tänkande börjar med dubbelt och hälften (Nunes & Bryant). Proportionella samband i Lgr22 åk 1–3."
+
+[[rad]]
+sager = "dubbelt så många som fyra"
+figur = { typ = "prickar", antal = 8, per_rad = 4 }
+skriver = ["4 + 4 = 8", "2 · 4 = 8"]
+
+[[rad]]
+sager = "hälften av åtta"
+figur = { typ = "stapel", delar = 2, fyllda = 1, farg = "gul" }
+skriver = ["8 / 2 = 4"]
+kommentar = "Dela i två lika stora delar. Den ena delen är hälften."
+
+[[exempel]]
+rubrik = "Dubbelt: lika många till"
+figur = { typ = "tioram", fyllda = 4, extra = 4 }
+steg = [
+  "Fyra blå brickor.",
+  "Dubbelt så många: lägg lika många till – fyra gula.",
+  "4 + 4 = 8. Dubbelt av 4 är 8.",
+]
+
+[[exempel]]
+rubrik = "Hälften: dela i två lika delar"
+figur = { typ = "prickar", antal = 12, per_rad = 6 }
+steg = [
+  "Tolv kakor ska delas mellan två barn.",
+  "Lägg en kaka i taget till varje barn – en rad var.",
+  "Varje rad har 6. Hälften av 12 är 6. Kontroll: dubbelt av 6 är 12.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är dubbelt så mycket som {a}?"
+steg = ["{a} + {a}", "= ?"]
+svar = "{2*a}"
+var = { a = "2..9" }
+ledtrad = "Lägg ihop talet med sig själv."
+feltankar = { "{a+2}" = "Dubbelt betyder inte två till – det betyder lika många till: {a} + {a}." }
+losning = ["Dubbelt = lika mycket till.", "{a} + {a} = {2*a}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Det ligger lika många gula som blå. Hur många brickor är det – dubbelt så många som de blå?"
+figur = { typ = "tioram", fyllda = "{a}", extra = "{a}" }
+svar = "{2*a}"
+var = { a = "2..5" }
+ledtrad = "Blå: {a}. Gula: lika många. Tillsammans?"
+losning = ["Blå: {a}. Gula: {a}.", "{a} + {a} = {2*a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "farga"
+fraga = "Färga hälften av stapeln."
+figur = { typ = "stapel", delar = "{2*n}", fyllda = 0, farg = "gul" }
+svar = "{n}"
+var = { n = "1..5" }
+ledtrad = "Stapeln har {2*n} delar. Hälften är lika många färgade som vita."
+feltankar = { "{2*n}" = "Det är hela stapeln. Hälften är en av två lika stora delar." }
+losning = ["Stapeln har {2*n} delar.", "Hälften av {2*n} är {n}.", "Färga {n} – då är lika många kvar."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är dubbelt så mycket som {a}?"
+svar = "{2*a}"
+var = { a = "6..25" }
+ledtrad = "Dubbla tiotalen och entalen var för sig."
+feltankar = { "{a+2}" = "Dubbelt betyder inte två till. Dubbelt av {a} är {a} + {a}." }
+losning = ["Dela upp: {a} = {a//10*10} + {a%10}.", "Dubbla: {2*(a//10*10)} + {2*(a%10)}.", "= {2*a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är hälften av {2*a}?"
+svar = "{a}"
+var = { a = "3..25" }
+ledtrad = "Vilket tal blir {2*a} om man dubblar det?"
+feltankar = { "{4*a}" = "Du dubblade. Hälften är mindre: dela i två lika stora delar.", "{2*a-2}" = "Hälften betyder inte två mindre. Dela {2*a} i två lika stora delar." }
+losning = ["Hälften = dela i två lika delar.", "{a} + {a} = {2*a}.", "Alltså är hälften av {2*a} = {a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket tal är dubbelt så stort som {a}?"
+alternativ = ["{a+2}", "{2*a}", "{a*a}"]
+svar = "{2*a}"
+var = { a = "3..9" }
+ledtrad = "Dubbelt = två gånger."
+feltankar = { "{a+2}" = "Det är två till, inte dubbelt.", "{a*a}" = "Det är {a} gånger {a}. Dubbelt är 2 gånger {a}." }
+losning = ["Dubbelt = 2 · {a}.", "= {2*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En kaka kostar {p} kr. Vad kostar 2 kakor? Vad kostar 4 kakor?"
+svarstyp = "tabell"
+falt = ["2 kakor", "4 kakor"]
+svar = ["{2*p}", "{4*p}"]
+var = { p = "3..12" }
+ledtrad = "2 kakor är dubbelt så många som 1. 4 kakor är dubbelt så många som 2."
+losning = ["2 kakor: dubbelt av {p} = {2*p} kr.", "4 kakor: dubbelt av {2*p} = {4*p} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett recept för 4 personer behöver {2*a} dl mjölk. Hur mycket mjölk behövs för 2 personer?"
+svar = "{a}"
+var = { a = "2..6" }
+ledtrad = "2 personer är hälften av 4 personer."
+feltankar = { "{2*a-2}" = "Två färre personer betyder inte två dl mindre. Hälften så många personer behöver hälften så mycket." }
+losning = ["2 personer är hälften av 4.", "Hälften av {2*a} dl = {a} dl."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lisa har {a} kr. Ali har dubbelt så mycket. Hur mycket har de tillsammans?"
+svar = "{3*a}"
+var = { a = "5..20" }
+ledtrad = "Två steg: vad har Ali? Sedan båda."
+feltankar = { "{2*a}" = "{2*a} kr har Ali. Lisas {a} kr ska också med." }
+losning = ["Ali: dubbelt av {a} = {2*a} kr.", "Tillsammans: {a} + {2*a} = {3*a} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är hälften av {2*a+1}?"
+svar = "{a},5"
+var = { a = "2..9" }
+ledtrad = "{2*a+1} är udda. Hälften av {2*a} och hälften av 1."
+losning = ["{2*a+1} = {2*a} + 1.", "Hälften av {2*a} är {a}. Hälften av 1 är 0,5.", "{a} + 0,5 = {a},5."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla de jämna talen blå och de udda talen röda."
+figur = { typ = "malrutor", kolumner = 6, ruta = 58, objekt = "{'|'.join(str(a + i) for i in range(12))}", farger = ["blå", "röd"] }
+svar = "{'|'.join('blå' if (a + i) % 2 == 0 else 'röd' for i in range(12))}"
+var = { a = "1..20" }
+ledtrad = "Ett jämnt tal går att dela i två lika halvor. Titta på entalssiffran: 0, 2, 4, 6, 8 är jämna."
+feltankar = { "{'|'.join('röd' if (a + i) % 2 == 0 else 'blå' for i in range(12))}" = "Du har bytt färgerna. Jämna tal (de som slutar på 0, 2, 4, 6, 8) ska vara blå." }
+losning = ["Titta på sista siffran i varje tal.", "Slutar talet på 0, 2, 4, 6 eller 8 är det jämnt – måla blått.", "Annars är det udda – måla rött. Varannan ruta blir blå."]

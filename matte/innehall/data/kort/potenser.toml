@@ -1,0 +1,127 @@
+id = "potenser"
+titel = "Potenser"
+omrade = "tal"
+ikon = "siffra-2"
+sager = "2⁴ betyder 2 · 2 · 2 · 2 = 16. Basen är det som multipliceras, exponenten hur många gånger."
+galler = "Alltid. 2⁴ är inte 2 · 4 – det är fyra tvåor gånger varandra."
+galler_inte = "”Upphöjt till gör talet större” gäller inte för tal mellan 0 och 1: 0,5² = 0,25, som är mindre än 0,5. Och ”upphöjt till” är aldrig gånger exponenten: 2³ = 8, inte 6."
+forkunskap = ["multiplikation-upprepad-addition"]
+kalla = "Upprepad multiplikation, på samma sätt som multiplikation var upprepad addition. Vanlig feltanke: bas · exponent."
+
+[[rad]]
+sager = "två upphöjt till fyra"
+figur = { typ = "tabell", rubriker = ["2¹", "2²", "2³", "2⁴"], rader = [[2, 4, 8, 16]], kolbredd = 70 }
+skriver = ["2⁴ = 2 · 2 · 2 · 2 = 16"]
+
+[[rad]]
+sager = "tre i kvadrat"
+figur = { typ = "rektangel", bredd = 3, hojd = 3, farg = "gul", matt = false }
+skriver = ["3² = 3 · 3 = 9"]
+kommentar = "Kvadrat – för att det är en kvadrats area."
+
+[[rad]]
+sager = "tio upphöjt till tre"
+figur = { typ = "positionstabell", tal = "1", skift = 3 }
+skriver = ["10³ = 1 000"]
+
+[[uppgift]]
+niva = 1
+fraga = "{a}² = ? (det är {a} · {a})"
+svar = "{a*a}"
+var = { a = "2..12" }
+ledtrad = "{a} gånger {a}."
+losning = ["{a}² = {a} · {a}.", "= {a*a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}^{n} = ?"
+svar = "{a**n}"
+var = { a = "2..5", n = "2..4" }
+ledtrad = "{n} stycken {a} gånger varandra."
+feltankar = { "{a*n}" = "{a}^{n} är inte {a} · {n}. Det är {a} multiplicerat med sig självt {n} gånger: {a} · {a} · … = {a**n}.", "{a+n}" = "Exponenten är inte något man adderar. {a}^{n} = {a} · {a} · … ({n} gånger)." }
+losning = ["{a}^{n} = {' · '.join([str(a)]*n)}.", "= {a**n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "10^{n} = ?"
+svar = "{10**n}"
+var = { n = "2..6" }
+ledtrad = "En etta följd av {n} nollor."
+feltankar = { "{10*n}" = "10^{n} är inte 10 · {n}. Varje tiopotens lägger till en nolla: 10² = 100, 10³ = 1 000 …" }
+losning = ["10^{n} = en etta och {n} nollor.", "= {ts(10**n)}."]
+
+[[exempel]]
+rubrik = "2⁴ steg för steg"
+figur = { typ = "tabell", rubriker = ["2¹", "2²", "2³", "2⁴"], rader = [[2, 4, 8, 16]], kolbredd = 70 }
+steg = [
+  "2⁴ = 2 · 2 · 2 · 2.",
+  "2 · 2 = 4, 4 · 2 = 8, 8 · 2 = 16.",
+  "Varje gång exponenten ökar med 1 multipliceras svaret med basen.",
+]
+
+[[exempel]]
+rubrik = "Varför är 2⁰ = 1?"
+figur = { typ = "tabell", rubriker = ["2³", "2²", "2¹", "2⁰"], rader = [[8, 4, 2, 1]], kolbredd = 70 }
+steg = [
+  "Gå baklänges i tabellen: varje steg åt höger delas med 2.",
+  "8 / 2 = 4, 4 / 2 = 2, 2 / 2 = 1.",
+  "Mönstret säger att 2⁰ = 1. Det gäller alla baser utom 0.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {a}^{n} = ?"
+steg = ["{a}^{n} = {' · '.join([str(a)]*n)}", "= ?"]
+svar = "{a**n}"
+var = { a = "2..5", n = "2..4" }
+ledtrad = "Multiplicera ett steg i taget."
+feltankar = { "{a*n}" = "{a}^{n} är inte {a} · {n}. Det är {n} stycken {a}:or gånger varandra." }
+losning = ["{' · '.join([str(a)]*n)} = {a**n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "0,{d}² = ?"
+svar = "{d*d}/100"
+form = "decimal"
+var = { d = "2..9" }
+ledtrad = "0,{d} · 0,{d}. Tiondelar gånger tiondelar blir hundradelar."
+feltankar = { "{d*d}/10" = "Tiondelar gånger tiondelar blir hundradelar: {d}/10 · {d}/10 = {d*d}/100." }
+losning = ["0,{d} · 0,{d} = {d}/10 · {d}/10.", "= {d*d}/100 = {d*d/100}.", "Mindre än 0,{d} – tal mellan 0 och 1 blir mindre i kvadrat."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} · 10^{n} = ?"
+svar = "{a*10**n}"
+var = { a = "2..9", n = "2..5" }
+ledtrad = "10^{n} = {ts(10**n)}."
+feltankar = { "{a*10*n}" = "10^{n} är inte 10 · {n}. Det är {ts(10**n)}." }
+losning = ["10^{n} = {ts(10**n)}.", "{a} · {ts(10**n)} = {ts(a*10**n)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är {a}⁰?"
+svar = "1"
+var = { a = "2..9" }
+ledtrad = "Gå baklänges: {a}² = {a*a}, {a}¹ = {a}, {a}⁰ = ? Varje steg delas med {a}."
+feltankar = { "0" = "Mönstret: {a}² = {a*a}, {a}¹ = {a}. Ett steg till delat med {a}: {a} / {a} = 1.", "{a}" = "{a} är {a}¹. Ett steg till delat med {a} ger 1." }
+losning = ["{a}² = {a*a}. Dela med {a}: {a}¹ = {a}.", "Dela med {a} igen: {a}⁰ = 1."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilket är störst: 2^{n} eller {n}^2?"
+alternativ = ["2^{n}", "{n}^2"]
+svar = "{'2^' + str(n) if 2**n > n*n else str(n) + '^2'}"
+form = "text"
+var = { n = "[3, 5, 6, 7]" }
+ledtrad = "Räkna ut båda."
+losning = ["2^{n} = {2**n}.", "{n}^2 = {n*n}.", "{'2^' + str(n) if 2**n > n*n else str(n) + '^2'} är störst."]
+
+[[uppgift]]
+niva = 3
+fraga = "På ett schackbräde läggs 1 riskorn på första rutan, 2 på andra, 4 på tredje, 8 på fjärde … Hur många riskorn ligger på ruta {n}?"
+svar = "{2**(n-1)}"
+var = { n = "6..12" }
+ledtrad = "Ruta 1: 2⁰. Ruta 2: 2¹. Ruta {n}: 2 upphöjt till …?"
+feltankar = { "{2**n}" = "Ruta 1 har 2⁰ = 1. Exponenten är alltså en mindre än rutans nummer." }
+losning = ["Ruta 1: 2⁰ = 1. Ruta 2: 2¹ = 2. Ruta 3: 2² = 4.", "Ruta {n}: 2^{n-1}.", "= {ts(2**(n-1))}."]

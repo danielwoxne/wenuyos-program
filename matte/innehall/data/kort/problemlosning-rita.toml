@@ -1,0 +1,140 @@
+id = "problemlosning-rita"
+titel = "Problemlösning – rita en bild"
+omrade = "problem"
+ikon = "gloidlampa"
+sager = "Läs frågan två gånger. Rita det som händer. Skriv en räknehändelse. Kolla: är svaret rimligt?"
+galler = "Alla textuppgifter. Bilden behöver inte vara fin – rutor och streck räcker."
+galler_inte = "Nyckelord lurar. ”Fler” betyder inte alltid plus: ”Ali har 12 kulor – det är 5 fler än Lisa har” betyder att Lisa har 12 − 5. Rita i stället för att leta nyckelord."
+forkunskap = ["multiplikation-upprepad-addition", "subtraktion-till-20"]
+kalla = "Pólyas fyra steg (förstå, planera, genomföra, se tillbaka). Bar-modellen (Singapore) som ritstrategi."
+
+[[rad]]
+sager = "Lisa har 50 kr och köper 3 bullar för 8 kr styck. Hur mycket har hon kvar?"
+figur = { typ = "stapel", delar = 10, fyllda = 6, farg = "orange" }
+skriver = ["50 − 3 · 8 = 50 − 24 = 26 kr"]
+kommentar = "Hela stapeln är 50 kr. De tre bullarna tar 24 – det färgade är det som är kvar, ungefär hälften. Rimligt."
+
+[[uppgift]]
+niva = 1
+fraga = "Ali har {a} kr och köper en bulle för {p} kr. Hur mycket har han kvar?"
+figur = { typ = "ikoner", namn = "mynt", antal = "{a//10}", d = 40 }
+svar = "{a-p}"
+var = { a = "[20, 30, 40, 50]", p = "5..9" }
+ledtrad = "Har kvar = det han hade minus det han betalade."
+losning = ["Han hade {a} kr.", "Bullen kostade {p} kr.", "{a} − {p} = {a-p} kr kvar."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lisa har {a} kr och köper {n} bullar för {p} kr styck. Hur mycket har hon kvar?"
+svar = "{a-n*p}"
+var = { a = "[50, 60, 80, 100]", n = "2..4", p = "5..9" }
+ledtrad = "Två steg: först vad bullarna kostar tillsammans ({n} · {p}), sedan {a} minus det."
+feltankar = { "{a-p}" = "Du drog bara av EN bulle. Hon köper {n} bullar: {n} · {p} = {n*p} kr tillsammans.", "{a-n-p}" = "Bullarna kostar {p} kr STYCK. {n} bullar kostar {n} · {p}, inte {n} + {p}." }
+losning = ["Bullarna: {n} · {p} = {n*p} kr.", "Kvar: {a} − {n*p} = {a-n*p} kr.", "Rimligt? Mindre än {a} och mer än noll – ja."]
+
+[[uppgift]]
+niva = 3
+fraga = "{n} barn delar lika på {n*k} kulor. Sedan får varje barn {m} kulor till. Hur många kulor har varje barn då?"
+svar = "{k+m}"
+var = { n = "3..6", k = "2..9", m = "2..5" }
+ledtrad = "Först: {n*k} delat på {n} barn. Sedan plus {m}."
+feltankar = { "{n*k+m}" = "Kulorna delas först – varje barn får {n*k} / {n} = {k}. Sedan {m} till." }
+losning = ["Dela kulorna: {n*k} / {n} = {k} var.", "Sedan {m} till: {k} + {m} = {k+m}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "skiss"
+fraga = "En buss har {n} passagerare. Vid hållplatsen går {a} av och {b} på. Hur många är det på bussen nu? Rita gärna först."
+svar = "{n-a+b}"
+var = { n = "12..30", a = "3..9", b = "2..8" }
+ledtrad = "Två steg: först minus {a}, sedan plus {b}."
+feltankar = { "{n-a-b}" = "De {b} som gick PÅ ska läggas till, inte dras ifrån.", "{n+a-b}" = "{a} gick AV (minus) och {b} gick på (plus) – du vände på dem." }
+losning = ["Från början {n}.", "{a} går av: {n} − {a} = {n-a}.", "{b} går på: {n-a} + {b} = {n-a+b}."]
+
+[[exempel]]
+rubrik = "Rita en stapel: hur mycket har hon kvar?"
+text = "Lisa har 50 kr och köper 3 bullar för 8 kr styck."
+figur = { typ = "stapel", delar = 10, fyllda = 6, farg = "orange" }
+steg = [
+  "Förstå: hela stapeln är 50 kr. En bit tas bort för bullarna.",
+  "Planera: först vad bullarna kostar, sedan det som är kvar.",
+  "Räkna: 3 · 8 = 24. 50 − 24 = 26 kr.",
+  "Kolla: 26 + 24 = 50. Och 26 är ungefär hälften – rimligt.",
+]
+
+[[exempel]]
+rubrik = "Jämföra med två staplar"
+text = "Ali har 12 kulor. Det är 5 fler än Lisa har."
+figur = { typ = "tallinje", fran = 0, till = 15, markera = [7, 12], etikett = 5 }
+steg = [
+  "Ali har flest – hans stapel är längst: 12.",
+  "Lisas stapel är 5 kortare.",
+  "Lisa: 12 − 5 = 7. Ordet ”fler” betydde minus här.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Sara har {a} kr. Hon får {b} kr av mormor. Hur mycket har hon nu?"
+steg = ["Rita en stapel för {a} kr.", "Rita {b} kr till i förlängningen.", "Hela stapeln = {a} + {b}."]
+svar = "{a+b}"
+var = { a = "12..40", b = "5..20" }
+ledtrad = "Hela stapeln."
+losning = ["{a} + {b} = {a+b} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "Ali har {a} kulor. Det är {b} fler än Lisa har. Hur många kulor har Lisa?"
+svar = "{a-b}"
+var = { a = "12..30", b = "3..9" }
+ledtrad = "Vem har flest? Rita Alis stapel först. Lisas stapel är {b} kortare."
+feltankar = { "{a+b}" = "Ordet ”fler” lurade. Ali har {b} fler än Lisa – alltså har Lisa {b} FÄRRE än Ali: {a} − {b}." }
+losning = ["Ali har flest: {a}.", "Lisa har {b} färre.", "{a} − {b} = {a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{n} barn ska dela {n*k} kakor lika. Hur många kakor får varje barn?"
+figur = { typ = "prickar", antal = "{n*k}", per_rad = "{k}" }
+svar = "{k}"
+var = { n = "2..5", k = "2..6" }
+ledtrad = "Ge en kaka i taget till varje barn tills kakorna är slut – en rad per barn."
+feltankar = { "{n*k-n}" = "Kakorna ska delas lika – det är division, inte subtraktion. {n} · ? = {n*k}." }
+losning = ["Dela i {n} lika stora högar.", "{n} · {k} = {n*k}.", "Varje barn får {k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "skiss"
+fraga = "I en hage finns {h} höns och {g} getter. Hur många ben är det tillsammans? Rita gärna."
+svar = "{2*h+4*g}"
+var = { h = "2..6", g = "2..5" }
+ledtrad = "En höna har 2 ben, en get har 4."
+feltankar = { "{2*(h+g)}" = "Getterna har fyra ben, inte två.", "{h+g}" = "Det är antalet djur. Frågan gäller benen." }
+losning = ["Hönsen: {h} · 2 = {2*h}.", "Getterna: {g} · 4 = {4*g}.", "{2*h} + {4*g} = {2*h+4*g}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En penna kostar {p} kr. Ett sudd kostar {s} kr mer än pennan. Vad kostar båda tillsammans?"
+svar = "{2*p+s}"
+var = { p = "5..15", s = "2..9" }
+ledtrad = "Två steg: vad kostar suddet? Sedan båda."
+feltankar = { "{p+s}" = "{p+s} kr är vad suddet kostar. Pennan ska också med: {p} + {p+s}." }
+losning = ["Suddet: {p} + {s} = {p+s} kr.", "Båda: {p} + {p+s} = {2*p+s} kr."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Lisa har {a} kr och köper {n} bullar för {p} kr styck. Vilket svar på ”hur mycket har hon kvar?” är rimligt?"
+alternativ = ["{a-n*p} kr", "{a+n*p} kr", "{n*p} kr"]
+svar = "{a-n*p} kr"
+form = "text"
+var = { a = "[50, 60, 80, 100]", n = "2..4", p = "5..9" }
+ledtrad = "Har hon mer eller mindre än {a} kr efteråt?"
+feltankar = { "{a+n*p} kr" = "Hon har betalat – då kan hon inte ha mer än {a} kr kvar.", "{n*p} kr" = "{n*p} kr är vad bullarna kostade, inte det som är kvar." }
+losning = ["Efter ett köp har man mindre än förut: under {a} kr.", "Bullarna kostade {n*p} kr.", "{a} − {n*p} = {a-n*p} kr."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "rita"
+fraga = "Rita en bild till problemet: {n} barn har {k} kulor var. Hur många kulor är det tillsammans? Skriv svaret i bilden."
+var = { n = "2..4", k = "2..5" }
+ledtrad = "Rita barnen först, och sedan kulorna bredvid varje barn."
+losning = ["Rita {n} barn (en enkel figur räcker).", "Rita {k} kulor vid varje barn.", "Räkna alla kulor: {n} · {k} = {n*k}."]

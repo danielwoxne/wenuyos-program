@@ -1,0 +1,137 @@
+id = "gy-exponentialfunktioner"
+titel = "Exponentialfunktioner"
+omrade = "samband"
+ikon = "raket"
+sager = "y = C · aˣ: C är startvärdet, a är förändringsfaktorn per steg. a > 1 växer, 0 < a < 1 avtar."
+galler = "När något ändras med samma procent (eller faktor) varje steg – inte med samma antal."
+galler_inte = "Exponentiell tillväxt ökar inte lika mycket varje steg. 100, 200, 400, 800: ökningen själv fördubblas. Och något som avtar exponentiellt når aldrig riktigt noll – det halveras och halveras."
+forkunskap = ["gy-upprepad-forandring", "gy-funktioner"]
+kalla = "Jämförelse linjär (+ samma) mot exponentiell (· samma) i en värdetabell."
+
+[[rad]]
+sager = "hundra bakterier som fördubblas varje timme"
+figur = { typ = "tabell", rubriker = ["timmar", "0", "1", "2", "3"], rader = [["antal", 100, 200, 400, 800]], kolbredd = 70 }
+skriver = ["y = 100 · 2ˣ"]
+
+[[uppgift]]
+niva = 1
+fraga = "y = {c} · {a}ˣ. Vad är startvärdet (y när x = 0)?"
+svar = "{c}"
+var = { c = "[50, 100, 200, 500]", a = "[2, 3]" }
+ledtrad = "{a}⁰ = 1."
+feltankar = { "{c*a}" = "Det är värdet efter ett steg. Vid x = 0 är {a}⁰ = 1, så y = {c}." }
+losning = ["Startvärdet är y när x = 0.", "{a}⁰ = 1, så y = {c} · 1.", "= {c}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{c} bakterier fördubblas varje timme. Hur många är de efter {n} timmar?"
+svar = "{c*2**n}"
+var = { c = "[50, 100, 200]", n = "2..6" }
+ledtrad = "{c} · 2^{n}"
+feltankar = { "{c+2*c*n}" = "Det växer inte med samma ANTAL varje timme – det fördubblas: {c} · 2^{n}.", "{c*2*n}" = "Fördubbling {n} gånger är 2^{n}, inte 2 · {n}." }
+losning = ["Fördubbling varje timme: faktorn 2.", "y = {c} · 2^{n}.", "= {c} · {2**n} = {c*2**n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En stad har {ts(c)} invånare och växer med {p} % per år. Vad är a i y = C · aˣ?"
+svar = "{1+p/100}"
+form = "decimal"
+var = { c = "[20000, 50000]", p = "[1, 2, 3, 5]" }
+ledtrad = "Förändringsfaktorn: 100 % + {p} %."
+feltankar = { "{p/100}" = "0,0{p} är bara ökningen. a är hela förändringsfaktorn: 1 + 0,0{p}." }
+losning = ["Förändringsfaktor: 1 + {p}/100.", "a = {1+p/100}."]
+
+[[rad]]
+sager = "linjärt mot exponentiellt"
+figur = { typ = "tabell", rubriker = ["x", "0", "1", "2", "3", "4"], rader = [["+ 100 (linjärt)", 100, 200, 300, 400, 500], ["· 2 (exponentiellt)", 100, 200, 400, 800, 1600]], kolbredd = 72 }
+skriver = ["linjärt: samma tillägg", "exponentiellt: samma faktor"]
+kommentar = "I början ser de lika ut. Efter några steg drar den exponentiella ifrån."
+
+[[rad]]
+sager = "avtagande"
+skriver = ["0 < a < 1, t.ex. a = 0,5"]
+kommentar = "y = 800 · 0,5ˣ: 800, 400, 200, 100 … Kurvan närmar sig x-axeln men når den aldrig."
+
+[[rad]]
+sager = "halveringstid"
+skriver = ["y = C · 0,5^(t/T)"]
+kommentar = "T är tiden det tar att halveras. Efter två halveringstider finns en fjärdedel kvar."
+
+[[exempel]]
+rubrik = "Från tabell till formel"
+figur = { typ = "tabell", rubriker = ["x", "0", "1", "2"], rader = [["y", 50, 150, 450]], kolbredd = 70 }
+steg = [
+  "x = 0 ger startvärdet: C = 50.",
+  "Varje steg: 150 / 50 = 3 och 450 / 150 = 3. Samma faktor – exponentiellt. a = 3.",
+  "y = 50 · 3ˣ. Kontroll: x = 2 ger 50 · 9 = 450.",
+]
+
+[[exempel]]
+rubrik = "Näckrosdammen"
+text = "Näckrosorna fördubblas varje dag. Dag 30 täcker de hela dammen."
+steg = [
+  "Fördubbling: dagen innan täckte de hälften.",
+  "Dag 29: halva dammen. Dag 28: en fjärdedel.",
+  "Exponentiell tillväxt känns långsam länge – och sedan plötsligt snabb.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. y = {c} · {a}ˣ. Vad är y när x = 3?"
+steg = ["{a}³ = {a} · {a} · {a} = {a**3}", "y = {c} · {a**3} = ?"]
+svar = "{c*a**3}"
+var = { c = "[2, 5, 10, 20]", a = "[2, 3, 4]" }
+ledtrad = "Multiplicera."
+feltankar = { "{c*a*3}" = "{a}³ är inte {a} · 3. Det är {a} · {a} · {a}." }
+losning = ["{c} · {a**3} = {c*a**3}."]
+
+[[uppgift]]
+niva = 2
+fraga = "En patient får {c} mg av ett läkemedel. Mängden minskar med {p} % per timme. Hur mycket finns kvar efter {n} timmar? (mg, en decimal)"
+svar = "{c}*(1-{p}/100)^{n}"
+tolerans = 0.05
+var = { c = "[100, 200, 500]", p = "[10, 15, 20, 25]", n = "2..5" }
+ledtrad = "Förändringsfaktor {1-p/100}. y = {c} · {1-p/100}^{n}."
+feltankar = { "{c}*(1-{p*n}/100)" = "Procenten adderas inte över tid. Varje timme försvinner {p} % av det som finns DÅ." }
+losning = ["Faktorn: 1 − {p/100} = {1-p/100}.", "{c} · {1-p/100}^{n}.", "≈ {round(c*(1-p/100)**n, 1)} mg."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Tabellen visar y för x = 0, 1, 2, 3: {c}, {[2*c, 2*c][e]}, {[3*c, 4*c][e]}, {[4*c, 8*c][e]}. Är sambandet linjärt eller exponentiellt?"
+alternativ = ["linjärt", "exponentiellt"]
+svar = "{['linjärt', 'exponentiellt'][e]}"
+form = "text"
+var = { c = "[5, 10, 20]", e = "0..1" }
+ledtrad = "Ökar y med samma tal eller med samma faktor varje steg?"
+losning = ["{'Skillnaden är ' + str(c) + ' varje steg – samma tillägg: linjärt.' if e == 0 else 'Kvoten är 2 varje steg – samma faktor: exponentiellt.'}"]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett radioaktivt ämne har halveringstiden {T} år. Hur stor andel finns kvar efter {k*T} år? Svara som bråk."
+svar = "1/{2**k}"
+form = "brak"
+var = { T = "[5, 8, 30]", k = "2..5" }
+ledtrad = "Hur många halveringstider är {k*T} år?"
+feltankar = { "1/{2*k}" = "Varje halveringstid halverar det som finns – (1/2)^{k}, inte 1/(2 · {k})." }
+losning = ["{k*T} / {T} = {k} halveringstider.", "(1/2)^{k} = 1/{2**k}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "y = C · aˣ går genom (0, {c}) och (1, {c*a}). Bestäm C och a."
+falt = ["C", "a"]
+svar = ["{c}", "{a}"]
+var = { c = "[3, 5, 10, 40]", a = "[2, 3, 5]" }
+ledtrad = "x = 0 ger C. a är kvoten mellan y-värdena."
+feltankar = { "{c};{c*a-c}" = "a är en faktor, inte ett tillägg: {c*a} / {c}." }
+losning = ["x = 0: y = C · 1 = {c}.", "x = 1: {c} · a = {c*a}, a = {a}.", "y = {c} · {a}ˣ."]
+
+[[uppgift]]
+niva = 3
+fraga = "Näckrosorna i en damm fördubblas varje dag. Dag {n} täcker de hela dammen. Vilken dag täckte de halva?"
+svar = "{n-1}"
+var = { n = "[20, 24, 30, 40]" }
+ledtrad = "Fördubbling – vad var det dagen innan?"
+feltankar = { "{n//2}" = "Halva tiden ger inte halva dammen. Det fördubblas varje dag: dagen innan var det hälften." }
+losning = ["Varje dag fördubblas ytan.", "Dagen innan dag {n} var det hälften.", "Dag {n-1}."]

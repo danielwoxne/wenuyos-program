@@ -1,0 +1,145 @@
+id = "procent-forandring"
+titel = "Procentuell förändring"
+omrade = "samband"
+ikon = "procent"
+sager = "Ökar priset med 20 % blir det nya priset 120 % av det gamla: gamla priset · 1,2. Minskar det med 20 % blir det 80 %: · 0,8. Talet man multiplicerar med heter förändringsfaktor."
+galler = "Alltid. Förändringsfaktorn gör flera förändringar i rad enkla: · 1,2 · 0,8."
+galler_inte = "En ökning med 20 % följd av en minskning med 20 % ger INTE tillbaka det gamla priset (1,2 · 0,8 = 0,96)."
+forkunskap = ["procent-av-tal", "mult-decimaltal"]
+kalla = "Förändringsfaktor som enhetlig modell; vanlig feltanke: procent är 'kronor'."
+
+[[rad]]
+sager = "200 kr ökar med 20 %"
+figur = { typ = "tiostaplar", fyllda = 10, farg = "orange" }
+skriver = ["200 · 1,2 = 240 kr"]
+kommentar = "Hela stapeln är 100 %. Två staplar till är 20 %."
+
+[[rad]]
+sager = "200 kr minskar med 20 %"
+figur = { typ = "tiostaplar", fyllda = 8, farg = "orange" }
+skriver = ["200 · 0,8 = 160 kr"]
+
+[[rad]]
+sager = "förändringsfaktorer"
+figur = { typ = "tabell", rubriker = ["förändring", "faktor"], rader = [["+ 20 %", "1,2"], ["+ 5 %", "1,05"], ["− 20 %", "0,8"], ["− 35 %", "0,65"]], kolbredd = 110 }
+skriver = ["ny = gammal · faktor"]
+
+[[uppgift]]
+niva = 1
+fraga = "Vilken förändringsfaktor motsvarar en ökning med {p} %?"
+svar = "{100+p}/100"
+form = "decimal"
+var = { p = "[5, 10, 20, 25, 50]" }
+ledtrad = "100 % + {p} % = {100+p} %, som decimaltal."
+feltankar = { "{p}/100" = "0,{p} är {p} % av det gamla – bara ökningen. Det nya priset är hela det gamla (100 %) plus {p} %: {100+p} %." }
+losning = ["100 % + {p} % = {100+p} %.", "{100+p} % = {(100+p)/100}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{n} kr ökar med {p} %. Vad blir det nya priset?"
+svar = "{n}*{100+p}/100"
+var = { n = "[200, 300, 400, 500, 800]", p = "[5, 10, 20, 25, 50]" }
+ledtrad = "{n} · {(100+p)/100}"
+feltankar = { "{n+p}" = "{p} % är inte {p} kr. {p} % av {n} är {n*p//100} kr. Nytt pris: {n} + {n*p//100}." }
+losning = ["Förändringsfaktor: {(100+p)/100}.", "{n} · {(100+p)/100} = {n*(100+p)//100} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "{n} kr minskar med {p} %. Vad blir det nya priset?"
+svar = "{n}*{100-p}/100"
+var = { n = "[200, 300, 400, 500, 800]", p = "[10, 20, 25, 50]" }
+ledtrad = "Förändringsfaktorn är {(100-p)/100}."
+feltankar = { "{n*p//100}" = "Det är minskningen, inte det nya priset. Nytt pris = {n} − {n*p//100}.", "{n-p}" = "{p} % är inte {p} kr. Räkna {p} % av {n} först." }
+losning = ["100 % − {p} % = {100-p} %, faktorn {(100-p)/100}.", "{n} · {(100-p)/100} = {n*(100-p)//100} kr."]
+
+[[exempel]]
+rubrik = "Ökning med 20 %: 200 kr"
+figur = { typ = "tiostaplar", fyllda = 10, farg = "orange" }
+steg = [
+  "Det gamla priset är 100 %. Ökningen 20 % läggs till: 120 %.",
+  "120 % = 1,2 – förändringsfaktorn.",
+  "200 · 1,2 = 240 kr.",
+]
+
+[[exempel]]
+rubrik = "Hur många procent billigare? 800 → 600 kr"
+steg = [
+  "Minskningen: 800 − 600 = 200 kr.",
+  "Jämför med det GAMLA priset: 200 / 800 = 0,25.",
+  "25 % billigare. (Delar du med 600 får du fel svar: 33 %.)",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {n} kr ökar med {p} %. Vad blir det nya priset?"
+steg = ["Förändringsfaktor: 100 % + {p} % = {100+p} % = {(100+p)/100}", "{n} · {(100+p)/100} = ?"]
+svar = "{n*(100+p)//100}"
+var = { n = "[200, 400, 500, 800]", p = "[10, 20, 25, 50]" }
+ledtrad = "Multiplicera."
+losning = ["{n} · {(100+p)/100} = {n*(100+p)//100} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilken förändringsfaktor motsvarar en minskning med {p} %?"
+svar = "{100-p}/100"
+form = "decimal"
+var = { p = "[5, 10, 15, 20, 25, 30, 40]" }
+ledtrad = "100 % − {p} %."
+feltankar = { "{p}/100" = "{p/100} är minskningen – det som försvinner. Kvar blir 100 % − {p} %.", "{100+p}/100" = "Det är en ökning. Vid minskning dras procenten ifrån." }
+losning = ["100 % − {p} % = {100-p} %.", "= {(100-p)/100}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Priset gick från {a} kr till {a*(100+p)//100} kr. Hur många procent ökade det?"
+svar = "{p} %"
+form = "procent"
+var = { a = "[200, 400, 500, 800]", p = "[10, 20, 25, 50]" }
+ledtrad = "Ökningen i kronor delat med det gamla priset."
+losning = ["Ökning: {a*(100+p)//100} − {a} = {a*p//100} kr.", "{a*p//100} / {a} = {p/100}.", "= {p} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "Priset sänktes från {a} kr till {a*(100-p)//100} kr. Hur många procent billigare blev det?"
+svar = "{p} %"
+form = "procent"
+var = { a = "[200, 400, 500, 800]", p = "[20, 25, 50]" }
+ledtrad = "Jämför alltid med det GAMLA priset."
+losning = ["Minskning: {a} − {a*(100-p)//100} = {a*p//100} kr.", "Jämför med det gamla: {a*p//100} / {a} = {p/100}.", "= {p} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "En jacka kostar {n} kr. Priset höjs med 20 % och sänks sedan med 20 %. Vad kostar den nu?"
+svar = "{n*96//100}"
+var = { n = "[500, 1000, 1500, 2000]" }
+ledtrad = "Använd förändringsfaktorerna i rad: · 1,2 · 0,8."
+feltankar = { "{n}" = "Det är inte samma 20 %: höjningen räknas på {n}, sänkningen på det högre priset. 1,2 · 0,8 = 0,96." }
+losning = ["{n} · 1,2 = {n*12//10} kr.", "{n*12//10} · 0,8 = {n*96//100} kr.", "Totalt · 0,96 – 4 % billigare än från början."]
+
+[[uppgift]]
+niva = 3
+fraga = "Efter en höjning med 25 % kostar en vara {5*n} kr. Vad kostade den innan?"
+svar = "{4*n}"
+var = { n = "[20, 40, 60, 100]" }
+ledtrad = "Nytt pris = gammalt · 1,25. Dela med 1,25."
+feltankar = { "{5*n*3//4}" = "Att sänka med 25 % tar dig inte tillbaka – 25 % av det nya priset är mer än 25 % av det gamla. Dela med 1,25." }
+losning = ["Gammalt · 1,25 = {5*n}.", "Gammalt = {5*n} / 1,25.", "= {4*n} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "Ett pris höjs från {a} kr till {a + a*p//100} kr. Hur många procent är höjningen?"
+svar = "{p}"
+var = { a = "[40, 80, 200, 400]", p = "[10, 20, 25, 50]" }
+ledtrad = "Ökningen är {a*p//100} kr. Hur stor del av det gamla priset {a} kr är det?"
+feltankar = { "{a*p//100}" = "{a*p//100} är ökningen i kronor. Räkna ut den som andel av det gamla priset: {a*p//100}/{a}." }
+losning = ["Ökningen: {a + a*p//100} − {a} = {a*p//100} kr.", "Andel av det gamla priset: {a*p//100}/{a} = {p} %."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Ett pris sänks med {p} %. Vilka sätt att räkna ut det nya priset är rätt? Kryssa i alla."
+alternativ = ["pris · {(100-p)/100}", "pris − pris · {p/100}", "pris − {p}", "pris · {p/100}", "pris · {1+p/100}"]
+svar = ["pris · {(100-p)/100}", "pris − pris · {p/100}"]
+var = { p = "[10, 20, 25, 40]" }
+ledtrad = "Efter sänkningen är {100-p} % kvar."
+feltankar = { "pris − {p}" = "{p} % är inte {p} kronor – det beror på priset.", "pris · {p/100}" = "Det är sänkningen, inte det nya priset.", "pris · {1+p/100}" = "Det är en höjning med {p} %." }
+losning = ["{100-p} % av priset är kvar: pris · {(100-p)/100}.", "Eller: dra bort sänkningen, pris − pris · {p/100}."]

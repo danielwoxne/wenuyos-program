@@ -1,0 +1,149 @@
+id = "gy-potenslagar"
+titel = "Potenslagarna"
+omrade = "tal"
+ikon = "siffra-2"
+sager = "a^m · a^n = a^(m+n). (a^m)^n = a^(m·n). a^m / a^n = a^(m−n). a⁰ = 1 och a^(−n) = 1/aⁿ."
+galler = "När basen är densamma. 2³ · 3² går inte att slå ihop till en potens."
+galler_inte = "Lagarna gäller bara med samma bas – och aldrig för addition. 2³ + 2² = 8 + 4 = 12, inte 2⁵ = 32. Och 2³ · 3² kan inte skrivas som en potens."
+forkunskap = ["potenser"]
+kalla = "Lagarna härleds ur upprepad multiplikation (2³ · 2² = 2·2·2 · 2·2) innan de används som regler."
+
+[[rad]]
+sager = "två upphöjt till tre gånger två upphöjt till två"
+figur = { typ = "tabell", rubriker = ["2³ · 2²", "="], rader = [["(2·2·2)·(2·2)", "2⁵"]], kolbredd = 160 }
+skriver = ["2³ · 2² = 2³⁺² = 2⁵"]
+
+[[rad]]
+sager = "negativ exponent"
+figur = { typ = "tabell", rubriker = ["2²", "2¹", "2⁰", "2⁻¹", "2⁻²"], rader = [[4, 2, 1, "1/2", "1/4"]], kolbredd = 70 }
+skriver = ["2⁻ⁿ = 1/2ⁿ"]
+kommentar = "Varje steg åt höger: dela med 2. Då blir 2⁰ = 1 och 2⁻¹ = 1/2 – inget att lära utantill."
+
+[[uppgift]]
+niva = 1
+fraga = "Skriv 2^{a} · 2^{b} som en potens av 2. Vilken blir exponenten?"
+svar = "{a+b}"
+var = { a = "2..6", b = "2..6" }
+ledtrad = "Lika baser: lägg ihop exponenterna."
+feltankar = { "{a*b}" = "Exponenterna multipliceras bara vid (2^{a})^{b}. Vid 2^{a} · 2^{b} adderas de: {a} + {b}." }
+losning = ["2^{a} är {a} tvåor, 2^{b} är {b} tvåor.", "Tillsammans {a} + {b} = {a+b} tvåor gånger varandra.", "Exponenten blir {a+b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Förenkla x^{a} · x^{b}"
+svar = "x^{a+b}"
+svarstyp = "uttryck"
+var = { a = "2..5", b = "2..5" }
+ledtrad = "x^{a} är {a} x:n gånger varandra, x^{b} är {b} till."
+feltankar = { "x^{a*b}" = "Exponenterna adderas när man multiplicerar potenser med samma bas: x^{a+b}." }
+losning = ["x^{a} · x^{b}: {a} x:n och {b} x:n.", "{a} + {b} = {a+b}.", "x^{a+b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skriv (3^{a})^{b} som en potens av 3. Vilken blir exponenten?"
+svar = "{a*b}"
+var = { a = "2..4", b = "2..4" }
+ledtrad = "{b} stycken 3^{a} gånger varandra: exponenterna multipliceras."
+feltankar = { "{a+b}" = "(3^{a})^{b} är 3^{a} · 3^{a} · … ({b} gånger). Exponenterna multipliceras: {a} · {b}." }
+losning = ["(3^{a})^{b} = 3^{a} · 3^{a} · … ({b} gånger).", "{b} · {a} = {a*b}.", "Exponenten blir {a*b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är 2^-{a}? Svara som bråk."
+svar = "1/{2**a}"
+form = "brak"
+var = { a = "1..5" }
+ledtrad = "Negativ exponent: 1 / 2^{a}."
+feltankar = { "-{2**a}" = "Minustecknet i exponenten gör inte talet negativt – det betyder 'ett delat med': 1 / 2^{a}." }
+losning = ["2^-{a} = 1 / 2^{a}.", "2^{a} = {2**a}.", "1/{2**a}."]
+
+[[rad]]
+sager = "potens av en potens"
+figur = { typ = "tabell", rubriker = ["(2³)²", "="], rader = [["2³ · 2³", "2⁶"]], kolbredd = 120 }
+skriver = ["(aᵐ)ⁿ = aᵐ·ⁿ"]
+
+[[rad]]
+sager = "division med samma bas"
+figur = { typ = "tabell", rubriker = ["2⁵ / 2²", "="], rader = [["(2·2·2·2·2) / (2·2)", "2³"]], kolbredd = 170 }
+skriver = ["aᵐ / aⁿ = aᵐ⁻ⁿ"]
+kommentar = "Två tvåor i nämnaren tar ut två i täljaren – tre blir kvar."
+
+[[rad]]
+sager = "inte för addition"
+skriver = ["2³ + 2² = 12 ≠ 2⁵"]
+kommentar = "Lagarna kommer från multiplikation. Vid addition måste man räkna ut potenserna först."
+
+[[exempel]]
+rubrik = "Varför adderas exponenterna?"
+text = "2³ · 2² = ?"
+steg = [
+  "Skriv ut: 2³ = 2 · 2 · 2 och 2² = 2 · 2.",
+  "Tillsammans: 2 · 2 · 2 · 2 · 2 – fem tvåor.",
+  "2³ · 2² = 2⁵. Exponenterna räknar tvåorna, och de läggs ihop.",
+]
+
+[[exempel]]
+rubrik = "Negativ exponent ur mönstret"
+figur = { typ = "tabell", rubriker = ["2²", "2¹", "2⁰", "2⁻¹", "2⁻²"], rader = [[4, 2, 1, "1/2", "1/4"]], kolbredd = 70 }
+steg = [
+  "Varje steg åt höger: exponenten minskar med 1 och värdet delas med 2.",
+  "Efter 2⁰ = 1 kommer 2⁻¹ = 1/2 och 2⁻² = 1/4.",
+  "a⁻ⁿ = 1/aⁿ – ett mönster, inte en regel att plugga.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. 2^{a} · 2^{b} = 2^? – vilken är exponenten?"
+steg = ["2^{a} = {a} tvåor gånger varandra", "2^{b} = {b} tvåor till", "Tillsammans: ? tvåor"]
+svar = "{a+b}"
+var = { a = "2..6", b = "2..6" }
+ledtrad = "{a} + {b}."
+losning = ["{a} + {b} = {a+b} tvåor: 2^{a+b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "uttryck"
+fraga = "Förenkla x^{a} / x^{b}"
+svar = "x^{a-b}"
+var = { b = "2..4", a = "b+1..8" }
+ledtrad = "{b} x:n i nämnaren tar ut {b} x:n i täljaren."
+feltankar = { "x^{a//b}" = "Exponenterna divideras inte – de subtraheras: {a} − {b}." }
+losning = ["x^{a} / x^{b}: {b} av de {a} x:na förkortas bort.", "{a} − {b} = {a-b}.", "x^{a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är 2^{a} + 2^{a}? Svara som ett tal."
+svar = "{2**(a+1)}"
+var = { a = "2..6" }
+ledtrad = "Två likadana termer: 2 · 2^{a}."
+feltankar = { "{2**(2*a)}" = "Exponenterna adderas bara vid multiplikation. 2^{a} + 2^{a} = 2 · 2^{a} = 2^{a+1}." }
+losning = ["2^{a} + 2^{a} = 2 · 2^{a}.", "= 2^{a+1} = {2**(a+1)}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Förenkla (x^{a})^{b} · x^{c}"
+svar = "x^{a*b+c}"
+var = { a = "2..4", b = "2..3", c = "1..5" }
+ledtrad = "Först potens av potens (multiplicera), sedan samma bas (addera)."
+losning = ["(x^{a})^{b} = x^{a*b}.", "x^{a*b} · x^{c} = x^{a*b+c}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a}^{m} / {a}^{m+2} = ? Svara som bråk."
+svar = "1/{a*a}"
+form = "brak"
+var = { a = "2..5", m = "2..5" }
+ledtrad = "Exponenten blir {m} − {m+2} = −2."
+feltankar = { "{a*a}" = "Exponenten blir negativ: {a}^-2 = 1/{a}² – ett litet tal." }
+losning = ["{a}^{m} / {a}^{m+2} = {a}^-2.", "= 1 / {a}² = 1/{a*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Beräkna {a}⁰ + {a}^-1. Svara som bråk."
+svar = "{a+1}/{a}"
+form = "brak"
+var = { a = "2..9" }
+ledtrad = "{a}⁰ = 1 och {a}^-1 = 1/{a}."
+feltankar = { "{a-1}/{a}" = "{a}^-1 är positivt: 1/{a}. Det ska läggas till 1." }
+losning = ["{a}⁰ = 1.", "{a}^-1 = 1/{a}.", "1 + 1/{a} = {a+1}/{a}."]

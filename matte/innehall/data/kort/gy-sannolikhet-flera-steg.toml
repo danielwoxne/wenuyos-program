@@ -1,0 +1,129 @@
+id = "gy-sannolikhet-flera-steg"
+titel = "Sannolikhet i flera steg"
+omrade = "sannolikhet"
+ikon = "tarning"
+sager = "Sannolikheten att två saker båda händer = produkten av sannolikheterna längs grenen i träddiagrammet. 'Minst en' räknas enklast som 1 − P(ingen)."
+galler = "När man följer en gren. Drar man utan återläggning ändras sannolikheten i andra steget."
+galler_inte = "Sannolikheter adderas inte när båda sakerna ska hända. Två sexor är 1/6 · 1/6 = 1/36, inte 1/6 + 1/6. Och ”minst en sexa på sex kast” är inte 6/6 = 100 %, utan 1 − (5/6)⁶ ≈ 67 %."
+forkunskap = ["sannolikhet"]
+kalla = "Träddiagrammet som modell; komplementhändelse för 'minst en'."
+
+[[rad]]
+sager = "två sexor på två kast"
+figur = { typ = "tabell", rubriker = ["kast 1", "kast 2", "båda"], rader = [["1/6", "1/6", "1/36"]], kolbredd = 90 }
+skriver = ["1/6 · 1/6 = 1/36"]
+
+[[rad]]
+sager = "minst en sexa på två kast"
+figur = { typ = "tabell", rubriker = ["ingen sexa", "minst en"], rader = [["5/6 · 5/6 = 25/36", "1 − 25/36 = 11/36"]], kolbredd = 160 }
+skriver = ["11/36"]
+
+[[uppgift]]
+niva = 1
+fraga = "Du kastar en tärning två gånger. Hur stor är sannolikheten att få {a} båda gångerna? (bråk)"
+svar = "1/36"
+form = "brak"
+var = { a = "1..6" }
+ledtrad = "1/6 för varje kast. Gånger."
+feltankar = { "2/6" = "Sannolikheterna adderas inte när BÅDA ska hända – de multipliceras: 1/6 · 1/6." }
+losning = ["P({a}) = 1/6 vid varje kast.", "Båda: 1/6 · 1/6.", "= 1/36."]
+
+[[uppgift]]
+niva = 2
+fraga = "En påse har {r} röda och {b} blå kulor. Du drar två utan att lägga tillbaka. P(båda röda)? (bråk)"
+svar = "{r}/{r+b} * {r-1}/{r+b-1}"
+form = "brak-enklast"
+var = { r = "2..5", b = "2..5" }
+ledtrad = "Första: {r}/{r+b}. Sedan är det en röd mindre OCH en kula mindre: {r-1}/{r+b-1}."
+feltankar = { "{r}/{r+b} * {r}/{r+b}" = "Utan återläggning: efter första röda finns {r-1} röda kvar av {r+b-1}." }
+losning = ["Första röda: {r}/{r+b}.", "Sedan finns {r-1} röda kvar av {r+b-1}: {r-1}/{r+b-1}.", "{r}/{r+b} · {r-1}/{r+b-1} = {r*(r-1)}/{(r+b)*(r+b-1)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Du kastar en tärning {n} gånger. Hur stor är sannolikheten att få minst en sexa? (tre decimaler)"
+svar = "1 - (5/6)^{n}"
+tolerans = 0.0005
+var = { n = "2..5" }
+ledtrad = "Räkna motsatsen: ingen sexa = (5/6)^{n}. Minst en = 1 − det."
+feltankar = { "{n}/6" = "Sannolikheterna kan inte adderas – med 6 kast skulle det bli 6/6 = 100 %. Räkna 1 − (5/6)^{n}." }
+losning = ["P(ingen sexa på ett kast) = 5/6.", "P(ingen på {n} kast) = (5/6)^{n} ≈ {round((5/6)**n, 3)}.", "P(minst en) = 1 − {round((5/6)**n, 3)} ≈ {round(1-(5/6)**n, 3)}."]
+
+[[rad]]
+sager = "”och” – multiplicera längs grenen"
+figur = { typ = "tabell", rubriker = ["händelse", "räkning"], rader = [["krona OCH krona", "1/2 · 1/2 = 1/4"], ["sexa OCH sexa", "1/6 · 1/6 = 1/36"]], kolbredd = 150 }
+skriver = ["multiplicera"]
+
+[[rad]]
+sager = "”eller” – addera olika grenar"
+skriver = ["1/4 + 1/4 = 1/2"]
+kommentar = "P(krona–klave eller klave–krona): två olika grenar i trädet som båda leder till det man vill ha."
+
+[[rad]]
+sager = "utan återläggning"
+skriver = ["3/5 · 2/4"]
+kommentar = "Ur 3 röda och 2 blå: P(röd, röd) = 3/5 · 2/4 = 6/20."
+
+[[exempel]]
+rubrik = "Träddiagram: två myntkast"
+figur = { typ = "tabell", rubriker = ["kast 1", "kast 2", "gren", "P"], rader = [["krona", "krona", "KK", "1/4"], ["krona", "klave", "KL", "1/4"], ["klave", "krona", "LK", "1/4"], ["klave", "klave", "LL", "1/4"]], kolbredd = 80 }
+steg = [
+  "Varje gren har sannolikheten 1/2 · 1/2 = 1/4.",
+  "P(två krona) = 1/4 – en gren.",
+  "P(en krona och en klave) = 1/4 + 1/4 = 1/2 – två grenar.",
+]
+
+[[exempel]]
+rubrik = "Minst en sexa på tre kast"
+steg = [
+  "Räkna motsatsen: ingen sexa alls. 5/6 · 5/6 · 5/6 = 125/216.",
+  "Minst en sexa = allt utom ”ingen”: 1 − 125/216 = 91/216.",
+  "≈ 0,42 – inte 3/6 = 0,5, som många gissar.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Du singlar slant två gånger. Hur stor är sannolikheten för krona båda gångerna? (bråk)"
+steg = ["P(krona) = 1/2 vid varje kast.", "Båda ska hända: multiplicera.", "1/2 · 1/2 = ?"]
+svar = "1/4"
+form = "brak"
+ledtrad = "En halv av en halv."
+feltankar = { "1" = "1/2 + 1/2 = 1 skulle betyda att det är säkert. Båda ska hända – multiplicera." }
+losning = ["1/2 · 1/2 = 1/4."]
+
+[[uppgift]]
+niva = 2
+fraga = "Du kastar två tärningar. Hur stor är sannolikheten att summan blir {s}? (bråk)"
+svar = "{6-abs(s-7)}/36"
+form = "brak"
+var = { s = "[2, 3, 4, 5, 7, 10, 11, 12]" }
+ledtrad = "Det finns 36 lika troliga par. Hur många av dem har summan {s}?"
+feltankar = { "1/11" = "Summorna 2–12 är inte lika troliga. Räkna paren: 36 möjliga." }
+losning = ["Möjliga utfall: 6 · 6 = 36 par.", "Par med summan {s}: {6-abs(s-7)} stycken.", "P = {6-abs(s-7)}/36."]
+
+[[uppgift]]
+niva = 2
+fraga = "En påse har {r} röda och {b} blå kulor. Du drar en, lägger tillbaka den och drar igen. P(först röd, sedan blå)? (bråk)"
+svar = "{r}/{r+b} * {b}/{r+b}"
+form = "brak-enklast"
+var = { r = "1..5", b = "1..5" }
+ledtrad = "Med återläggning: samma sannolikheter båda gångerna."
+losning = ["P(röd) = {r}/{r+b}.", "P(blå) = {b}/{r+b} – kulan lades tillbaka.", "{r}/{r+b} · {b}/{r+b} = {r*b}/{(r+b)**2}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Du kastar en tärning två gånger. Hur stor är sannolikheten att få exakt en sexa? (bråk)"
+svar = "10/36"
+form = "brak"
+ledtrad = "Två grenar: sexa–inte sexa och inte sexa–sexa."
+feltankar = { "5/36" = "Det är bara ena grenen. Sexan kan komma i första ELLER andra kastet – två grenar.", "11/36" = "11/36 är minst en sexa – då räknas även två sexor. Exakt en: utan dubbelsexan." }
+losning = ["Sexa först: 1/6 · 5/6 = 5/36.", "Sexa sist: 5/6 · 1/6 = 5/36.", "5/36 + 5/36 = 10/36."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ur en påse med {r} röda och {b} blå drar du två kulor utan återläggning. P(först röd, sedan blå)? (bråk)"
+svar = "{r}/{r+b} * {b}/{r+b-1}"
+form = "brak-enklast"
+var = { r = "2..5", b = "2..5" }
+ledtrad = "Efter den röda finns {r+b-1} kulor kvar – alla {b} blå är kvar."
+feltankar = { "{r}/{r+b} * {b}/{r+b}" = "Utan återläggning finns bara {r+b-1} kulor kvar i andra dragningen." }
+losning = ["P(röd först) = {r}/{r+b}.", "P(blå sedan) = {b}/{r+b-1}.", "{r}/{r+b} · {b}/{r+b-1} = {r*b}/{(r+b)*(r+b-1)}."]

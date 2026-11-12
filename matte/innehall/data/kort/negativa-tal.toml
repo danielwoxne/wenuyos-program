@@ -1,0 +1,165 @@
+id = "negativa-tal"
+titel = "Negativa tal"
+omrade = "tal"
+ikon = "termometer"
+bild = "termometer.jpg"
+bildtext = "Termometern visar 5 grader under noll: −5. Ju längre ner, desto kallare – desto mindre tal."
+sager = "Till vänster om noll på tallinjen finns de negativa talen. −3 är tre steg under noll, som tre minusgrader."
+galler = "Alltid. Ju längre åt vänster, desto mindre: −5 är mindre än −2."
+galler_inte = "'Det större talet står först i subtraktion' gäller inte längre: 2 − 5 går utmärkt och blir −3."
+forkunskap = ["tallinjen-0-20"]
+kalla = "Tallinjen och termometern som modeller. Vanlig feltanke: −5 > −2 för att 5 > 2."
+
+[[rad]]
+sager = "minus tre"
+figur = { typ = "tallinje", fran = -5, till = 5, markera = [-3] }
+skriver = ["−3"]
+
+[[rad]]
+sager = "minus fem är mindre än minus två"
+figur = { typ = "tallinje", fran = -6, till = 2, markera = [-5, -2] }
+skriver = ["−5 < −2"]
+
+[[rad]]
+sager = "två minus fem"
+figur = { typ = "tallinje", fran = -5, till = 5, markera = [2, -3] }
+skriver = ["2 − 5 = −3"]
+kommentar = "Börja på 2 och gå fem steg åt vänster."
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = -10, till = 10, markera = ["{n}"], etikett = 2 }
+svar = "{n}"
+var = { n = "-9..-1" }
+ledtrad = "Till vänster om noll – talet är negativt."
+feltankar = { "{-n}" = "Markeringen ligger till vänster om noll, så talet är negativt: {n}." }
+losning = ["Markeringen ligger till vänster om noll – talet är negativt.", "Den är {-n} steg från noll.", "Talet är {n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket är minst?"
+svar = "{-a}"
+var = { b = "1..8", a = "b+1..9" }
+alternativ = ["{-a}", "{-b}"]
+ledtrad = "Vilket ligger längst till vänster på tallinjen?"
+feltankar = { "{-b}" = "−{b} ligger närmare noll än −{a}. Längre åt vänster = mindre, så −{a} är minst." }
+losning = ["Längre åt vänster på tallinjen = mindre.", "−{a} ligger längre åt vänster än −{b}.", "−{a} är minst."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} − {b} = ?"
+svar = "{a-b}"
+var = { a = "1..6", b = "a+1..12" }
+ledtrad = "Börja på {a} och gå {b} steg åt vänster på tallinjen. Du passerar noll."
+feltankar = { "{b-a}" = "Du räknade {b} − {a}. Men det står {a} − {b}: man går {b} steg åt vänster från {a} och hamnar under noll." }
+losning = ["Börja på {a} och gå {b} steg åt vänster.", "Efter {a} steg är du på 0. Sedan {b-a} steg till.", "Du hamnar på {a-b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "punkt"
+fraga = "Pricka in {n} på tallinjen."
+figur = { typ = "tallinje", fran = -10, till = 10, etikett = 2 }
+svar = "{n}"
+var = { n = "-9..-1" }
+ledtrad = "Negativa tal ligger till vänster om noll."
+feltankar = { "{-n}" = "Du prickade {-n}. Minustecknet betyder vänster om noll: {n} ligger {-n} steg till vänster." }
+losning = ["Minustecknet betyder vänster om noll.", "Räkna {-n} steg åt vänster från 0."]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många grader visar termometern?"
+figur = { typ = "scen", bild = "termometer.jpg", bredd = 560 }
+svar = "-5"
+ledtrad = "Det röda slutar mellan 0 och −10, precis mitt emellan."
+feltankar = { "5" = "Det röda slutar UNDER noll. Grader under noll är negativa: −5." }
+losning = ["Det röda slutar under noll.", "Mitt emellan 0 och −10.", "−5 grader."]
+
+[[exempel]]
+rubrik = "2 − 5 på tallinjen"
+figur = { typ = "tallinje", fran = -5, till = 5, markera = [2, -3] }
+steg = [
+  "Börja på 2. Minus 5 betyder fem steg åt vänster.",
+  "Två steg tar dig till 0. Tre steg till tar dig under noll.",
+  "2 − 5 = −3.",
+]
+
+[[exempel]]
+rubrik = "Vilket är minst: −5 eller −2?"
+figur = { typ = "tallinje", fran = -6, till = 2, markera = [-5, -2] }
+steg = [
+  "Tänk på termometern: −5 grader är kallare än −2.",
+  "På tallinjen ligger −5 längre åt vänster.",
+  "Längre åt vänster = mindre: −5 < −2, fast 5 > 2.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {a} − {b} = ?"
+steg = ["Börja på {a}.", "Gå {a} steg åt vänster – då är du på 0.", "Gå {b-a} steg till åt vänster."]
+figur = { typ = "tallinje", fran = -10, till = 10, markera = ["{a}"], etikett = 2 }
+svar = "{a-b}"
+var = { a = "1..5", b = "a+1..10" }
+ledtrad = "{b-a} steg under noll."
+feltankar = { "{b-a}" = "Du hamnar under noll – svaret är negativt: {a-b}." }
+losning = ["{a} − {a} = 0.", "0 − {b-a} = {a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Termometern visar {a} grader. Temperaturen sjunker {b} grader. Vad visar den nu?"
+svar = "{a-b}"
+var = { a = "1..6", b = "a+1..12" }
+ledtrad = "Sjunker = åt nedåt, mot minus. Gå förbi noll."
+feltankar = { "{b-a}" = "Temperaturen sjunker under noll – det blir minusgrader: {a-b}." }
+losning = ["{a} grader ner till 0: {a} grader.", "Kvar att sjunka: {b-a}.", "{a} − {b} = {a-b} grader."]
+
+[[uppgift]]
+niva = 2
+fraga = "Det är {-a} grader. Det blir {b} grader varmare. Vad visar termometern nu?"
+svar = "{b-a}"
+var = { a = "2..9", b = "1..14" }
+ledtrad = "Varmare = uppåt. Börja på {-a} och gå {b} steg uppåt."
+feltankar = { "{-a-b}" = "Varmare betyder uppåt, mot plus. Gå {b} steg upp från {-a}.", "{a+b}" = "Du började på {a} i stället för {-a}." }
+losning = ["Börja på {-a}.", "Gå {b} steg uppåt.", "{-a} + {b} = {b-a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket tecken ska stå i rutan? −{a} ▢ −{b}"
+alternativ = ["<", ">"]
+svar = "<"
+form = "text"
+var = { b = "1..8", a = "b+1..9" }
+ledtrad = "Vilket ligger längst åt vänster på tallinjen?"
+feltankar = { ">" = "{a} > {b}, men −{a} ligger längre åt vänster än −{b}. Alltså −{a} < −{b}." }
+losning = ["−{a} ligger längre åt vänster.", "Vänster = mindre.", "−{a} < −{b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "På dagen var det {a} grader och på natten {-b} grader. Hur många grader skilde det?"
+svar = "{a+b}"
+var = { a = "2..12", b = "2..10" }
+ledtrad = "Räkna stegen från {-b} upp till 0, och sedan från 0 upp till {a}."
+feltankar = { "{abs(a-b)}" = "Du räknade som om båda var plusgrader. Från {-b} till 0 är {b} grader, och från 0 till {a} är {a} grader till." }
+losning = ["Från {-b} till 0: {b} grader.", "Från 0 till {a}: {a} grader.", "{b} + {a} = {a+b} grader."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Skriv talen {-a} · {b} · {-c} i storleksordning, minst först."
+falt = ["minst", "mitten", "störst"]
+svar = ["{-max(a,c)}", "{-min(a,c)}", "{b}"]
+var = { a = "1..9", c = "1..9 != a", b = "1..9" }
+ledtrad = "Tänk på tallinjen: längst åt vänster är minst."
+losning = ["Det positiva talet {b} är störst.", "Av de negativa är {-max(a,c)} längst åt vänster.", "{-max(a,c)} < {-min(a,c)} < {b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "kryssa"
+fraga = "Vilka tal är mindre än {a}? Kryssa i alla."
+alternativ = ["{a-3}", "{a-1}", "{a+2}", "{a+5}", "{a-6}"]
+svar = ["{a-3}", "{a-1}", "{a-6}"]
+var = { a = "-4..-1" }
+ledtrad = "Tänk på tallinjen: mindre tal ligger längre till vänster."
+feltankar = { "{a+2}" = "{a+2} ligger till höger om {a} på tallinjen – det är större.", "{a+5}" = "{a+5} ligger till höger om {a} på tallinjen – det är större." }
+losning = ["Rita en tallinje och markera {a}.", "Allt till vänster om {a} är mindre: {a-6}, {a-3} och {a-1}.", "Ju längre från noll på minussidan, desto mindre är talet."]

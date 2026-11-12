@@ -1,0 +1,162 @@
+id = "forenkla-uttryck"
+titel = "Förenkla uttryck"
+omrade = "algebra"
+ikon = "lika-med"
+sager = "x är ett tal vi inte vet. 2x + 3x = 5x – två äpplen och tre äpplen är fem äpplen. Men 2x + 3 går inte att slå ihop: äpplen och kronor är olika saker."
+galler = "Bara lika termer kan slås ihop: x-termer med x-termer, tal med tal, x² med x²."
+galler_inte = "3x betyder 3 · x – inte en trea följd av x. Om x = 4 är 3x = 12, inte 34. Och x kan vara vilket tal som helst; samma bokstav betyder samma tal i hela uttrycket."
+forkunskap = ["ekvationer-enkla"]
+kalla = "Variabeln som 'okänt tal', inte som 'bokstav' (Küchemann). Vanlig feltanke: 2x + 3 = 5x."
+
+[[rad]]
+sager = "två x plus tre x"
+figur = { typ = "ikoner", namn = "apple", antal = 5 }
+skriver = ["2x + 3x = 5x"]
+
+[[rad]]
+sager = "två x plus tre"
+figur = { typ = "ikoner", namn = "apple", antal = 2 }
+skriver = ["2x + 3 går inte att förenkla"]
+kommentar = "Två äpplen och tre kronor. Olika saker."
+
+[[rad]]
+sager = "tre gånger parentesen"
+figur = { typ = "tabell", rubriker = ["3(x + 2)", "=", "3x + 6"], rader = [["x + 2", "", ""], ["x + 2", "", ""], ["x + 2", "", ""]], kolbredd = 90 }
+skriver = ["3(x + 2) = 3x + 6"]
+kommentar = "Tre gånger allt i parentesen: tre x och tre tvåor."
+
+[[uppgift]]
+niva = 1
+fraga = "Förenkla {a}x + {b}x"
+svar = "{a+b}x"
+svarstyp = "uttryck"
+var = { a = "2..9", b = "2..9" }
+ledtrad = "{a} x och {b} x till."
+losning = ["{a}x och {b}x till.", "{a} + {b} = {a+b}.", "{a+b}x."]
+
+[[uppgift]]
+niva = 2
+fraga = "Förenkla {a}x + {b} + {c}x"
+svar = "{a+c}x + {b}"
+svarstyp = "uttryck"
+var = { a = "2..9", b = "1..9", c = "1..9" }
+ledtrad = "Slå ihop x-termerna. Talet {b} står kvar för sig."
+feltankar = { "{a+b+c}x" = "{b} är ett tal, inte x. Det kan inte slås ihop med x-termerna: {a}x + {c}x = {a+c}x, och {b} står kvar." }
+losning = ["x-termer: {a}x + {c}x = {a+c}x.", "Talet {b} står kvar.", "{a+c}x + {b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Multiplicera in: {a}(x + {b})"
+svar = "{a}x + {a*b}"
+svarstyp = "uttryck"
+var = { a = "2..6", b = "1..9" }
+ledtrad = "{a} gånger x OCH {a} gånger {b}."
+feltankar = { "{a}x + {b}" = "{a} ska multipliceras med allt i parentesen – även {b}. {a} · {b} = {a*b}." }
+losning = ["{a} · x = {a}x.", "{a} · {b} = {a*b}.", "{a}x + {a*b}."]
+
+[[exempel]]
+rubrik = "Lika termer"
+text = "Förenkla 4x + 7 + 2x − 3"
+steg = [
+  "Sortera: x-termer för sig och tal för sig.",
+  "4x + 2x = 6x. 7 − 3 = 4.",
+  "Svar: 6x + 4. Det går inte att slå ihop mer – 6x och 4 är olika sorter.",
+]
+
+[[exempel]]
+rubrik = "Multiplicera in: 3(x + 2)"
+figur = { typ = "tabell", rubriker = ["3(x + 2)", "=", "3x + 6"], rader = [["x + 2", "", ""], ["x + 2", "", ""], ["x + 2", "", ""]], kolbredd = 90 }
+steg = [
+  "3(x + 2) betyder tre stycken (x + 2).",
+  "x + x + x = 3x och 2 + 2 + 2 = 6.",
+  "3(x + 2) = 3x + 6. Trean multipliceras med båda termerna.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "uttryck"
+fraga = "Följ stegen och förenkla {a}x + {b} + {c}x."
+steg = ["x-termer: {a}x + {c}x = {a+c}x", "Tal: {b}", "Ihop: ?"]
+svar = "{a+c}x + {b}"
+var = { a = "2..9", b = "1..9", c = "1..9" }
+ledtrad = "Skriv x-termen och talet efter varandra."
+losning = ["{a+c}x + {b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "uttryck"
+fraga = "Förenkla {a}x − {b}x"
+svar = "{a-b}x"
+var = { b = "1..7", a = "b+1..12" }
+ledtrad = "{a} x minus {b} x."
+losning = ["{a} − {b} = {a-b}.", "{a-b}x."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är värdet av {a}x + {b} när x = {v}?"
+svar = "{a*v+b}"
+var = { a = "2..9", b = "1..9", v = "2..9" }
+ledtrad = "Byt x mot {v}: {a} · {v} + {b}."
+feltankar = { "{10*a+v+b}" = "{a}x betyder {a} · x – inte siffrorna {a} och {v} efter varandra." }
+losning = ["{a}x = {a} · {v} = {a*v}.", "{a*v} + {b} = {a*v+b}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Förenkla {a}(x + {b}) + {c}x"
+svar = "{a+c}x + {a*b}"
+var = { a = "2..5", b = "1..6", c = "1..5" }
+ledtrad = "Multiplicera in först, slå sedan ihop x-termerna."
+feltankar = { "{a+c}x + {b}" = "{a} ska multipliceras med {b} också: {a} · {b} = {a*b}." }
+losning = ["{a}(x + {b}) = {a}x + {a*b}.", "{a}x + {a*b} + {c}x = {a+c}x + {a*b}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Förenkla {a}x + {b}y + {c}x"
+svar = "{a+c}x + {b}y"
+var = { a = "2..8", b = "2..8", c = "1..6" }
+ledtrad = "x och y är olika tal – de slås inte ihop."
+feltankar = { "{a+b+c}x" = "y är ett annat tal än x. Bara x-termerna slås ihop.", "{a+b+c}xy" = "x och y slås inte ihop – de är olika sorter." }
+losning = ["x-termer: {a}x + {c}x = {a+c}x.", "y-termen står kvar: {b}y.", "{a+c}x + {b}y."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Förenkla −(x − {b})"
+svar = "-x + {b}"
+var = { b = "2..9" }
+ledtrad = "Minus framför parentesen byter tecken på allt inuti."
+feltankar = { "-x - {b}" = "Minustecknet byter tecken på båda termerna: −x och −(−{b}) = +{b}." }
+losning = ["−(x − {b}) = −1 · (x − {b}).", "= −x + {b}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Ett äpple kostar x kr och en banan 3 kr. Skriv ett uttryck för vad {a} äpplen och {b} bananer kostar."
+svar = "{a}x + {3*b}"
+var = { a = "2..9", b = "2..6" }
+ledtrad = "Äpplena: {a} · x. Bananerna: {b} · 3."
+feltankar = { "{a}x + {b}" = "Varje banan kostar 3 kr: {b} bananer kostar {b} · 3 = {3*b}." }
+losning = ["Äpplena: {a}x kr.", "Bananerna: {b} · 3 = {3*b} kr.", "{a}x + {3*b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje mellan uttrycken som är lika."
+par = [["{a}x + {b}x", "{a+b}x"], ["{a}x · {b}", "{a*b}x"], ["{a}(x + {b})", "{a}x + {a*b}"], ["x + x", "2x"]]
+var = { a = "2..4", b = "2..5 != a" }
+ledtrad = "Plus: lägg ihop antalet x. Gånger: multiplicera talen. Parentes: multiplicera båda termerna."
+feltankar = { "{a}x · {b} → {a+b}x" = "Det är gånger: {a}x · {b} = {a} · {b} · x = {a*b}x.", "{a}x + {b}x → {a*b}x" = "Det är plus: {a} x och {b} x till är {a+b} x." }
+losning = ["{a}x + {b}x = {a+b}x – lika termer läggs ihop.", "{a}x · {b} = {a*b}x – talen multipliceras.", "{a}(x + {b}) = {a}x + {a*b} – båda termerna multipliceras.", "x + x = 2x."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Vilka uttryck är lika med {a}(x + {b})? Kryssa i alla."
+alternativ = ["{a}x + {a*b}", "{a}x + {b}", "{a*b} + {a}x", "x + {a+b}", "{a} · x + {a} · {b}"]
+svar = ["{a}x + {a*b}", "{a*b} + {a}x", "{a} · x + {a} · {b}"]
+var = { a = "2..5", b = "2..6" }
+ledtrad = "Multiplicera in {a} i båda termerna i parentesen."
+feltankar = { "{a}x + {b}" = "Glöm inte att multiplicera båda termerna i parentesen: {a} · {b} = {a*b}.", "x + {a+b}" = "Parentesen ska multipliceras, inte läggas ihop: {a} · x + {a} · {b}." }
+losning = ["{a}(x + {b}) = {a} · x + {a} · {b} = {a}x + {a*b}.", "Ordningen spelar ingen roll: {a*b} + {a}x är samma sak."]

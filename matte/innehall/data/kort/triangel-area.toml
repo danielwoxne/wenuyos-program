@@ -1,0 +1,122 @@
+id = "triangel-area"
+titel = "Triangelns area"
+omrade = "geometri"
+ikon = "triangel"
+sager = "En triangel är en halv rektangel. Area = bas · höjd / 2."
+galler = "Alla trianglar – men höjden ska mätas vinkelrätt mot basen, inte längs en sned sida."
+galler_inte = "Den sneda sidan är inte höjden. Höjden står alltid vinkelrätt – rakt upp – mot basen. I en trubbig triangel kan höjden till och med hamna utanför triangeln."
+forkunskap = ["omkrets-area"]
+kalla = "Härledning ur rektangeln (bilden) i stället för formeln som regel att minnas."
+
+[[rad]]
+sager = "bas 6, höjd 4"
+figur = { typ = "triangel", bas = 6, hojd = 4 }
+skriver = ["6 · 4 / 2 = 12 cm²"]
+kommentar = "Rektangeln 6 · 4 = 24 skulle rymma två sådana trianglar."
+
+[[rad]]
+sager = "samma triangel i en rektangel"
+figur = { typ = "rektangel", bredd = 6, hojd = 4, farg = "rosa", rutnat = true }
+skriver = ["24 / 2 = 12 cm²"]
+
+[[uppgift]]
+niva = 1
+fraga = "Rektangeln är {b} · {h} = {b*h} cm². Hur stor är en triangel som är halva rektangeln?"
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}", farg = "rosa" }
+svar = "{b*h/2}"
+var = { b = "[2, 4, 6, 8]", h = "2..6" }
+ledtrad = "Hälften av {b*h}."
+losning = ["Triangeln är hälften av rektangeln.", "{b*h} / 2 = {b*h//2} cm²."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är triangelns area i cm²?"
+figur = { typ = "triangel", bas = "{b}", hojd = "{h}" }
+svar = "{b*h}/2"
+var = { b = "[4, 6, 8, 10]", h = "2..7" }
+ledtrad = "bas · höjd / 2 = {b} · {h} / 2."
+feltankar = { "{b*h}" = "Du glömde dela med 2. {b} · {h} är rektangelns area – triangeln är hälften.", "{b+h}" = "Area är inte bas plus höjd. Tänk rutor: bas · höjd ger rektangeln, triangeln är hälften." }
+losning = ["Rektangeln runt triangeln: {b} · {h} = {b*h}.", "Triangeln är hälften: {b*h} / 2 = {b*h//2} cm²."]
+
+[[uppgift]]
+niva = 3
+fraga = "En triangel har arean {b*h/2} cm² och basen {b} cm. Hur hög är den?"
+svar = "{h}"
+var = { b = "[4, 6, 8]", h = "2..9" }
+ledtrad = "bas · höjd / 2 = {b*h/2}. Så bas · höjd = {b*h}. Höjden = {b*h} / {b}."
+losning = ["bas · höjd / 2 = {b*h//2}, så bas · höjd = {b*h}.", "{b} · höjd = {b*h}.", "Höjden = {h} cm."]
+
+[[exempel]]
+rubrik = "Halva rektangeln"
+figur = { typ = "triangel", bas = 6, hojd = 4 }
+steg = [
+  "Rita en rektangel runt triangeln: 6 · 4 = 24 cm².",
+  "Triangeln tar precis halva rektangeln – de två vita bitarna blir tillsammans lika stora som triangeln.",
+  "24 / 2 = 12 cm².",
+]
+
+[[exempel]]
+rubrik = "Höjden står rakt upp"
+figur = { typ = "triangel", bas = 6, hojd = 4 }
+steg = [
+  "Basen är sidan triangeln står på.",
+  "Höjden mäts från toppen rakt ned mot basen – vinkelrätt.",
+  "Den sneda sidan är längre än höjden och används inte i formeln.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är triangelns area i cm²?"
+steg = ["Rektangeln runt triangeln: {b} · {h} = {b*h}", "Triangeln är hälften: {b*h} / 2 = ?"]
+figur = { typ = "triangel", bas = "{b}", hojd = "{h}" }
+svar = "{b*h//2}"
+var = { b = "[4, 6, 8, 10]", h = "2..7" }
+ledtrad = "Hälften av {b*h}."
+feltankar = { "{b*h}" = "Det är rektangeln. Triangeln är hälften." }
+losning = ["{b*h} / 2 = {b*h//2} cm²."]
+
+[[uppgift]]
+niva = 2
+fraga = "En triangel har basen {b} cm och höjden {h} cm. Vad är arean i cm²?"
+svar = "{b*h/2}"
+var = { b = "[3, 5, 7, 9]", h = "[3, 5, 7]" }
+ledtrad = "{b} · {h} / 2. Svaret blir inte ett heltal."
+feltankar = { "{b*h}" = "Glöm inte att dela med 2 – triangeln är halva rektangeln." }
+losning = ["{b} · {h} = {b*h}.", "{b*h} / 2 = {b*h/2} cm²."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Rektangeln och triangeln har samma bas ({b} cm) och höjd ({h} cm). Räkna ut båda areorna."
+figur = { typ = "triangel", bas = "{b}", hojd = "{h}" }
+falt = ["Rektangeln (cm²)", "Triangeln (cm²)"]
+svar = ["{b*h}", "{b*h//2}"]
+var = { b = "[4, 6, 8]", h = "2..6" }
+ledtrad = "Triangeln är hälften av rektangeln."
+losning = ["Rektangeln: {b} · {h} = {b*h} cm².", "Triangeln: {b*h} / 2 = {b*h//2} cm²."]
+
+[[uppgift]]
+niva = 3
+fraga = "En vimpel är en triangel med basen {b} cm och höjden {h} cm. Hur mycket tyg (cm²) går åt till {n} vimplar?"
+svar = "{n*b*h//2}"
+var = { b = "[10, 20, 30]", h = "20..40", n = "3..8" }
+ledtrad = "Räkna ut en vimpel först."
+losning = ["En vimpel: {b} · {h} / 2 = {b*h//2} cm².", "{n} vimplar: {n} · {b*h//2} = {n*b*h//2} cm²."]
+
+[[uppgift]]
+niva = 3
+fraga = "En triangel har arean {b*h//2} cm² och höjden {h} cm. Hur lång är basen?"
+svar = "{b}"
+var = { b = "[4, 6, 8, 10]", h = "3..9" }
+ledtrad = "bas · {h} / 2 = {b*h//2}. Gånger 2 först."
+feltankar = { "{b//2}" = "Glöm inte att arean är halva rektangeln. bas · höjd = 2 · {b*h//2} = {b*h}." }
+losning = ["bas · höjd / 2 = {b*h//2}, så bas · höjd = {b*h}.", "bas · {h} = {b*h}.", "basen = {b} cm."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "rita"
+fraga = "Rita en triangel som har arean {a*b//2} rutor. Börja med en rektangel och dela den på mitten."
+figur = { typ = "rutpapper", bredd = 18, hojd = 10, ruta = 28 }
+var = { a = "[2,4,6]", b = "[3,4,5]" }
+ledtrad = "En rektangel som är {a} rutor bred och {b} rutor hög har arean {a*b}. Hälften är {a*b//2}."
+losning = ["Rita en rektangel: {a} rutor bred och {b} rutor hög. Arean är {a} · {b} = {a*b}.", "Dra en linje från ett hörn till hörnet mitt emot.", "Varje triangel är hälften av rektangeln: {a*b} / 2 = {a*b//2} rutor."]

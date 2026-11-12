@@ -1,0 +1,150 @@
+id = "tiotal-ental"
+titel = "Tiotal och ental"
+omrade = "tal"
+ikon = "kuber-gula"
+bild = "tiobas.jpg"
+bildtext = "Två tiostavar och tre kuber: 20 + 3 = 23. Staven är tio kuber som sitter ihop."
+sager = "Ett tvåsiffrigt tal består av tiotal och ental. 23 är två tiostavar och tre kuber."
+galler = "Alltid – det är positionssystemet. Platsen bestämmer vad siffran är värd."
+galler_inte = "Siffran 2 är inte alltid värd två. I 23 är den värd tjugo, i 32 bara två. Det är platsen i talet som bestämmer vad siffran är värd – inte siffran själv."
+forkunskap = ["rakna-antal"]
+kalla = "Konkret → bild → symbol med tiobasmaterial (Dienes). Positionsförståelse (Fuson)."
+
+[[rad]]
+sager = "tjugotre"
+figur = { typ = "tiobas", tiotal = 2, ental = 3 }
+skriver = ["23 = 20 + 3"]
+
+[[rad]]
+sager = "fyrtioett"
+figur = { typ = "tiobas", tiotal = 4, ental = 1 }
+skriver = ["41 = 40 + 1"]
+
+[[rad]]
+sager = "trettio"
+figur = { typ = "tiobas", tiotal = 3, ental = 0 }
+skriver = ["30 = 30 + 0"]
+kommentar = "Nollan håller platsen: utan den skulle 30 bli 3."
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många är det? (varje stav är tio)"
+figur = { typ = "tiobas", tiotal = "{t}", ental = "{e}" }
+svar = "{t*10+e}"
+var = { t = "1..5", e = "1..9" }
+ledtrad = "Räkna stavarna: tio, tjugo, trettio … och sedan kuberna."
+feltankar = { "{t+e}" = "Du räknade stavarna som ettor. Varje stav är tio kuber." }
+losning = ["Räkna stavarna i tiotal: {', '.join(str(10*i) for i in range(1, t+1))}.", "Räkna vidare med kuberna: {', '.join(str(10*t+i) for i in range(1, e+1))}.", "Det blir {t*10+e}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur många tiotal är det i {t*10+e}?"
+svar = "{t}"
+var = { t = "1..9", e = "0..9" }
+ledtrad = "Tiotalssiffran står först."
+feltankar = { "{e}" = "Det är entalen. Tiotalen står till vänster om entalen." }
+losning = ["I {t*10+e} står {t} på tiotalsplatsen och {e} på entalsplatsen.", "Tiotalen: {t}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Skriv {t*10+e} som tiotal + ental, till exempel 20 + 3."
+svar = "{t*10} + {e}"
+form = "auto"
+var = { t = "2..9", e = "1..9" }
+ledtrad = "{t} tiotal är {t*10}. Lägg till entalen."
+losning = ["{t} tiotal = {t*10}.", "{e} ental = {e}.", "{t*10+e} = {t*10} + {e}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många är det på bilden? (Varje gul stav är tio.)"
+figur = { typ = "scen", bild = "tiobas.jpg", bredd = 560 }
+svar = "23"
+ledtrad = "Två stavar = 20. Och tre kuber."
+feltankar = { "5" = "Stavarna är inte ettor – varje stav är tio. 10 + 10 + 3." }
+losning = ["Två stavar = 20.", "Tre kuber = 3.", "20 + 3 = 23."]
+
+[[exempel]]
+rubrik = "Från kuber till tal: 34"
+figur = { typ = "tiobas", tiotal = 3, ental = 4 }
+steg = [
+  "Räkna stavarna i tiotal: tio, tjugo, trettio.",
+  "Räkna vidare med kuberna: trettioett, trettiotvå, trettiotre, trettiofyra.",
+  "Tre tiotal och fyra ental skrivs 34.",
+]
+
+[[exempel]]
+rubrik = "Nollan håller platsen"
+figur = { typ = "tiobas", tiotal = 4, ental = 0 }
+steg = [
+  "Fyra stavar och inga lösa kuber.",
+  "Vi skriver 40. Nollan visar att det inte finns några ental.",
+  "Utan nollan stod det 4 – och det är något helt annat.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Räkna vidare från {10*t}. Hur många är det?"
+steg = ["Stavarna: {', '.join(str(10*i) for i in range(1, t+1))}", "Kuberna: {', '.join(str(10*t+i) for i in range(1, e))}, …"]
+figur = { typ = "tiobas", tiotal = "{t}", ental = "{e}" }
+svar = "{t*10+e}"
+var = { t = "2..5", e = "2..8" }
+ledtrad = "Fortsätt räkna en kub till."
+feltankar = { "{t+e}" = "Varje stav är tio kuber, inte en. Räkna stavarna: {', '.join(str(10*i) for i in range(1, t+1))}." }
+losning = ["Stavarna: {', '.join(str(10*i) for i in range(1, t+1))}.", "Kuberna: {', '.join(str(10*t+i) for i in range(1, e+1))}.", "Det blir {t*10+e}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vad är siffran {a} värd i talet {a}{b}?"
+alternativ = ["{a}", "{10*a}", "{a}{b}"]
+svar = "{10*a}"
+var = { a = "1..9", b = "1..9 != a" }
+ledtrad = "Står {a} på tiotalsplatsen eller på entalsplatsen?"
+feltankar = { "{a}" = "I {a}{b} står {a} på tiotalsplatsen – den är värd {a} tiotal, alltså {10*a}." }
+losning = ["Den första siffran i ett tvåsiffrigt tal är tiotalen.", "{a} tiotal = {10*a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Hur många tiotal och ental har {10*t+e}?"
+falt = ["Tiotal", "Ental"]
+svar = ["{t}", "{e}"]
+var = { t = "1..9", e = "0..9" }
+ledtrad = "Tiotalen står först, entalen sist."
+losning = ["{10*t+e}: den första siffran är tiotalen, {t}.", "Den sista är entalen, {e}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{t} tiotal och {e} ental. Vilket tal är det?"
+svar = "{10*t+e}"
+var = { t = "1..9", e = "1..9" }
+ledtrad = "{t} tiotal är {10*t}. Lägg till entalen."
+feltankar = { "{t+e}" = "Tiotalen är värda tio var. {t} tiotal = {10*t}, inte {t}." }
+losning = ["{t} tiotal = {10*t}.", "{10*t} + {e} = {10*t+e}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{e} ental och {t} tiotal. Vilket tal är det?"
+svar = "{10*t+e}"
+var = { t = "1..9", e = "1..9 != t" }
+ledtrad = "Ordningen i frågan spelar ingen roll. Tiotalen står alltid först i talet."
+feltankar = { "{e}{t}" = "Du skrev siffrorna i samma ordning som i frågan. Men tiotalen står alltid först: {t} tiotal och {e} ental är {10*t+e}." }
+losning = ["Tiotal: {t} – de står först.", "Ental: {e} – de står sist.", "Talet är {10*t+e}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{t} tiotal och 0 ental. Vilket tal är det?"
+svar = "{10*t}"
+var = { t = "2..9" }
+ledtrad = "Nollan håller platsen för entalen."
+feltankar = { "{t}" = "Utan nollan blir det {t} – bara {t} ental. Nollan håller entalsplatsen: {10*t}." }
+losning = ["{t} tiotal = {10*t}.", "Inga ental – men platsen måste fyllas med en nolla.", "{10*t}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket tal är 10 mer än {n}?"
+svar = "{n+10}"
+var = { n = "11..89" }
+ledtrad = "Tio mer är ett tiotal till. Vilken siffra ändras?"
+feltankar = { "{n+1}" = "Det är ett mer. Tio mer betyder ett tiotal till – tiotalssiffran ökar." }
+losning = ["Tio mer = ett tiotal till.", "Tiotalssiffran ökar med ett, entalen är kvar.", "{n} + 10 = {n+10}."]

@@ -1,0 +1,139 @@
+id = "subtraktion-till-20"
+titel = "Subtraktion – ta bort och jämföra"
+omrade = "tal"
+ikon = "minus"
+bild = "applen-fat-brada.jpg"
+bildtext = "Sju äpplen – två har flyttats till brädan. 7 − 2 = 5 är kvar på fatet. Och 5 + 2 = 7."
+sager = "Minus kan betyda två saker: ta bort (13 − 5: ta bort fem) eller skillnad (hur mycket mer är 13 än 5?). Svaret är detsamma."
+galler = "Alltid. Men ordningen spelar roll: 13 − 5 och 5 − 13 är inte samma sak."
+galler_inte = "”Man drar alltid det minsta talet från det största” gäller bara tills du möter negativa tal. Då går det att räkna 5 − 13: svaret blir −8. Titta därför alltid på vilket tal som står först."
+forkunskap = ["addition-tiotalsovergang"]
+kalla = "Två betydelser av subtraktion (Fuson). Räkna upp från det mindre talet som strategi."
+
+[[rad]]
+sager = "tretton minus fem"
+figur = { typ = "prickar", antal = 13 }
+skriver = ["13 − 5 = 8"]
+kommentar = "Ta bort tre så är det tio kvar, ta bort två till – åtta."
+
+[[rad]]
+sager = "skillnaden mellan 13 och 5"
+figur = { typ = "tallinje", fran = 0, till = 15, markera = [5, 13] }
+skriver = ["13 − 5 = 8"]
+kommentar = "Hoppa från 5 till 10 (fem) och från 10 till 13 (tre): åtta."
+
+[[uppgift]]
+niva = 1
+fraga = "Det är {a} prickar. Ta bort {b}. Hur många är kvar?"
+figur = { typ = "prickar", antal = "{a}" }
+svar = "{a-b}"
+var = { a = "11..15", b = "2..5" }
+ledtrad = "Räkna bakåt från {a}: {a-1}, {a-2} …"
+losning = ["Börja på {a}.", "Räkna bakåt {b} steg.", "Du hamnar på {a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} − {b} = ?"
+svar = "{a-b}"
+var = { a = "11..18", b = "3..9" }
+ledtrad = "Gå ner till tio först: {a} − {a-10} = 10. Sedan {b-(a-10)} till."
+feltankar = { "{a-b+1}" = "Ett för mycket kvar. Räknade du med startpunkten? Från {a}, ta bort {b}: {a-b}.", "{b-a}" = "Du vände på talen. Det står {a} − {b}: börja på {a}." }
+losning = ["Gå ner till tio: {a} − {a-10} = 10.", "Ta bort resten: 10 − {b-(a-10)} = {a-b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lisa har {a} kr och Ali har {b} kr. Hur mycket mer har Lisa?"
+svar = "{a-b}"
+var = { a = "12..20", b = "3..9" }
+ledtrad = "'Hur mycket mer' är en skillnad: {a} − {b}."
+feltankar = { "{a+b}" = "Du lade ihop pengarna. Frågan är hur mycket MER Lisa har – skillnaden mellan {a} och {b}." }
+losning = ["”Hur mycket mer” betyder skillnaden.", "Räkna upp från {b} till {a}.", "{a} − {b} = {a-b}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Det var 7 äpplen. 2 har flyttats till brädan. Klicka på äpplena som är kvar på fatet."
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560, omraden = [[0.1971, 0.1971, 0.1286, 0.2285], [0.3514, 0.1971, 0.1286, 0.2285], [0.1259, 0.4756, 0.1286, 0.2285], [0.2676, 0.4809, 0.1286, 0.2285], [0.4082, 0.4756, 0.1286, 0.2285], [0.6295, 0.3374, 0.1286, 0.2285], [0.77, 0.3374, 0.1286, 0.2285]], namn = ["fat", "fat", "fat", "fat", "fat", "bräda", "bräda"] }
+svar = "fat,fat,fat,fat,fat"
+ledtrad = "Bara äpplena på det runda fatet."
+
+[[uppgift]]
+niva = 1
+fraga = "7 äpplen, 2 flyttades till brädan. Hur många är kvar på fatet? Skriv det som 7 − 2 = ?"
+figur = { typ = "scen", bild = "applen-fat-brada.jpg", bredd = 560 }
+svar = "5"
+ledtrad = "Räkna äpplena på fatet."
+feltankar = { "9" = "Du lade ihop. Två äpplen togs BORT från de sju: 7 − 2." }
+losning = ["Det var 7 äpplen.", "2 flyttades.", "7 − 2 = 5 är kvar."]
+
+[[exempel]]
+rubrik = "13 − 5: gå ner till tio"
+figur = { typ = "prickar", antal = 13 }
+steg = [
+  "Dela upp 5 i 3 och 2.",
+  "13 − 3 = 10.",
+  "10 − 2 = 8.",
+]
+
+[[exempel]]
+rubrik = "Hur mycket mer är 13 än 5? Räkna upp"
+figur = { typ = "tallinje", fran = 0, till = 15, markera = [5, 10, 13] }
+steg = [
+  "Hoppa från 5 till 10: fem steg.",
+  "Hoppa från 10 till 13: tre steg.",
+  "5 + 3 = 8. Skillnaden är 8 – samma som 13 − 5.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och skriv svaret."
+steg = ["{a} − {b}", "= {a} − {a-10} − {b-(a-10)}", "= 10 − {b-(a-10)}", "= ?"]
+svar = "{a-b}"
+var = { a = "11..17", b = "a-9..9" }
+ledtrad = "Tio minus {b-(a-10)}."
+losning = ["{a} − {a-10} = 10.", "Resten av {b}: {b-(a-10)}.", "10 − {b-(a-10)} = {a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur långt är det från {b} till {a} på tallinjen?"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{b}", "{a}"] }
+svar = "{a-b}"
+var = { a = "11..19", b = "2..9" }
+ledtrad = "Hoppa från {b} till 10 först, sedan från 10 till {a}."
+feltankar = { "{a+b}" = "Du lade ihop talen. Vi letar efter avståndet mellan dem: hur många steg från {b} till {a}?" }
+losning = ["Från {b} till 10: {10-b} steg.", "Från 10 till {a}: {a-10} steg.", "{10-b} + {a-10} = {a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Du vet att {x} + {y} = {x+y}. Vad är {x+y} − {y}?"
+svar = "{x}"
+var = { x = "4..9", y = "5..9" }
+ledtrad = "Tar du bort det du lade till är du tillbaka där du började."
+losning = ["{x} + {y} = {x+y}.", "Addition och subtraktion hör ihop: tar du bort {y} igen är du tillbaka på {x}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Det sitter {a} fåglar i ett träd. {b} flyger iväg. Hur många sitter kvar?"
+svar = "{a-b}"
+var = { a = "11..18", b = "3..9" }
+ledtrad = "Flyger iväg = tas bort: {a} − {b}."
+feltankar = { "{a+b}" = "Fåglarna flög IVÄG – de ska tas bort, inte läggas till. {a} − {b}." }
+losning = ["{a} fåglar från början.", "{b} försvinner: {a} − {b}.", "{a-b} sitter kvar."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} − ? = {c}"
+svar = "{a-c}"
+var = { a = "12..19", c = "3..9" }
+ledtrad = "Hur mycket ska tas bort från {a} för att det ska bli {c} kvar? Räkna upp från {c}."
+feltankar = { "{a+c}" = "Svaret ska vara det som tas bort – mindre än {a}. Räkna upp från {c} till {a}." }
+losning = ["Räkna upp från {c} till {a}.", "Från {c} till 10: {10-c}. Från 10 till {a}: {a-10}.", "{10-c} + {a-10} = {a-c}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Nora är {a} år och hennes lillebror är {b} år. Hur många år äldre är Nora?"
+svar = "{a-b}"
+var = { a = "11..16", b = "3..8" }
+ledtrad = "Hur många år äldre = skillnaden mellan åldrarna."
+feltankar = { "{a+b}" = "Du lade ihop åldrarna. Vi vill veta skillnaden: {a} − {b}." }
+losning = ["Skillnaden mellan {a} och {b}.", "Räkna upp från {b} till {a}.", "{a} − {b} = {a-b}."]

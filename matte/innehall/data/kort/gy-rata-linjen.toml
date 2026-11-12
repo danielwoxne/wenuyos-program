@@ -1,0 +1,127 @@
+id = "gy-rata-linjen"
+titel = "Räta linjen genom två punkter"
+omrade = "samband"
+ikon = "linjediagram"
+sager = "k = (y₂ − y₁) / (x₂ − x₁): hur mycket y ändras när x ändras ett steg. Sätt sedan in en punkt i y = kx + m för att få m."
+galler = "Två punkter med olika x. Samma x ger en lodrät linje, som saknar k."
+galler_inte = "k = Δy / Δx – inte Δx / Δy. Ta skillnaderna i samma ordning: (y₂ − y₁) / (x₂ − x₁). Byter du ordning i bara den ena blir tecknet fel."
+forkunskap = ["linjara-funktioner"]
+kalla = "Lutningen som 'trappsteg' i rutnätet först, formeln sedan."
+
+[[rad]]
+sager = "genom (1, 3) och (3, 7)"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 9, ruta = 26, linje = [2, 1], punkter = [[1, 3], [3, 7]] }
+skriver = ["k = (7 − 3) / (3 − 1) = 2", "3 = 2 · 1 + m → m = 1"]
+
+[[uppgift]]
+niva = 1
+fraga = "Linjen går genom ({x1}, {y1}) och ({x1+1}, {y1+k}). Vad är k?"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 12, ruta = 24, punkter = [["{x1}", "{y1}"], ["{x1+1}", "{y1+k}"]] }
+svar = "{k}"
+var = { k = "1..4", x1 = "0..3", y1 = "0..4" }
+ledtrad = "Ett steg åt höger – hur många steg upp?"
+losning = ["Ett steg åt höger.", "y ökar från {y1} till {y1+k}.", "k = {k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Linjen går genom ({x1}, {k*x1+m}) och ({x1+d}, {k*(x1+d)+m}). Bestäm k och m i y = kx + m."
+falt = ["k", "m"]
+svar = ["{k}", "{m}"]
+var = { k = "-3..4 != 0", m = "-5..5", x1 = "0..3", d = "2..4" }
+ledtrad = "k = ({k*(x1+d)+m} − {k*x1+m}) / ({x1+d} − {x1}). Sätt sedan in en punkt för att få m."
+feltankar = { "{1/k if k else 0};{m}" = "Du delade x-skillnaden med y-skillnaden. k = Δy / Δx: y-skillnaden överst." }
+losning = ["k = ({k*(x1+d)+m} − {k*x1+m}) / ({x1+d} − {x1}) = {k*d} / {d} = {k}.", "Sätt in ({x1}, {k*x1+m}): {k*x1+m} = {k} · {x1} + m.", "m = {m}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "linje"
+fraga = "Rita linjen som går genom (0, {m}) och har lutningen {k}."
+figur = { typ = "koordinatsystem", xmin = -3, xmax = 5, ymin = -3, ymax = 7 }
+svar = "{k};{m}"
+var = { k = "[-2, -1, 1, 2]", m = "1..3" }
+ledtrad = "Börja i (0, {m}). Gå ett steg åt höger och {k} steg {'upp' if k > 0 else 'ned'}."
+losning = ["Startpunkt (0, {m}).", "Ett steg åt höger och {abs(k)} {'upp' if k > 0 else 'ned'}.", "Klicka på båda punkterna."]
+
+[[rad]]
+sager = "parallella linjer"
+skriver = ["samma k"]
+kommentar = "y = 2x + 1 och y = 2x − 3 lutar lika mycket och möts aldrig."
+
+[[rad]]
+sager = "negativt k"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 6, linje = [-1, 5], punkter = [[0, 5], [1, 4]] }
+skriver = ["y = −x + 5 lutar nedåt"]
+
+[[rad]]
+sager = "vinkelräta linjer"
+skriver = ["k₁ · k₂ = −1"]
+kommentar = "Lutningen 2 och lutningen −1/2 ger en rät vinkel."
+
+[[exempel]]
+rubrik = "Linjen genom (1, 3) och (3, 7)"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 9, ruta = 26, linje = [2, 1], punkter = [[1, 3], [3, 7]] }
+steg = [
+  "Δy = 7 − 3 = 4 och Δx = 3 − 1 = 2. k = 4 / 2 = 2.",
+  "Sätt in (1, 3) i y = 2x + m: 3 = 2 + m, alltså m = 1.",
+  "y = 2x + 1. Kontroll med den andra punkten: 2 · 3 + 1 = 7.",
+]
+
+[[exempel]]
+rubrik = "Negativ lutning: (0, 6) och (3, 0)"
+steg = [
+  "Δy = 0 − 6 = −6 och Δx = 3 − 0 = 3.",
+  "k = −6 / 3 = −2. Linjen lutar nedåt.",
+  "m = 6 (där x = 0). y = −2x + 6.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är k för linjen genom ({x1}, {k*x1+m}) och ({x1+d}, {k*(x1+d)+m})?"
+steg = ["Δy = {k*(x1+d)+m} − {k*x1+m} = {k*d}", "Δx = {x1+d} − {x1} = {d}", "k = Δy / Δx = ?"]
+svar = "{k}"
+var = { k = "-3..4 != 0", m = "-3..5", x1 = "0..3", d = "2..4" }
+ledtrad = "{k*d} / {d}."
+feltankar = { "{d}/{k*d}" = "Δy ska stå överst: k = Δy / Δx." }
+losning = ["k = {k*d} / {d} = {k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "En linje har k = {k} och går genom ({x}, {k*x+m}). Vad är m?"
+svar = "{m}"
+var = { k = "-3..4 != 0", m = "-5..5", x = "1..4" }
+ledtrad = "Sätt in punkten i y = {k}x + m."
+feltankar = { "{k*x+m+k*x}" = "Kontrollera tecknet: m = y − kx = {k*x+m} − ({k*x})." }
+losning = ["{k*x+m} = {k} · {x} + m.", "{k*x+m} = {k*x} + m.", "m = {m}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilken linje är parallell med y = {k}x {t(m)}?"
+alternativ = ["y = {k}x {t(m+3)}", "y = {k+1}x {t(m)}", "y = {-k}x {t(m)}"]
+svar = "y = {k}x {t(m+3)}"
+form = "text"
+var = { k = "2..5", m = "-3..3" }
+ledtrad = "Parallella linjer lutar lika mycket."
+feltankar = { "y = {k+1}x {t(m)}" = "Samma m betyder att linjerna skär y-axeln på samma ställe – men lutningen är olika. Parallella = samma k." }
+losning = ["Parallella linjer har samma k.", "Bara y = {k}x {t(m+3)} har k = {k}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En linje går genom (0, {m}) och ({d}, 0). Vad är k? Svara som bråk eller heltal."
+svar = "-{m}/{d}"
+form = "brak-enklast"
+var = { m = "2..8", d = "2..6" }
+ledtrad = "Δy = 0 − {m}, Δx = {d} − 0."
+feltankar = { "{m}/{d}" = "y minskar från {m} till 0 – lutningen är negativ." }
+losning = ["Δy = 0 − {m} = −{m}.", "Δx = {d}.", "k = −{m}/{d}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Linjen y = {k}x + 1 är given. Vilken lutning har en linje som är vinkelrät mot den? Svara som bråk."
+svar = "-1/{k}"
+form = "brak-enklast"
+var = { k = "[2, 3, 4, -2, -3, -4]" }
+ledtrad = "k₁ · k₂ = −1."
+feltankar = { "{-k}" = "Vinkelrät: k₁ · k₂ = −1. {k} · ? = −1." }
+losning = ["{k} · k₂ = −1.", "k₂ = −1 / {k}."]

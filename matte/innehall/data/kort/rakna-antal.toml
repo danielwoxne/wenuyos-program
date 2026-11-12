@@ -1,0 +1,147 @@
+id = "rakna-antal"
+titel = "Räkna antal"
+omrade = "tal"
+ikon = "apple"
+bild = "jordgubbar-tallrikar.jpg"
+bildtext = "Två, fyra och sex jordgubbar. Peka på en i taget och räkna – det sista talet är hur många."
+sager = "Varje sak räknas en gång. Det sista talet du säger är hur många det är."
+galler = "Alltid – det spelar ingen roll i vilken ordning du räknar."
+galler_inte = "Att räkna en och en fungerar alltid, men vid stora antal blir det långsamt och lätt fel. Från ungefär tio lönar det sig att räkna i grupper: fem i taget, tio i taget."
+kalla = "Gelman & Gallistel: räkneprinciperna (ett-till-ett, stabil ordning, kardinaltal). Fem-struktur (Fuson) – rader om fem så man ser antalet utan att räkna varje."
+
+[[rad]]
+sager = "tre"
+figur = { typ = "ikoner", namn = "apple", antal = 3 }
+skriver = ["3"]
+
+[[rad]]
+sager = "fem"
+figur = { typ = "prickar", antal = 5 }
+skriver = ["5"]
+
+[[rad]]
+sager = "åtta"
+figur = { typ = "prickar", antal = 8 }
+skriver = ["8"]
+kommentar = "Fem i första raden och tre till – åtta. Man behöver inte räkna en och en."
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många äpplen är det?"
+figur = { typ = "ikoner", namn = "apple", antal = "{n}" }
+svar = "{n}"
+var = { n = "1..5" }
+ledtrad = "Peka på ett äpple i taget och räkna: ett, två, tre …"
+losning = ["Peka på ett äpple i taget.", "Säg ett tal för varje äpple.", "Det sista talet är svaret: {n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur många prickar är det?"
+figur = { typ = "prickar", antal = "{n}" }
+svar = "{n}"
+var = { n = "6..10" }
+ledtrad = "Första raden är fem. Räkna vidare från fem: sex, sju …"
+feltankar = { "{n-1}" = "Nära! Du missade en. Prova att räkna raderna: fem i första raden och sedan resten.", "{n+1}" = "Du räknade en för mycket. Peka på varje prick bara en gång." }
+losning = ["Den första raden har fem prickar – det ser du utan att räkna.", "Räkna vidare på nästa rad: {', '.join(str(i) for i in range(6, n+1))}.", "Det blir {n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur många jordgubbar är det?"
+figur = { typ = "ikoner", namn = "jordgubbe", antal = "{n}", per_rad = 5 }
+svar = "{n}"
+var = { n = "11..20" }
+ledtrad = "Varje rad är fem. Två rader är tio – räkna vidare därifrån."
+losning = ["Varje rad har fem. Två rader är tio.", "Räkna vidare från tio: {', '.join(str(i) for i in range(11, n+1))}.", "Det blir {n}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Klicka på alla jordgubbar på den mittersta tallriken."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.169, 0.4702, 0.0568, 0.1222], [0.2437, 0.4649, 0.0568, 0.1222], [0.4309, 0.4065, 0.0568, 0.1222], [0.5027, 0.4065, 0.0568, 0.1222], [0.4309, 0.5287, 0.0568, 0.1222], [0.5027, 0.5287, 0.0568, 0.1222], [0.6848, 0.407, 0.0538, 0.1169], [0.7416, 0.407, 0.0538, 0.1169], [0.7969, 0.407, 0.0508, 0.1169], [0.6848, 0.5313, 0.0538, 0.1169], [0.7416, 0.5313, 0.0538, 0.1169], [0.7969, 0.5313, 0.0508, 0.1169]], namn = ["vänster", "vänster", "mitten", "mitten", "mitten", "mitten", "höger", "höger", "höger", "höger", "höger", "höger"] }
+svar = "mitten,mitten,mitten,mitten"
+ledtrad = "Bara den mittersta tallriken. Klicka på varje jordgubbe en gång."
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på tallriken med flest jordgubbar."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.1136, 0.3348, 0.2392, 0.4038], [0.372, 0.3209, 0.2392, 0.3932], [0.6328, 0.3209, 0.2392, 0.3932]], namn = ["vänster", "mitten", "höger"] }
+svar = "höger"
+ledtrad = "Räkna jordgubbarna på varje tallrik: 2, 4 och …?"
+
+[[exempel]]
+rubrik = "Se fem utan att räkna"
+figur = { typ = "prickar", antal = 8 }
+steg = [
+  "Den första raden är full: fem prickar.",
+  "Räkna vidare på nästa rad: sex, sju, åtta.",
+  "Åtta prickar – och du räknade bara tre av dem.",
+]
+
+[[exempel]]
+rubrik = "Räkna vidare – börja inte om"
+figur = { typ = "ikoner", namn = "jordgubbe", antal = 13, per_rad = 5, d = 40 }
+steg = [
+  "Två fulla rader: fem och fem är tio.",
+  "Räkna vidare från tio: elva, tolv, tretton.",
+  "Tretton jordgubbar.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många prickar är det? Räkna vidare från fem."
+steg = ["Första raden: 5", "Räkna vidare: 6, …"]
+figur = { typ = "prickar", antal = "{n}" }
+svar = "{n}"
+var = { n = "7..10" }
+ledtrad = "Börja på fem och peka på prickarna på nästa rad."
+feltankar = { "{n-5}" = "Det är bara den andra raden. Räkna vidare från fem – den första raden finns också." }
+losning = ["Första raden är fem.", "Räkna vidare: {', '.join(str(i) for i in range(6, n+1))}.", "Det blir {n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Räkna två i taget. Vilket tal kommer sedan?"
+steg = ["{', '.join(str(2*i) for i in range(1, k+1))}, ?"]
+svar = "{2*k+2}"
+var = { k = "3..8" }
+ledtrad = "Hoppa två steg: {2*k} och två till."
+feltankar = { "{2*k+1}" = "Vi hoppar två i taget, inte ett. {2*k} + 2 = {2*k+2}." }
+losning = ["Talen ökar med två varje gång.", "Det sista talet är {2*k}.", "{2*k} + 2 = {2*k+2}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Räkna baklänges. Vilket tal kommer sedan?"
+steg = ["{n}, {n-1}, {n-2}, ?"]
+svar = "{n-3}"
+var = { n = "9..20" }
+ledtrad = "Baklänges blir talen ett mindre varje gång."
+feltankar = { "{n-1}" = "Det talet har redan kommit. Fortsätt baklänges från {n-2}." }
+losning = ["Baklänges: varje tal är ett mindre än det förra.", "Efter {n-2} kommer {n-3}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket tal är störst?"
+alternativ = ["{a}{b}", "{b}{a}"]
+svar = "{max(a,b)}{min(a,b)}"
+var = { a = "1..9", b = "1..9 != a" }
+ledtrad = "Titta på den första siffran – den säger hur många tiotal."
+feltankar = { "{min(a,b)}{max(a,b)}" = "Titta på tiotalssiffran först – den står först. {max(a,b)} tiotal är mer än {min(a,b)} tiotal, hur stora entalen än är." }
+losning = ["Den första siffran är tiotalen.", "{max(a,b)}{min(a,b)} har {max(a,b)} tiotal, {min(a,b)}{max(a,b)} har bara {min(a,b)}.", "Flest tiotal vinner: {max(a,b)}{min(a,b)}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "markera"
+fraga = "Klicka på alla jordgubbar på tallriken med flest."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.169, 0.4702, 0.0568, 0.1222], [0.2437, 0.4649, 0.0568, 0.1222], [0.4309, 0.4065, 0.0568, 0.1222], [0.5027, 0.4065, 0.0568, 0.1222], [0.4309, 0.5287, 0.0568, 0.1222], [0.5027, 0.5287, 0.0568, 0.1222], [0.6848, 0.407, 0.0538, 0.1169], [0.7416, 0.407, 0.0538, 0.1169], [0.7969, 0.407, 0.0508, 0.1169], [0.6848, 0.5313, 0.0538, 0.1169], [0.7416, 0.5313, 0.0538, 0.1169], [0.7969, 0.5313, 0.0508, 0.1169]], namn = ["vänster", "vänster", "mitten", "mitten", "mitten", "mitten", "höger", "höger", "höger", "höger", "höger", "höger"] }
+svar = "höger,höger,höger,höger,höger,höger"
+ledtrad = "Hitta tallriken med flest först. Klicka sedan på varje jordgubbe på den."
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket tal är ett mer än {n}?"
+svar = "{n+1}"
+var = { n = "[19, 29, 39, 49, 59, 69, 79, 89, 99]" }
+ledtrad = "Efter nio ental blir det ett nytt helt tiotal."
+feltankar = { "{n//10}10" = "Efter nio ental kommer ett helt tiotal: {n} + 1 = {n+1}. Man skriver inte {n//10}10." }
+losning = ["{n} har {n//10} tiotal och 9 ental.", "Ett ental till gör tio ental – det är ett nytt tiotal.", "{n//10 + 1} tiotal och 0 ental: {n+1}."]

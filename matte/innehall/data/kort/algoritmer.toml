@@ -1,0 +1,135 @@
+# Regelkort: algoritmer – Lgr22 åk 7–9, "hur algoritmer kan skapas och användas vid programmering".
+
+id = "algoritmer"
+titel = "Algoritmer – steg för steg"
+omrade = "algebra"
+ikon = "pusselbit"
+sager = "En algoritm är en instruktion i exakta steg. En dator följer den bokstavligt – därför måste varje steg vara entydigt och stå i rätt ordning."
+galler = "Alla algoritmer har tre byggstenar: sekvens (steg i ordning), upprepning (en loop som kör samma steg flera gånger) och villkor (om … annars – välj väg)."
+galler_inte = "Ordningen går inte att byta hur som helst. ”Lägg till 3, dubbla sedan” ger inte samma sak som ”dubbla, lägg sedan till 3”: från 5 blir det 16 respektive 13."
+forkunskap = ["forenkla-uttryck", "monster"]
+kalla = "Algoritmiskt tänkande och programmering i Lgr22 åk 7–9: sekvens, upprepning och villkor. Spåra koden för hand i en tabell innan den körs (Wing; Sentance)."
+
+[[rad]]
+sager = "sekvens – steg i ordning"
+figur = { typ = "tabell", rubriker = ["steg", "x"], rader = [["x = 5", "5"], ["x = x · 2", "10"], ["x = x + 3", "13"]], kolbredd = 110 }
+skriver = ["5 → 10 → 13"]
+
+[[rad]]
+sager = "upprepning – samma steg flera gånger"
+figur = { typ = "tabell", rubriker = ["varv", "x = x + 4"], rader = [["start", "1"], ["1", "5"], ["2", "9"], ["3", "13"]], kolbredd = 110 }
+skriver = ["upprepa 3 gånger: x = x + 4"]
+
+[[rad]]
+sager = "villkor – välj väg"
+figur = { typ = "tabell", rubriker = ["om", "gör"], rader = [["x är jämnt", "x = x / 2"], ["annars", "x = 3x + 1"]], kolbredd = 120 }
+skriver = ["6 → 3 → 10"]
+
+[[exempel]]
+rubrik = "Spåra en loop i en tabell"
+text = "x = 2. Upprepa 4 gånger: x = x · 3 − 1."
+figur = { typ = "tabell", rubriker = ["varv", "x före", "x efter"], rader = [["1", "2", "5"], ["2", "5", "14"], ["3", "14", "41"], ["4", "41", "122"]], kolbredd = 90 }
+steg = [
+  "Skriv startvärdet. Kör steget en gång och skriv det nya värdet.",
+  "Nästa varv börjar med det värde förra varvet slutade på.",
+  "Efter fyra varv är x = 122.",
+]
+
+[[exempel]]
+rubrik = "Villkor: jämnt eller udda"
+text = "Om x är jämnt: dela med 2. Annars: gånger 3 plus 1. Börja med 7."
+steg = [
+  "7 är udda: 3 · 7 + 1 = 22.",
+  "22 är jämnt: 22 / 2 = 11.",
+  "11 är udda: 34. 34 är jämnt: 17 … Talföljden når till slut 1 – det tror alla, men ingen har kunnat bevisa det än (Collatz förmodan).",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ algoritmen. Vad kommer ut?"
+steg = ["Börja med {a}.", "Gånger 2 → {2*a}", "Plus 3 → ?"]
+svar = "{2*a+3}"
+var = { a = "2..20" }
+ledtrad = "{2*a} + 3."
+losning = ["{a} · 2 = {2*a}.", "{2*a} + 3 = {2*a+3}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Börja med {a}. Lägg till {b}. Multiplicera med {c}. Vad kommer ut?"
+svar = "{(a+b)*c}"
+var = { a = "2..9", b = "1..9", c = "2..5" }
+ledtrad = "Ett steg i taget, i ordning."
+feltankar = { "{a+b*c}" = "Algoritmen lägger till {b} FÖRST och multiplicerar sedan hela resultatet med {c}." }
+losning = ["{a} + {b} = {a+b}.", "{a+b} · {c} = {(a+b)*c}."]
+
+[[uppgift]]
+niva = 2
+fraga = "x = {a}. Upprepa {n} gånger: x = x + {d}. Vad är x efter loopen?"
+svar = "{a+n*d}"
+var = { a = "0..10", n = "3..8", d = "2..9" }
+ledtrad = "Varje varv lägger till {d}. Hur mycket blir det på {n} varv?"
+feltankar = { "{a+(n-1)*d}" = "Ett varv för lite. Loopen körs {n} gånger – {n} tillägg av {d}." }
+losning = ["{n} varv med + {d}: {n} · {d} = {n*d}.", "{a} + {n*d} = {a+n*d}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "x = {a}. Upprepa 3 gånger: x = x + {d}. Skriv x efter varje varv."
+falt = ["varv 1", "varv 2", "varv 3"]
+svar = ["{a+d}", "{a+2*d}", "{a+3*d}"]
+var = { a = "1..10", d = "2..9" }
+ledtrad = "Varje varv börjar där förra slutade."
+losning = ["Varv 1: {a} + {d} = {a+d}.", "Varv 2: {a+d} + {d} = {a+2*d}.", "Varv 3: {a+2*d} + {d} = {a+3*d}."]
+
+[[uppgift]]
+niva = 2
+fraga = "x = 1. Upprepa {n} gånger: x = x · 2. Vad är x efter loopen?"
+svar = "{2**n}"
+var = { n = "3..10" }
+ledtrad = "1, 2, 4, 8 … – dubbla {n} gånger."
+feltankar = { "{2*n}" = "x dubblas varje varv – det blir inte 2 · {n} utan 2^{n}." }
+losning = ["Varje varv dubblas x.", "Efter {n} varv: 2^{n}.", "= {2**n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Om talet är jämnt: dela med 2. Annars: gånger 3 plus 1. Vad blir {a}?"
+svar = "{a//2 if a % 2 == 0 else 3*a+1}"
+var = { a = "5..30" }
+ledtrad = "Är {a} jämnt eller udda?"
+losning = ["{a} är {'jämnt' if a % 2 == 0 else 'udda'}.", "{str(a) + ' / 2 = ' + str(a//2) if a % 2 == 0 else '3 · ' + str(a) + ' + 1 = ' + str(3*a+1)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Samma algoritm (jämnt: dela med 2, udda: gånger 3 plus 1) körs två gånger. Börja med {a}. Vad kommer ut?"
+svar = "{[x//2 if x % 2 == 0 else 3*x+1 for x in [a//2 if a % 2 == 0 else 3*a+1]][0]}"
+var = { a = "5..30" }
+ledtrad = "Kör en gång, och kör sedan algoritmen på svaret."
+losning = ["Första: {a} → {a//2 if a % 2 == 0 else 3*a+1}.", "Andra: {a//2 if a % 2 == 0 else 3*a+1} → {[x//2 if x % 2 == 0 else 3*x+1 for x in [a//2 if a % 2 == 0 else 3*a+1]][0]}."]
+
+[[uppgift]]
+niva = 3
+fraga = "summa = 0. För i = 1, 2, 3 … {n}: summa = summa + i. Vad är summan efter loopen?"
+svar = "{n*(n+1)//2}"
+var = { n = "5..20" }
+ledtrad = "1 + 2 + 3 + … + {n}. Para ihop det första och det sista: 1 + {n}."
+losning = ["1 + {n} = {n+1}, 2 + {n-1} = {n+1} … – varje par blir {n+1}.", "Det finns {n} tal, alltså {n}/2 par.", "{n} · {n+1} / 2 = {n*(n+1)//2}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilken algoritm gör {a} till {2*a+3}?"
+alternativ = ["dubbla, sedan plus 3", "plus 3, sedan dubbla"]
+svar = "dubbla, sedan plus 3"
+form = "text"
+var = { a = "2..12" }
+ledtrad = "Testa båda med {a}."
+feltankar = { "plus 3, sedan dubbla" = "Testa: {a} + 3 = {a+3}, gånger 2 = {2*a+6}. Det blev inte {2*a+3}." }
+losning = ["Dubbla först: {a} · 2 = {2*a}, plus 3 = {2*a+3}. Stämmer.", "Plus 3 först: {a+3} · 2 = {2*a+6}. Stämmer inte."]
+
+[[uppgift]]
+niva = 3
+fraga = "En robot kör: upprepa 4 gånger: gå {s} steg framåt och sväng 90° åt höger. Hur många steg har den gått, och var står den?"
+svar = "{4*s}"
+var = { s = "3..12" }
+ledtrad = "Fyra sidor av en kvadrat."
+losning = ["Fyra varv med {s} steg: {4*s} steg.", "Fyra högersvängar på 90° är ett helt varv – roboten har gått runt en kvadrat och står där den började."]

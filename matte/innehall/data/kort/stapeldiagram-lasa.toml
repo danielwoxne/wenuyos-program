@@ -1,0 +1,119 @@
+id = "stapeldiagram-lasa"
+titel = "Läsa ett stapeldiagram"
+omrade = "sannolikhet"
+ikon = "stapeldiagram"
+bild = "plantor-diagram.jpg"
+bildtext = "Tre plantor, tre staplar. Stapelns höjd är plantans höjd – diagrammet visar samma sak som krukorna, fast med siffror."
+sager = "Stapelns höjd visar hur många. Läs av på skalan till vänster."
+galler = "När staplarna står på samma skala. Jämför alltid med siffrorna, inte bara med ögat."
+galler_inte = "Ögat räcker inte när staplarna är nästan lika höga, eller när skalan inte börjar på noll eller går två i taget. Läs alltid av siffrorna på skalan."
+kalla = "Lgr22 åk 1–3: enkla tabeller och diagram. Att läsa 'av', 'mellan' och 'bortom' data (Curcio)."
+
+[[rad]]
+sager = "favoritfrukt i klassen"
+figur = { typ = "stapeldiagram", varden = [6, 3, 5, 2], namn = ["äpple", "banan", "päron", "apelsin"], rubrik = "Favoritfrukt" }
+skriver = ["äpple: 6, banan: 3, päron: 5, apelsin: 2"]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många valde päron?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"], rubrik = "Favoritfrukt" }
+svar = "{c}"
+var = { a = "1..9", b = "1..9", c = "1..9" }
+ledtrad = "Hitta stapeln över 'päron' och läs av höjden på skalan till vänster."
+losning = ["Hitta stapeln över ”päron”.", "Gå rakt åt vänster från toppen till skalan.", "Där står {c}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilken frukt var populärast?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"] }
+svar = "banan"
+alternativ = ["äpple", "banan", "päron"]
+var = { b = "6..9", a = "1..5", c = "1..5" }
+ledtrad = "Den högsta stapeln."
+losning = ["Den högsta stapeln står över ”banan”.", "Banan valdes av {b} – fler än de andra."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur många fler valde banan än äpple?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"] }
+svar = "{b-a}"
+var = { b = "6..9", a = "1..5", c = "1..9" }
+ledtrad = "'Hur många fler' = skillnaden: {b} − {a}."
+feltankar = { "{a+b}" = "Du lade ihop. 'Hur många fler' är en skillnad – ta det större minus det mindre." }
+losning = ["Banan: {b}. Äpple: {a}.", "Hur många fler = skillnaden.", "{b} − {a} = {b-a}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på plantan som hör till den högsta stapeln."
+figur = { typ = "scen", bild = "plantor-diagram.jpg", bredd = 560, omraden = [[0.3846, 0.3773, 0.0897, 0.2444], [0.4707, 0.2497, 0.1017, 0.3719], [0.5652, 0.0797, 0.1435, 0.542]], namn = ["liten", "mellan", "stor"] }
+svar = "stor"
+ledtrad = "Den högsta stapeln är plantan som har vuxit mest."
+
+[[exempel]]
+rubrik = "Läs av en stapel"
+figur = { typ = "stapeldiagram", varden = [6, 3, 5, 2], namn = ["äpple", "banan", "päron", "apelsin"], rubrik = "Favoritfrukt" }
+steg = [
+  "Hitta stapeln du frågar om – till exempel päron.",
+  "Gå rakt åt vänster från stapelns topp till skalan.",
+  "Läs av: 5. Fem valde päron.",
+]
+
+[[exempel]]
+rubrik = "Jämför två staplar"
+figur = { typ = "stapeldiagram", varden = [6, 3, 5, 2], namn = ["äpple", "banan", "päron", "apelsin"] }
+steg = [
+  "Äpple: 6. Apelsin: 2.",
+  "Hur många fler valde äpple? Det är skillnaden: 6 − 2 = 4.",
+  "Hur många valde de två tillsammans? 6 + 2 = 8.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många valde äpple?"
+steg = ["Hitta stapeln över ”äpple”.", "Gå rakt åt vänster från toppen till skalan.", "Läs av talet."]
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"], rubrik = "Favoritfrukt" }
+svar = "{a}"
+var = { a = "1..9", b = "1..9", c = "1..9" }
+ledtrad = "Stapeln längst till vänster."
+losning = ["Stapeln över ”äpple” når upp till {a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur många valde äpple och päron tillsammans?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"] }
+svar = "{a+c}"
+var = { a = "1..9", b = "1..9", c = "1..9" }
+ledtrad = "Läs av båda staplarna och lägg ihop."
+losning = ["Äpple: {a}.", "Päron: {c}.", "{a} + {c} = {a+c}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilken frukt valde färst?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"] }
+alternativ = ["äpple", "banan", "päron"]
+svar = "päron"
+var = { a = "4..9", b = "4..9", c = "1..3" }
+ledtrad = "Färst = den lägsta stapeln."
+losning = ["Den lägsta stapeln står över päron.", "Päron: {c} – färre än de andra."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur många svarade på frågan sammanlagt?"
+figur = { typ = "stapeldiagram", varden = ["{a}", "{b}", "{c}"], namn = ["äpple", "banan", "päron"] }
+svar = "{a+b+c}"
+var = { a = "1..9", b = "1..9", c = "1..9" }
+ledtrad = "Alla som svarade finns i någon stapel. Lägg ihop alla tre."
+losning = ["Läs av alla staplar: {a}, {b} och {c}.", "{a} + {b} + {c} = {a+b+c}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Här går skalan två i taget. Hur många valde banan?"
+figur = { typ = "stapeldiagram", varden = ["{2*a}", "{2*b}", "{2*c}"], namn = ["äpple", "banan", "päron"] }
+svar = "{2*b}"
+var = { a = "3..9", b = "6..9", c = "3..9" }
+ledtrad = "Läs siffrorna på skalan – varje linje är två."
+feltankar = { "{b}" = "Skalan går två i taget. Räkna inte linjerna – läs av siffran vid stapelns topp." }
+losning = ["Skalan står 0, 2, 4, 6 … – varje linje är två.", "Stapeln över banan når till {2*b}."]

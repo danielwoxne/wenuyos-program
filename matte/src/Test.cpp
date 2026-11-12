@@ -1,0 +1,306 @@
+// Kärntesterna (utan GTK): cmake --build build --target matte-test && ./build/matte-test tester
+#include "Algebra.h"
+#include <glib/gstdio.h>
+#include "Bedom.h"
+#include "Data.h"
+#include "Framsteg.h"
+#include "Json.h"
+#include "Rita.h"
+#include "Tal.h"
+#include "Utskrift.h"
+#include "Flytt.h"
+#include "Framsteg.h"
+#include "Logg.h"
+
+#include <cmath>
+#include <cstring>
+#include <map>
+#include <cstdio>
+#include <algorithm>
+#include <set>
+#include <sstream>
+#include <string>
+
+using namespace matte;
+
+static int fel = 0, ok = 0;
+#define KOLLA(villkor, ...) do { if (villkor) ++ok; else { ++fel; fprintf(stderr, "FEL %s:%d: ", __FILE__, __LINE__); fprintf(stderr, __VA_ARGS__); fputc('\n', stderr); } } while (0)
+
+// Samma värden som Python-versionen för alla facit och svarsalternativ (tester/fall.json)
+static void testaTolkning(const std::string& mapp) {
+    Json fall = Json::lasFil(mapp + "/fall.json");
+    KOLLA(fall.storlek() > 100, "fall.json saknas eller är tom");
+    int skillnad = 0;
+    for (auto& f : fall.element()) {
+        std::string in = f["in"].str();
+        std::string tal, poly;
+        try { Brak b = tolka(in); tal = std::to_string(b.t()) + "/" + std::to_string(b.n()); } catch (const Fel&) {}
+        try { poly = skriv(tolkaUttryck(in)); } catch (const Fel&) {}
+        std::string vt = f["tal"].null() ? "" : f["tal"].str(), vp = f["poly"].null() ? "" : f["poly"].str();
+        // tal som Python räknade ungefärligt (π, sin 20°, lg 2) får skilja i sista siffrorna
+        bool tal_ok = tal == vt;
+        if (!tal_ok && !tal.empty() && !vt.empty()) {
+            auto d = [](const std::string& s) { auto p = s.find('/'); return std::stod(s.substr(0, p)) / std::stod(s.substr(p + 1)); };
+            tal_ok = std::fabs(d(tal) - d(vt)) < 1e-8;
+        }
+        if (!tal_ok || poly != vp) {
+            if (++skillnad <= 15) fprintf(stderr, "  '%s': tal %s/%s  poly '%s'/'%s'\n", in.c_str(), tal.c_str(), vt.c_str(), poly.c_str(), vp.c_str());
+        }
+    }
+    KOLLA(skillnad == 0, "%d av %zu texter tolkas annorlunda än i Python", skillnad, fall.storlek());
+}
+
+static void testaBrak() {
+    KOLLA(tolka("1/2") == tolka("0,5") && tolka("50 %") == tolka("2/4"), "former av en halv");
+    KOLLA(tolka("1 1/2") == Brak(3, 2), "blandad form");
+    KOLLA(tolka("√(9/4)") == Brak(3, 2), "exakt rot");
+    KOLLA(Brak(3, 4).text("procent") == "75 %", "procent: %s", Brak(3, 4).text("procent").c_str());
+    KOLLA(Brak(1, 3).text("decimal") == "0,333", "decimal");
+    KOLLA(Brak(7, 4).text() == "1,75", "auto");
+    KOLLA(skriv(tolkaUttryck("(x+1)(x+1)")) == "x² + 2x + 1", "kvadrat: %s", skriv(tolkaUttryck("(x+1)(x+1)")).c_str());
+    bool kastade = false;
+    try { tolka("1/0"); } catch (const Fel&) { kastade = true; }
+    KOLLA(kastade, "division med noll");
+}
+
+static void testaJson() {
+    Json j = Json::las("{\"a\": [1, 2.5, \"x\\u00e5\"], \"b\": {\"c\": true}, \"d\": null}");
+    KOLLA(j["a"][1].tal() == 2.5 && j["a"][2].str() == "xå" && j["b"]["c"].sant() && j["d"].null(), "json läses");
+    KOLLA(Json::las(j.skriv())["a"][2].str() == "xå", "json skrivs och läses tillbaka");
+}
+
+// Lättläst-stödet i rättningen: små stavfel förlåts, omkastade siffror känns igen
+static void testaStavningOchSiffror() {
+    KOLLA(redigeringsavstand("kvadratt", "kvadrat") == 1 && redigeringsavstand("triangle", "triangel") == 2 &&
+          redigeringsavstand("jämn", "jamn") == 1, "redigeringsavstånd");
+    Mall ord; ord.typ = "text";
+    Variant v; v.facit = {"o:kvadrat"}; v.facitText = {"kvadrat"};
+    Bedomning b = bedom(ord, v, {"kvadratt"});
+    KOLLA(b.ratt && b.text.find("stavas") != std::string::npos, "nästan rätt stavat ord räknas: %s", b.text.c_str());
+    b = bedom(ord, v, {"kvarts"});
+    KOLLA(!b.ratt, "ett annat ord räknas inte");
+    Variant k; k.facit = {"o:udda"}; k.facitText = {"udda"};
+    KOLLA(!bedom(ord, k, {"uddaa"}).ratt, "korta ord (under fem bokstäver) måste stämma: %s", "udda");
+    Mall tal; tal.typ = "text";
+    Variant t; t.facit = {svarsnyckel("12")}; t.facitText = {"12"};
+    b = bedom(tal, t, {"21"});
+    KOLLA(!b.ratt && b.omkastad, "21 i stället för 12 känns igen som omkastat");
+    KOLLA(!bedom(tal, t, {"13"}).omkastad, "13 är inte omkastat");
+    Variant p; p.facit = {svarsnyckel("11")}; p.facitText = {"11"};
+    KOLLA(!bedom(tal, p, {"11"}).omkastad && bedom(tal, p, {"11"}).ratt, "11 är rätt, inte omkastat");
+}
+
+// Exportera en elev och importera igen i en tom datamapp: allt ska följa med, inget farligt ska komma in
+static void testaFlytt() {
+    gchar* tmp = g_dir_make_tmp("matte-flytt-XXXXXX", nullptr);
+    std::string a = std::string(tmp) + "/a", b = std::string(tmp) + "/b";
+    g_setenv("XDG_DATA_HOME", a.c_str(), TRUE);
+    Elev e = Elev::ladda("test-elev");
+    e.visningsnamn = "Test Elev";
+    e.svarade("brak-delar", true, "", 0);
+    e.ritningar.push_back({"brak-delar", "1.png", "Rita", "2026-11-10 10:00"});
+    e.spara();
+    logga("test-elev", "svar", Json::objekt().satt("kort", "brak-delar"));
+    g_mkdir_with_parents(ritmapp("test-elev").c_str(), 0700);
+    const char png[] = "\x89PNG\r\n\x1a\nfejk";
+    g_file_set_contents((ritmapp("test-elev") + "/1.png").c_str(), png, sizeof png - 1, nullptr);
+    std::string fil = std::string(tmp) + "/elev.json", f;
+    KOLLA(exporteraElev("test-elev", fil, &f), "export: %s", f.c_str());
+    g_setenv("XDG_DATA_HOME", b.c_str(), TRUE);
+    bool fanns = true;
+    std::string visn, namn = importeraElev(fil, false, &f, &fanns, &visn);
+    KOLLA(namn == "test-elev" && !fanns && visn == "Test Elev", "import: %s (%s)", namn.c_str(), f.c_str());
+    Elev igen = Elev::ladda("test-elev");
+    KOLLA(igen.status("brak-delar").antalRatt == 1 && igen.ritningar.size() == 1, "framstegen följer med");
+    KOLLA(lasLogg("test-elev").size() == 1, "loggen följer med");
+    KOLLA(g_file_test((ritmapp("test-elev") + "/1.png").c_str(), G_FILE_TEST_EXISTS), "teckningen följer med");
+    importeraElev(fil, false, &f, &fanns);
+    KOLLA(fanns, "en elev som redan finns skrivs inte över utan att fråga");
+    // en elakt gjord fil: teckningsnamn med ../ ska inte kunna skriva utanför mappen
+    std::string elak = std::string(tmp) + "/elak.json";
+    std::string innehall = R"({"format":"se.wenuyos.lara.elev","program":"se.wenuyos.app.matte","namn":"../../x","elev":{"namn":"x"},"ritningar":{"../../ut.png":"iVBORw0KGgo="}})";
+    g_file_set_contents(elak.c_str(), innehall.c_str(), -1, nullptr);
+    namn = importeraElev(elak, true, &f);
+    KOLLA(namn.find('/') == std::string::npos && !g_file_test((b + "/ut.png").c_str(), G_FILE_TEST_EXISTS) &&
+          !g_file_test((std::string(tmp) + "/ut.png").c_str(), G_FILE_TEST_EXISTS), "farliga sökvägar i en importfil stoppas");
+    g_unsetenv("XDG_DATA_HOME");
+    std::string rm = std::string("rm -rf '") + tmp + "'";
+    if (system(rm.c_str()) != 0) fprintf(stderr, "kunde inte städa %s\n", tmp);
+    g_free(tmp);
+}
+
+int main(int argc, char** argv) {
+    std::string mapp = argc > 1 ? argv[1] : "tester";
+    testaFlytt();
+    testaStavningOchSiffror();
+    testaBrak();
+    testaJson();
+    testaTolkning(mapp);
+    if (argc > 2) {   // data-mappen: alla uppgifter bedöms rätt med sitt eget facit
+        extern int testaData(const std::string&, int&, int&);
+        testaData(argv[2], ok, fel);
+    }
+    printf("%d ok, %d fel\n", ok, fel);
+    return fel ? 1 : 0;
+}
+
+// Varje färdig uppgift ska bedömas rätt med sitt eget facit – precis som `matte check` i Python-versionen.
+// En feltanke i kryssa/para/måla: bygg elevens fel svar ur felsvaret och kolla att förklaringen kommer
+static void testaNyFeltankar(const std::string& kid, size_t mi, const Mall& m, const Variant& v, const Data& d, int& testade, int& fel) {
+    for (auto& f : v.fel) {
+        if (!v.facit.empty() && f.nyckel == v.facit[0]) continue;
+        std::vector<std::string> svar;
+        if (m.typ == "kryssa") {
+            if (std::find(v.alternativ.begin(), v.alternativ.end(), f.felsvar) == v.alternativ.end()) continue;
+            svar = v.facitSvar; svar.push_back(f.felsvar);
+        } else if (m.typ == "para") {
+            auto p = f.felsvar.find("→");
+            if (p == std::string::npos) continue;
+            std::string vv = trim(f.felsvar.substr(0, p)), hh = trim(f.felsvar.substr(p + strlen("→")));
+            auto vi = std::find_if(v.falt.begin(), v.falt.end(), [&](const std::string& x) { return textnorm(x) == textnorm(vv); });
+            auto hi = std::find_if(v.alternativ.begin(), v.alternativ.end(), [&](const std::string& x) { return textnorm(x) == textnorm(hh); });
+            if (vi == v.falt.end() || hi == v.alternativ.end()) continue;
+            svar = v.facitSvar;
+            svar[vi - v.falt.begin()] = *hi;
+        } else if (m.typ == "mala") {
+            std::string del; std::stringstream in(f.felsvar);
+            while (std::getline(in, del, '|')) {
+                auto k = del.find(':');
+                if (k == std::string::npos) svar.push_back(trim(del));
+                else for (int i = 0; i < atoi(del.c_str() + k + 1); ++i) svar.push_back(trim(del.substr(0, k)));
+            }
+            if (!f.felsvar.empty() && f.felsvar.back() == '|') svar.push_back("");
+            size_t n = celler(d, v.figur).size();
+            if (svar.size() > n) continue;
+            svar.resize(n);
+        } else continue;
+        Bedomning b = bedom(m, v, svar);
+        if (b.ratt || b.otolkbart) continue;
+        ++testade;
+        if (b.text != f.text && ++fel <= 10)
+            fprintf(stderr, "  %s uppgift %zu: felsvaret '%s' gav '%s'\n", kid.c_str(), mi + 1, f.felsvar.c_str(), b.text.c_str());
+    }
+}
+
+int testaData(const std::string& mapp, int& ok_, int& fel_) {
+    std::map<std::string, int> nya;
+    Data d;
+    std::string err;
+    if (!d.las(mapp, &err)) { fprintf(stderr, "FEL: data: %s\n", err.c_str()); ++fel_; return 1; }
+    int antal = 0, felaktiga = 0, feltankarTestade = 0, feltankarFel = 0;
+    for (auto& k : d.kort()) {
+        const auto& mallar = d.mallar(k.id);
+        if (mallar.empty()) { fprintf(stderr, "FEL: %s saknar uppgifter\n", k.id.c_str()); ++fel_; }
+        for (size_t mi = 0; mi < mallar.size(); ++mi) {
+            const Mall& m = mallar[mi];
+            for (auto& v : m.varianter) {
+                ++antal;
+                std::vector<std::string> svar;
+                bool flera = (m.typ == "tabell" || m.typ == "punkt" || m.typ == "linje") && v.facitText.size() > 1;
+                if (flera) svar = v.facitText; else svar = {v.facitText.empty() ? "" : v.facitText[0]};
+                if (nyTyp(m.typ)) {   // kryssa, para, mala, rita: facit som elevens svar
+                    svar = v.facitSvar;
+                    if (m.typ == "mala") svar.resize(std::max(svar.size(), celler(d, v.figur).size()));
+                    ++nya[m.typ];
+                    testaNyFeltankar(k.id, mi, m, v, d, feltankarTestade, feltankarFel);
+                }
+                Bedomning b = bedom(m, v, svar);
+                // varje känd feltanke ska ge sin egen förklaring (om felsvaret inte råkar vara facit)
+                for (auto& f : v.fel) {
+                    if (nyTyp(m.typ)) break;
+                    if (f.felsvar.empty() || (!v.facit.empty() && f.nyckel == v.facit[0])) continue;
+                    if (m.typ == "val" && std::find(v.alternativ.begin(), v.alternativ.end(), f.felsvar) == v.alternativ.end()) continue;
+                    if (m.typ == "valj" || m.typ == "markera" || m.typ == "klick" || m.typ == "farga" || m.typ == "dra") continue;
+                    std::vector<std::string> fs;
+                    if (flera) { std::string del; std::stringstream in(f.felsvar); while (std::getline(in, del, ';')) fs.push_back(del); }
+                    else fs = {f.felsvar};
+                    if (fs.size() != v.facit.size()) continue;
+                    Bedomning bf = bedom(m, v, fs);
+                    if (bf.ratt || bf.otolkbart) continue;   // samma tal som facit för den här varianten, eller ingen siffra
+                    ++feltankarTestade;
+                    bool tvetydig = std::count_if(v.fel.begin(), v.fel.end(), [&](const Feltanke& g) { return g.nyckel == f.nyckel; }) > 1;
+                    if (bf.text != f.text && !tvetydig && ++feltankarFel <= 10)
+                        fprintf(stderr, "  %s uppgift %zu: felsvaret '%s' gav '%s'\n", k.id.c_str(), mi + 1, f.felsvar.c_str(), bf.text.c_str());
+                }
+                if (!b.ratt) {
+                    if (++felaktiga <= 20)
+                        fprintf(stderr, "  %s uppgift %zu: facit '%s' bedöms fel: %s\n", k.id.c_str(), mi + 1,
+                                svar[0].c_str(), b.text.c_str());
+                }
+            }
+        }
+    }
+    // Alla figurer går att rita: korten och första varianten av varje mall, på ett kontaktark
+    int figurer = 0, figurfel = 0;
+    std::vector<std::pair<std::string, Json>> alla;
+    for (auto& k : d.kort()) {
+        for (auto& r : k.rader) if (r.figur.arObjekt()) alla.push_back({k.id, r.figur});
+        for (auto& e : k.exempel) if (e.figur.arObjekt()) alla.push_back({k.id, e.figur});
+        for (auto& m : d.mallar(k.id)) for (auto& v : m.varianter) if (v.figur.arObjekt()) alla.push_back({k.id, v.figur});
+    }
+    cairo_surface_t* ark = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 1400, 1800);
+    cairo_t* cr = cairo_create(ark);
+    cairo_set_source_rgb(cr, 1, 1, 1); cairo_paint(cr);
+    double ax = 10, ay = 10, radh = 0;
+    std::set<std::string> visade;
+    for (auto& [kid, fj] : alla) {
+        try {
+            Figur f = figur(d, fj);
+            cairo_surface_t* s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, std::max(1, (int)f.bredd), std::max(1, (int)f.hojd));
+            cairo_t* c2 = cairo_create(s);
+            f.rita(c2, 0, 0);
+            cairo_destroy(c2); cairo_surface_destroy(s);
+            ++figurer;
+            std::string typ = fj["typ"].str();
+            if (visade.insert(typ).second && f.bredd < 700) {   // en av varje sort på kontaktarket
+                if (ax + f.bredd > 1390) { ax = 10; ay += radh + 30; radh = 0; }
+                if (ay + f.hojd < 1790) {
+                    f.rita(cr, ax, ay + 16);
+                    text(cr, ax, ay + 10, typ, 11, true, "#d1403a");
+                    ax += f.bredd + 20; radh = std::max(radh, f.hojd + 16);
+                }
+            }
+        } catch (const std::exception& e) {
+            if (++figurfel <= 10) fprintf(stderr, "  %s: figuren går inte att rita: %s\n", kid.c_str(), e.what());
+        }
+    }
+    cairo_surface_write_to_png(ark, "figurer.png");
+    for (auto& [typ, n] : nya) printf("%s: %d uppgifter\n", typ.c_str(), n);
+
+    // Utskrift: ett arbetsblad för varje kort, samma nummer = samma blad, och hela regelboken
+    int blad = 0, bladfel = 0;
+    for (auto& k : d.kort()) {
+        std::string fel, fil = "/tmp/matte-test-" + k.id + ".pdf";
+        if (arbetsbladPdf(d, {&k}, fil, 4711, 8, &fel) != 4711) { if (++bladfel <= 5) fprintf(stderr, "  %s: arbetsbladet: %s\n", k.id.c_str(), fel.c_str()); }
+        else ++blad;
+        if (arbetsbladFragor(d, {&k}, 4711) != arbetsbladFragor(d, {&k}, 4711)) { ++bladfel; fprintf(stderr, "  %s: blad 4711 blev olika\n", k.id.c_str()); }
+        g_remove(fil.c_str());
+    }
+    std::vector<std::string> grupper;
+    auto bok = kortILaroplansordning(d, &grupper);
+    std::string fel;
+    if (bok.size() != d.kort().size()) { ++bladfel; fprintf(stderr, "  läroplansordningen tappar kort\n"); }
+    if (!regelbokPdf(d, bok, "Regelboken", "test", "/tmp/matte-test-regelbok.pdf", &fel, &grupper)) { ++bladfel; fprintf(stderr, "  regelboken: %s\n", fel.c_str()); }
+    g_remove("/tmp/matte-test-regelbok.pdf");
+    printf("%d arbetsblad och regelboken som PDF\n", blad);
+
+    // Ordlistan: finns, varje form leder till sitt ord, figurerna går att rita
+    int ordfel = 0;
+    for (size_t i = 0; i < d.ordlista().size(); ++i) {
+        const Ord& o = d.ordlista()[i];
+        for (auto& f : o.former) if (d.ordFor(f) != (int)i && ++ordfel <= 5) fprintf(stderr, "  ordlistan: '%s' leder fel\n", f.c_str());
+        if (o.figur.arObjekt()) try { figur(d, o.figur); } catch (const std::exception& e) { if (++ordfel <= 5) fprintf(stderr, "  ordlistan: %s: %s\n", o.ord.c_str(), e.what()); }
+    }
+    if (d.ordlista().size() < 40) { ++ordfel; fprintf(stderr, "  ordlistan har bara %zu ord\n", d.ordlista().size()); }
+    printf("%zu ord i ordlistan\n", d.ordlista().size());
+    if (ordfel) { fprintf(stderr, "FEL: %d fel i ordlistan\n", ordfel); ++fel_; } else ++ok_;
+    if (bladfel) { fprintf(stderr, "FEL: %d fel i utskriften\n", bladfel); ++fel_; } else ++ok_;
+    cairo_destroy(cr); cairo_surface_destroy(ark);
+    if (figurfel) { ++fel_; fprintf(stderr, "FEL: %d figurer går inte att rita\n", figurfel); } else ++ok_;
+    printf("%d figurer ritade (kontaktark: figurer.png)\n", figurer);
+    printf("%zu kort, %d färdiga uppgifter, %d feltankar provade\n", d.kort().size(), antal, feltankarTestade);
+    if (feltankarFel) { ++fel_; fprintf(stderr, "FEL: %d feltankar känns inte igen\n", feltankarFel); } else ++ok_;
+    if (felaktiga) { ++fel_; fprintf(stderr, "FEL: %d uppgifter bedöms fel med sitt eget facit\n", felaktiga); }
+    else ++ok_;
+    return 0;
+}

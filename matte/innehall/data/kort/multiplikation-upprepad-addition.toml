@@ -1,0 +1,161 @@
+id = "multiplikation-upprepad-addition"
+titel = "Multiplikation – lika stora grupper"
+omrade = "tal"
+ikon = "ganger"
+bild = "bullpasar.jpg"
+bildtext = "Tre påsar med två bullar i varje: 2 + 2 + 2 = 3 · 2 = 6."
+sager = "3 · 4 betyder tre grupper med fyra i varje: 4 + 4 + 4 = 12."
+galler = "När grupperna är lika stora. Är de olika stora får man addera varje grupp för sig."
+galler_inte = "Att 'gånger gör talet större' gäller bara heltal. Längre fram multiplicerar du med bråk och decimaltal – då kan svaret bli mindre."
+forkunskap = ["addition-tiotalsovergang"]
+kalla = "Multiplikation som upprepad addition och som rutnät (array) – två bilder av samma sak."
+
+[[rad]]
+sager = "tre gånger fyra"
+figur = { typ = "prickar", antal = 12, per_rad = 4 }
+skriver = ["3 · 4 = 4 + 4 + 4 = 12"]
+
+[[rad]]
+sager = "fyra gånger tre"
+figur = { typ = "prickar", antal = 12, per_rad = 3 }
+skriver = ["4 · 3 = 3 + 3 + 3 + 3 = 12"]
+kommentar = "Samma prickar, vänt på rutnätet. Därför är 3 · 4 = 4 · 3."
+
+[[uppgift]]
+niva = 1
+fraga = "Rutnätet har {a} rader med {b} i varje. Hur många prickar är det?"
+figur = { typ = "prickar", antal = "{a*b}", per_rad = "{b}" }
+svar = "{a*b}"
+var = { a = "2..5", b = "2..5" }
+ledtrad = "Räkna radvis: {b}, {2*b}, {3*b} …"
+losning = ["Varje rad har {b}.", "{a} rader: {' + '.join([str(b)]*a)}.", "{a} · {b} = {a*b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} · {b} = ?"
+svar = "{a*b}"
+var = { a = "2..6", b = "2..9" }
+ledtrad = "{a} grupper med {b}: {b} + {b} + … ({a} gånger)."
+feltankar = { "{a+b}" = "Du adderade talen. {a} · {b} är {a} grupper med {b} i varje – inte {a} plus {b}.", "{a*(b-1)}" = "En grupp för lite. Det ska vara {a} grupper med {b}." }
+losning = ["{a} · {b} betyder {a} grupper med {b} i varje.", "{' + '.join([str(b)]*a)} = {a*b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Det är {a} påsar med {b} bullar i varje. Hur många bullar är det?"
+figur = { typ = "ikoner", namn = "kaka", antal = "{a}" }
+svar = "{a*b}"
+var = { a = "3..6", b = "3..8" }
+ledtrad = "Lika stora grupper – det är multiplikation: {a} · {b}."
+losning = ["{a} påsar med {b} i varje = {a} · {b}.", "{' + '.join([str(b)]*a)} = {a*b}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Klicka på alla bullar. Hur många blir det – 3 påsar med 2 i varje?"
+figur = { typ = "scen", bild = "bullpasar.jpg", bredd = 560, omraden = [[0.0523, 0.4145, 0.1286, 0.17], [0.1809, 0.4145, 0.1286, 0.17], [0.3753, 0.4145, 0.1286, 0.17], [0.5027, 0.4145, 0.1286, 0.17], [0.6953, 0.4145, 0.1286, 0.17], [0.8257, 0.4145, 0.1286, 0.17]], namn = ["bulle", "bulle", "bulle", "bulle", "bulle", "bulle"] }
+svar = "bulle,bulle,bulle,bulle,bulle,bulle"
+ledtrad = "Klicka på varje bulle en gång. 2 + 2 + 2."
+
+[[uppgift]]
+niva = 2
+fraga = "Det är 3 påsar med 2 bullar i varje. Skriv det som multiplikation och räkna: 3 · 2 = ?"
+figur = { typ = "scen", bild = "bullpasar.jpg", bredd = 560 }
+svar = "6"
+ledtrad = "Tre grupper med två i varje: 2 + 2 + 2."
+feltankar = { "5" = "3 + 2 = 5, men det är tre GRUPPER med två i varje: 2 + 2 + 2 = 3 · 2 = 6." }
+losning = ["Tre grupper med två i varje.", "2 + 2 + 2 = 6.", "3 · 2 = 6."]
+
+[[exempel]]
+rubrik = "3 · 4 som rader"
+figur = { typ = "prickar", antal = 12, per_rad = 4 }
+steg = [
+  "Tre rader med fyra prickar i varje.",
+  "4 + 4 + 4 = 12.",
+  "Vi skriver 3 · 4 = 12 och säger ”tre gånger fyra”.",
+]
+
+[[exempel]]
+rubrik = "Vänd på rutnätet"
+figur = { typ = "prickar", antal = 12, per_rad = 3 }
+steg = [
+  "Nu är det fyra rader med tre i varje.",
+  "3 + 3 + 3 + 3 = 12 – samma prickar.",
+  "4 · 3 = 3 · 4. Välj det som är lättast att räkna.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och skriv svaret."
+steg = ["{a} · {b}", "= {' + '.join([str(b)]*a)}", "= ?"]
+svar = "{a*b}"
+var = { a = "2..5", b = "2..6" }
+ledtrad = "Räkna i {b}-hopp: {', '.join(str(b*i) for i in range(1, 3))} …"
+feltankar = { "{a+b}" = "Det är inte {a} + {b}. Det är {a} stycken {b}:or: {' + '.join([str(b)]*a)}." }
+losning = ["Räkna i {b}-hopp: {', '.join(str(b*i) for i in range(1, a+1))}.", "{a} · {b} = {a*b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{' + '.join([str(b)]*a)} = ? · {b}"
+svar = "{a}"
+var = { a = "3..6", b = "2..9" }
+ledtrad = "Hur många {b}:or står det?"
+feltankar = { "{a*b}" = "Det är summan. Frågan är hur många gånger {b} står där." }
+losning = ["Räkna {b}:orna: det är {a} stycken.", "{a} · {b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Räkna ut båda. Vad märker du?"
+falt = ["{a} · {b}", "{b} · {a}"]
+svar = ["{a*b}", "{a*b}"]
+var = { a = "2..5", b = "6..9" }
+ledtrad = "Tänk på rutnätet som vänds."
+losning = ["{a} rader med {b} = {a*b}.", "{b} rader med {a} är samma prickar, vända: {a*b}.", "Ordningen spelar ingen roll i multiplikation."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} · {b} = {a*b}. Vad är {2*a} · {b}?"
+svar = "{2*a*b}"
+var = { a = "2..5", b = "3..9" }
+ledtrad = "Dubbelt så många grupper."
+feltankar = { "{a*b+2}" = "Det blir dubbelt så många grupper – inte två till. Dubbla {a*b}." }
+losning = ["{2*a} grupper är dubbelt så många som {a}.", "Då blir det dubbelt så mycket: {a*b} + {a*b} = {2*a*b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett bord har 4 ben. Hur många ben har {a} bord?"
+svar = "{4*a}"
+var = { a = "3..9" }
+ledtrad = "Lika stora grupper: {a} bord med 4 ben i varje."
+feltankar = { "{a+4}" = "{a} bord och 4 ben per bord: det är {a} grupper med 4 – multiplikation." }
+losning = ["{a} grupper med 4 i varje.", "{a} · 4 = {4*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Rutnätet har {a} rader och {a*b} prickar. Hur många prickar är det i varje rad?"
+figur = { typ = "prickar", antal = "{a*b}", per_rad = "{b}" }
+svar = "{b}"
+var = { a = "2..5", b = "3..6" }
+ledtrad = "{a} · ? = {a*b}. Räkna en rad."
+losning = ["{a} rader, lika många i varje.", "{a} · {b} = {a*b}.", "Varje rad har {b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla alla tal i {k}:ans tabell gula."
+figur = { typ = "malrutor", kolumner = 10, ruta = 46, objekt = "{'|'.join(str(i) for i in range(1, 31))}", farger = ["gul"] }
+svar = "{'|'.join('gul' if i % k == 0 else '' for i in range(1, 31))}"
+var = { k = "[2,3,4,5]" }
+ledtrad = "Börja på {k} och hoppa {k} steg i taget: {k}, {2*k}, {3*k} …"
+losning = ["{k}:ans tabell är talen du får när du hoppar {k} steg i taget.", "{', '.join(str(i) for i in range(k, 31, k))}.", "Ser du mönstret i rutnätet?"]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Vilka betyder samma sak som {a} · {b}? Kryssa i alla."
+alternativ = ["{' + '.join([str(b)] * a)}", "{' + '.join([str(a)] * b)}", "{a} + {b}", "{a*b}", "{a+b}"]
+svar = ["{' + '.join([str(b)] * a)}", "{' + '.join([str(a)] * b)}", "{a*b}"]
+var = { a = "2..4", b = "2..5 != a" }
+ledtrad = "{a} · {b} betyder {a} grupper med {b} i varje – eller {b} grupper med {a}."
+feltankar = { "{a} + {b}" = "Plus lägger bara ihop två tal. {a} · {b} är {a} grupper med {b} i varje: {' + '.join([str(b)] * a)}.", "{a+b}" = "{a+b} är {a} + {b}. Gånger blir {a*b}." }
+losning = ["{a} · {b} = {' + '.join([str(b)] * a)} = {a*b}.", "Man kan byta plats: {b} · {a} = {' + '.join([str(a)] * b)} = {a*b}.", "{a} + {b} och {a+b} är plus, inte gånger."]

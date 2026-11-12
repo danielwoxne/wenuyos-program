@@ -1,0 +1,136 @@
+id = "addition-tiotalsovergang"
+titel = "Addition över tio"
+omrade = "tal"
+ikon = "plus"
+bild = "tioram-8-plus-5.jpg"
+bildtext = "8 blå i tioramen och 5 gula bredvid. Två gula fyller ramen – då är det 10, och 3 gula blir över: 13."
+sager = "Fyll upp till tio först. 8 + 5: ta 2 från 5 så blir det 10, och sedan 3 till – 13."
+galler = "När summan går över ett helt tiotal. Samma knep fungerar över 20, 30 … och över 100."
+galler_inte = "Att räkna uppåt en i taget (”nio, tio, elva …”) fungerar, men blir långsamt och lätt fel med stora tal. Den som kan tiokamraterna behöver aldrig räkna på fingrarna förbi tio."
+forkunskap = ["talkamrater-10"]
+kalla = "Räknestrategier: 'fylla upp till tio' (Carpenter m.fl.). Tioramen som bild."
+
+[[rad]]
+sager = "åtta plus fem"
+figur = { typ = "talkamrater", summa = 10, del1 = 8, visa = false }
+skriver = ["8 + 5 = 8 + 2 + 3 = 13"]
+kommentar = "De två blå fyller tioramen. Tre blir över."
+
+[[rad]]
+sager = "sju plus sex"
+figur = { typ = "talkamrater", summa = 10, del1 = 7, visa = false }
+skriver = ["7 + 6 = 7 + 3 + 3 = 13"]
+
+[[uppgift]]
+niva = 1
+fraga = "{a} + {b}. Hur mycket saknas till tio?"
+svar = "{10-a}"
+var = { a = "6..9", b = "5..9" }
+ledtrad = "{a}:s tiokamrat."
+losning = ["Tiokamraten till {a} är {10-a}.", "{a} + {10-a} = 10."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} + {b} = ?"
+svar = "{a+b}"
+var = { a = "6..9", b = "4..9" }
+ledtrad = "Fyll upp {a} till 10 med {10-a}. Då är {b-(10-a)} kvar: 10 + {b-(10-a)}."
+feltankar = { "{a+b-1}" = "Ett för lite – räknade du från {a} i stället för från {a+1}? Prova: {a} + {10-a} = 10, 10 + {b-(10-a)} = {a+b}.", "{a+b+1}" = "Ett för mycket. {a} + {10-a} = 10, och sedan {b-(10-a)} till." }
+losning = ["Dela upp {b} i {10-a} och {b-(10-a)}.", "{a} + {10-a} = 10.", "10 + {b-(10-a)} = {a+b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} + {b} = ?"
+svar = "{a+b}"
+var = { a = "[18, 27, 36, 45, 57, 68, 79]", b = "4..9" }
+ledtrad = "Fyll upp till nästa tiotal först. Vad saknas från {a} till {(a//10+1)*10}?"
+losning = ["Fyll upp till nästa tiotal: {a} + {(a//10+1)*10-a} = {(a//10+1)*10}.", "Kvar av {b}: {b-((a//10+1)*10-a)}.", "{(a//10+1)*10} + {b-((a//10+1)*10-a)} = {a+b}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "8 + 5: Klicka på de gula brickor som behövs för att fylla tioramen."
+figur = { typ = "scen", bild = "tioram-8-plus-5.jpg", bredd = 560, omraden = [[0.1331, 0.3321, 0.0688, 0.1222], [0.2228, 0.3321, 0.0688, 0.1222], [0.3125, 0.3321, 0.0688, 0.1222], [0.4022, 0.3321, 0.0688, 0.1222], [0.4919, 0.3321, 0.0688, 0.1222], [0.1331, 0.5021, 0.0688, 0.1222], [0.2228, 0.5021, 0.0688, 0.1222], [0.3125, 0.5021, 0.0688, 0.1222], [0.6056, 0.4384, 0.0628, 0.1116], [0.6743, 0.4384, 0.0628, 0.1116], [0.7431, 0.4384, 0.0628, 0.1116], [0.8119, 0.4384, 0.0628, 0.1116], [0.8807, 0.4384, 0.0628, 0.1116]], namn = ["blå", "blå", "blå", "blå", "blå", "blå", "blå", "blå", "gul", "gul", "gul", "gul", "gul"] }
+svar = "gul,gul"
+ledtrad = "Ramen har 10 platser och 8 är fyllda. Hur många tomma platser finns det?"
+feltankar = { "gul,gul,gul,gul,gul" = "Alla fem får inte plats – ramen har bara två tomma platser. Två gula fyller den, tre blir över." }
+
+[[uppgift]]
+niva = 1
+fraga = "8 + 5: När tioramen är full – hur många gula brickor är kvar utanför?"
+figur = { typ = "scen", bild = "tioram-8-plus-5.jpg", bredd = 560 }
+svar = "3"
+ledtrad = "Två gula fyller ramen. 5 − 2 = ?"
+losning = ["Två gula behövs för att fylla ramen.", "5 − 2 = 3 blir över."]
+
+[[uppgift]]
+niva = 2
+fraga = "Så hur mycket är 8 + 5?"
+figur = { typ = "scen", bild = "tioram-8-plus-5.jpg", bredd = 560 }
+svar = "13"
+ledtrad = "En full ram är 10, och 3 till."
+feltankar = { "12" = "Ett för lite. Full ram = 10, och 3 gula kvar utanför: 13.", "3" = "3 är de som blev kvar utanför ramen. Hela summan är ramen (10) plus de 3: 13." }
+losning = ["Full ram = 10.", "Tre gula utanför.", "10 + 3 = 13."]
+
+[[exempel]]
+rubrik = "8 + 5 med tioramen"
+figur = { typ = "tioram", fyllda = 8, extra = 2 }
+steg = [
+  "8 blå ligger i ramen. Två rutor är tomma.",
+  "Ta 2 av de 5 gula och fyll ramen: nu är det 10.",
+  "5 − 2 = 3 gula blir kvar utanför.",
+  "10 + 3 = 13.",
+]
+
+[[exempel]]
+rubrik = "Samma knep över 20: 27 + 6"
+figur = { typ = "tallinje", fran = 25, till = 35, markera = [27, 30, 33] }
+steg = [
+  "27 behöver 3 för att bli 30.",
+  "Dela upp 6 i 3 och 3.",
+  "27 + 3 = 30, och 30 + 3 = 33.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och skriv svaret."
+steg = ["{a} + {b}", "= {a} + {10-a} + {b-(10-a)}", "= 10 + {b-(10-a)}", "= ?"]
+svar = "{a+b}"
+var = { a = "6..9", b = "11-a..9" }
+ledtrad = "Tio plus {b-(10-a)}."
+feltankar = { "{b-(10-a)}" = "Det är bara det som blev över. Glöm inte tian: 10 + {b-(10-a)}." }
+losning = ["{a} + {10-a} fyller upp till 10.", "{b-(10-a)} blir kvar av {b}.", "10 + {b-(10-a)} = {a+b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Dela upp {b} så att {a} blir 10. {b} = {10-a} + ?"
+svar = "{b-(10-a)}"
+var = { a = "6..9", b = "11-a..9" }
+ledtrad = "Hur mycket blir kvar av {b} när du har tagit {10-a}?"
+losning = ["{a} behöver {10-a} för att bli 10.", "{b} − {10-a} = {b-(10-a)}.", "{b} = {10-a} + {b-(10-a)}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{b} + {a} = ?"
+svar = "{a+b}"
+var = { a = "7..9", b = "2..4" }
+ledtrad = "Byt plats och börja med det största talet: {a} + {b}."
+feltankar = { "{a+b-1}" = "Ett för lite. Börja på {a} och räkna {b} steg till." }
+losning = ["Ordningen spelar ingen roll i addition: {b} + {a} = {a} + {b}.", "Börja med {a} och fyll upp: {a} + {10-a} = 10.", "Kvar: {b-(10-a)}. Svar: {a+b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} + {a+1} = ?"
+svar = "{2*a+1}"
+var = { a = "5..9" }
+ledtrad = "{a} + {a} är en dubbel. Sedan ett till."
+losning = ["{a+1} är {a} + 1.", "Dubbeln: {a} + {a} = {2*a}.", "Ett till: {2*a+1}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{10*p+q} + {10*r+s} = ?"
+svar = "{10*(p+r)+q+s}"
+var = { p = "1..5", q = "5..9", r = "1..3", s = "11-q..9" }
+ledtrad = "Tiotal för sig och ental för sig. Entalen blir mer än tio."
+feltankar = { "{10*(p+r)+q+s-10}" = "Entalen blev {q+s} – mer än tio. Den extra tian måste räknas med i tiotalen.", "{p+r}{q+s}" = "Du skrev entalen {q+s} direkt efter tiotalen. Men {q+s} ental är en tia och {q+s-10} ental – tian ska läggas till tiotalen." }
+losning = ["Tiotal: {p}0 + {r}0 = {10*(p+r)}.", "Ental: {q} + {s} = {q+s}.", "Tillsammans: {10*(p+r)} + {q+s} = {10*(p+r)+q+s}."]

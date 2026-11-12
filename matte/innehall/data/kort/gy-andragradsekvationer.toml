@@ -1,0 +1,160 @@
+id = "gy-andragradsekvationer"
+titel = "Andragradsekvationer"
+omrade = "algebra"
+ikon = "kvadrat"
+sager = "x² + px + q = 0 löses med pq-formeln: x = −p/2 ± √((p/2)² − q). En andragradsekvation har oftast två lösningar."
+galler = "När ekvationen står på formen x² + px + q = 0 – flytta allt till en sida och dela med x²-termens koefficient först."
+galler_inte = "x² = 9 har två lösningar, x = 3 och x = −3. Bara 'roten ur' tappar den negativa."
+forkunskap = ["gy-kvadreringsregler", "gy-rotter"]
+kalla = "Nollproduktmetoden och kvadratkomplettering innan formeln; grafen visar att det finns två (eller en eller noll) skärningar."
+
+[[rad]]
+sager = "x i kvadrat minus fyra x plus tre är noll"
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 5, ymin = -2, ymax = 5, ruta = 28, funktioner = ["x^2 - 4x + 3"], punkter = [[1, 0], [3, 0]] }
+skriver = ["x = 2 ± √(4 − 3)", "x₁ = 1, x₂ = 3"]
+kommentar = "Parabeln skär x-axeln i två punkter – två lösningar."
+
+[[uppgift]]
+niva = 1
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös x² = {a*a}."
+falt = ["x₁", "x₂"]
+svar = ["{a}", "-{a}"]
+var = { a = "2..12" }
+ledtrad = "Vilka tal gånger sig självt blir {a*a}? Det finns två."
+feltankar = { "{a};{a}" = "Även (−{a}) · (−{a}) = {a*a}. Den andra lösningen är −{a}." }
+losning = ["x² = {a*a} ger x = ±√{a*a}.", "x₁ = {a}, x₂ = −{a}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös (x − {r1})(x + {r2}) = 0."
+falt = ["x₁", "x₂"]
+svar = ["{r1}", "-{r2}"]
+var = { r1 = "1..9", r2 = "1..9" }
+ledtrad = "En produkt är noll när någon av faktorerna är noll: x − {r1} = 0 eller x + {r2} = 0."
+feltankar = { "-{r1};{r2}" = "Tecknen är vända: x − {r1} = 0 ger x = {r1} (plus), x + {r2} = 0 ger x = −{r2}." }
+losning = ["En produkt är noll om någon faktor är noll.", "x − {r1} = 0 ger x = {r1}.", "x + {r2} = 0 ger x = −{r2}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös x²{'' if r1+r2 == 0 else ' ' + t(-(r1+r2)) + 'x'}{'' if r1*r2 == 0 else ' ' + t(r1*r2)} = 0."
+falt = ["x₁", "x₂"]
+svar = ["{r1}", "{r2}"]
+var = { r1 = "-5..6", r2 = "-5..7 != -r1" }
+ledtrad = "pq-formeln: p = {-(r1+r2)}, q = {r1*r2}. x = {(r1+r2)/2} ± √({((r1+r2)/2)**2} − ({r1*r2}))."
+losning = ["p = {-(r1+r2)}, q = {r1*r2}.", "x = {(r1+r2)/2} ± √({((r1+r2)/2)**2} − ({r1*r2})) = {(r1+r2)/2} ± {abs(r1-r2)/2}.", "x₁ = {r1}, x₂ = {r2}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös x² + {p}x {t(q)} = 0. (två decimaler)"
+falt = ["x₁", "x₂"]
+svar = ["-{p}/2 + sqrt(({p}/2)^2 - {q})", "-{p}/2 - sqrt(({p}/2)^2 - {q})"]
+tolerans = 0.005
+var = { p = "[2, 4, 6, 8]", q = "[-1, -2, -3, 1]" }
+ledtrad = "x = −{p}/2 ± √(({p}/2)² {t(-q)})"
+losning = ["x = −{p}/2 ± √(({p}/2)² {t(-q)}) = {-p/2} ± √{(p/2)**2-q}.", "x₁ ≈ {round(-p/2 + ((p/2)**2-q)**0.5, 2)}.", "x₂ ≈ {round(-p/2 - ((p/2)**2-q)**0.5, 2)}."]
+
+[[rad]]
+sager = "pq-formeln steg för steg"
+figur = { typ = "tabell", rubriker = ["x² − 6x + 5 = 0", ""], rader = [["p = −6, q = 5", ""], ["−p/2 = 3", "(p/2)² − q = 9 − 5 = 4"], ["x = 3 ± √4", "x₁ = 5, x₂ = 1"]], kolbredd = 160 }
+skriver = ["x = 3 ± 2"]
+
+[[rad]]
+sager = "hur många lösningar?"
+figur = { typ = "tabell", rubriker = ["(p/2)² − q", "lösningar"], rader = [["positivt", "två"], ["noll", "en (dubbelrot)"], ["negativt", "inga reella"]], kolbredd = 130 }
+skriver = ["talet under rottecknet avgör"]
+kommentar = "Det motsvarar att parabeln skär x-axeln två gånger, nuddar den, eller inte når den."
+
+[[rad]]
+sager = "när q saknas"
+skriver = ["x² − 5x = 0 → x(x − 5) = 0"]
+kommentar = "Bryt ut x i stället för pq-formeln: x = 0 eller x = 5. Dela aldrig med x – då tappar du lösningen x = 0."
+
+[[exempel]]
+rubrik = "x² − 6x + 5 = 0 med pq-formeln"
+steg = [
+  "p = −6 och q = 5. Tecknen följer med!",
+  "x = 3 ± √(3² − 5) = 3 ± √4 = 3 ± 2.",
+  "x₁ = 5 och x₂ = 1. Kontroll: 25 − 30 + 5 = 0.",
+]
+
+[[exempel]]
+rubrik = "2x² − 8x − 10 = 0: dela först"
+steg = [
+  "pq-formeln kräver att x² står ensamt. Dela alla termer med 2.",
+  "x² − 4x − 5 = 0: p = −4, q = −5.",
+  "x = 2 ± √(4 + 5) = 2 ± 3. x₁ = 5, x₂ = −1.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "tabell"
+oordnad = true
+fraga = "Följ stegen och lös x² {t(-2*h)}x {t(h*h-d*d)} = 0."
+steg = ["p = {-2*h}, q = {h*h-d*d}", "−p/2 = {h}", "(p/2)² − q = {h*h} − ({h*h-d*d}) = {d*d}", "x = {h} ± √{d*d}"]
+falt = ["x₁", "x₂"]
+svar = ["{h+d}", "{h-d}"]
+var = { h = "1..5", d = "1..5" }
+ledtrad = "√{d*d} = {d}."
+losning = ["x = {h} ± {d}.", "x₁ = {h+d}, x₂ = {h-d}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös x² − {a}x = 0."
+falt = ["x₁", "x₂"]
+svar = ["0", "{a}"]
+var = { a = "2..12" }
+ledtrad = "Bryt ut x: x(x − {a}) = 0."
+feltankar = { "{a};{a}" = "Delar man med x försvinner lösningen x = 0. Bryt ut x i stället: x · (x − {a}) = 0." }
+losning = ["x(x − {a}) = 0.", "x = 0 eller x − {a} = 0.", "x₁ = 0, x₂ = {a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många reella lösningar har x² {t(2*h)}x {t(h*h-[4,0,-4][e])} = 0?"
+alternativ = ["två", "en", "inga"]
+svar = "{['två','en','inga'][e]}"
+form = "text"
+var = { h = "1..4", e = "0..2" }
+ledtrad = "Räkna ut (p/2)² − q."
+losning = ["(p/2)² − q = {h*h} − ({h*h-[4,0,-4][e]}) = {[4,0,-4][e]}.", "{['Positivt – två lösningar.', 'Noll – en lösning.', 'Negativt – inga reella lösningar.'][e]}"]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+oordnad = true
+fraga = "Lös 2x² {t(-2*(r1+r2))}x {t(2*r1*r2)} = 0."
+falt = ["x₁", "x₂"]
+svar = ["{r1}", "{r2}"]
+var = { r1 = "-4..5", r2 = "-4..6 != r1" }
+ledtrad = "Dela alla termer med 2 först."
+losning = ["Dela med 2: x² {t(-(r1+r2))}x {t(r1*r2)} = 0.", "x = {(r1+r2)/2} ± √({((r1+r2)/2)**2} − ({r1*r2})).", "x₁ = {r1}, x₂ = {r2}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En rektangel har arean {x*(x+d)} cm². Den ena sidan är {d} cm längre än den andra. Hur lång är den kortaste sidan?"
+svar = "{x}"
+var = { x = "3..12", d = "1..5" }
+ledtrad = "x(x + {d}) = {x*(x+d)} ger x² + {d}x − {x*(x+d)} = 0. Bara den positiva lösningen är en längd."
+feltankar = { "{-x-d}" = "Det är den andra lösningen till ekvationen – men en sida kan inte vara negativ." }
+losning = ["x(x + {d}) = {x*(x+d)}.", "x² + {d}x − {x*(x+d)} = 0 ger x = {x} eller x = {-x-d}.", "En längd är positiv: {x} cm."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "kryssa"
+fraga = "Vilka tal löser ekvationen x² = {a*a}? Kryssa i alla."
+alternativ = ["{a}", "-{a}", "{a*a}", "{2*a}", "0"]
+svar = ["{a}", "-{a}"]
+var = { a = "3..9" }
+ledtrad = "x² betyder x · x. Vilka tal gånger sig själva blir {a*a}? Glöm inte de negativa."
+feltankar = { "{2*a}" = "x² betyder x · x, inte 2 · x. {2*a} · {2*a} = {4*a*a}.", "{a*a}" = "{a*a} · {a*a} blir mycket mer än {a*a}. Vilket tal gånger sig självt blir {a*a}?" }
+losning = ["{a} · {a} = {a*a}.", "(−{a}) · (−{a}) = {a*a} också – minus gånger minus blir plus.", "Därför har x² = {a*a} två lösningar: x = ±{a}."]

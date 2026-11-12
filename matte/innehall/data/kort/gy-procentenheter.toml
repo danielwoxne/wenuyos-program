@@ -1,0 +1,136 @@
+id = "gy-procentenheter"
+titel = "Procent och procentenheter"
+omrade = "samband"
+ikon = "procent"
+sager = "Går räntan från 2 % till 3 % har den ökat med 1 procentenhet – men med 50 procent. Procentenheter är skillnaden; procent är skillnaden jämfört med där man började."
+galler = "När två procentsatser jämförs. Skillnad i procentenheter = subtraktion; förändring i procent = skillnaden delat med det gamla värdet."
+galler_inte = "”Räntan har ökat med 1 %” är fel när den går från 2 % till 3 %. Det är 1 procentenhet – men 50 %. Den som säger 1 % gör ökningen femtio gånger mindre än den är."
+forkunskap = ["procent-forandring"]
+kalla = "Vanlig förväxling i media och i elevsvar (procent vs procentenhet). Två representationer av samma förändring."
+
+[[rad]]
+sager = "från 2 % till 3 %"
+figur = { typ = "tabell", rubriker = ["", "förändring"], rader = [["procentenheter", "3 − 2 = 1"], ["procent", "1 / 2 = 50 %"]], kolbredd = 140 }
+skriver = ["+1 procentenhet", "+50 %"]
+
+[[uppgift]]
+niva = 1
+fraga = "Andelen ökar från {a} % till {b} %. Hur många procentenheter är ökningen?"
+svar = "{b-a}"
+var = { a = "[10, 20, 25, 40]", b = "a+5..a+20" }
+ledtrad = "Procentenheter = skillnaden: {b} − {a}."
+losning = ["Procentenheter = skillnaden mellan procentsatserna.", "{b} − {a} = {b-a} procentenheter."]
+
+[[uppgift]]
+niva = 2
+fraga = "Räntan höjs från {a} % till {b} %. Hur många procent har räntan ökat?"
+svar = "{(b-a)/a*100} %"
+form = "procent"
+var = { a = "[2, 4, 5]", b = "a+1..a+6" }
+ledtrad = "Ökningen är {b-a} procentenheter. Jämför med där den började: ({b-a}) / {a}."
+feltankar = { "{b-a} %" = "{b-a} är ökningen i procentENHETER. I procent ska den jämföras med startvärdet: {b-a} / {a}." }
+losning = ["Ökningen: {b} − {a} = {b-a} procentenheter.", "Jämför med starten: {b-a} / {a} = {(b-a)/a}.", "= {(b-a)/a*100} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett parti får {b} % i stället för {a} %. Hur många procent har partiets andel minskat?"
+svar = "{(a-b)/a*100} %"
+form = "procent"
+var = { a = "[20, 25, 40]", b = "[5, 10, 15]" }
+ledtrad = "Minskningen är {a-b} procentenheter. Jämför med {a}."
+feltankar = { "{a-b} %" = "Det är minskningen i procentenheter. I procent: {a-b} / {a}." }
+losning = ["Minskningen: {a} − {b} = {a-b} procentenheter.", "Jämför med starten: {a-b} / {a} = {(a-b)/a}.", "= {(a-b)/a*100} %."]
+
+[[rad]]
+sager = "från 40 % till 30 %"
+figur = { typ = "tabell", rubriker = ["", "förändring"], rader = [["procentenheter", "30 − 40 = −10"], ["procent", "−10 / 40 = −25 %"]], kolbredd = 140 }
+skriver = ["−10 procentenheter", "−25 %"]
+
+[[rad]]
+sager = "procentenheter mäter avståndet"
+skriver = ["subtrahera: 3 − 2 = 1"]
+kommentar = "Som avståndet mellan två tal på en tallinje – det beror inte på var man började."
+
+[[rad]]
+sager = "procent mäter förändringen"
+skriver = ["dela med det gamla: 1 / 2"]
+kommentar = "Samma ökning på 1 procentenhet är 100 % om man börjar på 1 %, men bara 2 % om man börjar på 50 %."
+
+[[exempel]]
+rubrik = "Räntan: 2 % → 3 %"
+figur = { typ = "tabell", rubriker = ["", "räkning", "svar"], rader = [["procentenheter", "3 − 2", "1"], ["procent", "1 / 2", "50 %"]], kolbredd = 120 }
+steg = [
+  "Procentenheter: skillnaden, 3 − 2 = 1.",
+  "Procent: skillnaden jämfört med där räntan började, 1 / 2 = 0,5 = 50 %.",
+  "Båda är rätt – men de svarar på olika frågor.",
+]
+
+[[exempel]]
+rubrik = "Väljarstöd: 25 % → 20 %"
+steg = [
+  "Partiet har tappat 25 − 20 = 5 procentenheter.",
+  "I procent: 5 / 25 = 0,2 = 20 %. En femtedel av väljarna har lämnat partiet.",
+  "”Partiet tappar 5 %” vore alltså fel – det tappar 20 %.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Räntan höjs från {a} % till {b} %. Hur många procent har räntan ökat?"
+steg = ["Procentenheter: {b} − {a} = {b-a}.", "Procent: {b-a} / {a} = ?"]
+svar = "{(b-a)*100//a} %"
+form = "procent"
+var = { a = "[2, 4, 5]", b = "a+1..a+3" }
+ledtrad = "Gör om kvoten till procent."
+feltankar = { "{b-a} %" = "{b-a} är procentenheter. Dela med startvärdet {a}." }
+losning = ["{b-a} / {a} = {(b-a)/a}.", "= {(b-a)*100//a} %."]
+
+[[uppgift]]
+niva = 2
+fraga = "Arbetslösheten minskar från {a} % till {b} %. Hur många procentenheter har den minskat?"
+svar = "{a-b}"
+var = { a = "6..12", b = "3..a-1" }
+ledtrad = "Procentenheter: skillnaden."
+losning = ["{a} − {b} = {a-b} procentenheter."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Räntan höjs från {a} % till {a+1} %. Vilket påstående är rätt?"
+alternativ = ["Räntan har ökat med 1 %", "Räntan har ökat med 1 procentenhet", "Räntan har ökat med {100//a} procentenheter"]
+svar = "Räntan har ökat med 1 procentenhet"
+form = "text"
+var = { a = "[2, 4, 5]" }
+ledtrad = "Skillnaden mellan två procentsatser mäts i procentenheter."
+feltankar = { "Räntan har ökat med 1 %" = "Ökningen i procent är 1 / {a} = {100//a} %, inte 1 %. Skillnaden 1 är procentenheter." }
+losning = ["Skillnaden: {a+1} − {a} = 1 procentenhet.", "I procent: 1 / {a} = {100//a} %."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Andelen elever som cyklar ökar från {a} % till {b} %. Beskriv ökningen på båda sätten."
+falt = ["procentenheter", "procent"]
+svar = ["{b-a}", "{(b-a)*100//a} %"]
+var = { a = "[10, 20, 25, 40, 50]", b = "[60, 75, 80]" }
+ledtrad = "Procentenheter: subtrahera. Procent: dela skillnaden med {a}."
+losning = ["Procentenheter: {b} − {a} = {b-a}.", "Procent: {b-a} / {a} = {(b-a)/a} = {(b-a)*100//a} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "Andelen ekologisk mat i skolan ökar med {p} % från {a} %. Vad blir den nya andelen (i procent)?"
+svar = "{a*(100+p)//100} %"
+form = "procent"
+var = { a = "[10, 20, 40]", p = "[10, 25, 50]" }
+ledtrad = "Ökningen är {p} % AV {a} % – inte {p} procentenheter."
+feltankar = { "{a+p} %" = "Det vore en ökning med {p} procentenheter. {p} % av {a} är {a*p/100} procentenheter." }
+losning = ["{p} % av {a} = {a*p/100} procentenheter.", "{a} + {a*p/100} = {a*(100+p)//100} %."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "kryssa"
+fraga = "Räntan höjs från {a} % till {a+1} %. Vilka påståenden stämmer? Kryssa i alla."
+alternativ = ["Räntan har ökat med 1 procentenhet", "Räntan har ökat med {100//a} procent", "Räntan har ökat med 1 procent", "Räntan har fördubblats"]
+svar = ["Räntan har ökat med 1 procentenhet", "Räntan har ökat med {100//a} procent"]
+var = { a = "[2, 4, 5]" }
+ledtrad = "Procentenheter: skillnaden mellan procentsatserna. Procent: ökningen jämfört med det gamla värdet."
+feltankar = { "Räntan har ökat med 1 procent" = "1 är skillnaden i procentenheter. I procent jämför man med det gamla: 1/{a} = {100//a} %.", "Räntan har fördubblats" = "Fördubblad vore {2*a} %. Den har ökat med en procentenhet." }
+losning = ["Skillnaden: {a+1} − {a} = 1 procentenhet.", "Jämfört med {a} %: 1/{a} = {100//a} %."]

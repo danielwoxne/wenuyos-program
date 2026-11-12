@@ -1,0 +1,142 @@
+id = "gy-andragradsfunktioner"
+titel = "Andragradsfunktioner och parabler"
+omrade = "samband"
+ikon = "linjediagram"
+sager = "Grafen till y = ax² + bx + c är en parabel. Nollställena är där den skär x-axeln; symmetrilinjen ligger mitt emellan dem, och där ligger vändpunkten."
+galler = "a > 0 ger en 'glad' parabel med minimipunkt, a < 0 en 'ledsen' med maximipunkt."
+galler_inte = "Vändpunkten är inte där parabeln skär y-axeln. Y-axeln skärs där x = 0 (y = c). Vändpunkten ligger på symmetrilinjen x = −b / (2a) – mitt emellan nollställena."
+forkunskap = ["gy-funktioner", "gy-andragradsekvationer"]
+kalla = "Graf, tabell och formel för samma funktion; symmetrin som genväg till vändpunkten."
+
+[[rad]]
+sager = "y = (x − 1)(x − 5)"
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 7, ymin = -5, ymax = 6, ruta = 26, funktioner = ["(x-1)*(x-5)"], punkter = [[1, 0], [5, 0], [3, -4]] }
+skriver = ["nollställen 1 och 5", "symmetrilinje x = 3", "minimipunkt (3, −4)"]
+
+[[uppgift]]
+niva = 1
+svarstyp = "punkt"
+fraga = "Klicka på parabelns minimipunkt."
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 7, ymin = -5, ymax = 6, ruta = 28, funktioner = ["(x-{h-d})*(x-{h+d})"] }
+svar = "{h};{-d*d}"
+var = { h = "2..4", d = "1..2" }
+ledtrad = "Den lägsta punkten på kurvan – mitt emellan nollställena."
+feltankar = { "{h-d};0" = "Det är ett nollställe. Minimipunkten är den lägsta punkten, mitt emellan nollställena.", "{h+d};0" = "Det är ett nollställe. Minimipunkten är den lägsta punkten, mitt emellan nollställena." }
+losning = ["Nollställena: {h-d} och {h+d}.", "Mitt emellan: x = {h}.", "y = ({h} − {h-d})({h} − {h+d}) = {d} · (−{d}) = {-d*d}. Minimipunkt ({h}, {-d*d})."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+oordnad = true
+fraga = "Var skär y = (x − {a})(x − {b}) x-axeln? Ange x-värdena."
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 8, ymin = -6, ymax = 6, ruta = 26, funktioner = ["(x-{a})*(x-{b})"] }
+falt = ["x₁", "x₂"]
+svar = ["{a}", "{b}"]
+var = { a = "0..3", b = "4..7" }
+ledtrad = "y = 0 när någon av parenteserna är 0."
+losning = ["y = 0 när x − {a} = 0 eller x − {b} = 0.", "x₁ = {a}, x₂ = {b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "y = x² − {2*h}x + {c}. Vilken x-koordinat har vändpunkten?"
+svar = "{h}"
+var = { h = "1..6", c = "0..9" }
+ledtrad = "Symmetrilinjen: x = −b/(2a) = {2*h}/2."
+feltankar = { "{2*h}" = "Det är −b. Vändpunkten ligger på x = −b / (2a) = {2*h} / 2." }
+losning = ["Symmetrilinjen: x = −b/(2a).", "= {2*h} / 2 = {h}."]
+
+[[rad]]
+sager = "a styr formen"
+figur = { typ = "koordinatsystem", xmin = -3, xmax = 3, ymin = -4, ymax = 4, ruta = 24, funktioner = ["x^2", "-x^2"] }
+skriver = ["a > 0: minimipunkt", "a < 0: maximipunkt"]
+
+[[rad]]
+sager = "c är skärningen med y-axeln"
+skriver = ["x = 0 ger y = c"]
+kommentar = "y = x² − 4x + 3 skär y-axeln i 3."
+
+[[rad]]
+sager = "symmetrilinjen"
+skriver = ["x = −b / (2a)"]
+kommentar = "Parabeln är spegelsymmetrisk – vändpunkten ligger alltid på symmetrilinjen."
+
+[[exempel]]
+rubrik = "y = x² − 6x + 5: allt på en gång"
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 7, ymin = -5, ymax = 6, ruta = 24, funktioner = ["x^2-6*x+5"], punkter = [[1, 0], [5, 0], [3, -4], [0, 5]] }
+steg = [
+  "Skärning med y-axeln: x = 0 ger y = 5.",
+  "Nollställen: x² − 6x + 5 = 0 ger x = 1 och x = 5.",
+  "Symmetrilinje x = 3. Vändpunkt: y(3) = 9 − 18 + 5 = −4. Minimipunkt (3, −4).",
+]
+
+[[exempel]]
+rubrik = "Ett kast: h(t) = −5t² + 20t"
+steg = [
+  "a = −5 < 0: parabeln har en högsta punkt.",
+  "Landar när h = 0: −5t(t − 4) = 0, alltså t = 0 och t = 4 s.",
+  "Högst mitt emellan, t = 2 s: h(2) = −20 + 40 = 20 m.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. y = (x − {h-d})(x − {h+d}). Vad är y-värdet i minimipunkten?"
+steg = ["Nollställen: {h-d} och {h+d}.", "Symmetrilinje: x = ({h-d} + {h+d}) / 2 = {h}.", "y = ({h} − {h-d})({h} − {h+d}) = ?"]
+svar = "{-d*d}"
+var = { h = "2..5", d = "1..3" }
+ledtrad = "{d} · (−{d})."
+losning = ["y = {d} · (−{d}) = {-d*d}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Var skär y = x² {t(b)}x {t(c)} y-axeln? Ange y-värdet."
+svar = "{c}"
+var = { b = "-6..6 != 0", c = "-8..8 != 0" }
+ledtrad = "Y-axeln: x = 0."
+feltankar = { "{b}" = "Sätt in x = 0: 0² + {b} · 0 + ({c}) = {c}." }
+losning = ["Sätt x = 0.", "y = 0 + 0 {t(c)} = {c}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Har y = {a}x² {t(b)}x {t(c)} en maximipunkt eller en minimipunkt?"
+alternativ = ["maximipunkt", "minimipunkt"]
+svar = "{'minimipunkt' if a > 0 else 'maximipunkt'}"
+form = "text"
+var = { a = "[-3, -2, -1, 1, 2, 3]", b = "-5..5", c = "-5..5" }
+ledtrad = "Titta på tecknet framför x²."
+losning = ["a = {a}.", "{'a > 0: parabeln öppnar sig uppåt – minimipunkt.' if a > 0 else 'a < 0: parabeln öppnar sig nedåt – maximipunkt.'}"]
+
+[[uppgift]]
+niva = 3
+fraga = "y = −x² {t(2*h)}x {t(c)}. Vad är y-koordinaten i maximipunkten?"
+svar = "{h*h+c}"
+var = { h = "1..5", c = "-4..6" }
+ledtrad = "Symmetrilinjen x = −b/(2a) = {h}. Sätt in x = {h}."
+feltankar = { "{c}" = "Det är skärningen med y-axeln (x = 0). Maximipunkten ligger på x = {h}." }
+losning = ["x = −{2*h} / (2 · (−1)) = {h}.", "y = −{h}² + {2*h} · {h} {t(c)} = {-h*h} + {2*h*h} {t(c)}.", "= {h*h+c}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En boll kastas uppåt. Höjden är h(t) = −5t² + {v}t meter efter t sekunder. Efter hur många sekunder landar den?"
+svar = "{v/5}"
+var = { v = "[10, 15, 20, 25, 30]" }
+ledtrad = "Landar = höjden är 0: −5t² + {v}t = 0. Bryt ut t."
+feltankar = { "0" = "t = 0 är när bollen kastas. Den andra lösningen är när den landar." }
+losning = ["−5t² + {v}t = 0 ger t(−5t + {v}) = 0.", "t = 0 (kastet) eller t = {v} / 5.", "Landar efter {v/5} s."]
+
+[[uppgift]]
+niva = 3
+fraga = "Samma boll: h(t) = −5t² + {v}t. Hur högt kommer den som mest (i meter)?"
+svar = "{v*v/20}"
+var = { v = "[10, 20, 30]" }
+ledtrad = "Högst mitt emellan t = 0 och landningen t = {v/5}: t = {v/10}."
+losning = ["Symmetrilinjen: t = {v/10} s.", "h({v/10}) = −5 · {(v/10)**2} + {v} · {v/10}.", "= {v*v/20} m."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "rita"
+fraga = "Skissa grafen till y = x² − {c}. Markera var den skär x-axeln."
+figur = { typ = "koordinatsystem", xmin = -4, xmax = 4, ymin = -5, ymax = 8, ruta = 26 }
+var = { c = "[1,4]" }
+ledtrad = "Räkna ut några punkter: x = 0, 1, 2 och −1, −2."
+losning = ["Grafen är en parabel som öppnar sig uppåt (x² har ett plustecken framför).", "Den lägsta punkten är (0, −{c}).", "Den skär x-axeln där x² = {c}: x = {int(sqrt(c))} och x = −{int(sqrt(c))}."]

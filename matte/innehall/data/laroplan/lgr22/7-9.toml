@@ -1,0 +1,68 @@
+# Lgr22, årskurs 7–9 – centralt innehåll i matematik (förkortat ur Skolverkets kursplan).
+stadium = "lgr22.7-9"
+
+[[mal]]
+id = "lgr22.7-9.tal.reella"
+omrade = "tal"
+text = "Reella tal och deras egenskaper; talsystemets utveckling; potensform för att uttrycka små och stora tal; grundpotensform"
+kort = ["negativa-tal-rakna", "potenser"]
+
+[[mal]]
+id = "lgr22.7-9.tal.rakna"
+omrade = "tal"
+text = "Metoder för beräkningar med reella tal, inklusive potenser och kvadratrötter; rimlighetsbedömning"
+kort = ["mult-decimaltal", "potenser"]
+
+[[mal]]
+id = "lgr22.7-9.algebra.uttryck"
+omrade = "algebra"
+text = "Variabler och deras användning i algebraiska uttryck, formler och ekvationer; metoder för att lösa linjära ekvationer; metoder för ekvationslösning"
+kort = ["forenkla-uttryck", "ekvationer-tva-steg"]
+
+[[mal]]
+id = "lgr22.7-9.algebra.programmering"
+omrade = "algebra"
+text = "Hur algoritmer kan skapas och användas vid programmering"
+kort = ["algoritmer"]
+
+[[mal]]
+id = "lgr22.7-9.geometri.objekt"
+omrade = "geometri"
+text = "Geometriska objekt och deras egenskaper; avbildning och konstruktion; skala vid förminskning och förstoring av två- och tredimensionella objekt"
+kort = ["skala"]
+
+[[mal]]
+id = "lgr22.7-9.geometri.matning"
+omrade = "geometri"
+text = "Metoder för beräkning av area, omkrets och volym hos geometriska objekt; geometriska satser och formler, däribland Pythagoras sats"
+kort = ["omkrets-area", "triangel-area", "pythagoras"]
+
+[[mal]]
+id = "lgr22.7-9.sannolikhet.sannolikhet"
+omrade = "sannolikhet"
+text = "Likformig sannolikhet och metoder för att beräkna sannolikheten i vardagliga situationer; kombinatoriska principer"
+kort = ["sannolikhet"]
+
+[[mal]]
+id = "lgr22.7-9.sannolikhet.statistik"
+omrade = "sannolikhet"
+text = "Tabeller, diagram och lägesmått för att beskriva och tolka data; statistiska undersökningar; spridningsmått"
+kort = ["medelvarde-median"]
+
+[[mal]]
+id = "lgr22.7-9.samband.procent"
+omrade = "samband"
+text = "Procent för att uttrycka förändring och förändringsfaktor; beräkningar med procent i vardagliga situationer"
+kort = ["procent-av-tal", "procent-forandring"]
+
+[[mal]]
+id = "lgr22.7-9.samband.funktioner"
+omrade = "samband"
+text = "Funktioner och räta linjens ekvation; hur funktioner kan användas för att beskriva verkliga förlopp; proportionalitet"
+kort = ["proportionalitet", "linjara-funktioner"]
+
+[[mal]]
+id = "lgr22.7-9.problem.strategier"
+omrade = "problem"
+text = "Strategier för problemlösning i vardagliga situationer och inom olika ämnesområden; värdering av strategier; formulering av problem"
+kort = ["problemlosning-tabell"]

@@ -1,0 +1,144 @@
+id = "ekvationer-enkla"
+titel = "Ekvationer – det obekanta talet"
+omrade = "algebra"
+ikon = "vag"
+bild = "vag.jpg"
+bildtext = "Vågen är i balans: lådan och en vikt väger lika mycket som tre vikter. Lådan väger alltså två vikter – x + 1 = 3, x = 2."
+sager = "En ekvation är som en våg i balans. Det som görs på ena sidan måste göras på andra. x + 4 = 9: ta bort 4 på båda sidor – x = 5."
+galler = "Alltid: likhetstecknet betyder 'är lika mycket som', inte 'blir'."
+galler_inte = "Likhetstecknet betyder inte ”här kommer svaret”. 3 + 4 = 5 + 2 är en sann likhet fast det står en uträkning på båda sidor. Läs = som ”är lika mycket som”."
+forkunskap = ["monster"]
+kalla = "Vågen som modell (balansmodellen). Vanlig feltanke: likhetstecknet som 'här kommer svaret' (Kieran)."
+
+[[rad]]
+sager = "x plus fyra är nio"
+figur = { typ = "tabell", rubriker = ["vänster", "=", "höger"], rader = [["x + 4", "=", "9"], ["x + 4 − 4", "=", "9 − 4"], ["x", "=", "5"]], kolbredd = 110 }
+skriver = ["x = 5"]
+
+[[rad]]
+sager = "tre gånger x är tolv"
+figur = { typ = "tabell", rubriker = ["vänster", "=", "höger"], rader = [["3x", "=", "12"], ["3x / 3", "=", "12 / 3"], ["x", "=", "4"]], kolbredd = 110 }
+skriver = ["x = 4"]
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket tal ska stå i rutan? ▢ + {a} = {b}"
+svar = "{b-a}"
+var = { a = "2..9", b = "a+1..20" }
+ledtrad = "Vad måste man lägga till {a} för att få {b}?"
+losning = ["Räkna upp från {a} till {b}.", "Det är {b-a} steg.", "{b-a} + {a} = {b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen x + {a} = {b}"
+svar = "{b-a}"
+var = { a = "2..9", b = "a+1..30" }
+ledtrad = "Ta bort {a} på båda sidor."
+feltankar = { "{b+a}" = "Du lade till {a}. Men x + {a} = {b} betyder att x är MINDRE än {b}: x = {b} − {a}." }
+losning = ["x + {a} = {b}.", "Ta bort {a} på båda sidor: x = {b} − {a}.", "x = {b-a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen {a}x = {a*s}"
+svar = "{s}"
+var = { a = "2..9", s = "2..9" }
+ledtrad = "{a}x betyder {a} gånger x. Dela båda sidor med {a}."
+feltankar = { "{a*s-a}" = "{a}x är {a} GÅNGER x, inte {a} plus x. Dela med {a}: {a*s} / {a}." }
+losning = ["{a}x betyder {a} · x.", "Dela båda sidor med {a}: x = {a*s} / {a}.", "x = {s}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Vågen på bilden: lådan + 1 vikt = 3 vikter. Hur många vikter väger lådan?"
+svar = "2"
+ledtrad = "Ta bort en vikt från varje sida – vågen är fortfarande i balans."
+feltankar = { "3" = "Tre vikter är hela högra sidan. Men på vänstra sidan står redan en vikt bredvid lådan – lådan är bara det som fattas: 3 − 1.", "4" = "Du lade ihop. Vågen är i balans: lådan + 1 = 3, så lådan = 3 − 1 = 2." }
+losning = ["Lådan + 1 = 3.", "Ta bort en vikt på båda sidor.", "Lådan = 2."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vågen på bilden: lådan väger x. Skriv ekvationen som en uträkning – vad är x?"
+figur = { typ = "scen", bild = "vag.jpg", bredd = 560 }
+svar = "2"
+ledtrad = "x + 1 = 3. Ta bort en vikt från båda sidor."
+losning = ["x + 1 = 3.", "Ta bort 1 på båda sidor.", "x = 2."]
+
+[[exempel]]
+rubrik = "Vågen: x + 1 = 3"
+figur = { typ = "scen", bild = "vag.jpg", bredd = 420 }
+steg = [
+  "Vänster: lådan och en vikt. Höger: tre vikter. Vågen är i balans.",
+  "Ta bort en vikt från varje sida – vågen är fortfarande i balans.",
+  "Kvar: lådan på ena sidan, två vikter på den andra. x = 2.",
+]
+
+[[exempel]]
+rubrik = "Lika mycket på båda sidor"
+text = "3 + 4 = ▢ + 2"
+steg = [
+  "Vänster sida: 3 + 4 = 7.",
+  "Höger sida ska också vara 7: ▢ + 2 = 7.",
+  "▢ = 5. (Inte 7 – då blir höger sida 9.)",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och skriv vad x är."
+steg = ["x + {a} = {b}", "x + {a} − {a} = {b} − {a}", "x = ?"]
+svar = "{b-a}"
+var = { a = "2..9", b = "a+3..20" }
+ledtrad = "{b} − {a}."
+losning = ["Ta bort {a} på båda sidor.", "x = {b} − {a} = {b-a}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Är det här sant? {a} + {b} = {c} + {a+b-c+e}"
+alternativ = ["sant", "falskt"]
+svar = "{['sant','falskt'][e]}"
+var = { a = "2..9", b = "2..9", c = "1..a+b-1", e = "0..1" }
+ledtrad = "Räkna ut vänster sida. Räkna ut höger sida. Är de lika?"
+losning = ["Vänster: {a} + {b} = {a+b}.", "Höger: {c} + {a+b-c+e} = {a+b+e}.", "{'Lika – sant.' if e == 0 else 'Inte lika – falskt.'}"]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} + {b} = ▢ + {c}. Vilket tal ska stå i rutan?"
+svar = "{a+b-c}"
+var = { a = "3..9", b = "3..9", c = "1..5" }
+ledtrad = "Båda sidorna ska bli lika mycket. Vänster sida är {a+b}."
+feltankar = { "{a+b}" = "Likhetstecknet betyder lika mycket på båda sidor. Står {a+b} i rutan blir höger sida {a+b} + {c} = {a+b+c} – mer än vänster." }
+losning = ["Vänster sida: {a} + {b} = {a+b}.", "Höger sida ska också bli {a+b}: ▢ + {c} = {a+b}.", "▢ = {a+b} − {c} = {a+b-c}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen x − {a} = {b}"
+svar = "{a+b}"
+var = { a = "2..9", b = "2..15" }
+ledtrad = "Lägg tillbaka {a} på båda sidor."
+feltankar = { "{b-a}" = "x − {a} = {b} betyder att x är STÖRRE än {b} – något togs bort och {b} blev kvar. x = {b} + {a}." }
+losning = ["Något minus {a} blev {b}.", "Lägg till {a} på båda sidor: x = {b} + {a}.", "x = {a+b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen {b} = x + {a}"
+svar = "{b-a}"
+var = { a = "2..9", b = "a+2..25" }
+ledtrad = "x kan stå på höger sida också. Ta bort {a} på båda sidor."
+losning = ["Det spelar ingen roll vilken sida x står på.", "{b} − {a} = x.", "x = {b-a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lisa tänker på ett tal. Hon lägger till {a} och får {b}. Vilket tal tänkte hon på?"
+svar = "{b-a}"
+var = { a = "3..9", b = "a+5..30" }
+ledtrad = "Skriv det som en ekvation: x + {a} = {b}."
+feltankar = { "{a+b}" = "Hon lade till {a} och fick {b} – talet var alltså mindre än {b}. x + {a} = {b}." }
+losning = ["x + {a} = {b}.", "x = {b} − {a}.", "Hon tänkte på {b-a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje från varje ekvation till dess lösning."
+par = [["x + {a} = {a+b}", "x = {b}"], ["{c}x = {c*d}", "x = {d}"], ["x − {e} = {f}", "x = {e+f}"]]
+var = { a = "2..9", b = "2..9", c = "2..5", d = "2..9 != b", e = "4..9", f = "7..9" }
+ledtrad = "Gör samma sak på båda sidor tills x står ensamt."
+losning = ["x + {a} = {a+b}: ta bort {a} på båda sidor → x = {b}.", "{c}x = {c*d}: dela båda sidor med {c} → x = {d}.", "x − {e} = {f}: lägg till {e} på båda sidor → x = {e+f}."]

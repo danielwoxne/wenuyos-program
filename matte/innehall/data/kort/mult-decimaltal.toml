@@ -1,0 +1,132 @@
+id = "mult-decimaltal"
+titel = "Multiplikation med decimaltal – när svaret blir mindre"
+omrade = "tal"
+ikon = "ganger"
+sager = "8 · 0,5 betyder åtta halvor – det är 4. Att multiplicera med ett tal mellan 0 och 1 gör talet MINDRE."
+galler = "Alltid: gånger ett tal mindre än 1 ger mindre, gånger ett tal större än 1 ger större, gånger 1 ger samma."
+galler_inte = "Regeln 'multiplikation gör talet större' slutar gälla här. Den gällde för heltal större än 1."
+forkunskap = ["mult-10-100-1000", "brak-procent-decimal"]
+ateruppta = ["mult-10-100-1000", "multiplikation-upprepad-addition"]
+kalla = "Regler som slutar gälla (Karp m.fl.). Modell: '0,5 gånger' = hälften av; '0,1 gånger' = en tiondel av."
+
+[[rad]]
+sager = "åtta gånger en halv"
+figur = { typ = "stapel", delar = 2, fyllda = 1, farg = "bla" }
+skriver = ["8 · 0,5 = 4"]
+kommentar = "Åtta halvor. Hälften av 8."
+
+[[rad]]
+sager = "åtta gånger en tiondel"
+figur = { typ = "stapel", delar = 10, fyllda = 1, farg = "beige" }
+skriver = ["8 · 0,1 = 0,8"]
+kommentar = "Åtta tiondelar. En tiondel av 8."
+
+[[rad]]
+sager = "åtta gånger tre tiondelar"
+figur = { typ = "stapel", delar = 10, fyllda = 3, farg = "beige" }
+skriver = ["8 · 0,3 = 2,4"]
+kommentar = "Tre tiondelar av 8: 0,8 + 0,8 + 0,8."
+
+[[uppgift]]
+niva = 1
+fraga = "{a} · 0,5 = ? (tänk: hälften av {a})"
+svar = "{a}/2"
+var = { a = "[4, 6, 8, 10, 12, 20]" }
+ledtrad = "Hälften av {a}."
+losning = ["· 0,5 betyder hälften av.", "Hälften av {a} är {a//2}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} · 0,{d} = ?"
+svar = "{a}*{d}/10"
+form = "decimal"
+var = { a = "2..9", d = "1..9" }
+ledtrad = "En tiondel av {a} är {a}/10 = 0,{a}. Och {d} tiondelar är {d} gånger så mycket."
+feltankar = { "{a*d}" = "Svaret kan inte vara större än {a} – du multiplicerar med 0,{d}, som är mindre än 1. Det blir {d} tiondelar av {a}: {a} · {d} / 10.", "{a}{d}" = "Att sätta siffrorna efter varandra är inte multiplikation. 0,{d} är {d} tiondelar: ta {a} · {d} och dela med 10." }
+losning = ["En tiondel av {a} är 0,{a}.", "{d} tiondelar: {d} · 0,{a} = {a*d/10}.", "Svaret är mindre än {a} – rimligt."]
+
+[[uppgift]]
+niva = 3
+fraga = "Blir svaret större eller mindre än {a} när du räknar {a} · 0,{d}?"
+svar = "mindre"
+var = { a = "2..9", d = "1..9" }
+alternativ = ["mindre", "större", "lika"]
+ledtrad = "0,{d} är mindre än 1."
+feltankar = { "större" = "Det var regeln för heltal. 0,{d} är mindre än 1, så {a} · 0,{d} är en del av {a} – alltså mindre." }
+losning = ["0,{d} är mindre än 1.", "{a} · 0,{d} är en del av {a}.", "Svaret blir mindre."]
+
+[[exempel]]
+rubrik = "8 · 0,5 = hälften av 8"
+figur = { typ = "stapel", delar = 2, fyllda = 1, farg = "bla" }
+steg = [
+  "0,5 är en halv.",
+  "8 · 0,5 betyder åtta halvor – eller hälften av 8.",
+  "8 · 0,5 = 4. Svaret är mindre än 8.",
+]
+
+[[exempel]]
+rubrik = "6 · 0,3"
+figur = { typ = "stapel", delar = 10, fyllda = 3, farg = "beige" }
+steg = [
+  "0,3 är tre tiondelar.",
+  "En tiondel av 6 är 0,6.",
+  "Tre tiondelar av 6: 3 · 0,6 = 1,8. Mindre än 6 – rimligt.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {a} · 0,{d} = ?"
+steg = ["0,{d} = {d} tiondelar.", "En tiondel av {a} = 0,{a}.", "{d} tiondelar: {d} · 0,{a} = ?"]
+svar = "{a}*{d}/10"
+form = "decimal"
+var = { a = "2..9", d = "2..9" }
+ledtrad = "{d} · {a} tiondelar = {a*d} tiondelar."
+feltankar = { "{a*d}" = "{a*d} tiondelar, inte {a*d} hela. Skriv det som decimaltal." }
+losning = ["{d} · {a} = {a*d} tiondelar.", "{a*d} tiondelar = {a*d/10}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{4*a} · 0,25 = ?"
+svar = "{a}"
+var = { a = "2..12" }
+ledtrad = "0,25 är en fjärdedel. Dela {4*a} i fyra lika delar."
+feltankar = { "{a*100}" = "0,25 är mindre än 1 – svaret ska vara mindre än {4*a}." }
+losning = ["0,25 = 1/4.", "{4*a} · 0,25 = en fjärdedel av {4*a}.", "{4*a} / 4 = {a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilken uträkning ger det minsta svaret?"
+alternativ = ["{a} · 1,{d}", "{a} · 0,{d}", "{a} · 1"]
+svar = "{a} · 0,{d}"
+form = "text"
+var = { a = "3..9", d = "2..8" }
+ledtrad = "Vilken faktor är mindre än 1?"
+feltankar = { "{a} · 1" = "Gånger 1 ger samma tal: {a}. Gånger 0,{d} ger mindre än {a}." }
+losning = ["Gånger 1,{d} (större än 1) ger mer än {a}.", "Gånger 1 ger precis {a}.", "Gånger 0,{d} (mindre än 1) ger mindre än {a} – minst."]
+
+[[uppgift]]
+niva = 3
+fraga = "Osten kostar {p} kr/kg. Hur mycket kostar 0,{d} kg?"
+svar = "{p*d/10}"
+var = { p = "[80, 90, 120, 150, 180, 240]", d = "2..9" }
+ledtrad = "Mindre än ett kilo – mindre än {p} kr. En tiondel kostar {p//10} kr."
+feltankar = { "{p*d}" = "Det blir mer än {p} kr för mindre än ett kilo – orimligt. 0,{d} kg är {d} tiondelar av ett kilo." }
+losning = ["En tiondel av ett kilo kostar {p} / 10 = {p//10} kr.", "{d} tiondelar: {d} · {p//10} = {p*d//10} kr.", "Mindre än {p} kr – rimligt."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a},{b} · {c} = ?"
+svar = "{(10*a+b)*c/10}"
+var = { a = "1..9", b = "1..9", c = "2..9" }
+ledtrad = "Dela upp: {a} · {c} och 0,{b} · {c}."
+losning = ["{a} · {c} = {a*c}.", "0,{b} · {c} = {b*c/10}.", "{a*c} + {b*c/10} = {(10*a+b)*c/10}."]
+
+[[uppgift]]
+niva = 3
+fraga = "0,{a} · 0,{b} = ?"
+svar = "{a*b/100}"
+var = { a = "2..9", b = "2..9" }
+ledtrad = "Tiondelar gånger tiondelar blir hundradelar: {a}/10 · {b}/10 = {a*b}/100."
+feltankar = { "{a*b/10}" = "Tiondelar gånger tiondelar blir hundradelar, inte tiondelar: {a}/10 · {b}/10 = {a*b}/100." }
+losning = ["0,{a} = {a}/10 och 0,{b} = {b}/10.", "{a}/10 · {b}/10 = {a*b}/100.", "{a*b}/100 = {a*b/100}. Mindre än båda talen – rimligt."]

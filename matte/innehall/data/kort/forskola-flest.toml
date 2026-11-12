@@ -1,0 +1,145 @@
+id = "forskola-flest"
+titel = "Flest och färst"
+omrade = "tal"
+ikon = "kaka"
+bild = "jordgubbar-tallrikar.jpg"
+bildtext = "Vilken tallrik har flest jordgubbar? Och vilken har färst?"
+sager = "Där det finns flest är det mest att räkna. Lägg sakerna bredvid varandra så syns det."
+galler = "När man jämför samma sorts saker – eller när man räknar sakerna, inte hur stora de är."
+galler_inte = "”Störst” och ”flest” är inte samma sak. Två stora apelsiner är färre än fyra små jordgubbar. Och saker som ligger utspridda är inte fler än samma saker i en hög."
+kalla = "Jämföra mängder med en-till-en-korrespondens och räkning (Piaget: antalets konstans; Clements & Sarama)."
+
+[[rad]]
+sager = "tre och fem – fem är flest"
+figur = { typ = "grupper", namn = "kaka", antal = [3, 5] }
+skriver = ["3 < 5"]
+
+[[rad]]
+sager = "lika många"
+figur = { typ = "grupper", namn = "apple", antal = [4, 4] }
+skriver = ["4 = 4"]
+
+[[exempel]]
+rubrik = "Lägg bredvid varandra"
+figur = { typ = "grupper", namn = "kaka", antal = [3, 5] }
+steg = [
+  "Ta en kaka från varje grupp och lägg dem bredvid varandra – ett par.",
+  "Gör så tills en grupp är slut. Vänster tar slut efter tre par.",
+  "Höger har två kakor kvar. Den som har kvar har flest: fem är fler än tre.",
+]
+
+[[exempel]]
+rubrik = "Stora saker är inte fler"
+figur = { typ = "ikonval", fore = ["apelsin", "apelsin"], fore_namn = "jordgubbe", fore_antal = 4, ikoner = [], d = 1 }
+steg = [
+  "Två apelsiner och fyra jordgubbar.",
+  "En apelsin är mycket större än en jordgubbe – men räkna: ett, två.",
+  "Jordgubbarna: ett, två, tre, fyra. Jordgubbarna är flest.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka där det finns flest kakor."
+figur = { typ = "grupper", namn = "kaka", antal = ["{a}", "{b}"] }
+svar = "{'första' if a > b else 'andra'}"
+var = { a = "1..6", b = "1..6 != a" }
+ledtrad = "Räkna i båda rutorna."
+losning = ["Räkna den första rutan: {a}.", "Räkna den andra rutan: {b}.", "{max(a,b)} är fler än {min(a,b)}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Räkna med mig. Klicka där det finns flest."
+steg = ["Den första: {', '.join(str(i) for i in range(1, a+1))}.", "Den andra: {', '.join(str(i) for i in range(1, b+1))}."]
+figur = { typ = "grupper", namn = "apple", antal = ["{a}", "{b}"] }
+svar = "{'första' if a > b else 'andra'}"
+var = { a = "1..6", b = "1..6 != a" }
+ledtrad = "Vilken grupp kom längst när vi räknade?"
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på tallriken med flest jordgubbar."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.1136, 0.3348, 0.2392, 0.4038], [0.372, 0.3209, 0.2392, 0.3932], [0.6328, 0.3209, 0.2392, 0.3932]], namn = ["vänster", "mitten", "höger"] }
+svar = "höger"
+ledtrad = "Räkna jordgubbarna på varje tallrik."
+feltankar = { "vänster" = "Den har bara två – den har färst.", "mitten" = "Mitten har fyra. Räkna tallriken till höger också." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka där det finns färst äpplen."
+figur = { typ = "grupper", namn = "apple", antal = ["{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][0]}", "{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][1]}", "{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][2]}"] }
+svar = "{['första','andra','tredje'][[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p].index(a)]}"
+var = { a = "1..3", b = "4..6", c = "7..9", p = "0..5" }
+ledtrad = "Färst är den som har minst. Räkna alla tre."
+losning = ["Räkna varje ruta.", "Den med {a} är minst.", "Färst = {a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka där det finns flest äpplen."
+figur = { typ = "grupper", namn = "apple", antal = ["{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][0]}", "{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][1]}", "{[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p][2]}"] }
+svar = "{['första','andra','tredje'][[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]][p].index(c)]}"
+var = { a = "1..3", b = "4..5", c = "6..9", p = "0..5" }
+ledtrad = "Räkna alla tre rutorna. Flest är den som har mest."
+losning = ["Räkna varje ruta.", "Den med {c} är störst.", "Flest = {c}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Två rutor har lika många. Klicka på den som INTE har lika många."
+figur = { typ = "grupper", namn = "kaka", antal = ["{[[a,a,b],[a,b,a],[b,a,a]][p][0]}", "{[[a,a,b],[a,b,a],[b,a,a]][p][1]}", "{[[a,a,b],[a,b,a],[b,a,a]][p][2]}"] }
+svar = "{['tredje','andra','första'][p]}"
+var = { a = "2..5", b = "1..6 != a", p = "0..2" }
+ledtrad = "Räkna alla tre. Två av dem blir samma tal."
+losning = ["Två rutor har {a} kakor – de har lika många.", "En ruta har {b}.", "Det är den som är annorlunda."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Här finns apelsiner och jordgubbar. Klicka på det som det finns flest av."
+figur = { typ = "ikonval", fore = ["apelsin", "apelsin", "apelsin"], fore_namn = "jordgubbe", fore_antal = "{b}", ikoner = ["apelsin", "jordgubbe"] }
+svar = "{'apelsin' if 3 > b else 'jordgubbe'}"
+var = { b = "1..6 != 3" }
+ledtrad = "Räkna apelsinerna. Räkna jordgubbarna. Det är antalet som räknas – inte hur stora de är."
+feltankar = { "apelsin" = "Apelsinerna är större – men de är inte fler. Räkna dem: ett, två, tre.", "jordgubbe" = "Jordgubbarna är små – men räkna dem. Är de fler än tre?" }
+losning = ["Apelsiner: tre.", "Jordgubbar: {b}.", "{'Tre apelsiner är flest.' if 3 > b else str(b) + ' jordgubbar är flest, fast de är små.'}"]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på tallriken med färst jordgubbar."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.1136, 0.3348, 0.2392, 0.4038], [0.372, 0.3209, 0.2392, 0.3932], [0.6328, 0.3209, 0.2392, 0.3932]], namn = ["vänster", "mitten", "höger"] }
+svar = "vänster"
+ledtrad = "Färst betyder minst. Räkna jordgubbarna på varje tallrik."
+feltankar = { "höger" = "Den har flest – sex stycken. Vilken har färst?" }
+
+[[uppgift]]
+niva = 3
+svarstyp = "markera"
+fraga = "Klicka på alla jordgubbar på tallriken som har färst."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.169, 0.4702, 0.0568, 0.1222], [0.2437, 0.4649, 0.0568, 0.1222], [0.4309, 0.4065, 0.0568, 0.1222], [0.5027, 0.4065, 0.0568, 0.1222], [0.4309, 0.5287, 0.0568, 0.1222], [0.5027, 0.5287, 0.0568, 0.1222], [0.6848, 0.407, 0.0538, 0.1169], [0.7416, 0.407, 0.0538, 0.1169], [0.7969, 0.407, 0.0508, 0.1169], [0.6848, 0.5313, 0.0538, 0.1169], [0.7416, 0.5313, 0.0538, 0.1169], [0.7969, 0.5313, 0.0508, 0.1169]], namn = ["vänster", "vänster", "mitten", "mitten", "mitten", "mitten", "höger", "höger", "höger", "höger", "höger", "höger"] }
+svar = "vänster,vänster"
+ledtrad = "Hitta först tallriken med färst. Klicka sedan på varje jordgubbe på den."
+feltankar = { "höger,höger,höger,höger,höger,höger" = "Den tallriken har flest. Vi letar efter den som har färst." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje från bilden till rätt siffra."
+par = [["prickar:{a}", "{a}"], ["prickar:{b}", "{b}"], ["prickar:{c}", "{c}"]]
+var = { a = "1..2", b = "3..4", c = "5..6" }
+ledtrad = "Räkna prickarna. Peka på varje prick när du räknar."
+losning = ["Räkna prickarna i varje ruta.", "Dra linjen till siffran som säger samma antal."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla den ruta som har flest prickar."
+figur = { typ = "malrutor", kolumner = 3, ruta = 96, objekt = "prickar:{a}|prickar:{b}|prickar:{c}", farger = ["gul"] }
+svar = "{'|'.join('gul' if x == max(a, b, c) else '' for x in [a, b, c])}"
+var = { a = "1..6", b = "1..6 != a", c = "1..6 != a != b" }
+ledtrad = "Räkna prickarna i varje ruta. Vilket tal är störst?"
+losning = ["Räkna: {a}, {b} och {c}.", "Flest är {max(a, b, c)}."]

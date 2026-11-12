@@ -1,0 +1,116 @@
+id = "gy-spridning"
+titel = "Lägesmått och spridning"
+omrade = "sannolikhet"
+ikon = "stapeldiagram"
+sager = "Medelvärdet påverkas av ett extremt värde, medianen inte. Variationsbredden = största − minsta. Kvartilavståndet = övre kvartilen − undre kvartilen."
+galler = "Sortera alltid först. Med extremvärden säger medianen mer om det 'typiska' än medelvärdet."
+galler_inte = "Variationsbredden säger ingenting om hur värdena ligger däremellan – ett enda extremvärde gör den stor. Därför används ofta kvartilavståndet, som bara tittar på den mittersta hälften."
+forkunskap = ["medelvarde-median"]
+kalla = "Robusthet mot extremvärden; lönestatistik som klassiskt exempel."
+
+[[rad]]
+sager = "löner 25, 26, 27, 28 och 94 tusen"
+figur = { typ = "stapeldiagram", varden = [25, 26, 27, 28, 94], namn = ["A", "B", "C", "D", "E"] }
+skriver = ["medelvärde 40", "median 27"]
+kommentar = "En hög lön drar upp medelvärdet – medianen står still."
+
+[[uppgift]]
+niva = 1
+fraga = "Vad är variationsbredden för {a}, {b}, {c}, {d}, {e}?"
+svar = "{max(a,b,c,d,e)-min(a,b,c,d,e)}"
+var = { a = "1..30", b = "1..30", c = "1..30", d = "1..30", e = "1..30" }
+ledtrad = "Största minus minsta."
+losning = ["Största: {max(a,b,c,d,e)}. Minsta: {min(a,b,c,d,e)}.", "{max(a,b,c,d,e)} − {min(a,b,c,d,e)} = {max(a,b,c,d,e)-min(a,b,c,d,e)}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Fem löner (tusen kr): {a}, {a+1}, {a+2}, {a+3} och {x}. Vad är medianen?"
+svar = "{a+2}"
+var = { a = "22..30", x = "80..120" }
+ledtrad = "Sortera och ta det mittersta."
+feltankar = { "({5*a+6}+{x})/5" = "Det är medelvärdet – det dras upp av den höga lönen. Medianen är det mittersta värdet." }
+losning = ["Sortera: {a}, {a+1}, {a+2}, {a+3}, {x}.", "Mitten är det tredje värdet.", "Medianen är {a+2}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Samma fem löner: {a}, {a+1}, {a+2}, {a+3}, {x}. Hur mycket större är medelvärdet än medianen? (tusen kr, en decimal)"
+svar = "({5*a+6}+{x})/5 - {a+2}"
+tolerans = 0.05
+var = { a = "22..30", x = "80..120" }
+ledtrad = "Medelvärde: summan / 5. Median: {a+2}."
+losning = ["Medelvärde: ({5*a+6} + {x}) / 5 = {(5*a+6+x)/5}.", "Median: {a+2}.", "Skillnad: {round((5*a+6+x)/5 - (a+2), 1)}."]
+
+[[rad]]
+sager = "kvartiler"
+figur = { typ = "tabell", rubriker = ["3", "5", "7", "8", "9", "12", "15"], rader = [["", "Q1", "", "median", "", "Q3", ""]], kolbredd = 56 }
+skriver = ["Q3 − Q1 = 12 − 5 = 7"]
+kommentar = "Median: mitten. Q1: mitten av den undre halvan. Q3: mitten av den övre."
+
+[[rad]]
+sager = "lådagram"
+skriver = ["min – Q1 – median – Q3 – max"]
+kommentar = "Lådan visar den mittersta hälften av värdena. Strecken visar resten."
+
+[[exempel]]
+rubrik = "Lönerna: medelvärde mot median"
+figur = { typ = "stapeldiagram", varden = [25, 26, 27, 28, 94], namn = ["A", "B", "C", "D", "E"] }
+steg = [
+  "Medelvärde: (25 + 26 + 27 + 28 + 94) / 5 = 200 / 5 = 40.",
+  "Median: sortera och ta mitten – 27.",
+  "Fyra av fem tjänar under 30. Medianen beskriver dem bättre.",
+]
+
+[[exempel]]
+rubrik = "Kvartilavstånd för 3, 5, 7, 8, 9, 12, 15"
+steg = [
+  "Sortera (redan gjort). Medianen: 8.",
+  "Undre halvan 3, 5, 7: Q1 = 5. Övre halvan 9, 12, 15: Q3 = 12.",
+  "Kvartilavstånd: 12 − 5 = 7. Ändra 15 till 150 – kvartilavståndet står still.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är variationsbredden för {a}, {b}, {c}, {d}, {e}?"
+steg = ["Största värdet: {max(a,b,c,d,e)}", "Minsta värdet: {min(a,b,c,d,e)}", "Variationsbredd = största − minsta = ?"]
+svar = "{max(a,b,c,d,e)-min(a,b,c,d,e)}"
+var = { a = "1..30", b = "1..30", c = "1..30", d = "1..30", e = "1..30" }
+ledtrad = "Subtrahera."
+losning = ["{max(a,b,c,d,e)} − {min(a,b,c,d,e)} = {max(a,b,c,d,e)-min(a,b,c,d,e)}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Sju värden: {', '.join(str(v) for v in [a, b, c, d, e, f, g])}. Bestäm undre kvartilen, medianen och övre kvartilen."
+falt = ["Q1", "median", "Q3"]
+svar = ["{sorted([a,b,c,d,e,f,g])[1]}", "{sorted([a,b,c,d,e,f,g])[3]}", "{sorted([a,b,c,d,e,f,g])[5]}"]
+var = { a = "1..40", b = "1..40", c = "1..40", d = "1..40", e = "1..40", f = "1..40", g = "1..40" }
+ledtrad = "Sortera först. Medianen är det fjärde värdet. Q1 är mitten av de tre under, Q3 mitten av de tre över."
+losning = ["Sortera: {', '.join(str(v) for v in sorted([a,b,c,d,e,f,g]))}.", "Median: {sorted([a,b,c,d,e,f,g])[3]}.", "Q1 = {sorted([a,b,c,d,e,f,g])[1]}, Q3 = {sorted([a,b,c,d,e,f,g])[5]}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Sju värden: {', '.join(str(v) for v in [a, b, c, d, e, f, g])}. Vad är kvartilavståndet?"
+svar = "{sorted([a,b,c,d,e,f,g])[5] - sorted([a,b,c,d,e,f,g])[1]}"
+var = { a = "1..40", b = "1..40", c = "1..40", d = "1..40", e = "1..40", f = "1..40", g = "1..40" }
+ledtrad = "Q3 − Q1. Sortera först."
+losning = ["Sortera: {', '.join(str(v) for v in sorted([a,b,c,d,e,f,g]))}.", "Q1 = {sorted([a,b,c,d,e,f,g])[1]}, Q3 = {sorted([a,b,c,d,e,f,g])[5]}.", "Q3 − Q1 = {sorted([a,b,c,d,e,f,g])[5] - sorted([a,b,c,d,e,f,g])[1]}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Ett värde i en mätserie ändras från {x} till {10*x}. Vilket mått påverkas?"
+alternativ = ["medelvärdet", "medianen", "kvartilavståndet"]
+svar = "medelvärdet"
+form = "text"
+var = { x = "[50, 60, 80]" }
+ledtrad = "Anta att {x} redan var det största värdet. Vilka mått bryr sig om exakt hur stort det största är?"
+feltankar = { "medianen" = "Medianen är det mittersta värdet – det ändras inte när det största blir ännu större." }
+losning = ["Medelvärdet räknar med alla värden – summan ökar.", "Medianen och kvartilerna tittar bara på var värdena ligger i ordningen.", "Bara medelvärdet påverkas."]
+
+[[uppgift]]
+niva = 3
+fraga = "Fyra värden: {a}, {b}, {c}, {d}. Vilket femte värde gör att medelvärdet blir {m}?"
+svar = "{5*m-a-b-c-d}"
+var = { m = "10..20", a = "5..m", b = "5..m", c = "5..m", d = "5..m" }
+ledtrad = "Medelvärdet {m} gånger fem värden är summan."
+losning = ["Summan av fem värden: 5 · {m} = {5*m}.", "De fyra kända: {a+b+c+d}.", "Det femte: {5*m} − {a+b+c+d} = {5*m-a-b-c-d}."]

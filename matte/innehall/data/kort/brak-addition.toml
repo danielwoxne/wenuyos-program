@@ -1,0 +1,169 @@
+id = "brak-addition"
+titel = "Addera bråk med samma nämnare"
+omrade = "tal"
+ikon = "fjardedelar"
+sager = "Har bråken samma nämnare lägger man ihop täljarna. Nämnaren är kvar – den säger bara hur stora delarna är."
+galler = "När nämnarna är lika. Är de olika måste man först skriva om bråken så att nämnarna blir lika."
+galler_inte = "Man adderar aldrig nämnarna. 1/4 + 2/4 är inte 3/8 – delarna blir inte mindre för att man lägger ihop dem. Det gäller även när nämnarna är olika: 1/2 + 1/3 är inte 2/5."
+forkunskap = ["brak-delar"]
+kalla = "Bråkstaplar som modell. Den vanligaste feltanken: addera både täljare och nämnare (1/4 + 2/4 = 3/8)."
+
+[[rad]]
+sager = "en fjärdedel plus två fjärdedelar"
+figur = { typ = "stapel", delar = 4, fyllda = 3, farg = "gron" }
+skriver = ["1/4 + 2/4 = 3/4"]
+kommentar = "Tre delar av samma storlek. Delarna blev inte mindre – nämnaren är kvar."
+
+[[rad]]
+sager = "två femtedelar plus två femtedelar"
+figur = { typ = "stapel", delar = 5, fyllda = 4, farg = "bla" }
+skriver = ["2/5 + 2/5 = 4/5"]
+
+[[uppgift]]
+niva = 1
+fraga = "Stapeln är delad i {n} delar. {a} är färgade. Hur många delar blir färgade om du färgar {b} till? Svara som bråk."
+figur = { typ = "stapel", delar = "{n}", fyllda = "{a}", farg = "gron" }
+svar = "{a+b}/{n}"
+form = "brak"
+var = { n = "4..10", a = "1..n-3", b = "1..n-a-1" }
+ledtrad = "{a} delar och {b} delar till av samma storlek – {a+b} av {n}."
+losning = ["{a} delar är färgade. {b} till blir {a+b} delar.", "Delarna har samma storlek som förut – {n}-delar.", "{a+b}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}/{n} + {b}/{n} = ?"
+svar = "{a+b}/{n}"
+form = "brak"
+var = { n = "4..10", a = "1..n-3", b = "1..n-a-1" }
+ledtrad = "Samma nämnare: lägg ihop täljarna, behåll nämnaren."
+feltankar = { "{a+b}/{2*n}" = "Du adderade nämnarna också. Men delarna blev inte mindre – {n}-delar plus {n}-delar är fortfarande {n}-delar. Titta på stapeln: {a+b} av {n}." }
+losning = ["Samma nämnare: {n}-delar.", "Lägg ihop täljarna: {a} + {b} = {a+b}.", "{a+b}/{n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a}/{n} − {b}/{n} = ?"
+svar = "{a-b}/{n}"
+form = "brak"
+var = { n = "4..10", b = "1..n-3", a = "b+1..n-1" }
+ledtrad = "Samma sak med minus: täljarna, behåll nämnaren."
+feltankar = { "{a-b}/0" = "Nämnaren försvinner inte – delarnas storlek ändras inte. Det är {a-b} {n}-delar." }
+losning = ["Samma nämnare: {n}-delar.", "Dra ifrån täljarna: {a} − {b} = {a-b}.", "{a-b}/{n}."]
+
+[[exempel]]
+rubrik = "1/4 + 2/4 med stapeln"
+figur = { typ = "stapel", delar = 4, fyllda = 3, farg = "gron" }
+steg = [
+  "En fjärdedel är färgad. Färga två fjärdedelar till.",
+  "Nu är tre fjärdedelar färgade: 1/4 + 2/4 = 3/4.",
+  "Stapeln är fortfarande delad i fyra – nämnaren är kvar.",
+]
+
+[[exempel]]
+rubrik = "Över en hel: 3/5 + 4/5"
+figur = { typ = "stapel", delar = 5, fyllda = 5, farg = "bla" }
+steg = [
+  "3 + 4 = 7 femtedelar: 7/5.",
+  "Fem femtedelar är en hel stapel. Två femtedelar blir över.",
+  "7/5 = 1 hel och 2/5. Båda skrivsätten är rätt.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och skriv svaret som bråk."
+steg = ["{a}/{n} + {b}/{n}", "= ({a} + {b})/{n}", "= ?"]
+figur = { typ = "stapel", delar = "{n}", fyllda = "{a+b}", farg = "gron" }
+svar = "{a+b}/{n}"
+form = "brak"
+var = { n = "4..10", a = "1..n-3", b = "1..n-a-1" }
+ledtrad = "Täljarna läggs ihop. Nämnaren är kvar."
+feltankar = { "{a+b}/{2*n}" = "Nämnaren läggs inte ihop – titta på stapeln: den är fortfarande delad i {n}." }
+losning = ["{a} + {b} = {a+b}.", "Nämnaren {n} är kvar: {a+b}/{n}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket är rätt? 1/{n} + 1/{n} = ?"
+alternativ = ["2/{n}", "2/{2*n}", "1/{2*n}"]
+svar = "2/{n}"
+form = "brak"
+var = { n = "3..9" }
+ledtrad = "Två bitar av samma storlek – {n}-delar."
+feltankar = { "2/{2*n}" = "2/{2*n} är samma sak som 1/{n} – då skulle summan vara lika stor som en av bitarna. Två {n}-delar är 2/{n}.", "1/{2*n}" = "Summan kan inte vara mindre än det man lade ihop. Två {n}-delar är 2/{n}." }
+losning = ["En {n}-del plus en {n}-del är två {n}-delar.", "2/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}/{n} + {b}/{n} = ? Svara som bråk eller i blandad form."
+svar = "{a+b}/{n}"
+form = "brak"
+var = { n = "3..8", a = "2..n-1", b = "n-a+1..n-1" }
+ledtrad = "Lägg ihop täljarna. Det blir mer än en hel."
+losning = ["{a} + {b} = {a+b}, alltså {a+b}/{n}.", "{n}/{n} är en hel. {a+b-n}/{n} blir över.", "{a+b}/{n} = 1 {a+b-n}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}/{n} + ?/{n} = {c}/{n}. Vilken täljare saknas?"
+svar = "{c-a}"
+var = { n = "5..12", a = "1..n-3", c = "a+1..n" }
+ledtrad = "Hur många {n}-delar fattas från {a} till {c}?"
+losning = ["Samma nämnare – titta bara på täljarna.", "{a} + ? = {c}.", "? = {c-a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ali äter {a}/8 av pizzan och Lisa äter {b}/8. Hur stor del av pizzan är kvar?"
+figur = { typ = "staende", delar = 8, fyllda = "{8-a-b}", farg = "orange" }
+svar = "{8-a-b}/8"
+form = "brak"
+var = { a = "1..4", b = "1..7-a" }
+ledtrad = "Hela pizzan är 8/8. Dra ifrån det de ätit."
+feltankar = { "{a+b}/8" = "{a+b}/8 är det de har ätit. Frågan gäller det som är kvar." }
+losning = ["De har ätit {a}/8 + {b}/8 = {a+b}/8.", "Hela pizzan är 8/8.", "8/8 − {a+b}/8 = {8-a-b}/8."]
+
+[[uppgift]]
+niva = 3
+fraga = "1 − {a}/{n} = ?"
+svar = "{n-a}/{n}"
+form = "brak"
+var = { n = "3..10", a = "1..n-1" }
+ledtrad = "Skriv 1 som {n}/{n}."
+feltankar = { "{1-a}/{n}" = "Ettan är en hel: {n}/{n}. Då blir det {n} − {a} i täljaren." }
+losning = ["1 = {n}/{n}.", "{n}/{n} − {a}/{n} = {n-a}/{n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a}/{n} + {b}/{n} + {c}/{n} = ?"
+svar = "{a+b+c}/{n}"
+form = "brak"
+var = { n = "6..12", a = "1..3", b = "1..3", c = "1..3" }
+ledtrad = "Samma nämnare överallt: lägg ihop alla täljare."
+losning = ["{a} + {b} + {c} = {a+b+c}.", "{a+b+c}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}/{n} − {b}/{n} = ?"
+svar = "{a-b}/{n}"
+form = "brak"
+var = { n = "5..12", a = "3..n-1", b = "1..a-1" }
+ledtrad = "Samma nämnare: dra bort täljarna, behåll nämnaren."
+feltankar = { "{a-b}/0" = "Nämnaren försvinner inte – det är fortfarande {n}-delar." }
+losning = ["Samma nämnare: {n}-delar.", "Täljarna: {a} − {b} = {a-b}.", "{a-b}/{n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "1/{n} + 1/{2*n} = ?  Skriv om till samma nämnare först."
+svar = "3/{2*n}"
+form = "brak"
+var = { n = "2..6" }
+ledtrad = "1/{n} är samma sak som 2/{2*n}."
+feltankar = { "2/{3*n}" = "Du lade ihop täljare och nämnare var för sig. Gör nämnarna lika först: 1/{n} = 2/{2*n}." }
+losning = ["Gör nämnarna lika: 1/{n} = 2/{2*n}.", "2/{2*n} + 1/{2*n} = 3/{2*n}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla {a}/{n} röd och {b}/{n} blå. Hur stor del är målad tillsammans? Måla först."
+figur = { typ = "stapel", delar = "{n}", fyllda = 0, farger = ["röd", "blå"] }
+svar = "röd:{a}|blå:{b}"
+var = { n = "5..10", a = "1..n-3", b = "1..n-a-1" }
+ledtrad = "Räkna delarna: {a} röda och {b} blå – tillsammans {a+b} av {n}."
+losning = ["Måla {a} delar röda och {b} delar blå.", "Tillsammans är {a+b} av {n} delar målade: {a}/{n} + {b}/{n} = {a+b}/{n}."]

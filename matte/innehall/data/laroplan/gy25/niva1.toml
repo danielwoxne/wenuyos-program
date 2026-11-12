@@ -1,0 +1,47 @@
+# Gy25 – ämnet Matematik, nivå 1 (1a, 1b och 1c har gemensam kärna; 1c går längst).
+# Målen är förkortade och omskrivna efter innehållsområdena i Skolverkets ämnesplan.
+# Fördelningen mellan 1a/1b/1c är ungefärlig – kontrollera mot ämnesplanen innan
+# programmet används i undervisning.
+stadium = "gy25.1"
+
+[[mal]]
+id = "gy25.1.tal.potenser"
+omrade = "tal"
+text = "Potenser med heltalsexponenter, potenslagar, tal i grundpotensform och rötter"
+kort = ["gy-potenslagar", "gy-grundpotensform", "gy-rotter"]
+
+[[mal]]
+id = "gy25.1.algebra.ekvationer"
+omrade = "algebra"
+text = "Algebraiska uttryck, formler och linjära ekvationer, även med parenteser och bråk"
+kort = ["gy-ekvationer"]
+
+[[mal]]
+id = "gy25.1.samband.procent"
+omrade = "samband"
+text = "Procent, procentenheter och förändringsfaktor, även vid upprepad förändring"
+kort = ["gy-procentenheter", "gy-upprepad-forandring"]
+
+[[mal]]
+id = "gy25.1.samband.funktioner"
+omrade = "samband"
+text = "Begreppet funktion; linjära funktioner och räta linjens ekvation; exponentialfunktioner som modell"
+kort = ["gy-funktioner", "gy-rata-linjen", "gy-exponentialfunktioner"]
+
+[[mal]]
+id = "gy25.1.geometri"
+omrade = "geometri"
+text = "Likformighet och skala för längd, area och volym; trigonometri i rätvinkliga trianglar"
+kort = ["gy-likformighet", "gy-trigonometri"]
+
+[[mal]]
+id = "gy25.1.sannolikhet"
+omrade = "sannolikhet"
+text = "Sannolikhet i slumpförsök i flera steg; lägesmått och spridningsmått"
+kort = ["gy-sannolikhet-flera-steg", "gy-spridning"]
+
+[[mal]]
+id = "gy25.1.problem"
+omrade = "problem"
+text = "Problemlösning med modeller: formulera, välja metod, värdera resultatets rimlighet"
+kort = ["problemlosning-tabell"]

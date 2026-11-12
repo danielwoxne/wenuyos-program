@@ -1,0 +1,31 @@
+# Lpfö 18 – läroplan för förskolan. Förskolan har inga mål som varje barn ska nå,
+# bara mål att sträva mot: att ge varje barn förutsättningar att utveckla förståelse
+# för rum, tid och form, och för grundläggande egenskaper hos mängder, antal, ordning,
+# talbegrepp, mätning och förändring – och att använda matematik för att undersöka,
+# resonera och pröva lösningar. Texterna nedan är förkortade och omskrivna; läs
+# Skolverkets Lpfö 18 för ordalydelsen.
+stadium = "forskola"
+
+[[mal]]
+id = "forskola.antal"
+omrade = "tal"
+text = "Mängder och antal: hur många, flest och färst, att räkna och se antal"
+kort = ["forskola-rakna", "forskola-flest"]
+
+[[mal]]
+id = "forskola.siffror"
+omrade = "tal"
+text = "Talbegrepp: att känna igen siffrorna och koppla dem till antal"
+kort = ["forskola-siffror"]
+
+[[mal]]
+id = "forskola.form"
+omrade = "geometri"
+text = "Rum och form: att känna igen och benämna former"
+kort = ["forskola-former"]
+
+[[mal]]
+id = "forskola.monster"
+omrade = "algebra"
+text = "Ordning och mönster: att se vad som upprepas och fortsätta ett mönster"
+kort = ["forskola-monster"]

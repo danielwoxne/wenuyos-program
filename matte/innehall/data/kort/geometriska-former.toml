@@ -1,0 +1,181 @@
+id = "geometriska-former"
+titel = "Former – hörn och sidor"
+omrade = "geometri"
+ikon = "triangel"
+bild = "torget.jpg"
+bildtext = "Torget är lagt med trianglar och kvadrater i ett stjärnmönster runt fontänen. Formerna finns överallt – räkna hörnen."
+sager = "Man känner igen en form på hur många hörn och sidor den har, inte på hur den ligger eller vilken färg den har."
+galler = "Alltid. En triangel som står på spetsen är fortfarande en triangel."
+galler_inte = "”En kvadrat är ingen rektangel” stämmer inte. En rektangel är en fyrhörning med fyra räta hörn – och det har kvadraten. Kvadraten är en särskild sorts rektangel där alla sidor råkar vara lika långa."
+kalla = "Van Hiele-nivåerna: från 'ser ut som' till egenskaper. Variation: samma form i olika lägen och storlekar."
+
+[[rad]]
+sager = "triangel – tre hörn, tre sidor"
+figur = { typ = "ikoner", namn = "triangel", antal = 1, d = 64 }
+skriver = ["3 hörn"]
+
+[[rad]]
+sager = "kvadrat – fyra lika långa sidor"
+figur = { typ = "ikoner", namn = "kvadrat", antal = 1, d = 64 }
+skriver = ["4 hörn"]
+
+[[rad]]
+sager = "rektangel – fyra hörn, motstående sidor lika"
+figur = { typ = "ikoner", namn = "rektangel", antal = 1, d = 64 }
+skriver = ["4 hörn"]
+
+[[rad]]
+sager = "cirkel – inga hörn"
+figur = { typ = "ikoner", namn = "cirkel", antal = 1, d = 64 }
+skriver = ["0 hörn"]
+
+[[rad]]
+sager = "femhörning"
+figur = { typ = "ikoner", namn = "femhorning", antal = 1, d = 64 }
+skriver = ["5 hörn"]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många hörn har en triangel?"
+figur = { typ = "ikoner", namn = "triangel", antal = 1, d = 72 }
+svar = "3"
+ledtrad = "Räkna spetsarna."
+losning = ["Lägg fingret i ett hörn och gå runt.", "Räkna varje hörn: ett, två, tre.", "En triangel har tre hörn."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilken form har fyra lika långa sidor och fyra hörn?"
+svar = "kvadrat"
+alternativ = ["kvadrat", "triangel", "cirkel", "rektangel"]
+ledtrad = "Rektangeln har också fyra hörn – men dess sidor är inte alla lika långa."
+feltankar = { "rektangel" = "Nästan – en rektangel har fyra hörn, men bara motstående sidor är lika långa. Är ALLA fyra lika långa heter den kvadrat (en kvadrat är en särskild rektangel)." }
+losning = ["Fyra hörn: kvadrat eller rektangel.", "Alla fyra sidor lika långa: kvadrat."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur många hörn har en sexhörning och en triangel tillsammans?"
+figur = { typ = "ikoner", namn = "sexhorning", antal = 1, d = 64 }
+svar = "9"
+ledtrad = "6 + 3."
+losning = ["En sexhörning har 6 hörn.", "En triangel har 3 hörn.", "6 + 3 = 9."]
+
+[[uppgift]]
+niva = 1
+fraga = "Torget är lagt med plattor som har tre hörn. Vad heter formen?"
+figur = { typ = "scen", bild = "torget.jpg", bredd = 560 }
+svar = "triangel"
+alternativ = ["triangel", "kvadrat", "cirkel"]
+ledtrad = "Tre hörn och tre sidor."
+losning = ["Tre hörn och tre sidor.", "Det är en triangel."]
+
+[[exempel]]
+rubrik = "Kvadraten är en särskild rektangel"
+figur = { typ = "ikonval", ikoner = ["kvadrat", "rektangel"], d = 64 }
+steg = [
+  "Båda har fyra raka sidor och fyra räta hörn – de är rektanglar.",
+  "Rektangeln har två långa och två korta sidor.",
+  "Kvadraten har fyra lika långa sidor. Den är en rektangel med något extra.",
+]
+
+[[exempel]]
+rubrik = "Platta figurer och kroppar"
+figur = { typ = "ikonval", ikoner = ["cirkel", "klot", "kvadrat", "kub"], d = 56 }
+steg = [
+  "Cirkeln och kvadraten är platta – de går att rita på ett papper.",
+  "Klotet och kuben är kroppar – de går att hålla i handen.",
+  "Klotet är runt åt alla håll. Kubens sidor är sex kvadrater.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många hörn har formen?"
+steg = ["Lägg fingret i ett hörn och säg: ett.", "Gå runt och räkna varje hörn.", "När du är tillbaka där du började är du klar."]
+figur = { typ = "ikoner", namn = "{['triangel','kvadrat','femhorning','sexhorning'][f]}", antal = 1, d = 80 }
+svar = "{f+3}"
+var = { f = "0..3" }
+ledtrad = "Peka och räkna."
+losning = ["Gå runt formen och räkna hörnen.", "Det blir {f+3}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många sidor har en rektangel?"
+figur = { typ = "ikoner", namn = "rektangel", antal = 1, d = 80 }
+alternativ = ["2", "4", "6"]
+svar = "4"
+ledtrad = "Följ kanten runt med fingret."
+feltankar = { "2" = "Det är två långa sidor – och två korta. Fyra sidor tillsammans." }
+losning = ["Två långa sidor och två korta.", "2 + 2 = 4 sidor."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på klotet."
+figur = { typ = "ikonval", ikoner = ["kub", "klot", "cylinder", "kon"] }
+svar = "klot"
+ledtrad = "Ett klot är runt åt alla håll – som en boll."
+feltankar = { "cylinder" = "Cylindern är rund runt om, men platt i ändarna. Klotet är runt åt alla håll." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på cylindern."
+figur = { typ = "ikonval", ikoner = ["kon", "cylinder", "ratblock"] }
+svar = "cylinder"
+ledtrad = "En cylinder är lika tjock hela vägen, med en cirkel i varje ände – som en burk."
+feltankar = { "kon" = "Konen har en spets i ena änden. Cylindern är lika tjock hela vägen." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Vilken kropp ser ut som en mjölkkartong?"
+figur = { typ = "ikonval", ikoner = ["klot", "ratblock", "kon"] }
+svar = "ratblock"
+ledtrad = "En mjölkkartong har sex sidor som är rektanglar."
+
+[[uppgift]]
+niva = 3
+svarstyp = "markera"
+fraga = "Klicka på alla fyrhörningar."
+figur = { typ = "ikonval", ikoner = ["kvadrat", "triangel", "rektangel", "romb", "femhorning", "cirkel"], d = 56 }
+svar = "kvadrat,rektangel,romb"
+ledtrad = "En fyrhörning har fyra hörn – oavsett hur sidorna ser ut."
+feltankar = { "kvadrat,rektangel" = "En till. Formen som står på spetsen har också fyra hörn." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Är en kvadrat en rektangel?"
+alternativ = ["ja", "nej"]
+svar = "ja"
+ledtrad = "En rektangel är en fyrhörning där alla hörn är räta. Har kvadraten det?"
+feltankar = { "nej" = "Kvadraten har fyra räta hörn – då är den en rektangel. Att sidorna är lika långa gör den till en särskild rektangel." }
+losning = ["En rektangel har fyra räta hörn.", "Kvadraten har fyra räta hörn.", "Alltså är kvadraten en rektangel – med lika långa sidor."]
+
+[[uppgift]]
+niva = 3
+fraga = "Du har {a} trianglar och {b} kvadrater. Hur många hörn är det tillsammans?"
+svar = "{3*a+4*b}"
+var = { a = "2..5", b = "1..4" }
+ledtrad = "Trianglarna: {a} · 3. Kvadraterna: {b} · 4."
+losning = ["Trianglarna: {a} · 3 = {3*a}.", "Kvadraterna: {b} · 4 = {4*b}.", "{3*a} + {4*b} = {3*a+4*b}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla alla fyrhörningar gröna."
+figur = { typ = "malrutor", kolumner = 6, ruta = 76, objekt = "{'|'.join('form:' + ['kvadrat','triangel','rektangel','cirkel','romb','femhorning'][(i*n)%6] for i in range(6))}", farger = ["grön"] }
+svar = "{'|'.join('grön' if ['kvadrat','triangel','rektangel','cirkel','romb','femhorning'][(i*n)%6] in ('kvadrat','rektangel','romb') else '' for i in range(6))}"
+var = { n = "[1,5]" }
+ledtrad = "En fyrhörning har fyra hörn och fyra raka sidor. Räkna hörnen."
+losning = ["Räkna hörnen på varje form.", "Kvadraten, rektangeln och romben har fyra hörn – de är fyrhörningar.", "Triangeln har tre, femhörningen fem och cirkeln inga."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Vilka påståenden stämmer om en kvadrat? Kryssa i alla."
+alternativ = ["Den har fyra hörn", "Alla sidor är lika långa", "Den har tre sidor", "Den är en rektangel", "Den är rund"]
+svar = ["Den har fyra hörn", "Alla sidor är lika långa", "Den är en rektangel"]
+ledtrad = "En rektangel är en fyrhörning där alla hörn är räta. Gäller det kvadraten?"
+feltankar = { "Den har tre sidor" = "Tre sidor har en triangel. En kvadrat har fyra.", "Den är rund" = "En kvadrat har raka sidor och hörn – den är inte rund." }
+losning = ["En kvadrat har fyra hörn och fyra lika långa sidor.", "Alla hörnen är räta – därför är en kvadrat också en rektangel (en extra jämn sådan)."]

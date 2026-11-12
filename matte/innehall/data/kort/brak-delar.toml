@@ -1,0 +1,234 @@
+# Regelkort: bråk som delar av en hel
+# Förlagan: sidan "Bråk 2" i regelboken – man säger / bild / man skriver.
+
+id = "brak-delar"
+titel = "Bråk – delar av en hel"
+omrade = "tal"
+ikon = "fjardedelar"
+bild = "pizza-attondelar.jpg"
+bildtext = "Pizzan är delad i åtta lika stora bitar. Två ligger på brädan – sex åttondelar är kvar: 6/8."
+sager = "Ett bråk säger hur många lika stora delar helheten är delad i, och hur många av dem vi menar."
+galler = "När helheten är delad i LIKA stora delar. Är delarna olika stora är det inget bråk."
+galler_inte = "”Större nämnare ger större bråk” stämmer inte. 1/8 är mindre än 1/5 – ju fler delar helheten delas i, desto mindre blir varje del."
+kalla = "Konkret → bild → symbol (CRA). Variationsteori: samma längd på helheten, bara antalet delar varierar."
+
+[[rad]]
+sager = "en hel"
+figur = { typ = "stapel", delar = 1, fyllda = 1, farg = "gul" }
+skriver = ["1", "1/1"]
+
+[[rad]]
+sager = "en halv"
+figur = { typ = "stapel", delar = 2, fyllda = 1, farg = "bla" }
+skriver = ["1/2"]
+
+[[rad]]
+sager = "en tredjedel"
+figur = { typ = "stapel", delar = 3, fyllda = 1, farg = "rosa" }
+skriver = ["1/3"]
+
+[[rad]]
+sager = "en fjärdedel"
+figur = { typ = "stapel", delar = 4, fyllda = 1, farg = "gron" }
+skriver = ["1/4"]
+
+[[rad]]
+sager = "en femtedel"
+figur = { typ = "stapel", delar = 5, fyllda = 1, farg = "ljusgul" }
+skriver = ["1/5"]
+
+[[rad]]
+sager = "en sjättedel"
+figur = { typ = "stapel", delar = 6, fyllda = 1, farg = "himmel" }
+skriver = ["1/6"]
+
+[[rad]]
+sager = "en sjundedel"
+figur = { typ = "stapel", delar = 7, fyllda = 1, farg = "sand" }
+skriver = ["1/7"]
+
+[[rad]]
+sager = "en åttondel"
+figur = { typ = "stapel", delar = 8, fyllda = 1, farg = "aprikos" }
+skriver = ["1/8"]
+
+[[rad]]
+sager = "en niondel"
+figur = { typ = "stapel", delar = 9, fyllda = 1, farg = "mint" }
+skriver = ["1/9"]
+
+[[rad]]
+sager = "en tiondel"
+figur = { typ = "stapel", delar = 10, fyllda = 1, farg = "beige" }
+skriver = ["1/10"]
+
+[[rad]]
+sager = "en hundradel"
+figur = { typ = "hundraruta", fyllda = 1, farg = "lila" }
+skriver = ["1/100"]
+
+# Den vanligaste feltanken: "8 är större än 5, så 1/8 är större än 1/5".
+[feltankar]
+
+[[uppgift]]
+niva = 1
+fraga = "Helheten är delad i {n} delar och {k} är färgade. Vilket bråk är det?"
+figur = { typ = "stapel", delar = "{n}", fyllda = "{k}", farg = "bla" }
+svar = "{k}/{n}"
+form = "brak"
+var = { n = "2..10", k = "1..n-1" }
+ledtrad = "Räkna delarna i hela stapeln – det är nämnaren (under strecket). Räkna de färgade – det är täljaren (över strecket)."
+feltankar = { "{n}/{k}" = "Du har vänt på bråket. Under strecket står hur många delar helheten är delad i ({n}), över strecket hur många som är färgade ({k})." }
+losning = ["Räkna alla delar: {n}. Det är nämnaren, under strecket.", "Räkna de färgade: {k}. Det är täljaren, över strecket.", "{k}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket bråk visar bilden?"
+figur = { typ = "stapel", delar = "{n}", fyllda = "{k}", farg = "gron" }
+svar = "{k}/{n}"
+form = "brak"
+var = { n = "3..10", k = "1..n-1" }
+ledtrad = "Nämnaren = alla delar. Täljaren = de färgade."
+feltankar = { "{n}/{k}" = "Du har vänt på bråket – nämnaren (alla delar) ska stå under strecket.", "{k}/{n-k}" = "Nämnaren är alla delar, både färgade och tomma – inte bara de tomma." }
+losning = ["Alla delar: {n}.", "Färgade: {k}.", "{k}/{n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket är störst: 1/{a} eller 1/{b}? Svara med bråket."
+svar = "1/{min(a,b)}"
+form = "brak"
+var = { a = "2..10", b = "2..10 != a" }
+ledtrad = "Ju fler delar helheten delas i, desto mindre blir varje del. Tänk på staplarna på kortet."
+feltankar = { "1/{max(a,b)}" = "Många tänker att 1/{max(a,b)} är störst för att {max(a,b)} är större än {min(a,b)}. Men ju fler delar, desto MINDRE blir varje del – titta på staplarna." }
+losning = ["1/{a} är en av {a} delar. 1/{b} är en av {b} delar.", "Färre delar ger större bitar.", "1/{min(a,b)} är störst."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "farga"
+fraga = "Färga {k}/{n} av stapeln."
+figur = { typ = "stapel", delar = "{n}", fyllda = 0, farg = "gul" }
+svar = "{k}"
+var = { n = "3..10", k = "1..n-1" }
+ledtrad = "Stapeln är delad i {n} delar. Färga {k} av dem."
+feltankar = { "{n}" = "Du färgade hela stapeln. {k}/{n} är {k} av de {n} delarna." }
+
+[[uppgift]]
+niva = 1
+fraga = "Pizzan på bilden var delad i 8 bitar. 2 bitar ligger på brädan. Hur stor del av pizzan är kvar på fatet? Svara som bråk."
+figur = { typ = "staende", delar = 8, fyllda = 6, farg = "orange" }
+svar = "6/8"
+form = "brak"
+ledtrad = "Räkna bitarna som är kvar: 6 av 8."
+feltankar = { "2/8" = "2/8 är det som togs. Frågan är vad som är KVAR: 8 − 2 = 6 bitar av 8.", "6/2" = "Nämnaren är alla bitar pizzan var delad i: 8. Inte de två som togs." }
+losning = ["Pizzan var delad i 8 – nämnaren är 8.", "8 − 2 = 6 bitar är kvar.", "6/8."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Klicka på alla pizzabitar som ligger kvar på det runda fatet."
+figur = { typ = "scen", bild = "pizza-attondelar.jpg", bredd = 560, omraden = [[0.2063, 0.2869, 0.0897, 0.1594], [0.299, 0.2444, 0.0897, 0.1488], [0.4516, 0.2444, 0.0897, 0.1488], [0.2123, 0.5154, 0.0897, 0.1594], [0.2961, 0.6164, 0.0897, 0.1488], [0.4456, 0.5898, 0.0897, 0.1594], [0.7446, 0.3879, 0.1017, 0.1807], [0.8044, 0.5473, 0.1017, 0.1807]], namn = ["fat", "fat", "fat", "fat", "fat", "fat", "bräda", "bräda"] }
+svar = "fat,fat,fat,fat,fat,fat"
+ledtrad = "Bara bitarna på det runda fatet – inte de på skärbrädan."
+
+[[exempel]]
+rubrik = "Hur stor del är färgad?"
+figur = { typ = "stapel", delar = 5, fyllda = 2, farg = "bla" }
+steg = [
+  "Räkna alla delar: 5. Alla är lika stora – annars är det inget bråk.",
+  "Räkna de färgade: 2.",
+  "Två av fem: 2/5. Nämnaren (5) under strecket, täljaren (2) över.",
+]
+
+[[exempel]]
+rubrik = "Del av ett antal: 1/3 av 12"
+figur = { typ = "prickar", antal = 12, per_rad = 4 }
+steg = [
+  "Dela de 12 prickarna i 3 lika stora grupper – en rad var.",
+  "Varje grupp har 4.",
+  "1/3 av 12 är 4. Och 2/3 av 12 är två grupper: 8.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vilket bråk visar stapeln?"
+steg = ["Helheten är delad i {n} lika stora delar – nämnaren är {n}.", "{k} delar är färgade – täljaren är {k}."]
+figur = { typ = "stapel", delar = "{n}", fyllda = "{k}", farg = "rosa" }
+svar = "{k}/{n}"
+form = "brak"
+var = { n = "3..8", k = "1..n-1" }
+ledtrad = "Täljaren över strecket, nämnaren under."
+feltankar = { "{n}/{k}" = "Du har vänt på bråket. Täljaren ({k}) står över strecket." }
+losning = ["Täljare {k}, nämnare {n}.", "{k}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur mycket är 1/{n} av {n*k}?"
+figur = { typ = "prickar", antal = "{n*k}", per_rad = "{k}" }
+svar = "{k}"
+var = { n = "2..4", k = "2..5" }
+ledtrad = "Dela prickarna i {n} lika stora grupper. Hur många i en grupp?"
+feltankar = { "{n*k-n}" = "1/{n} betyder dela i {n} lika delar – inte ta bort {n}." }
+losning = ["Dela {n*k} i {n} lika stora grupper.", "Varje grupp har {k}.", "1/{n} av {n*k} = {k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur stor del av stapeln är INTE färgad? Svara som bråk."
+figur = { typ = "stapel", delar = "{n}", fyllda = "{k}", farg = "gron" }
+svar = "{n-k}/{n}"
+form = "brak"
+var = { n = "3..10", k = "1..n-1" }
+ledtrad = "Räkna de vita delarna. Nämnaren är fortfarande alla delar."
+feltankar = { "{k}/{n}" = "Det är den färgade delen. Frågan gäller de vita.", "{n-k}/{k}" = "Nämnaren är alla delar ({n}), inte bara de färgade." }
+losning = ["Alla delar: {n}.", "Vita: {n} − {k} = {n-k}.", "{n-k}/{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur många {['','','halvor','tredjedelar','fjärdedelar','femtedelar','sjättedelar','sjundedelar','åttondelar'][n]} behövs för att det ska bli en hel?"
+figur = { typ = "stapel", delar = "{n}", fyllda = 1, farg = "himmel" }
+svar = "{n}"
+var = { n = "2..8" }
+ledtrad = "Hur många delar är stapeln delad i?"
+losning = ["Helheten är delad i {n} delar.", "{n}/{n} = 1 hel."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilket är störst: {k}/{n} eller {k}/{m}?"
+alternativ = ["{k}/{n}", "{k}/{m}"]
+svar = "{k}/{min(n,m)}"
+form = "brak"
+var = { k = "1..3", n = "4..9", m = "4..9 != n" }
+ledtrad = "Samma antal bitar. Vilka bitar är störst – {n}-delar eller {m}-delar?"
+feltankar = { "{k}/{max(n,m)}" = "{max(n,m)} är större än {min(n,m)} – men {max(n,m)}-delar är MINDRE bitar. Lika många mindre bitar blir mindre." }
+losning = ["Båda har {k} bitar.", "{min(n,m)}-delar är större bitar än {max(n,m)}-delar.", "{k}/{min(n,m)} är störst."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur mycket är {k}/{n} av {n*m} kr?"
+svar = "{k*m}"
+var = { n = "3..5", k = "2..n-1", m = "2..10" }
+ledtrad = "Ta reda på 1/{n} först."
+feltankar = { "{m}" = "{m} kr är 1/{n}. Du ska ha {k} sådana delar." }
+losning = ["1/{n} av {n*m} = {n*m} / {n} = {m} kr.", "{k}/{n} är {k} sådana delar.", "{k} · {m} = {k*m} kr."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla {a}/{n} av stapeln röd och {b}/{n} blå."
+figur = { typ = "stapel", delar = "{n}", fyllda = 0, farger = ["röd", "blå"] }
+svar = "röd:{a}|blå:{b}"
+var = { n = "4..8", a = "1..n-2", b = "1..n-a-1" }
+ledtrad = "Nämnaren {n} säger att stapeln har {n} delar. Täljaren säger hur många delar du ska måla."
+feltankar = { "röd:{b}|blå:{a}" = "Du har bytt färgerna. Röd ska ha {a} delar (täljaren i {a}/{n}), blå {b}." }
+losning = ["Stapeln har {n} lika stora delar – det är nämnaren.", "Måla {a} delar röda – det är {a}/{n}.", "Måla {b} andra delar blå – det är {b}/{n}.", "{n-a-b} delar blir kvar vita: {n-a-b}/{n}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Vilka bråk är lika med en halv? Kryssa i alla."
+alternativ = ["1/2", "{a}/{2*a}", "{b}/{2*b}", "{a}/{2*a+1}", "1/3", "{b+1}/{2*b}"]
+svar = ["1/2", "{a}/{2*a}", "{b}/{2*b}"]
+var = { a = "2..4", b = "5..7" }
+ledtrad = "En halv betyder att nämnaren är dubbelt så stor som täljaren."
+feltankar = { "{a}/{2*a+1}" = "Dubbelt så mycket som {a} är {2*a}, inte {2*a+1}. {a}/{2*a+1} är lite mindre än en halv.", "1/3" = "1/3 är en tredjedel – tre delar, inte två.", "{b+1}/{2*b}" = "Halva {2*b} är {b}, inte {b+1}. {b+1}/{2*b} är lite mer än en halv." }
+losning = ["Fråga för varje bråk: är nämnaren dubbelt så stor som täljaren?", "1/2, {a}/{2*a} och {b}/{2*b} – ja.", "{a}/{2*a+1}, 1/3 och {b+1}/{2*b} – nej."]

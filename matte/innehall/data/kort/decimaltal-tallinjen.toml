@@ -1,0 +1,140 @@
+id = "decimaltal-tallinjen"
+titel = "Decimaltal på tallinjen"
+omrade = "tal"
+ikon = "tallinje"
+sager = "Mellan två heltal finns tiondelar. 0,7 är sju tiondelar – sju steg av tio från 0 till 1."
+galler = "Alltid. Mellan tiondelarna finns hundradelar, och så vidare – tallinjen tar aldrig slut inåt."
+galler_inte = "Det finns inget ”nästa tal” efter 0,7. Mellan 0,7 och 0,8 ligger 0,71, 0,72 … och mellan dem ännu fler. Heltalen har grannar – decimaltalen har det inte."
+forkunskap = ["brak-procent-decimal"]
+kalla = "Tallinjen som modell för rationella tal (Siegler). Kopplar decimalform till bråk (7/10)."
+
+[[rad]]
+sager = "sju tiondelar"
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1", markera = ["0,7"] }
+skriver = ["0,7 = 7/10"]
+
+[[rad]]
+sager = "två och en halv"
+figur = { typ = "tallinje", fran = 0, till = 4, steg = "0,5", markera = ["2,5"], etikett = 2 }
+skriver = ["2,5 = 2 + 5/10"]
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket tal pekar markeringen på? Svara med decimaltal."
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1", markera = ["{k}/10"] }
+svar = "{k}/10"
+form = "decimal"
+var = { k = "1..9" }
+ledtrad = "Räkna strecken från 0: varje streck är en tiondel, 0,1."
+losning = ["Varje streck är 0,1.", "Markeringen är {k} streck från 0.", "{k} tiondelar = 0,{k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = "{h}", till = "{h+1}", steg = "0,1", markera = ["{h} + {k}/10"] }
+svar = "{h} + {k}/10"
+form = "decimal"
+var = { h = "1..8", k = "1..9" }
+ledtrad = "Tallinjen går från {h} till {h+1}. Varje streck är 0,1."
+feltankar = { "{h}{k}" = "Markeringen ligger mellan {h} och {h+1} – det måste vara ett decimaltal: {h} komma något." }
+losning = ["Tallinjen går från {h} till {h+1}. Varje streck är 0,1.", "Markeringen är {k} streck efter {h}.", "{h},{k}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket tal ligger mitt emellan {a}/10 och {a+2}/10? Svara med decimaltal."
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1", markera = ["{a}/10", "{a+2}/10"] }
+svar = "{a+1}/10"
+form = "decimal"
+var = { a = "1..7" }
+ledtrad = "Ett steg från vardera. Varje steg är 0,1."
+losning = ["Mellan {a}/10 och {a+2}/10 är det två steg.", "Ett steg från vardera: {a+1}/10.", "= 0,{a+1}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "punkt"
+fraga = "Pricka in 0,{k} på tallinjen."
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1" }
+svar = "{k}/10"
+var = { k = "1..9" }
+ledtrad = "0,{k} är {k} tiondelar – {k} streck från 0."
+losning = ["0,{k} är {k} tiondelar.", "Räkna {k} streck från 0."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "punkt"
+fraga = "Pricka in {k}/10 på tallinjen."
+figur = { typ = "tallinje", fran = 0, till = 2, steg = "0,1", etikett = 5 }
+svar = "{k}/10"
+var = { k = "1..19" }
+ledtrad = "Tiondelar: varje streck är 0,1. {k}/10 = {k//10},{k%10}."
+feltankar = { "{k}/10 + 1" = "Ett helt för långt. {k}/10 är {k//10},{k%10} – mellan {k//10} och {k//10+1}." }
+losning = ["{k}/10 = {k//10},{k%10}.", "Det ligger mellan {k//10} och {k//10+1}.", "Räkna {k%10} streck efter {k//10}."]
+
+[[exempel]]
+rubrik = "0,7 på tallinjen"
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1", markera = ["0,7"] }
+steg = [
+  "Sträckan från 0 till 1 är delad i 10 lika stora delar.",
+  "Varje del är en tiondel: 0,1.",
+  "Sju delar från 0: 0,7 = 7/10.",
+]
+
+[[exempel]]
+rubrik = "2,35 – mellan 2,3 och 2,4"
+figur = { typ = "tallinje", fran = "2,3", till = "2,4", steg = "0,01", markera = ["2,35"], etikett = 5 }
+steg = [
+  "Zooma in mellan 2,3 och 2,4 – där finns tio hundradelar.",
+  "Varje streck är 0,01.",
+  "Fem streck efter 2,3: 2,35. Det ligger precis mitt emellan.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vilket tal pekar markeringen på?"
+steg = ["Tallinjen från 0 till 1 är delad i 10 delar.", "Varje del är 0,1.", "Markeringen är {k} delar från 0."]
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,1", markera = ["{k}/10"] }
+svar = "{k}/10"
+form = "decimal"
+var = { k = "1..9" }
+ledtrad = "{k} tiondelar."
+losning = ["{k} tiondelar = 0,{k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Här är varje streck en hundradel. Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = "{a}/10", till = "{a+1}/10", steg = "0,01", markera = ["{a}/10 + {k}/100"], etikett = 5 }
+svar = "{a}/10 + {k}/100"
+form = "decimal"
+var = { a = "1..8", k = "1..9" }
+ledtrad = "Börja på 0,{a} och räkna strecken – varje streck är 0,01."
+feltankar = { "{a}/10 + {k}/10" = "Strecken här är hundradelar, inte tiondelar. Hela linjen är bara 0,1 lång." }
+losning = ["Linjen går från 0,{a} till 0,{a+1}.", "Varje streck är 0,01.", "{k} streck efter 0,{a}: 0,{a}{k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket tal ligger närmast 1?"
+alternativ = ["0,9", "0,09", "0,99"]
+svar = "0,99"
+ledtrad = "Hur långt är det från varje tal till 1?"
+feltankar = { "0,9" = "0,9 = 0,90. Från 0,90 till 1 är 0,10 – från 0,99 är det bara 0,01." }
+losning = ["1 − 0,9 = 0,1.", "1 − 0,99 = 0,01.", "0,99 är närmast."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket tal ligger 0,1 till höger om {h},9?"
+svar = "{h+1}"
+var = { h = "0..8" }
+ledtrad = "Nio tiondelar och en tiondel till blir tio tiondelar."
+feltankar = { "{h},10" = "Efter nio tiondelar kommer ett helt: {h},9 + 0,1 = {h+1}. Det finns ingen tionde decimal-plats." }
+losning = ["{h},9 + 0,1 = {h} + 0,9 + 0,1.", "0,9 + 0,1 = 1,0.", "{h} + 1 = {h+1}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Skriv {k}/100 som decimaltal."
+svar = "{k}/100"
+form = "decimal"
+var = { k = "[1, 3, 5, 7, 9, 12, 25, 48, 60, 99]" }
+ledtrad = "Hundradelar står på andra platsen efter kommat."
+feltankar = { "{k}/10" = "{k}/10 är tiondelar. Hundradelar står två platser efter kommat." }
+losning = ["Hundradelar = andra platsen efter kommat.", "{k}/100 = {k/100}."]

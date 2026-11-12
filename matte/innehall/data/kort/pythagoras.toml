@@ -1,0 +1,143 @@
+id = "pythagoras"
+titel = "Pythagoras sats"
+omrade = "geometri"
+ikon = "triangel"
+bild = "stege.jpg"
+bildtext = "Väggen, marken och stegen bildar en rätvinklig triangel. Stegen är den längsta sidan – hypotenusan."
+sager = "I en rätvinklig triangel är a² + b² = c², där c är den längsta sidan (hypotenusan, mitt emot den räta vinkeln)."
+galler = "BARA rätvinkliga trianglar. Och det är sidornas kvadrater som adderas, inte sidorna."
+galler_inte = "Satsen gäller bara rätvinkliga trianglar. I en triangel med sidorna 4, 5 och 6 är 4² + 5² = 41, inte 36. Det fungerar också åt andra hållet: stämmer a² + b² = c² så är triangeln rätvinklig."
+forkunskap = ["potenser", "omkrets-area"]
+kalla = "Satsen som area (kvadraterna på sidorna) innan formeln. Vanlig feltanke: a + b = c."
+
+[[rad]]
+sager = "tre, fyra, fem"
+figur = { typ = "tabell", rubriker = ["a²", "+", "b²", "=", "c²"], rader = [["3² = 9", "+", "4² = 16", "=", "25 = 5²"]], kolbredd = 80 }
+skriver = ["3² + 4² = 5²"]
+
+[[rad]]
+sager = "kvadraten på kateten a"
+figur = { typ = "rektangel", bredd = 3, hojd = 3, farg = "gul", matt = false }
+skriver = ["9 rutor"]
+
+[[rad]]
+sager = "kvadraten på kateten b"
+figur = { typ = "rektangel", bredd = 4, hojd = 4, farg = "gron", matt = false }
+skriver = ["16 rutor"]
+
+[[rad]]
+sager = "kvadraten på hypotenusan c"
+figur = { typ = "rektangel", bredd = 5, hojd = 5, farg = "rosa", matt = false }
+skriver = ["25 rutor = 9 + 16"]
+
+[[uppgift]]
+niva = 1
+fraga = "Kateterna är {3*k} och {4*k}. Räkna {3*k}² + {4*k}². (Det är c².)"
+svar = "{25*k*k}"
+var = { k = "1..3" }
+ledtrad = "{9*k*k} + {16*k*k}."
+losning = ["{3*k}² = {9*k*k}. {4*k}² = {16*k*k}.", "{9*k*k} + {16*k*k} = {25*k*k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "En rätvinklig triangel har kateterna {3*k} cm och {4*k} cm. Hur lång är hypotenusan?"
+svar = "{5*k}"
+var = { k = "1..4" }
+ledtrad = "c² = {3*k}² + {4*k}² = {25*k*k}. Vilket tal i kvadrat är {25*k*k}?"
+feltankar = { "{7*k}" = "Det är inte sidorna som adderas utan deras kvadrater: {3*k}² + {4*k}² = {25*k*k}, och c = √{25*k*k}.", "{25*k*k}" = "Det är c². Hypotenusan är roten ur {25*k*k}." }
+losning = ["c² = {3*k}² + {4*k}² = {25*k*k}.", "c = √{25*k*k} = {5*k} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hypotenusan är {13*k} cm och en katet är {5*k} cm. Hur lång är den andra kateten?"
+svar = "{12*k}"
+var = { k = "1..2" }
+ledtrad = "b² = c² − a² = {169*k*k} − {25*k*k}."
+feltankar = { "{18*k}" = "Kateten är kortare än hypotenusan. Subtrahera kvadraterna: {169*k*k} − {25*k*k} = {144*k*k}, och roten ur det." }
+losning = ["b² = c² − a² = {169*k*k} − {25*k*k} = {144*k*k}.", "b = √{144*k*k} = {12*k} cm."]
+
+[[uppgift]]
+niva = 2
+fraga = "Stegen på bilden står 3 m från väggen och når 4 m upp. Hur lång är stegen?"
+figur = { typ = "scen", bild = "stege.jpg", bredd = 560 }
+svar = "5"
+ledtrad = "Väggen, marken och stegen bildar en rätvinklig triangel. Stegen är hypotenusan: 3² + 4² = c²."
+feltankar = { "7" = "Sidorna adderas inte – deras kvadrater gör: 9 + 16 = 25, och stegen är √25.", "25" = "25 är stegens längd i kvadrat. Stegen är √25." }
+losning = ["c² = 3² + 4² = 9 + 16 = 25.", "c = √25 = 5 m."]
+
+[[uppgift]]
+niva = 3
+fraga = "En 5 m lång stege ska nå 4,8 m upp på väggen. Hur långt från väggen ska foten stå? (svara i meter)"
+figur = { typ = "scen", bild = "stege.jpg", bredd = 560 }
+svar = "1,4"
+ledtrad = "b² = 5² − 4,8² = 25 − 23,04."
+feltankar = { "0,2" = "Du drog ifrån längderna. Det är kvadraterna som dras ifrån: 25 − 23,04 = 1,96, och √1,96 = 1,4." }
+losning = ["b² = 5² − 4,8² = 25 − 23,04 = 1,96.", "b = √1,96 = 1,4 m."]
+
+[[exempel]]
+rubrik = "3, 4, 5 med kvadrater"
+figur = { typ = "tabell", rubriker = ["a²", "+", "b²", "=", "c²"], rader = [["9", "+", "16", "=", "25"]], kolbredd = 60 }
+steg = [
+  "Rita en kvadrat på varje sida av triangeln.",
+  "Kvadraterna på kateterna har arean 9 och 16.",
+  "Tillsammans 25 – precis kvadraten på hypotenusan. c = √25 = 5.",
+]
+
+[[exempel]]
+rubrik = "Hitta en katet"
+text = "Hypotenusan är 10 och en katet 6. Hur lång är den andra?"
+steg = [
+  "a² + b² = c² ger b² = c² − a².",
+  "b² = 100 − 36 = 64.",
+  "b = √64 = 8. Kontroll: kateten är kortare än hypotenusan.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Kateterna är {6*k} och {8*k}. Hur lång är hypotenusan?"
+steg = ["c² = {6*k}² + {8*k}²", "= {36*k*k} + {64*k*k} = {100*k*k}", "c = √{100*k*k} = ?"]
+svar = "{10*k}"
+var = { k = "1..4" }
+ledtrad = "Vilket tal gånger sig självt blir {100*k*k}?"
+feltankar = { "{100*k*k}" = "Det är c². Ta roten ur." }
+losning = ["√{100*k*k} = {10*k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "En rätvinklig triangel har kateterna {a} cm och {b} cm. Hur lång är hypotenusan? Svara med en decimal."
+svar = "sqrt({a*a+b*b})"
+tolerans = 0.05
+var = { a = "2..9", b = "2..9" }
+ledtrad = "c² = {a*a} + {b*b} = {a*a+b*b}. c = √{a*a+b*b}."
+feltankar = { "{a+b}" = "Sidorna adderas inte – deras kvadrater gör." }
+losning = ["c² = {a}² + {b}² = {a*a} + {b*b} = {a*a+b*b}.", "c = √{a*a+b*b} ≈ {round((a*a+b*b)**0.5, 1)} cm."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "En triangel har sidorna {3*k}, {4*k} och {5*k+e} cm. Är den rätvinklig?"
+alternativ = ["ja", "nej"]
+svar = "{['ja','nej'][e]}"
+form = "text"
+var = { k = "1..4", e = "0..1" }
+ledtrad = "Stämmer a² + b² = c² för den längsta sidan?"
+losning = ["{3*k}² + {4*k}² = {25*k*k}.", "{5*k+e}² = {(5*k+e)**2}.", "{'Lika – rätvinklig.' if e == 0 else 'Inte lika – inte rätvinklig.'}"]
+
+[[uppgift]]
+niva = 3
+fraga = "En rektangel är {6*k} cm bred och {8*k} cm hög. Hur lång är diagonalen?"
+figur = { typ = "rektangel", bredd = "{3*k}", hojd = "{4*k}", rutnat = false, matt = false }
+svar = "{10*k}"
+var = { k = "1..2" }
+ledtrad = "Diagonalen delar rektangeln i två rätvinkliga trianglar. Diagonalen är hypotenusan."
+losning = ["d² = {6*k}² + {8*k}² = {100*k*k}.", "d = {10*k} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur långt är det från origo (0, 0) till punkten ({3*k}, {4*k}) i koordinatsystemet?"
+figur = { typ = "koordinatsystem", xmax = "{3*k+1}", ymax = "{4*k+1}", punkter = [["{3*k}", "{4*k}"]] }
+svar = "{5*k}"
+var = { k = "1..2" }
+ledtrad = "Gå {3*k} åt höger och {4*k} uppåt – det är kateterna."
+feltankar = { "{7*k}" = "{3*k} + {4*k} är vägen längs rutorna. Fågelvägen är hypotenusan: √({3*k}² + {4*k}²)." }
+losning = ["Kateterna: {3*k} och {4*k}.", "Avståndet² = {9*k*k} + {16*k*k} = {25*k*k}.", "Avståndet = {5*k}."]

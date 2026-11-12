@@ -1,0 +1,170 @@
+id = "forskola-former"
+titel = "Formerna"
+omrade = "geometri"
+ikon = "triangel"
+bild = "torget.jpg"
+bildtext = "Torget är fullt av former: trianglar i stenläggningen, rektanglar i fönstren, en cirkel runt fontänen."
+sager = "Cirkeln är rund. Kvadraten har fyra lika långa sidor. Triangeln har tre hörn."
+galler = "Formen är densamma hur den än vänds, hur stor den är och vilken färg den har."
+galler_inte = "En triangel behöver inte stå på sin breda sida eller ha lika långa sidor. Allt som har tre raka sidor och tre hörn är en triangel – även en smal, sned eller upp-och-nedvänd."
+kalla = "Van Hiele nivå 0–1: från helhetsintryck till egenskaper (hörn och sidor). Visa formerna i många lägen så att barnet inte bara känner igen en ”typbild” (Clements)."
+
+[[rad]]
+sager = "cirkel"
+figur = { typ = "ikonval", ikoner = ["cirkel"], d = 56 }
+skriver = ["inga hörn"]
+
+[[rad]]
+sager = "triangel"
+figur = { typ = "ikonval", ikoner = ["triangel"], d = 56 }
+skriver = ["3 hörn"]
+
+[[rad]]
+sager = "kvadrat"
+figur = { typ = "ikonval", ikoner = ["kvadrat"], d = 56 }
+skriver = ["4 hörn, lika långa sidor"]
+
+[[rad]]
+sager = "rektangel"
+figur = { typ = "ikonval", ikoner = ["rektangel"], d = 56 }
+skriver = ["4 hörn, 2 långa + 2 korta sidor"]
+
+[[rad]]
+sager = "stjärna"
+figur = { typ = "ikonval", ikoner = ["stjarna"], d = 56 }
+skriver = ["5 uddar"]
+
+[[exempel]]
+rubrik = "Räkna hörnen"
+figur = { typ = "ikonval", ikoner = ["femhorning"], d = 72 }
+steg = [
+  "Lägg fingret i ett hörn. Säg: ett.",
+  "Gå längs sidan till nästa hörn: två.",
+  "Fortsätt runt: tre, fyra, fem.",
+  "Nu är du tillbaka där du började. Formen har fem hörn – den heter femhörning.",
+]
+
+[[exempel]]
+rubrik = "Kvadrat eller rektangel?"
+figur = { typ = "ikonval", ikoner = ["kvadrat", "rektangel"], d = 64 }
+steg = [
+  "Båda har fyra hörn och fyra raka sidor.",
+  "Kvadratens sidor är lika långa allihop.",
+  "Rektangeln har två långa och två korta sidor.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på triangeln."
+figur = { typ = "ikonval", ikoner = ["cirkel", "triangel", "kvadrat"] }
+svar = "triangel"
+ledtrad = "Triangeln har tre hörn."
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på cirkeln."
+figur = { typ = "ikonval", ikoner = ["kvadrat", "hjarta", "cirkel", "stjarna"] }
+svar = "cirkel"
+ledtrad = "Cirkeln är rund och har inga hörn."
+feltankar = { "hjarta" = "Hjärtat är runt på två ställen, men det har en spets längst ned. Cirkeln är rund hela vägen." }
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på stjärnan."
+figur = { typ = "ikonval", ikoner = ["hjarta", "stjarna", "cirkel"] }
+svar = "stjarna"
+ledtrad = "Stjärnan har fem spetsiga uddar."
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Lyssna på ledtrådarna. Vilken form är det?"
+steg = ["Formen har tre hörn.", "Den har tre raka sidor."]
+figur = { typ = "ikonval", ikoner = ["kvadrat", "triangel", "cirkel"] }
+svar = "triangel"
+ledtrad = "Vilken form har tre hörn? Räkna hörnen på varje form."
+feltankar = { "kvadrat" = "Kvadraten har fyra hörn. Vi letar efter tre.", "cirkel" = "Cirkeln har inga hörn alls." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på formen med fyra hörn."
+figur = { typ = "ikonval", ikoner = ["triangel", "kvadrat", "cirkel", "femhorning"] }
+svar = "kvadrat"
+ledtrad = "Räkna hörnen på varje form."
+feltankar = { "femhorning" = "Den har fem hörn. Räkna igen – vilken har fyra?", "triangel" = "Triangeln har tre hörn. Vilken har ett till?" }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på formen som inte har några hörn alls."
+figur = { typ = "ikonval", ikoner = ["kvadrat", "sexhorning", "cirkel", "triangel"] }
+svar = "cirkel"
+ledtrad = "Dra fingret runt kanten. Var tar det stopp? Den som aldrig tar stopp har inga hörn."
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många hörn har formen?"
+figur = { typ = "ikonval", ikoner = ["{['triangel','kvadrat','femhorning','sexhorning'][f]}"], d = 96 }
+alternativ = ["{f+2}", "{f+3}", "{f+4}"]
+svar = "{f+3}"
+var = { f = "0..3" }
+ledtrad = "Lägg fingret i ett hörn och räkna medan du går runt."
+losning = ["Lägg fingret i ett hörn och säg: ett.", "Gå runt formen och räkna varje hörn.", "När du är tillbaka där du började är du klar: {f+3} hörn."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "markera"
+fraga = "Klicka på alla trianglar."
+figur = { typ = "ikonval", ikoner = ["triangel", "kvadrat", "triangel", "cirkel", "triangel"], d = 64 }
+svar = "triangel,triangel,triangel"
+ledtrad = "En triangel har tre hörn. Räkna hörnen på varje form."
+
+[[uppgift]]
+niva = 3
+svarstyp = "valj"
+fraga = "Klicka på kvadraten. Alla dess sidor är lika långa."
+figur = { typ = "ikonval", ikoner = ["rektangel", "triangel", "kvadrat"] }
+svar = "kvadrat"
+ledtrad = "Två av formerna har fyra hörn. Titta på sidorna: är de lika långa?"
+feltankar = { "rektangel" = "Rektangeln har fyra hörn, men två av sidorna är längre. Kvadratens sidor är lika långa.", "triangel" = "Triangeln har tre hörn. Kvadraten har fyra." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "markera"
+fraga = "Klicka på alla former som har fyra hörn. Även den som står på spetsen."
+figur = { typ = "ikonval", ikoner = ["kvadrat", "triangel", "rektangel", "romb", "cirkel"], d = 64 }
+svar = "kvadrat,rektangel,romb"
+ledtrad = "Räkna hörnen på varje form. Tre av dem har fyra."
+feltankar = { "kvadrat" = "Kvadraten har fyra hörn – men det har två former till. Räkna hörnen på alla.", "kvadrat,rektangel" = "En till! Formen som står på spetsen har också fyra hörn – räkna dem." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla trianglarna röda och cirklarna blå."
+figur = { typ = "malrutor", kolumner = 6, ruta = 76, objekt = "{'|'.join('form:' + ['triangel','cirkel','kvadrat','cirkel','triangel','kvadrat'][(i+n)%6] for i in range(6))}" }
+svar = "{'|'.join(['röd','blå','','blå','röd',''][(i+n)%6] for i in range(6))}"
+var = { n = "0..5" }
+ledtrad = "En triangel har tre hörn. En cirkel är rund. Kvadraterna ska inte målas."
+losning = ["Leta upp formerna med tre hörn – de är trianglar. Måla dem röda.", "Leta upp de runda – de är cirklar. Måla dem blå.", "Kvadraterna lämnar du vita."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "kryssa"
+fraga = "Vilka former har hörn? Kryssa i alla."
+alternativ = ["form:triangel", "form:kvadrat", "form:cirkel", "form:rektangel", "form:oval"]
+svar = ["form:triangel", "form:kvadrat", "form:rektangel"]
+ledtrad = "Ett hörn är där två raka sidor möts. Känn med fingret runt formen."
+feltankar = { "form:cirkel" = "En cirkel är rund hela vägen runt – den har inga hörn.", "form:oval" = "En oval är rund som ett ägg – den har inga hörn." }
+losning = ["Triangeln har tre hörn.", "Kvadraten och rektangeln har fyra hörn.", "Cirkeln och ovalen är runda – inga hörn."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "rita"
+fraga = "Rita en cirkel, en triangel och en kvadrat."
+ledtrad = "Börja med cirkeln – den är rund. Triangeln har tre hörn."
+losning = ["En cirkel är rund och har inga hörn.", "En triangel har tre sidor och tre hörn.", "En kvadrat har fyra lika långa sidor."]
