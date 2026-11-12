@@ -1,6 +1,8 @@
 # Versionshistorik
 
 ## 0.5.0 (under utveckling)
+- Etapp 17: stabilisering av GUI/övningar/LAN. Ångra/Ctrl+Z startar om aktuell flerstegsövning i stället för att lämna övningssteget osynkroniserat; kontrollen heter då `Restart exercise / Starta om övningen`. Framstegens 1-/2-/3-radiga format använder nu samma testade kodväg i GUI och kärna, fortfarande med atomisk filersättning. En tyst LAN-motpart kan inte hålla kvar värdens parningsfas i hela den tidigare väntetiden; Avbryt avbryter även inkomplett handskakning. Nya regressioner täcker dessa fall och en serie med begränsad AI-sökning. Manuell provplan för 2 GB/soft, GUI, 31 övningar, Orca och två datorer dokumenterad.
+
 - Etapp 16: Schackskolan utökad till **31 övningar**. Ny löparspets (schack följt av verkligt slag av damen) med två försvar och en längre femhalvdragsövning där tredje spelar­draget anpassas till svarts försvar. Träningsmotorn kan nu hantera 1/3/5 halvdrag, med målbaserad kontroll för de två övningarna om att vinna damen. Ledtrådar, lärandemål och förklaringar anpassas efter aktuellt steg och försvarsgren, på svenska och engelska. Flera nya regel- och regressionsprov; ingen ny söktråd, extern tjänst eller ändring av sparfilens format.
 
 - Etapp 15: en ny **flerstegsövning med springargaffel** utökar schackskolan till **29 övningar**. Spelaren ger schack med springaren, svart försvarar kungen genom ett av två lagliga drag och spelaren slår sedan den hotade damen. Svenska/engelska kommentarer efter motdraget och tester som verifierar att damen faktiskt försvinner från ställningen. Befintliga öppningsövningar får dessutom två alternerande lagliga svartsvar vardera, med en relevant kommentar för varje variant.
