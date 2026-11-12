@@ -55,14 +55,14 @@ bool localIPv4(const std::string& address) {
         (v>>16)==0xA9FE || (v>>24)==127;
 }
 Peer::~Peer(){close();}
-void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;incoming_.clear();}
+void Peer::close(){shutdownFd(socket_);game_.reset();host_=false;incoming_.clear();peerClosed_=false;}
 bool Peer::begin(int fd,bool hosting,int timeoutMs,std::string* error){
  if(fd<0){fail(error,"Socket unavailable");return false;}
  std::string incoming;
  if(!sendAll(fd,hello,timeoutMs)||!readLine(fd,incoming,timeoutMs)||incoming!="WCHESS/1"){
   fail(error,"Protocol handshake failed");::shutdown(fd,SHUT_RDWR);::close(fd);return false;
  }
- socket_=fd;host_=hosting;incoming_.clear();game_.reset();return true;
+ socket_=fd;host_=hosting;incoming_.clear();peerClosed_=false;game_.reset();return true;
 }
 bool Peer::host(std::uint16_t port,int timeoutMs,std::string* error,const std::atomic<bool>* cancel){
  close();
@@ -124,6 +124,7 @@ bool Peer::sendMove(const std::string& notation,std::string* error){
 }
 Peer::Incoming Peer::pollMove(std::string& notation,std::string* error){
  notation.clear();
+ if(peerClosed_){fail(error,"Peer disconnected");close();return Incoming::Closed;}
  if(!connected()){fail(error,"Not connected");return Incoming::Closed;}
  char chunk[128];
  for(;;){
@@ -131,13 +132,16 @@ Peer::Incoming Peer::pollMove(std::string& notation,std::string* error){
   if(n>0){
    incoming_.append(chunk,static_cast<std::size_t>(n));
    if(incoming_.size()>128){fail(error,"Network message too long");close();return Incoming::Closed;}
-  } else if(n==0){fail(error,"Peer disconnected");close();return Incoming::Closed;}
+  } else if(n==0){peerClosed_=true;break;}
   else if(errno==EINTR)continue;
   else if(errno==EAGAIN||errno==EWOULDBLOCK)break;
   else{fail(error,"Connection lost");close();return Incoming::Closed;}
  }
  const auto pos=incoming_.find('\n');
- if(pos==std::string::npos)return Incoming::Waiting;
+ if(pos==std::string::npos){
+  if(peerClosed_){fail(error,"Peer disconnected");close();return Incoming::Closed;}
+  return Incoming::Waiting;
+ }
  const std::string line=incoming_.substr(0,pos);
  incoming_.erase(0,pos+1);
  const std::string expected="MOVE "+std::to_string(game_.moves.size())+" ";
