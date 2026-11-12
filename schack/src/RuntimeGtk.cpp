@@ -1230,7 +1230,7 @@ void activate(Ptr application,void*){
  label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
  g.gtk_scrolled_window_set_policy(scroll,2,1);
- g.gtk_widget_set_size_request(scroll,240,80);g.gtk_box_append(side,scroll);
+ g.gtk_widget_set_size_request(scroll,-1,80);g.gtk_widget_set_hexpand(scroll,1);g.gtk_box_append(side,scroll);
  app.history=g.gtk_label_new(tr("No moves yet","Inga drag ännu"));g.gtk_label_set_xalign(app.history,0);
  g.gtk_label_set_wrap(app.history,1);g.gtk_label_set_wrap_mode(app.history,2);
  g.gtk_label_set_max_width_chars(app.history,28);
