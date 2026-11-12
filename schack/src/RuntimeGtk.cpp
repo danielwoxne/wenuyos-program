@@ -564,6 +564,42 @@ void suggestMove(){
   g_idle_add(deliverAI,result);
  }).detach();
 }
+// An explicit user request analyses the previous position with a small node
+// budget. Never blocks GTK or labels an unsearched move as a proven blunder.
+struct MoveReview {
+ unsigned epoch;
+ chess::Board before;
+ chess::Move played;
+ chess::SearchResult suggested;
+};
+int deliverMoveReview(void* data){
+ std::unique_ptr<MoveReview> r(static_cast<MoveReview*>(data));
+ if(app.closed||r->epoch!=app.epoch)return 0;
+ app.analysisBusy=false;
+ const auto actual=chess::san(r->before,r->played);
+ std::string message=std::string(tr("Your move: ","Ditt drag: "))+actual+
+     " · "+explanation(chess::explainMove(r->before,r->played));
+ if(r->suggested.move.from>=0){
+  if(r->played==r->suggested.move)
+   message+=" · "+std::string(tr("Also chosen by the limited computer analysis.",
+                          "Valdes även av datorns begränsade analys."));
+  else message+=" · "+std::string(tr("Another candidate: ","Ett annat alternativ: "))+
+       chess::san(r->before,r->suggested.move)+
+       tr(" (not a proven improvement)."," (inte bevisat bättre).");
+ }
+ app.transient=message;refresh();return 0;
+}
+void analyzeLastMove(){
+ if(app.closed||app.training||app.mode==2||app.analysisBusy||app.game.moves.empty())return;
+ const auto before=app.game.positions[app.game.positions.size()-2];
+ const auto played=app.game.moves.back();
+ const unsigned epoch=app.epoch;
+ app.analysisBusy=true;app.transient.clear();refresh();
+ std::thread([before,played,epoch](){
+  auto* r=new MoveReview{epoch,before,played,chess::bestMove(before,3,8000)};
+  g_idle_add(deliverMoveReview,r);
+ }).detach();
+}
 void chosen(int sq){
  if(sq<0||app.game.result()!="ongoing")return;
  if(app.training&&app.lessonSolved)return;
@@ -920,6 +956,7 @@ void perform(int id){
   refresh();break;
  }
  case 12:suggestMove();break;
+ case 18:analyzeLastMove();break;
  case 13:app.palette=(app.palette+1)%4;theme();save();refresh();break;
  case 14:app.focusBoard=!app.focusBoard;refresh();g.gtk_widget_grab_focus(app.board);break;
  case 15:startLan(true);break;
@@ -975,6 +1012,7 @@ void activate(Ptr application,void*){
  app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;margin(tools,10,4);g.gtk_box_append(root,tools);
  button(tools,tr("Chess school","Schackskolan"),6);
  app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
+ app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);
  app.focusBtn=button(tools,tr("Focus on board","Fokus på brädet"),14);
  app.mainBox=g.gtk_box_new(0,0);Ptr main=app.mainBox;g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
