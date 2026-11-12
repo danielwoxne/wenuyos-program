@@ -235,7 +235,7 @@ void piece(cairo_t* c,char p,double x,double y,double s){
 
 struct App {
  Ptr window=nullptr,board=nullptr,status=nullptr,turn=nullptr,history=nullptr,levelBtn=nullptr,modeBtn=nullptr,sideBtn=nullptr;
- Ptr themeBtn=nullptr,hintBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
+ Ptr themeBtn=nullptr,hintBtn=nullptr,analyzeBtn=nullptr,material=nullptr,lessonProgress=nullptr,cssProvider=nullptr;
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
  Ptr lanStatus=nullptr,lanEntry=nullptr,lanCodeEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,promoteBtn=nullptr;
@@ -244,7 +244,7 @@ struct App {
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
  bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;
- bool lanConnecting=false;
+ bool lanConnecting=false,analysisBusy=false;
  // 160 ms linear piece travel; no extra surfaces, textures or worker thread.
  bool movingPiece=false;
  int motionFrom=-1,motionTo=-1;
@@ -422,6 +422,7 @@ void refresh(){
  else if(app.training&&app.lessonSolved)text=tr("Correct! Choose the next lesson.","Rätt drag! Välj nästa övning.");
  else if(app.busy)text=tr("Computer is thinking…","Datorn tänker…");
  else if(app.thinkingHint)text=tr("Analysing a move… you can keep playing.","Analyserar ett drag… du kan fortsätta spela.");
+ else if(app.analysisBusy)text=tr("Analysing your previous move…","Analyserar ditt föregående drag…");
  else if(!app.hintText.empty())text=app.hintText;
  else if(app.mode==2&&app.lanPeer&&!app.lanPeer->myTurn())text=tr("Waiting for opponent…","Väntar på motspelaren…");
  else if(app.game.board().inCheck(app.game.board().white))text=tr("Check!","Schack!");
@@ -461,6 +462,7 @@ void refresh(){
  const char* paletteNames[]={tr("Nordic blue","Nordiskt blått"),tr("Light","Ljust läge"),tr("Classic wood","Klassiskt trä"),tr("High contrast","Hög kontrast")};
  g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
+ if(app.analyzeBtn)g.gtk_widget_set_sensitive(app.analyzeBtn,!app.training&&!app.analysisBusy&&!app.game.moves.empty()&&app.mode!=2);
 
  g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
  const char* promoname=(app.promotion=='q'?tr("Queen","Dam"):app.promotion=='r'?tr("Rook","Torn"):app.promotion=='b'?tr("Bishop","Löpare"):tr("Knight","Springare"));
@@ -485,7 +487,7 @@ void refresh(){
  }
  repaint();
 }
-void reset(){if(app.mode==2){app.lanMessage=tr("Disconnect before starting a new game.","Koppla från innan du startar nytt parti.");refresh();return;}app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;stopPieceMotion();app.game.reset();
+void reset(){if(app.mode==2){app.lanMessage=tr("Disconnect before starting a new game.","Koppla från innan du startar nytt parti.");refresh();return;}app.epoch++;app.busy=false;clearHint();app.training=false;app.lessonSolved=false;app.analysisBusy=false;stopPieceMotion();app.game.reset();
  app.flipped=app.mode==0&&app.human==1;app.selected=-1;app.transient.clear();save();refresh();}
 void startAI();
 void afterMove(chess::Move m,bool byComputer=false){
@@ -500,6 +502,7 @@ void afterMove(chess::Move m,bool byComputer=false){
  const char moving=(m.from>=0&&m.from<64)?app.game.board().squares[m.from]:0;
  if(!app.game.play(m))return;
  startPieceMotion(m,moving);
+ app.analysisBusy=false;
  app.selected=-1;app.keyboardCursor=false;app.transient.clear();clearHint();app.epoch++;
  if(app.training){app.lessonMask|=(std::uint64_t(1)<<app.lessonIndex);saveProgress();}
  if(app.training)app.lessonSolved=true;else save();
@@ -710,8 +713,8 @@ int onKey(Ptr,unsigned key,unsigned,unsigned state,void*){
  refresh();return 1;
 }
 void lessonLoad(){
- app.epoch++;app.busy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
- stopPieceMotion();app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
+ app.epoch++;app.busy=false;app.analysisBusy=false;clearHint();app.lessonSolved=false;app.selected=-1;app.transient.clear();
+ stopPieceMotion();app.analysisBusy=false;app.game.loadFen(chess::lesson(app.lessonIndex).fen);refresh();
 }
 // The only network entry points are the two visible Host/Join buttons.
 std::string localLanAddress(){
@@ -893,7 +896,7 @@ void perform(int id){
   if(!app.training){
    save();app.savedGame=app.game;app.training=true;app.lessonIndex=0;lessonLoad();
   }else{
-   stopPieceMotion();app.training=false;app.lessonSolved=false;app.game=app.savedGame;
+   stopPieceMotion();app.analysisBusy=false;app.training=false;app.lessonSolved=false;app.game=app.savedGame;
    app.epoch++;app.busy=false;clearHint();app.selected=-1;app.transient.clear();refresh();startAI();
   }break;
  case 7:if(app.training&&app.lessonIndex>0){app.lessonIndex--;lessonLoad();}break;
