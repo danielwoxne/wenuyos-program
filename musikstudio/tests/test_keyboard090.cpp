@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "wenuystudio/KeyboardInput.hpp"
 #include "wenuystudio/MidiTake.hpp"
+#include "wenuystudio/BlockMixer.hpp"
 #include "wenuystudio/ProjectIO.hpp"
 #include "wenuystudio/Sequencer.hpp"
 #include <cassert>
@@ -71,6 +72,24 @@ int main() {
   assert(restored.tracks.size()==1&&restored.tracks[0].notes.size()==2);
   std::filesystem::remove(output);
  }catch(...){std::filesystem::remove(output);throw;}
+ // A keyboard preview must produce actual PCM energy without needing any
+ // PortAudio device in the headless test environment.
+ Project preview;
+ preview.sampleRate=48000;preview.durationSeconds=.60;
+ Track instrument;instrument.instrument=3;
+ instrument.notes.push_back({60,.005,.52,.8f});
+ preview.tracks.push_back(instrument);
+ BlockMixer synth(preview);
+ Stereo samples[512]{};
+ double signal=0;
+ for(std::uint64_t at=0;at<2048;at+=512){
+  assert(synth.process(at,samples,512)==512);
+  for(const auto& frame:samples){
+   assert(std::isfinite(frame.l)&&std::isfinite(frame.r));
+   signal+=std::abs(frame.l);
+  }
+ }
+ assert(signal>.1);
  // Every captured event is bounded: never allocate more than 4096 events.
  assert(take.begin(0,0));
  for(int i=0;i<4100;++i){
