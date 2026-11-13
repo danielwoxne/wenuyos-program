@@ -147,10 +147,13 @@ assert "GtkProgressBar" not in manifest, "No new runtime dependency should be ad
 
 # Dynamic labels must not discard the custom GTK icon+text child.
 for marker in (
-    "struct ButtonData{int id;Ptr button=nullptr,caption=nullptr;};",
+    "struct ButtonData{int id;Ptr button=nullptr,caption=nullptr,customChild=nullptr;};",
     "void updateButtonLabel(Ptr button,const char* text){",
+    "M(Ptr,gtk_button_get_child,(Ptr))",
+    "bool themedButtonsIntact(){",
+    'g.gtk_button_get_child(data->button)!=data->customChild',
     "g.gtk_label_set_label(entry->caption,text);",
-    "buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption}));",
+    "buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption,content}));",
     "updateButtonLabel(app.levelBtn,",
     "updateButtonLabel(app.modeBtn,",
     "updateButtonLabel(app.themeBtn,",
