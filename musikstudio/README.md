@@ -30,6 +30,14 @@ De format som inte är en direkt spelbar WAV avkodas till en permanent stereo-WA
 
 I byggen som saknar Datatyper är vanlig WAV-import fortfarande möjlig. Se [Datatyper-etappen](https://github.com/danielwoxne/wenuyos-program/pull/23) och `docs/DATATYPER_0.9.md`.
 
+## Valbar 3D-notkarta med WenuyGFX 0.9
+
+När WenuyGFX 0.9-SDK finns vid bygget följer det separata verktyget `wenuy-studio-gfx` med. När verktyget finns i programmappen visas även **Arkiv → Exportera 3D-notkarta…**. Spara projektet först, välj sedan en **ny** fil med ändelsen `.ppm`. Verktyget genererar en statisk 3D-karta av MIDI-noternas placering, längd, tonhöjd och anslagsstyrka; det exporterar **inte** ljud eller en frekvensanalys.
+
+Kommandoradsvarianten (när byggd): `wenuy-studio-gfx LÅT.wstudio NOTER.ppm --low`. En 2 GB-dator använder 320×180-bilden och WenuyGFX:s CPU-renderare utan grafikdrivrutin. Andra profiler använder 640×360. Högst 256 noter från de första 16 spåren ritas för att hålla minne/CPU nere.
+
+3D-funktionen är **frivillig och isolerad i en egen process**. Vanlig GTK4-redigering, inspelning och uppspelning kräver varken WenuyGFX eller GPU. Om hjälpprogrammet inte byggts visas inte menyvalet. Se [WenuyGFX-PR #24](https://github.com/danielwoxne/wenuyos-program/pull/24) och `docs/WENUYGFX_0.9.md`.
+
 ## Pianorullen (utvecklingsversion 0.9.0)
 
 1. Välj ett spår genom att klicka på dess rad i **Arrangemang**. Gå till fliken **Pianorulle**.
