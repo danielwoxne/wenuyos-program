@@ -389,10 +389,15 @@ void theme(){
     !g.gtk_css_provider_load_from_data || !g.gtk_style_context_add_provider_for_display)return;
  // Let GTK/WenuyOS provide application foreground and background colours.
  // Only the chessboard's four deliberate palettes are rendered in Cairo.
- const std::string css=std::string(".wenuy-topbar {padding: 2px 3px 5px;}")
-  +".wenuy-panel {border-radius: 16px; padding: 12px; }"
-  +".wenuy-control {border-radius: 9px; padding: 5px 9px; }"
-  +".wenuy-brand {font-weight: 800; letter-spacing: 1.1px;}"
+ // Theme colours and corners are inherited from GTK/libadwaita.
+ // Separators use the active theme foreground with low opacity.
+ const std::string css=std::string(".wenuy-topbar {padding: 6px 8px; border-bottom: 1px solid alpha(currentColor, 0.13);}")
+  +".wenuy-toolbar {padding: 5px 8px; border-bottom: 1px solid alpha(currentColor, 0.10);}"
+  +".wenuy-panel {padding: 6px;}"
+  +".wenuy-section {padding: 8px; border-bottom: 1px solid alpha(currentColor, 0.13);}"
+  +".wenuy-section-title {font-weight: 700; opacity: .84;}"
+  +".wenuy-control {padding: 6px 10px;}"
+  +".wenuy-brand {font-weight: 700; letter-spacing: .4px;}"
   +".wenuy-dim {opacity: .70;}";
  if(!app.cssProvider){
   app.cssProvider=g.gtk_css_provider_new();
@@ -1173,6 +1178,15 @@ void margin(Ptr w,int x,int y){
  g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
  g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
 }
+// The controls in each section are allocated only once, not during moves.
+Ptr section(Ptr parent,const char* title){
+ Ptr card=g.gtk_box_new(1,6);
+ g.gtk_widget_add_css_class(card,"wenuy-section");
+ g.gtk_widget_set_hexpand(card,1);
+ g.gtk_box_append(parent,card);
+ if(title)label(card,title,false,"wenuy-section-title");
+ return card;
+}
 int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
  if(app.lanCancel)app.lanCancel->store(true);
  if(app.lanPeer)app.lanPeer->close();
@@ -1193,7 +1207,8 @@ void activate(Ptr application,void*){
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
  button(header,tr("New game","Nytt parti"),0,true);app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
  // A separate compact toolbar keeps the game controls legible on smaller screens.
- app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;margin(tools,10,4);g.gtk_box_append(root,tools);
+ app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;
+ g.gtk_widget_add_css_class(tools,"wenuy-toolbar");g.gtk_box_append(root,tools);
  button(tools,tr("Chess school","Schackskolan"),6);
  app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
  app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);
