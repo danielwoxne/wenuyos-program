@@ -95,6 +95,23 @@ for marker in (
 assert "rgba(c,1,.75,.22,.3)" not in gui, "Last move highlight must follow theme"
 assert "rgba(c,.12,.27,.42,.47)" not in gui, "Legal move hint must follow theme"
 
+# 0.5.2: theme-friendly controls and sharper pieces, with no extra assets.
+for marker in (
+    "A stepped mane and nostril improve the knight silhouette",
+    "A neck ring makes the bishop readable on small squares",
+    "Shoulder folds add dimension without bitmap shading",
+    'Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"));',
+    'Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"));',
+    'Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"));',
+    'Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"));',
+    'g.gtk_widget_add_css_class(tools,"wenuy-toolbar");',
+    'g.gtk_widget_add_css_class(app.lessonBox,"wenuy-section");',
+    '.wenuy-section-title {font-weight: 700;',
+    'alpha(currentColor, 0.13)',
+):
+    assert marker in gui, f"Theme UI or vector drawing missing: {marker}"
+assert "border-radius: 16px" not in gui and "border-radius: 9px" not in gui
+
 # 0.5.2: a changing status message must never wrap and resize the board.
 # These are structure checks; actual pixel stability still requires a GTK test.
 for marker in (
@@ -144,8 +161,8 @@ for marker in (
 
     "g.gtk_widget_set_size_request(app.board,260,260);",
     "g.gtk_widget_set_size_request(app.sidePanel,252,-1);",
-    'app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);',
-    'app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);',
+    'app.lanHostBtn=button(lanSection,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);',
+    'app.lanJoinBtn=button(lanSection,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);',
     'app.lanCodeEntry=g.gtk_entry_new();',
     'tr("Six-digit pairing code","Sexsiffrig parningskod")',
     'tr(" · Pairing code: "," · Parningskod: ")',
@@ -185,9 +202,11 @@ for marker in (
 # Claude review (12 Nov): the chess-school panel must come before the LAN section, so its task and buttons are
 # visible without scrolling, and the first window must fit the screen (1024x600, 1280x720 with the panel).
 lesson_at = gui.index("app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);")
-lan_at = gui.index('label(side,tr("LAN GAME","NÄTVERKSPARTI")')
-status_at = gui.index('app.material=label(side,"",false,"wenuy-dim");')
-assert status_at < lesson_at < lan_at, "Chess school must be right under the game status, before the LAN section"
+settings_at = gui.index('Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"));')
+moves_at = gui.index('Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"));')
+lan_at = gui.index('Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"));')
+status_at = gui.index('app.material=label(gameSection,"",false,"wenuy-dim");')
+assert status_at < lesson_at < settings_at < moves_at < lan_at, "Keep the game and lessons ahead of settings and optional LAN"
 assert "g.gtk_window_set_default_size(app.window,960,700)" not in gui, "Fixed 960x700 window overflows small screens"
 assert "const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);" in gui
 import re as _re
