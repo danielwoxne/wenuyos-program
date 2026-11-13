@@ -8,12 +8,11 @@ UT=$(realpath "${1:-..}")
 V=$(sed -n 's/^version = "\(.*\)"/\1/p' wenuyos-app.toml)
 WENUYOS_PY=${WENUYOS_PY:-/usr/lib/wenuyos/python}
 
-python3 verktyg/expandera.py innehall share/se.wenuyos.app.matte    # kontrollerar innehållet först
-python3 verktyg/testfall.py innehall tester/fall.json
+# CMake förbereder uppgiftsdata och reservikoner under build/ (aldrig i källan).
+# Begränsad byggparallellism gör även själva bygget rimligt på en 2 GB-dator.
 cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
-cmake --build build -j"$(nproc)"
-cmake --build build --target matte-test -j"$(nproc)" >/dev/null
-./build/matte-test tester share/se.wenuyos.app.matte
+cmake --build build -j"${MATTE_BUILD_JOBS:-2}"
+ctest --test-dir build --output-on-failure
 
 STAGE=build/stage/matte
 rm -rf build/stage && mkdir -p "$STAGE"
