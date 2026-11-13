@@ -48,7 +48,20 @@ I fliken **Pianorulle** finns två oktaver (C4–B5). Klicka och håll en tangen
 - Klicka **Spela in MIDI**, spela tangenterna och välj **Stoppa MIDI-inspelning** eller transportens **Stoppa**. Noternas längder mäts från anslag till släpp med monoton klocka; flera samtidiga toner registreras och resultatet sätts in med 1/16-delskvantisering av starttiden.
 - Inspelningen läggs på det spår som var valt vid start. **Ångra** kan återställa hela tagningen. Programmet hindrar projektbyte/stängning och sparning medan MIDI-inspelningen pågår; stoppa tagningen först.
 
-**Begränsningar:** Högst 4 096 registrerade noter per tagning och 50 000 per spår i befintliga modellen. Ljudförhandsvisningen öppnar än så länge ett kortlivat PortAudio-flöde per ton och behöver speltestas för låg latens. Externt USB-/ALSA-MIDI-keyboard och licensgranskade inspelade instrument ingår **inte** i detta första utkast. Se `docs/KEYBOARD_MIDI_0.9.md`, `docs/FRIA_SAMPLINGAR.md` och [ärende #26](https://github.com/danielwoxne/wenuyos-program/issues/26). Inget av detta finns ännu i den publicerade versionen 0.8.1.
+**Begränsningar:** Högst 4 096 registrerade noter per tagning och 50 000 per spår i befintliga modellen. Ljudförhandsvisningen öppnar än så länge ett kortlivat PortAudio-flöde per ton och behöver speltestas för låg latens. Extern USB-/ALSA-MIDI har ett separat utkast i PR #28; licensgranskade inspelade instrument ingår **inte**. Se `docs/KEYBOARD_MIDI_0.9.md`, `docs/FRIA_SAMPLINGAR.md` och [ärende #26](https://github.com/danielwoxne/wenuyos-program/issues/26). Inget av detta finns ännu i den publicerade versionen 0.8.1.
+
+## Extern MIDI-inmatning (utkast PR #28)
+
+Musikstudion kan använda ett **externt USB-MIDI-keyboard** via Linux **ALSA Sequencer**, utan att starta en bakgrundstjänst eller ansluta automatiskt. Under **Pianorulle**, nedanför det virtuella keyboardet:
+
+1. Anslut ett MIDI-keyboard till datorn och välj **Sök MIDI-enheter**. En lista över lokala ALSA-källor visas.
+2. Välj rätt källa och klicka på **Anslut MIDI**. Anslutningen görs endast efter detta val. **Koppla från MIDI** avslutar prenumerationen och släpper toner som fortfarande hålls nere.
+3. Spela. Toner från C4–B5 visas också på det virtuella keyboardet; övriga MIDI-toner (0–127) registreras utan att grafik utanför keyboardet krävs.
+4. Starta **Spela in MIDI** innan du spelar om du vill behålla tagningen. Anslagets velocity (1–127) och verkliga notlängd följer med. Tryck **Stoppa MIDI-inspelning** och spara projektet.
+
+**Viktigt:** Linux ALSA Sequencer (utvecklingspaketet `libasound2-dev` för bygge, körbiblioteket `libasound2t64` på Debian 13) krävs för den externa funktionen. Om MIDI-stödet inte kan byggas visas ett förklarande meddelande, medan det virtuella keyboardet och ljudredigeringen fungerar utan ALSA. MIDI-händelser behandlas händelsestyrt i GTK:s huvudloop utan nätverk. Källorna listas bara efter användarens klick.
+
+Stödet omfattar MIDI Note On/Off, velocity och Controller 120/123 (*All Sound Off / All Notes Off*). Sustainpedal, pitchbend, flera röster samtidigt i förhandslyssningen och kanalbaserad separation är ännu inte implementerat. Inspelning kan behålla flera samtidiga toner, men förhandslyssningen är fortfarande monofon. Ingen fysisk USB-MIDI-enhet har provats i denna utvecklingsmiljö; se `docs/EXTERN_MIDI_0.9.md`.
 
 ## Pianorullen (utvecklingsversion 0.9.0)
 
