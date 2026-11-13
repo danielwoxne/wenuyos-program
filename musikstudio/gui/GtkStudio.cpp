@@ -11,6 +11,7 @@
 #include "wenuystudio/PianoInput.hpp"
 #include "wenuystudio/ProjectGuard.hpp"
 #include "wenuystudio/InstrumentBank.hpp"
+#include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -122,12 +123,18 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
     if(auto next=s->guard.finishedSave(true))performProtected(s,*next);
     break;
    case Pick::ImportWav:{
-    if(s->project.tracks.size()>=128)throw std::runtime_error("Maximum 128 tracks");
-    ws::WaveReader r(path);double len=double(r.frames())/r.rate();
-    ws::Track t;t.name=fs::path(path).stem().string();t.clips.push_back({fs::absolute(path).string(),s->playhead,0,len,1});
+    if(s->project.tracks.size()>=128)throw std::runtime_error(tr("Maximum 128 tracks","Högst 128 spår"));
+    const auto importDir=fs::u8path(g_get_user_data_dir())/"se.wenuyos.app.musikstudio"/"imports";
+    const auto imported=ws::importAudioFile(path,importDir.u8string());
+    const double len=double(imported.frames)/imported.rate;
+    ws::Track t;t.name=fs::path(path).stem().string();
+    t.clips.push_back({imported.filename,s->playhead,0,len,1});
     checkpoint(s);s->project.tracks.push_back(std::move(t));
     s->project.durationSeconds=std::min(20000.,std::max(s->project.durationSeconds,s->playhead+len));
-    s->selected=static_cast<unsigned>(s->project.tracks.size()-1);change(s);notice(s,tr("WAV imported","WAV importerad"));break;}
+    s->selected=static_cast<unsigned>(s->project.tracks.size()-1);
+    s->selectedNote.reset();change(s);
+    notice(s,imported.converted?tr("Audio imported with Datatypes","Ljud importerat med Datatyper"):
+                    tr("WAV imported","WAV importerad"));break;}
    case Pick::ImportMidi:{
     auto project=ws::importMidi(path);
     if(s->project.tracks.size()+project.tracks.size()>128)throw std::runtime_error("Maximum 128 tracks");
@@ -154,6 +161,10 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
    g_warning("Project save failed: %s",e.what());
    notice(s,tr("Could not save the project. Check disk space and permissions.",
                "Kunde inte spara projektet. Kontrollera ledigt utrymme och behörigheter."));
+  }else if(pick==Pick::ImportWav){
+   g_warning("Audio import failed: %s",e.what());
+   notice(s,tr("Could not import audio. Check the format or enable WenuyOS Datatypes.",
+               "Kunde inte importera ljud. Kontrollera formatet eller aktivera WenuyOS Datatyper."));
   }else notice(s,std::string(tr("Error: ","Fel: "))+e.what());
  }
 }
@@ -166,7 +177,7 @@ void choose(Studio* s,Pick pick){
  const bool save=pick==Pick::Save||pick==Pick::ExportWav||pick==Pick::ExportMidi||pick==Pick::Record;
  const char* title=pick==Pick::Open?tr("Open project","Öppna projekt"):
  pick==Pick::Save?tr("Save project","Spara projekt"):
- pick==Pick::ImportWav?tr("Import WAV","Importera WAV"):
+ pick==Pick::ImportWav?tr("Import audio","Importera ljud"):
  pick==Pick::ExportWav?tr("Export WAV","Exportera WAV"):
  pick==Pick::ImportMidi?tr("Import MIDI","Importera MIDI"):
  pick==Pick::ExportMidi?tr("Export MIDI","Exportera MIDI"):tr("Record WAV","Spela in WAV");
@@ -551,7 +562,7 @@ void activate(GApplication* application,gpointer){
  addAction(files,"new",tr("New project","Nytt projekt"));
  addAction(files,"open",tr("Open project…","Öppna projekt…"));
  addAction(files,"save",tr("Save project","Spara projekt"));
- addAction(files,"import-wav",tr("Import WAV…","Importera WAV…"));
+ addAction(files,"import-wav",tr("Import audio…","Importera ljud…"));
  addAction(files,"import-midi",tr("Import MIDI…","Importera MIDI…"));
  addAction(files,"export-wav",tr("Export WAV…","Exportera WAV…"));
  addAction(files,"export-midi",tr("Export MIDI…","Exportera MIDI…"));

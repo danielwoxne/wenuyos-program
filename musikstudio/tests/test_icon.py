@@ -44,4 +44,9 @@ assert 's->guard.finishedSave(true)' in code
 assert 's->guard.finishedSave(false)' in code
 assert 'ws::Project loaded=ws::loadProject(action.path)' in code
 assert code.index('ws::Project loaded=ws::loadProject(action.path)') < code.index('s->project=std::move(loaded)')
+# System Datatyper is a conditional capability; never remove the native WAV fallback.
+assert '#include "wenuystudio/AudioImport.hpp"' in code
+assert 'ws::importAudioFile(path,importDir.u8string())' in code
+assert 'tr("Import audio","Importera ljud")' in code
+assert 'tr("Import audio…","Importera ljud…")' in code
 print("Desktop, MIME, project guard, icon and compact layout PASS")
