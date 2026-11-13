@@ -392,7 +392,7 @@ void requestProtected(Studio* s,ws::ProjectAction action){
  const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen||s->midi.recording();
  const auto result=s->guard.request(action,s->dirty,blocked);
  if(result==ws::GuardDecision::Busy){
-  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty())?
+  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty()||s->midi.recording())?
    tr("Stop recording before switching projects or closing",
       "Avsluta inspelningen innan du byter projekt eller stänger"):
    tr("Finish the current dialog first","Avsluta den pågående dialogen först"));
@@ -535,6 +535,106 @@ void rightPressed(GtkGestureClick*,int,double x,double y,gpointer data){
  if(auto found=ws::pianoNoteAt(s->project.tracks[s->selected],*point)){
   s->selectedNote=*found;deleteSelectedNote(s);
  }
+}
+void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user){
+ auto* s=static_cast<Studio*>(user);
+ GdkRGBA foreground{.5,.5,.5,1};
+ gtk_style_context_get_color(gtk_widget_get_style_context(GTK_WIDGET(area)),&foreground);
+ auto color=[&](double alpha){
+  cairo_set_source_rgba(cr,foreground.red,foreground.green,foreground.blue,alpha);
+ };
+ const double white=double(width)/ws::keyboardWhiteCount;
+ // Use the current GTK foreground color with differing alpha; no hardcoded
+ // theme RGB values, custom skin, image atlas or graphics dependency.
+ for(int i=0;i<ws::keyboardWhiteCount;++i){
+  const int key=ws::keyboardWhiteKey(i);
+  const double x=i*white;
+  color(s->activeKeys[static_cast<std::size_t>(key)]?.27:.055);
+  cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_fill(cr);
+  color(.55);cairo_set_line_width(cr,1);
+  cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_stroke(cr);
+  color(.95);cairo_set_font_size(cr,11);
+  cairo_move_to(cr,x+4,height-8);
+  cairo_show_text(cr,ws::pitchName(key).c_str());
+ }
+ for(int i=0;i<ws::keyboardWhiteCount;++i){
+  const int key=ws::keyboardBlackAfter(i);
+  if(key<0)continue;
+  const double x=(i+1-ws::keyboardBlackWidth*.5)*white;
+  color(s->activeKeys[static_cast<std::size_t>(key)]?.98:.75);
+  cairo_rectangle(cr,x,0,white*ws::keyboardBlackWidth,
+                  height*ws::keyboardBlackHeight);cairo_fill(cr);
+ }
+}
+GtkWidget* createKeyboard(Studio* s){
+ auto* box=gtk_box_new(GTK_ORIENTATION_VERTICAL,3);
+ auto* instruction=gtk_label_new(tr(
+  "Play C4–B5 with mouse or Z/X/C… and Q/W/E… keys. Record MIDI to save played notes.",
+  "Spela C4–B5 med mus eller Z/X/C… och Q/W/E… Tryck Spela in MIDI för att spara toner."));
+ gtk_label_set_wrap(GTK_LABEL(instruction),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(instruction),0);
+ gtk_widget_set_margin_start(instruction,10);
+ gtk_widget_set_margin_end(instruction,10);
+ gtk_widget_add_css_class(instruction,"dim-label");
+ gtk_box_append(GTK_BOX(box),instruction);
+ auto* scroll=gtk_scrolled_window_new();
+ gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),GTK_POLICY_AUTOMATIC,GTK_POLICY_NEVER);
+ gtk_widget_set_size_request(scroll,-1,112);
+ auto* draw=gtk_drawing_area_new();
+ s->keyboard=draw;
+ gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(draw),560);
+ gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(draw),106);
+ gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(draw),drawKeyboard,s,nullptr);
+ gtk_widget_set_focusable(draw,TRUE);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(draw),GTK_ACCESSIBLE_PROPERTY_LABEL,
+  tr("Virtual keyboard C4 to B5 – press a key to hear it",
+     "Virtuellt keyboard C4 till B5 – tryck en tangent för att höra den"),-1);
+ auto* pointer=gtk_gesture_click_new();
+ gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(pointer),GDK_BUTTON_PRIMARY);
+ g_signal_connect(pointer,"pressed",G_CALLBACK(+[](GtkGestureClick*,gint,double x,double y,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  gtk_widget_grab_focus(st->keyboard);
+  if(auto key=ws::keyboardKeyAt(x,y,gtk_widget_get_width(st->keyboard),
+                                     gtk_widget_get_height(st->keyboard))){
+   st->pointerKey=*key;pressKeyboard(st,*key);
+  }
+ }),s);
+ g_signal_connect(pointer,"released",G_CALLBACK(+[](GtkGestureClick*,gint,double,double,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  if(st->pointerKey>=0)releaseKeyboard(st,st->pointerKey);
+  st->pointerKey=-1;
+ }),s);
+ gtk_widget_add_controller(draw,GTK_EVENT_CONTROLLER(pointer));
+ auto* keys=gtk_event_controller_key_new();
+ g_signal_connect(keys,"key-pressed",G_CALLBACK(+[](GtkEventControllerKey*,guint keyval,
+     guint,GdkModifierType mod,gpointer data)->gboolean{
+  if(mod&(GDK_CONTROL_MASK|GDK_ALT_MASK|GDK_SUPER_MASK))return FALSE;
+  auto* st=static_cast<Studio*>(data);
+  const int key=ws::keyboardComputerKey(gdk_keyval_to_lower(keyval));
+  if(key<0)return FALSE;
+  pressKeyboard(st,key);return TRUE;
+ }),s);
+ g_signal_connect(keys,"key-released",G_CALLBACK(+[](GtkEventControllerKey*,guint keyval,
+     guint,GdkModifierType,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  releaseKeyboard(st,ws::keyboardComputerKey(gdk_keyval_to_lower(keyval)));
+ }),s);
+ gtk_widget_add_controller(draw,keys);
+ auto* focus=gtk_event_controller_focus_new();
+ g_signal_connect(focus,"leave",G_CALLBACK(+[](GtkEventControllerFocus*,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  for(int key=ws::keyboardLowest;key<=ws::keyboardHighest;++key)releaseKeyboard(st,key);
+  st->pointerKey=-1;
+ }),s);
+ gtk_widget_add_controller(draw,focus);
+ gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),draw);
+ gtk_box_append(GTK_BOX(box),scroll);
+ s->keyboardStatus=gtk_label_new(tr("Keyboard ready","Keyboard redo"));
+ gtk_label_set_xalign(GTK_LABEL(s->keyboardStatus),0);
+ gtk_widget_set_margin_start(s->keyboardStatus,10);
+ gtk_widget_add_css_class(s->keyboardStatus,"dim-label");
+ gtk_box_append(GTK_BOX(box),s->keyboardStatus);
+ return box;
 }
 GtkWidget* area(Studio* s,bool piano){
  GtkWidget* sc=gtk_scrolled_window_new();auto* draw=gtk_drawing_area_new();
@@ -766,6 +866,7 @@ void activate(GApplication* application,gpointer){
  gtk_widget_set_margin_start(pianoBar,8);gtk_widget_set_margin_top(pianoBar,6);
  button(pianoBar,s,tr("Add C4 note","Lägg till C4-ton"),addNote);
  button(pianoBar,s,tr("Quantize","Kvantisera"),quantize);
+ s->midiButton=button(pianoBar,s,tr("Record MIDI","Spela in MIDI"),toggleMidi);
  gtk_box_append(GTK_BOX(pianoPage),pianoBar);
  auto* hint=gtk_label_new(tr("Click: add/select note · Right-click/Delete: remove · Arrows: move",
                           "Klick: lägg till/välj ton · Högerklick/Delete: ta bort · Pilar: flytta"));
@@ -774,6 +875,7 @@ void activate(GApplication* application,gpointer){
  gtk_widget_set_margin_start(hint,10);gtk_widget_set_margin_end(hint,10);
  gtk_widget_add_css_class(hint,"dim-label");
  gtk_box_append(GTK_BOX(pianoPage),hint);
+ gtk_box_append(GTK_BOX(pianoPage),createKeyboard(s));
  auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
  gtk_box_append(GTK_BOX(pianoPage),pianoArea);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));
