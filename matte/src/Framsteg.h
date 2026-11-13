@@ -39,6 +39,10 @@ struct Elev {
     std::string visuellStil = "automatisk";  // separat från lekläge/lättläst, per elev
     double zoom = 1.0;                               // textstorlek i övningen (Ctrl+plus/minus), 0.8–1.6
     bool sifferknappar = false;                      // knappar för siffror på skärmen (svara utan tangentbord)                           // lättläst: större text, luft, uppläsning, en mening per rad
+    // Pågående, ännu ej avslutad uppgift – pekar på JSON i elevens räknepappersmapp.
+    // Äldre elevprofiler saknar fälten och fortsätter fungera som förut.
+    std::string papperId, papperKort, papperFraga;
+    int papperMall = -1, papperVariant = -1;
     std::vector<Ritning> ritningar;                  // nyaste sist, högst 200
     std::string dagensKlar;                          // datum då "Dagens tre" senast blev klara
     int dagensSvit = 0;                              // dagar i rad
