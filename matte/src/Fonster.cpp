@@ -2641,7 +2641,13 @@ void Matte::visaKort(const Kort& k, bool nyttPass) {
     tyst();
     bool samma = aktuellt == &k && passAktivt && uppgift.v && passKort.empty() && !nyttPass;
     if (!samma) loggaAvbrott();
-    if (aktuellt != &k) regelHel = elev.lage(k.id) == LAR;   // ett nytt kort: hela regeln; ett man övar på: kärnan
+    if (aktuellt != &k) {
+        // Yngre elever får hela introduktionen först; högstadiet/gymnasiet
+        // börjar med kärnan och ser uppgiften direkt. Hela regeln kan öppnas.
+        const auto niva = visuellNiva(stadiumFor(k.id), elev.visuellStil);
+        regelHel = elev.lage(k.id) == LAR &&
+                   (niva == VisuellNiva::Lekfull || niva == VisuellNiva::Lugn);
+    }
     aktuellt = &k;
     elev.settKort(k.id);
     elev.spara();
@@ -2697,6 +2703,11 @@ void Matte::visaRegel() {
     GtkWidget* st = lbl(stjarntext(elev.stjarnor(k.id)), "matte-stjarnor", false);
     gtk_widget_set_tooltip_text(st, tr("★ a right answer · ★★ mastered · ★★★ it sticks (reviewed)",
                                        "★ ett rätt svar · ★★ behärskar · ★★★ det sitter (repeterat)"));
+    const auto niv = visuellNiva(stadiumFor(k.id), elev.visuellStil);
+    // Belöningsstjärnor finns kvar i elevens framsteg men tar inte plats
+    // i den mer professionella lektionsvyn för högstadiet/gymnasiet.
+    gtk_widget_set_visible(st, niv != VisuellNiva::Akademisk &&
+                               niv != VisuellNiva::Professionell);
     gtk_box_append(GTK_BOX(t), st);
     GtkWidget* lasKnapp = gtk_button_new_from_icon_name("audio-volume-high-symbolic");
     gtk_widget_add_css_class(lasKnapp, "circular");
