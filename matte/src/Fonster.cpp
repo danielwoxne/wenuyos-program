@@ -639,7 +639,9 @@ struct Matte {
     // verktygsraden, layouten, räknepappret, zoom, helskärm
     GtkWidget *verktyg = nullptr, *vRegel = nullptr, *vPapper = nullptr, *vFokus = nullptr, *vZoom = nullptr, *vHel = nullptr, *vLedtrad = nullptr;
     GtkWidget *kortBin = nullptr, *yttre = nullptr, *inrePaned = nullptr, *papperKolumn = nullptr, *papperDel = nullptr, *papperRull = nullptr,
-              *papper = nullptr;
+              *papper = nullptr, *papperStatus = nullptr;
+    bool papperByte = false, papperFelVisat = false, papperAterupptaVidStart = false;
+    bool sparaPapper();
     int layout = 0;                          // 0 en kolumn · 1 uppgift | papper · 2 regel | uppgift | papper · 3 som 2, större
     bool regelKolumn = true;                 // brett: regeln i egen kolumn (Regeln i verktygsraden)
     int papperVal = -1;                      // -1 som uppgiften vill, 0 av, 1 på (Räknepapper i verktygsraden)
@@ -827,7 +829,14 @@ void Matte::bygg(GtkApplication* app) {
     GtkWidget* ptips = lbl(tr("– not marked, it is for you", "– rättas inte, det är för dig"), "matte-svag", false);
     gtk_widget_set_hexpand(ptips, TRUE);
     gtk_box_append(GTK_BOX(prub), ptips);
+    papperStatus = lbl(tr("Not saved yet", "Inte sparat än"), "matte-svag", false);
+    gtk_widget_set_valign(papperStatus, GTK_ALIGN_CENTER);
+    gtk_box_append(GTK_BOX(prub), papperStatus);
     gtk_box_append(GTK_BOX(papperDel), prub);
+    raknepapper_andringar(papper,
+        [] { if (M) M->sparaPapper(); },
+        [] { if (M) M->toast(tr("Working paper is full. Undo or erase some strokes before drawing more.",
+                                "Räknepappret är fullt. Ångra eller sudda några streck innan du ritar mer.")); });
     GtkWidget* pv = raknepapper_verktyg(papper);
     gtk_box_append(GTK_BOX(papperDel), pv);
     papperRull = gtk_scrolled_window_new();
@@ -910,6 +919,11 @@ void Matte::bygg(GtkApplication* app) {
     }), nullptr);
     gtk_widget_add_controller(win, tang);
 
+    g_signal_connect(win, "close-request",
+        G_CALLBACK(+[](GtkWindow*, gpointer) -> gboolean {
+            if (M) M->sparaPapper();
+            return FALSE;  // lämna stängningen till GTK
+        }), nullptr);
     tillampaLeklage();
     tillampaZoom(false);
     fyllElevKnapp();
@@ -943,6 +957,28 @@ void Matte::tillampaLeklage() {
         adw_clamp_set_tightening_threshold(ADW_CLAMP(ovaKlamp), elev.lattlast ? 760 : 980);
     }
     passMal = elev.leklage ? 6 : 10;
+}
+
+// Lagra en ögonblicksbild efter tangentändring eller färdigt pennstreck.
+bool Matte::sparaPapper() {
+    if (papperByte || !papper || !giltigtPapperId(elev.papperId)) return true;
+    PapperData d = raknepapper_hamta(papper);
+    if (d.id != elev.papperId || d.kort != elev.papperKort) return true;
+    std::string fel;
+    if (!papperSpara(elev.namn, d, &fel)) {
+        if (papperStatus) gtk_label_set_text(GTK_LABEL(papperStatus),
+            tr("Could not save", "Kunde inte spara"));
+        if (!papperFelVisat) {
+            papperFelVisat = true;
+            toast(tr("Could not save the working paper. Your current work is still on screen.",
+                     "Kunde inte spara räknepappret. Ditt arbete finns kvar på skärmen."));
+        }
+        g_warning("Matte: kunde inte spara räknepappret: %s", fel.c_str());
+        return false;
+    }
+    papperFelVisat = false;
+    if (papperStatus) gtk_label_set_text(GTK_LABEL(papperStatus), tr("Saved", "Sparat"));
+    return true;
 }
 
 // ---- fokusläget -------------------------------------------------------------------------------------
@@ -2622,8 +2658,15 @@ void Matte::visaRegelbok() {
 }
 
 void Matte::bytElev(const std::string& namn) {
+    if (!sparaPapper()) return;
     tyst();
+    papperByte = true;
     elev = Elev::ladda(namn);
+    uppgift = Uppgift{};
+    papperAterupptaVidStart = false;
+    raknepapper_ny_session(papper, "", "", "", -1, -1);
+    papperByte = false;
+    if (papperStatus) gtk_label_set_text(GTK_LABEL(papperStatus), tr("Not saved yet", "Inte sparat än"));
     sattSenasteElev(namn);
     aktuellt = nullptr;
     passAktivt = false;
@@ -2638,8 +2681,11 @@ void Matte::bytElev(const std::string& namn) {
 // Kortet: regeln och uppgifterna på samma sida. Att öppna ett kort börjar ett pass direkt – första uppgiften
 // står under (eller bredvid) regeln. Samma kort igen mitt i ett pass = samma uppgift som förut.
 void Matte::visaKort(const Kort& k, bool nyttPass) {
+    if (!sparaPapper()) return;
     tyst();
     bool samma = aktuellt == &k && passAktivt && uppgift.v && passKort.empty() && !nyttPass;
+    papperAterupptaVidStart = !nyttPass && !samma &&
+        elev.papperKort == k.id && giltigtPapperId(elev.papperId);
     if (!samma) loggaAvbrott();
     if (aktuellt != &k) {
         // Yngre elever får hela introduktionen först; högstadiet/gymnasiet
@@ -3182,6 +3228,7 @@ void Matte::borjaOva() {
 
 void Matte::nyUppgift() {
     if (!aktuellt) return;
+    if (!sparaPapper()) return; // byt aldrig uppgift när diskfullt riskerar arbetet
     tyst();
     if (passGjorda >= passMal) { visaPaus(); return; }
     if (gtk_stack_get_visible_child_name(GTK_STACK(stack)) != std::string("kort")) visa("kort");
@@ -3208,7 +3255,59 @@ void Matte::nyUppgift() {
     uppgiftKlar = false;
     uppgiftBorjade = g_get_monotonic_time();
     if (!uppgift.v) { toast(tr("This card has no tasks yet.", "Det här kortet har inga uppgifter än.")); return; }
-    raknepapper_rensa(papper);   // ett nytt papper till varje uppgift
+
+    // Första uppgiften i ett återupptaget pass: återställ samma variant, inte
+    // en ny slumpfråga. Varje nytt försök får sedan sitt eget unika pappers-id.
+    bool aterstall = false;
+    PapperData gammalt;
+    if (papperAterupptaVidStart && passKort.empty() &&
+        elev.papperKort == aktuellt->id && giltigtPapperId(elev.papperId)) {
+        const auto& ms = data.mallar(aktuellt->id);
+        if (elev.papperMall >= 0 && (size_t)elev.papperMall < ms.size()) {
+            const auto& mall = ms[elev.papperMall];
+            if (elev.papperVariant >= 0 && (size_t)elev.papperVariant < mall.varianter.size() &&
+                mall.varianter[elev.papperVariant].fraga == elev.papperFraga) {
+                const std::string path = papperFil(elev.namn, elev.papperId);
+                bool finns = g_file_test(path.c_str(), G_FILE_TEST_EXISTS);
+                if (finns && papperLadda(elev.namn, elev.papperId, gammalt) &&
+                    gammalt.kort == aktuellt->id && gammalt.fraga == elev.papperFraga &&
+                    gammalt.mallIndex == elev.papperMall && gammalt.variantIndex == elev.papperVariant) {
+                    uppgift.kort = aktuellt;
+                    uppgift.mall = &mall;
+                    uppgift.mallIndex = elev.papperMall;
+                    uppgift.v = &mall.varianter[elev.papperVariant];
+                    aterstall = true;
+                } else if (finns) {
+                    // Behåll den skadade filen oförändrad för eventuell räddning.
+                    toast(tr("Could not restore an earlier paper. The old file was kept.",
+                             "Kunde inte återställa ett tidigare papper. Den gamla filen behölls."));
+                }
+            }
+        }
+    }
+    papperAterupptaVidStart = false;
+    papperByte = true;
+    if (aterstall) {
+        raknepapper_ladda_session(papper, gammalt);
+        if (papperStatus) gtk_label_set_text(GTK_LABEL(papperStatus), tr("Restored", "Återställd"));
+    } else {
+        // Ett nytt försök kan aldrig skriva över det förra, även om samma variant
+        // slumpas fram en gång till.
+        const auto& variants = uppgift.mall->varianter;
+        const int variant = (int)(uppgift.v - variants.data());
+        elev.papperId = nyttPapperId();
+        elev.papperKort = aktuellt->id;
+        elev.papperFraga = uppgift.v->fraga;
+        elev.papperMall = uppgift.mallIndex;
+        elev.papperVariant = variant;
+        raknepapper_ny_session(papper, elev.papperId, elev.papperKort,
+                               elev.papperFraga, elev.papperMall, variant);
+        if (!elev.spara())
+            toast(tr("Could not save the current task. Check available disk space.",
+                     "Kunde inte spara aktuell uppgift. Kontrollera ledigt diskutrymme."));
+        if (papperStatus) gtk_label_set_text(GTK_LABEL(papperStatus), tr("Not saved yet", "Inte sparat än"));
+    }
+    papperByte = false;
     visaUppgift();
     const Variant& v = *uppgift.v;
     if (lasesUpp()) {
