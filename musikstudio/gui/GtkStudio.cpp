@@ -75,7 +75,14 @@ void change(Studio* s){s->dirty=true;refresh(s);}
 void checkpoint(Studio* s){s->history.checkpoint(s->project);}
 void finishMidi(Studio* s){
  if(!s->midi.recording())return;
- auto captured=s->midi.finish(g_get_monotonic_time());
+ std::vector<ws::MidiNote> captured;
+ try{captured=s->midi.finish(g_get_monotonic_time());}
+ catch(const std::exception& e){
+  g_warning("MIDI buffer could not finalize: %s",e.what());
+  notice(s,tr("Not enough memory to finalize MIDI take",
+              "Inte tillräckligt med minne för att avsluta MIDI-tagningen"));
+  return;
+ }
  if(s->midiButton)gtk_button_set_label(GTK_BUTTON(s->midiButton),tr("Record MIDI","Spela in MIDI"));
  if(captured.empty()){
   notice(s,tr("MIDI recording stopped – no notes","MIDI-inspelning stoppad – inga toner"));
@@ -148,7 +155,14 @@ void releaseKeyboard(Studio* s,int key){
  if(key<ws::keyboardLowest||key>ws::keyboardHighest||
     !s->activeKeys[static_cast<std::size_t>(key)])return;
  s->activeKeys[static_cast<std::size_t>(key)]=false;
- if(s->midi.recording())s->midi.noteOff(key,g_get_monotonic_time());
+ if(s->midi.recording()){
+  try{(void)s->midi.noteOff(key,g_get_monotonic_time());}
+  catch(const std::exception& e){
+   g_warning("MIDI note buffering failed: %s",e.what());
+   notice(s,tr("MIDI recording memory limit reached",
+               "Minnesgränsen för MIDI-inspelning har nåtts"));
+  }
+ }
  if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
  s->audition.stop();
  // PortAudio initialization fails asynchronously when audio is unavailable.
@@ -363,7 +377,14 @@ void choose(Studio* s,Pick pick){
  }),req);
  gtk_native_dialog_show(GTK_NATIVE_DIALOG(dialog));
 }
-void save(Studio* s){if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);}
+void save(Studio* s){
+ if(s->midi.recording()){
+  notice(s,tr("Stop MIDI recording before saving the project",
+              "Stoppa MIDI-inspelningen innan du sparar projektet"));
+  return;
+ }
+ if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);
+}
 
 // Executes only AFTER the dirty guard allows the action, and only commits a
 // loaded file after its full parse/validation succeeded.
@@ -538,7 +559,7 @@ void rightPressed(GtkGestureClick*,int,double x,double y,gpointer data){
 }
 void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user){
  auto* s=static_cast<Studio*>(user);
- GdkRGBA foreground{.5,.5,.5,1};
+ GdkRGBA foreground{};
  gtk_style_context_get_color(gtk_widget_get_style_context(GTK_WIDGET(area)),&foreground);
  auto color=[&](double alpha){
   cairo_set_source_rgba(cr,foreground.red,foreground.green,foreground.blue,alpha);
