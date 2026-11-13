@@ -49,7 +49,7 @@ pkg_check_modules(SODIUM REQUIRED IMPORTED_TARGET libsodium)
 # wenuy-lara: den ämnesoberoende grunden – kort och uppgifter, framsteg och repetition, logg, uppläsning.
 # Ett nytt ämne (Svenska …) länkar mot den och lägger till sin egen rättning och sina figurer (docs/NYTT-AMNE.md).
 pkg_check_modules(GIO REQUIRED IMPORTED_TARGET gio-2.0)
-add_library(wenuy-lara STATIC src/Lara.cpp src/Text.cpp src/Json.cpp src/Data.cpp src/Framsteg.cpp src/Logg.cpp src/Uppl.cpp src/Flytt.cpp)
+add_library(wenuy-lara STATIC src/Lara.cpp src/Text.cpp src/Json.cpp src/Data.cpp src/Framsteg.cpp src/Logg.cpp src/Uppl.cpp src/Flytt.cpp src/PapperLagring.cpp)
 target_include_directories(wenuy-lara PUBLIC src)
 target_link_libraries(wenuy-lara PUBLIC PkgConfig::GLIB PkgConfig::GIO)
 
