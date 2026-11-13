@@ -13,11 +13,13 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 add_compile_options(-Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter)
 
-# Generate lesson data and missing fallback icons during configure.
-# This allows clean CI and AI Studio builds without an external setup script.
+# Generate lesson data and fallback icons in the build tree (never in the source).
+# Real icon assets take precedence over any placeholder generated below.
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(MATTE_FALLBACK_ICONS "${CMAKE_CURRENT_BINARY_DIR}/matte-fallback-icons")
 execute_process(
-  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/generera-saknade-ikoner.py" "${CMAKE_CURRENT_SOURCE_DIR}"
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/generera-saknade-ikoner.py"
+          "${CMAKE_CURRENT_SOURCE_DIR}" "${MATTE_FALLBACK_ICONS}"
   RESULT_VARIABLE MATTE_ICONS_RC
   OUTPUT_VARIABLE MATTE_ICONS_LOG
   ERROR_VARIABLE MATTE_ICONS_ERROR)
@@ -28,6 +30,7 @@ message(STATUS "${MATTE_ICONS_LOG}")
 execute_process(
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/expandera.py"
           "${CMAKE_CURRENT_SOURCE_DIR}/innehall" "${CMAKE_CURRENT_BINARY_DIR}/matte-share/se.wenuyos.app.matte"
+          "${MATTE_FALLBACK_ICONS}"
   RESULT_VARIABLE MATTE_DATA_RC
   OUTPUT_VARIABLE MATTE_DATA_LOG
   ERROR_VARIABLE MATTE_DATA_ERROR)
@@ -72,6 +75,12 @@ add_test(NAME matte-regression
     "${CMAKE_CURRENT_SOURCE_DIR}/tester"
     "${CMAKE_CURRENT_BINARY_DIR}/matte-share/se.wenuyos.app.matte")
 set_tests_properties(matte-regression PROPERTIES TIMEOUT 180)
+
+# Regression: real clay icons must win and CMake must leave all source assets untouched.
+add_test(NAME matte-icon-assets
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verktyg/test-ikoner.py"
+          "${CMAKE_CURRENT_SOURCE_DIR}")
+set_tests_properties(matte-icon-assets PROPERTIES TIMEOUT 90)
 
 
 # libwenuy (WenuyOS bibliotek: fönstergrund, tema, mätning) – källkoden ligger i common/
