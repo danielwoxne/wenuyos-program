@@ -37,6 +37,11 @@ int main(){
   assert(panic&&panic->kind==MidiInputKind::AllNotesOff&&panic->channel==channel);
  }
  MidiInput input;
+#ifdef WENUYSTUDIO_TEST_ALSA
+ assert(input.supported());
+#else
+ assert(!input.supported());
+#endif
  assert(!input.connected());
  // An invalid source must never open ALSA or connect to any device.
  std::string error;
