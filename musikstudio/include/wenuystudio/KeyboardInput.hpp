@@ -23,6 +23,7 @@ inline int keyboardWhiteKey(int index) noexcept {
   keyboardLowest+(index/7)*12+pcs[static_cast<std::size_t>(index%7)]:-1;
 }
 inline int keyboardBlackAfter(int whiteIndex) noexcept {
+ if(whiteIndex<0||whiteIndex>=keyboardWhiteCount)return -1;
  // A black key overlays the end of these white keys in each octave.
  switch(whiteIndex%7) {
   case 0:return keyboardLowest+(whiteIndex/7)*12+1;
