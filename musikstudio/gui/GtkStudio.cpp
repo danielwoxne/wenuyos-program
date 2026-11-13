@@ -13,6 +13,8 @@
 #include "wenuystudio/InstrumentBank.hpp"
 #include "wenuystudio/KeyboardInput.hpp"
 #include "wenuystudio/MidiTake.hpp"
+#include "wenuystudio/MidiInput.hpp"
+#include "wenuystudio/MidiInputKeys.hpp"
 #include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
 #include <array>
@@ -35,12 +37,17 @@ enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,ExportGfx,R
 struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
  GtkWidget *keyboard=nullptr,*midiButton=nullptr,*keyboardStatus=nullptr;
+ GtkWidget *midiDevicePicker=nullptr,*midiDeviceButton=nullptr,*midiDeviceStatus=nullptr;
+ GtkStringList* midiDeviceNames=nullptr;
  ws::Project project{};
  ws::Playback playback{};
- ws::Playback audition{};
+ ws::LivePreview audition{};
  ws::Recording recording{};
  ws::MidiTake midi{};
- std::array<bool,128> activeKeys{};
+ ws::MidiInput midiInput{};
+ ws::MidiInputKeys externalNotes{};
+ std::vector<ws::MidiInputSource> midiSources{};
+ std::array<bool,128> activeKeys{},externalKeys{};
  int pointerKey=-1;
  unsigned midiTrack=0;
  bool previewUnavailable=false;
@@ -53,7 +60,11 @@ struct Studio{
  bool dirty=false;
  bool closeAllowed=false,chooserOpen=false;
  guint timer=0;
- ~Studio(){if(timer)g_source_remove(timer);playback.stop();recording.stop();}
+ ~Studio(){
+  midiInput.disconnect();
+  if(timer)g_source_remove(timer);
+  audition.stop();playback.stop();recording.stop();
+ }
 };
 struct Request{Studio* s;Pick pick;};
 struct MapRequest{
@@ -67,6 +78,7 @@ void requestProtected(Studio*,ws::ProjectAction);
 void performProtected(Studio*,const ws::ProjectAction&);
 void save(Studio*);
 void finishMidi(Studio*);
+void releaseKeyboard(Studio*,int,bool external=false);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
@@ -128,33 +140,39 @@ void toggleMidi(Studio* s){
  notice(s,tr("MIDI recording – play the keyboard, then Stop MIDI",
              "MIDI-inspelning – spela på tangenterna och tryck sedan Stoppa MIDI"));
 }
-void pressKeyboard(Studio* s,int key){
- if(key<ws::keyboardLowest||key>ws::keyboardHighest||s->activeKeys[static_cast<std::size_t>(key)])return;
- s->activeKeys[static_cast<std::size_t>(key)]=true;
- if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time());
- if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
- if(s->keyboardStatus)gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
- if(s->selected>=s->project.tracks.size()||s->recording.active()||s->playback.active()||s->previewUnavailable)return;
+void pressKeyboard(Studio* s,int key,float velocity=.8f,bool external=false){
+ if(key<0||key>127)return;
+ auto& held=external?s->externalKeys:s->activeKeys;
+ auto& other=external?s->activeKeys:s->externalKeys;
+ const auto i=static_cast<std::size_t>(key);
+ if(held[i])return;
+ held[i]=true;
+ if(other[i])return; // one note-on for a key held by both sources
+ if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time(),velocity);
+ if(s->keyboard&&key>=ws::keyboardLowest&&key<=ws::keyboardHighest)
+  gtk_widget_queue_draw(s->keyboard);
+ if(s->keyboardStatus)
+  gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
+ if(s->selected>=s->project.tracks.size()||s->recording.active()||
+    s->playback.active()||s->previewUnavailable)return;
  try{
-  // Short-lived voice, no soundfiles and no new audio backend. The preview
-  // has its own player, so it never changes the arrangement playhead.
-  s->audition.stop();
-  ws::Project preview;
-  preview.sampleRate=s->project.sampleRate;
-  preview.durationSeconds=.60;
-  ws::Track track;track.instrument=s->project.tracks[s->selected].instrument;
-  track.notes.push_back({key,.005,.52,.8f});preview.tracks.push_back(std::move(track));
-  s->audition.start(preview,0);
+  // One PortAudio stream mixes the keyboard/ALSA voices on its worker.
+  if(!s->audition.active())s->audition.start(s->project.sampleRate);
+  s->audition.noteOn(key,s->project.tracks[s->selected].instrument,velocity);
  }catch(const std::exception& e){
   g_warning("Keyboard preview failed: %s",e.what());s->previewUnavailable=true;
   notice(s,tr("No audio output – MIDI recording still works",
               "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
  }
 }
-void releaseKeyboard(Studio* s,int key){
- if(key<ws::keyboardLowest||key>ws::keyboardHighest||
-    !s->activeKeys[static_cast<std::size_t>(key)])return;
- s->activeKeys[static_cast<std::size_t>(key)]=false;
+void releaseKeyboard(Studio* s,int key,bool external){
+ if(key<0||key>127)return;
+ auto& held=external?s->externalKeys:s->activeKeys;
+ auto& other=external?s->activeKeys:s->externalKeys;
+ const auto i=static_cast<std::size_t>(key);
+ if(!held[i])return;
+ held[i]=false;
+ if(other[i])return; // the other input source is still holding this note
  if(s->midi.recording()){
   try{
    if(!s->midi.noteOff(key,g_get_monotonic_time())&&
@@ -169,9 +187,9 @@ void releaseKeyboard(Studio* s,int key){
                "Minnesgränsen för MIDI-inspelning har nåtts"));
   }
  }
- if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
- s->audition.stop();
- // PortAudio initialization fails asynchronously when audio is unavailable.
+ if(s->keyboard&&key>=ws::keyboardLowest&&key<=ws::keyboardHighest)
+  gtk_widget_queue_draw(s->keyboard);
+ s->audition.noteOff(key);
  if(!s->audition.error().empty()&&!s->previewUnavailable){
   s->previewUnavailable=true;
   notice(s,tr("No audio output – MIDI recording still works",
@@ -209,7 +227,7 @@ gboolean tick(gpointer data){
 void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
 void play(Studio* s){
  if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
- try{if(!s->recordFile.empty())finishRecord(s);s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
+ try{if(!s->recordFile.empty())finishRecord(s);s->audition.stop();s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
  startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
 }
 void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
@@ -583,7 +601,8 @@ void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer
  for(int i=0;i<ws::keyboardWhiteCount;++i){
   const int key=ws::keyboardWhiteKey(i);
   const double x=i*white;
-  color(s->activeKeys[static_cast<std::size_t>(key)]?.27:.055);
+  color((s->activeKeys[static_cast<std::size_t>(key)]||
+         s->externalKeys[static_cast<std::size_t>(key)])?.27:.055);
   cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_fill(cr);
   color(.55);cairo_set_line_width(cr,1);
   cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_stroke(cr);
@@ -595,10 +614,148 @@ void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer
   const int key=ws::keyboardBlackAfter(i);
   if(key<0)continue;
   const double x=(i+1-ws::keyboardBlackWidth*.5)*white;
-  color(s->activeKeys[static_cast<std::size_t>(key)]?.98:.75);
+  color((s->activeKeys[static_cast<std::size_t>(key)]||
+         s->externalKeys[static_cast<std::size_t>(key)])?.98:.75);
   cairo_rectangle(cr,x,0,white*ws::keyboardBlackWidth,
                   height*ws::keyboardBlackHeight);cairo_fill(cr);
  }
+}
+void releaseExternalKeys(Studio* s){
+ s->externalNotes.reset([s](int key,bool down,float){
+  if(!down)releaseKeyboard(s,key,true);
+ });
+}
+void refreshExternalMidi(Studio* s){
+ if(s->midiInput.connected()){
+  notice(s,tr("Disconnect MIDI before refreshing the device list",
+              "Koppla från MIDI innan du söker efter enheter igen"));
+  return;
+ }
+ if(!s->midiDeviceNames)return;
+ std::string error;
+ const auto sources=s->midiInput.scan(error);
+ if(!error.empty()){
+  notice(s,tr("Could not access ALSA MIDI devices. Check device permissions.",
+              "Kunde inte läsa ALSA MIDI-enheter. Kontrollera enhetens behörigheter."));
+  return;
+ }
+ s->midiSources=sources;
+ gtk_string_list_splice(s->midiDeviceNames,0,
+                        g_list_model_get_n_items(G_LIST_MODEL(s->midiDeviceNames)),
+                        nullptr);
+ for(const auto& source:sources){
+  char* safe=g_utf8_make_valid(source.label.c_str(),-1);
+  gtk_string_list_append(s->midiDeviceNames,safe);
+  g_free(safe);
+ }
+ if(!sources.empty())gtk_drop_down_set_selected(GTK_DROP_DOWN(s->midiDevicePicker),0);
+ if(s->midiDeviceStatus){
+  const std::string label=std::string(tr("MIDI devices found: ","MIDI-enheter hittade: "))+std::to_string(sources.size());
+  gtk_label_set_text(GTK_LABEL(s->midiDeviceStatus),label.c_str());
+ }
+ gtk_widget_set_sensitive(s->midiDevicePicker,!sources.empty());
+ gtk_widget_set_sensitive(s->midiDeviceButton,!sources.empty());
+}
+void toggleExternalMidi(Studio* s){
+ if(s->midiInput.connected()){
+  s->midiInput.disconnect();releaseExternalKeys(s);
+  if(s->midiDeviceButton)
+   gtk_button_set_label(GTK_BUTTON(s->midiDeviceButton),tr("Connect MIDI","Anslut MIDI"));
+  if(s->midiDeviceStatus)
+   gtk_label_set_text(GTK_LABEL(s->midiDeviceStatus),tr("MIDI disconnected","MIDI frånkopplat"));
+  gtk_widget_set_sensitive(s->midiDevicePicker,!s->midiSources.empty());
+  return;
+ }
+ if(!s->midiDevicePicker)return;
+ const auto selected=gtk_drop_down_get_selected(GTK_DROP_DOWN(s->midiDevicePicker));
+ if(selected>=s->midiSources.size()){
+  notice(s,tr("Select a MIDI device first","Välj först en MIDI-enhet"));return;
+ }
+ std::string error;
+ const auto source=s->midiSources[selected];
+ const bool ok=s->midiInput.connect(source,[s](const ws::MidiInputMessage& event){
+  // Aggregate per pitch for GTK/MidiTake, but retain separate MIDI channels
+  // and pedal-held notes until that channel actually releases the pitch.
+  auto keyChange=[s](int key,bool down,float velocity){
+   if(down)pressKeyboard(s,key,velocity,true);
+   else releaseKeyboard(s,key,true);
+  };
+  switch(event.kind){
+   case ws::MidiInputKind::NoteOn:
+    s->externalNotes.noteOn(event.channel,event.key,event.velocity,keyChange);break;
+   case ws::MidiInputKind::NoteOff:
+    s->externalNotes.noteOff(event.channel,event.key,keyChange);break;
+   case ws::MidiInputKind::Sustain:
+    s->externalNotes.sustain(event.channel,event.value>=64,keyChange);break;
+   case ws::MidiInputKind::AllNotesOff:
+    s->externalNotes.allNotesOff(event.channel,keyChange);break;
+   case ws::MidiInputKind::Disconnected:
+    releaseExternalKeys(s);
+    if(s->midiDeviceButton)
+     gtk_button_set_label(GTK_BUTTON(s->midiDeviceButton),tr("Connect MIDI","Anslut MIDI"));
+    if(s->midiDeviceStatus)
+     gtk_label_set_text(GTK_LABEL(s->midiDeviceStatus),
+                       tr("MIDI source disconnected","MIDI-källan kopplades från"));
+    if(s->midiDevicePicker)gtk_widget_set_sensitive(s->midiDevicePicker,TRUE);
+    notice(s,tr("MIDI device was disconnected","MIDI-enheten kopplades från"));
+    break;
+  }
+ },error);
+ if(!ok){
+  g_warning("MIDI connect failed: %s",error.c_str());
+  notice(s,tr("Could not connect to the selected MIDI device",
+              "Kunde inte ansluta till den valda MIDI-enheten"));
+  return;
+ }
+ gtk_button_set_label(GTK_BUTTON(s->midiDeviceButton),
+                      tr("Disconnect MIDI","Koppla från MIDI"));
+ gtk_widget_set_sensitive(s->midiDevicePicker,FALSE);
+ if(s->midiDeviceStatus){
+  const std::string label=std::string(tr("Connected to MIDI: ","Ansluten till MIDI: "))+source.label;
+  char* safe=g_utf8_make_valid(label.c_str(),-1);
+  gtk_label_set_text(GTK_LABEL(s->midiDeviceStatus),safe);g_free(safe);
+ }
+}
+GtkWidget* createExternalMidiUi(Studio* s){
+ auto* container=gtk_box_new(GTK_ORIENTATION_VERTICAL,4);
+ gtk_widget_set_margin_start(container,10);
+ gtk_widget_set_margin_end(container,10);
+ auto* label=gtk_label_new(tr(
+  "External MIDI: Scan, choose a local source, then Connect. No automatic connection.",
+  "Extern MIDI: Sök, välj en lokal källa och tryck Anslut. Ingen automatisk anslutning."));
+ gtk_label_set_wrap(GTK_LABEL(label),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(label),0);
+ gtk_widget_add_css_class(label,"dim-label");
+ gtk_box_append(GTK_BOX(container),label);
+ auto* controls=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
+ auto* scan=gtk_button_new_with_label(tr("Scan MIDI devices","Sök MIDI-enheter"));
+ gtk_widget_set_tooltip_text(scan,tr("List local ALSA MIDI sources",
+                                      "Lista lokala ALSA MIDI-källor"));
+ g_signal_connect_swapped(scan,"clicked",G_CALLBACK(refreshExternalMidi),s);
+ gtk_box_append(GTK_BOX(controls),scan);
+ s->midiDeviceNames=gtk_string_list_new(nullptr);
+ s->midiDevicePicker=gtk_drop_down_new(G_LIST_MODEL(s->midiDeviceNames),nullptr);
+ g_object_unref(s->midiDeviceNames); // dropdown owns this list model
+ gtk_widget_set_hexpand(s->midiDevicePicker,TRUE);
+ gtk_widget_set_sensitive(s->midiDevicePicker,FALSE);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(s->midiDevicePicker),
+   GTK_ACCESSIBLE_PROPERTY_LABEL,tr("External MIDI source","Extern MIDI-källa"),-1);
+ gtk_box_append(GTK_BOX(controls),s->midiDevicePicker);
+ s->midiDeviceButton=gtk_button_new_with_label(tr("Connect MIDI","Anslut MIDI"));
+ g_signal_connect_swapped(s->midiDeviceButton,"clicked",G_CALLBACK(toggleExternalMidi),s);
+ gtk_widget_set_sensitive(s->midiDeviceButton,FALSE);
+ gtk_box_append(GTK_BOX(controls),s->midiDeviceButton);
+ gtk_box_append(GTK_BOX(container),controls);
+ s->midiDeviceStatus=gtk_label_new(s->midiInput.supported()?
+   tr("Click Scan MIDI devices to search","Tryck Sök MIDI-enheter för att söka"):
+   tr("ALSA MIDI input unavailable; on-screen keyboard still works",
+      "ALSA MIDI-indata saknas; det virtuella keyboardet fungerar ändå"));
+ gtk_label_set_wrap(GTK_LABEL(s->midiDeviceStatus),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(s->midiDeviceStatus),0);
+ gtk_widget_add_css_class(s->midiDeviceStatus,"dim-label");
+ gtk_box_append(GTK_BOX(container),s->midiDeviceStatus);
+ gtk_widget_set_sensitive(scan,s->midiInput.supported());
+ return container;
 }
 GtkWidget* createKeyboard(Studio* s){
  auto* box=gtk_box_new(GTK_ORIENTATION_VERTICAL,3);
@@ -910,6 +1067,7 @@ void activate(GApplication* application,gpointer){
  gtk_widget_add_css_class(hint,"dim-label");
  gtk_box_append(GTK_BOX(pianoPage),hint);
  gtk_box_append(GTK_BOX(pianoPage),createKeyboard(s));
+ gtk_box_append(GTK_BOX(pianoPage),createExternalMidiUi(s));
  auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
  gtk_box_append(GTK_BOX(pianoPage),pianoArea);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));

@@ -33,6 +33,14 @@ Inget av detta ingår i signerade 0.8.1 förrän ny release godkänts och public
 - Tak 4 096 händelser per tagning; inget nät eller ny audio-drivrutin. MIDI via fysisk USB-enhet och samplingsbank är framtida etapper, inte levererade här.
 - Dokumenterad separat licens- och RAM-budget för framtida fria samplingar, inga ljudfiler tillagda.
 
+## Extern MIDI via ALSA Sequencer (stackad PR #28)
+
+- Frivillig lokal anslutning till ett externt MIDI-keyboard via **Sök MIDI-enheter → Välj källa → Anslut MIDI**. Källorna listas endast på begäran, och prenumerationen avslutas via **Koppla från MIDI**.
+- MIDI Note On/Off, Note On med velocity 0 och Control Change 120/123; anslagsstyrkan följer med till befintlig `MidiTake`, som mäter notlängd och kan spela in ackord.
+- Varje extern källa hanteras separat från virtuella tangenterna; vid USB-frånkoppling släpps hållna noter. Ingenting kopplas upp via nätverk.
+- ALSA-SDK är valfritt i CMake; GTK4 och MIDI-tagning från datortangentbord fungerar även utan ALSA. Körpaketet på Debian 13 deklareras när ALSA byggs in.
+- CTest provar normalisering, ogiltig källa, frånvarande ALSA-backend och befintliga keyboard/ljudfunktioner. Förbindelse med fysisk USB-MIDI-enhet är inte verifierad i CI.
+
 ## Föreslagna prov före merge
 
 - C++17-regressionsprov av pixlar→ton, randvärden, dubblettskydd, markerad ton, förflyttning, ångra/borttagning.
