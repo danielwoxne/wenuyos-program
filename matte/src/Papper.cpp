@@ -482,9 +482,32 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
         uppdatera(p);
         markeraAndring(p);
     }), p);
-    GtkWidget* re = knapp(rad, tr("Clear", "Rensa"), tr("An empty paper", "Ett tomt papper"), false);
+    GtkWidget* re = knapp(rad, tr("Clear", "Rensa"),
+                            tr("Erase this working paper after confirmation", "Sudda hela räknepappret efter bekräftelse"),
+                            false);
     g_signal_connect(re, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
-        Papper* p = static_cast<Papper*>(d); raknepapper_rensa(p->w); gtk_widget_grab_focus(p->w);
+        Papper* p = static_cast<Papper*>(d);
+        if (p->c.empty() && p->drag.empty() && p->streck.empty()) return;
+        GtkWidget* parent = GTK_WIDGET(gtk_widget_get_root(p->w));
+        if (!parent) return;
+        AdwAlertDialog* dialog = adw_alert_dialog_new(
+            tr("Clear working paper?", "Rensa räknepappret?"),
+            tr("The handwritten calculations on this page will be erased.",
+               "De handskrivna uträkningarna på den här sidan tas bort."));
+        adw_alert_dialog_add_responses(dialog,
+            "cancel", tr("Cancel", "Avbryt"),
+            "clear", tr("Clear", "Rensa"), nullptr);
+        adw_alert_dialog_set_default_response(dialog, "cancel");
+        adw_alert_dialog_set_close_response(dialog, "cancel");
+        adw_alert_dialog_set_response_appearance(dialog, "clear", ADW_RESPONSE_DESTRUCTIVE);
+        g_signal_connect(dialog, "response", G_CALLBACK(+[](AdwAlertDialog*, const char* response, gpointer d) {
+            if (response && std::string(response) == "clear") {
+                Papper* p = static_cast<Papper*>(d);
+                raknepapper_rensa(p->w);
+                gtk_widget_grab_focus(p->w);
+            }
+        }), p);
+        adw_dialog_present(ADW_DIALOG(dialog), parent);
     }), p);
     uppdatera(p);
     return rad;
