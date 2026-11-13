@@ -4,9 +4,22 @@
 #pragma once
 #include <gtk/gtk.h>
 
+#include "PapperLagring.h"
+
+#include <functional>
 #include <string>
 
 namespace matte {
+
+// Koppla varaktig sparning till ändringar (efter färdigt penndrag och tangenttryckning).
+// Varna om en hård minnes-/punktgräns nås; ingen tyst radering av handskrift.
+void raknepapper_andringar(GtkWidget* papper, std::function<void()> spara,
+                            std::function<void()> begransning);
+void raknepapper_ny_session(GtkWidget* papper, const std::string& id,
+                           const std::string& kort, const std::string& fraga,
+                           int mall, int variant);
+bool raknepapper_ladda_session(GtkWidget* papper, const PapperData& data);
+PapperData raknepapper_hamta(GtkWidget* papper);
 
 GtkWidget* raknepapper_new();                                   // pappret (fokuserbart, fyller sin bredd)
 GtkWidget* raknepapper_verktyg(GtkWidget* papper);              // raden ovanför: Skriv, Penna, Sudda, Liten siffra …
