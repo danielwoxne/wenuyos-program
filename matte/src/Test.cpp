@@ -4,6 +4,7 @@
 #include "Bedom.h"
 #include "Data.h"
 #include "Penntryck.h"
+#include "PapperLagring.h"
 #include "VisuellNiva.h"
 #include "Framsteg.h"
 #include "Json.h"
@@ -84,6 +85,57 @@ static void testaVisuellNiva() {
           std::string(visuellStilVarde(200)) == "automatisk", "stilkoderna är säkra");
     KOLLA(std::string(visuellNivaKlass(VisuellNiva::Professionell)) ==
           "matte-visuell-professionell", "CSS-klass för gymnasiet");
+}
+
+// Själva handskriftens form, sparning och återläsning provas utan GTK och riktig elevdata.
+static void testaPapperLagring() {
+    gchar* tmp = g_dir_make_tmp("matte-papper-XXXXXX", nullptr);
+    KOLLA(tmp != nullptr, "tillfällig datamapp för räknepapper");
+    if (!tmp) return;
+    g_setenv("XDG_DATA_HOME", tmp, TRUE);
+    PapperData p;
+    p.id = nyttPapperId(); p.kort = "brak-delar";
+    p.fraga = "Hur stor del är 3/4?";
+    p.mallIndex = 2; p.variantIndex = 4;
+    p.c[{1,2}] = {"3", "1"};
+    p.streck.push_back({2, 1, 4});
+    p.drag.push_back({{1.125, 2.5, .25, true}, {2.75, 3.0, .95, true}});
+    std::string fil, err;
+    KOLLA(giltigtPapperId(p.id) && !giltigtPapperId("../andra") &&
+          papperFil("a", "../andra").empty(), "säker UUID och stoppad sökväg");
+    KOLLA(papperTillJson(p, fil, &err), "JSON från giltigt papper: %s", err.c_str());
+    PapperData d;
+    KOLLA(papperFranJson(fil, d, &err) &&
+          d.id == p.id && d.c[{1,2}].t == "3" && d.c[{1,2}].liten == "1" &&
+          d.streck.size() == 1 && d.drag.size() == 1 &&
+          d.drag[0][1].tryckFinns && d.drag[0][1].tryck > .94,
+          "tryck, minnessiffra och streck överlever JSON-rundgång");
+    KOLLA(papperSpara("forsta-elev", p, &err), "atomär lokal sparning: %s", err.c_str());
+    PapperData igen;
+    KOLLA(papperLadda("forsta-elev", p.id, igen, &err) &&
+          igen.fraga == p.fraga && igen.c[{1,2}].liten == "1" &&
+          igen.drag[0][1].first == 2.75, "återställ efter omstart");
+    KOLLA(!papperLadda("andra-elev", p.id, d, &err),
+          "elev B får inte läsa elev A:s papper");
+    PapperData tidigare = igen;
+    KOLLA(!papperFranJson("{trasig", igen, &err) && igen.id == tidigare.id,
+          "skadad JSON får inte förstöra befintligt papper");
+    KOLLA(!papperFranJson(std::string(PAPPER_MAX_BYTE + 1, 'x'), igen, &err),
+          "för stor fil stoppas före JSON-parsning");
+    PapperData felData = p;
+    felData.drag[0][0].tryck = NAN;
+    KOLLA(!papperKontroll(felData), "NaN-tryck stoppas");
+    felData = p; felData.drag[0][0].first = 1e50;
+    KOLLA(!papperKontroll(felData), "ogiltig koordinat stoppas");
+    felData = p; felData.id = "../annat";
+    KOLLA(!papperSpara("forsta-elev", felData), "farligt filnamn skrivs aldrig");
+    const std::string path = papperFil("forsta-elev", p.id);
+    const std::string mapp = papperMapp("forsta-elev");
+    g_remove(path.c_str()); g_rmdir(mapp.c_str());
+    g_rmdir((datamapp() + "/raknepapper").c_str());
+    g_rmdir(datamapp().c_str()); g_rmdir(tmp);
+    g_unsetenv("XDG_DATA_HOME");
+    g_free(tmp);
 }
 
 static void testaBrak() {
@@ -224,6 +276,7 @@ int main(int argc, char** argv) {
     testaStavningOchSiffror();
     testaBrak();
     testaPenntryck();
+    testaPapperLagring();
     testaVisuellNiva();
     testaJson();
     testaTolkning(mapp);
