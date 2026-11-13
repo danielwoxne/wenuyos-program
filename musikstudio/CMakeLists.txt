@@ -63,4 +63,21 @@ add_executable(wenuystudio-audioimport-tests tests/test_audioimport090.cpp)
 target_link_libraries(wenuystudio-audioimport-tests PRIVATE wenuystudio_core)
 target_compile_options(wenuystudio-audioimport-tests PRIVATE -Wall -Wextra -Wpedantic -Werror -UNDEBUG)
 add_test(NAME datatype_audio_import_090 COMMAND wenuystudio-audioimport-tests)
+# An optional tool, not a runtime dependency of the GTK music window.
+# Link only the short-lived note-map CLI to the system's ABI-versioned engine.
+find_package(WenuyGFX 0.9 CONFIG QUIET)
+if(WenuyGFX_FOUND)
+ add_executable(wenuy-studio-gfx tools/GfxNoteMap.cpp)
+ target_link_libraries(wenuy-studio-gfx PRIVATE wenuystudio_core WenuyGFX::wenuygfx)
+ target_compile_options(wenuy-studio-gfx PRIVATE -Wall -Wextra -Wpedantic -Werror)
+ install(TARGETS wenuy-studio-gfx RUNTIME DESTINATION bin)
+ add_test(NAME gfx_3d_notes_090
+  COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gfxmap090.py
+          $<TARGET_FILE:wenuy-studio-gfx>
+          ${CMAKE_CURRENT_SOURCE_DIR}/examples/Demo.wstudio)
+ message(STATUS "Musikstudio: optional WenuyGFX 0.9 note-map tool enabled")
+else()
+ message(STATUS "Musikstudio: no WenuyGFX 0.9 SDK; normal music window unchanged")
+endif()
+
 add_test(NAME icon_asset_integrity COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_icon.py)
