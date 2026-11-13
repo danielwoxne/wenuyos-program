@@ -83,6 +83,8 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_label_set_xalign,(Ptr,float)) \
  M(void,gtk_label_set_yalign,(Ptr,float)) \
  M(void,gtk_label_set_wrap,(Ptr,int)) \
+ M(void,gtk_label_set_ellipsize,(Ptr,int)) \
+ M(void,gtk_label_set_single_line_mode,(Ptr,int)) \
  M(void,gtk_label_set_wrap_mode,(Ptr,int)) \
  M(void,gtk_label_set_max_width_chars,(Ptr,int)) \
  M(Ptr,gtk_button_new_with_label,(const char*)) \
@@ -490,6 +492,8 @@ void refresh(){
   if(app.mode==2){summary+=" · ";summary+=tr("LAN game","Nätverksparti");}
   if(app.keyboardCursor)summary+=" · "+chess::squareName(app.cursor);
   g.gtk_label_set_label(app.boardSummary,summary.c_str());
+  // Preserve the complete status in a tooltip when the visible line is shortened.
+  g.gtk_widget_set_tooltip_text(app.boardSummary,summary.c_str());
   updateBoardAccessibility();
  }
  g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget")):tr("Game over","Partiet avslutat"));
@@ -1172,7 +1176,14 @@ void activate(Ptr application,void*){
  g.gtk_widget_add_controller(app.board,keys);g.gtk_box_append(boardBox,app.board);
  // A persistent text equivalent of the custom-drawn board, also visible in focus mode.
  app.boardSummary=g.gtk_label_new("");
- g.gtk_label_set_wrap(app.boardSummary,1);
+ // Wrapping this line makes its height change on selection and after a move;
+ // GTK then resizes/recentres the expanding chessboard (visible as a jump).
+ // Keep its height to one line, preserving the full text for accessibility.
+ g.gtk_label_set_wrap(app.boardSummary,0);
+ g.gtk_label_set_single_line_mode(app.boardSummary,1);
+ g.gtk_label_set_ellipsize(app.boardSummary,3); // PANGO_ELLIPSIZE_END
+ g.gtk_label_set_max_width_chars(app.boardSummary,36);
+ g.gtk_widget_set_hexpand(app.boardSummary,1);
  g.gtk_label_set_xalign(app.boardSummary,0);
  g.gtk_widget_add_css_class(app.boardSummary,"wenuy-dim");
  g.gtk_widget_set_margin_start(app.boardSummary,12);
