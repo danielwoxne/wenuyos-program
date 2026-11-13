@@ -262,7 +262,9 @@ lan_at = gui.index('Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"),
 status_at = gui.index('app.material=label(gameSection,"",false,"wenuy-dim");')
 assert status_at < lesson_at < settings_at < moves_at < lan_at, "Keep the game and lessons ahead of settings and optional LAN"
 assert "g.gtk_window_set_default_size(app.window,960,700)" not in gui, "Fixed 960x700 window overflows small screens"
-assert "const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);" in gui
+assert "const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window," in gui
+assert "uiProbeRequested?(uiProbeSmall?768:960):size.first" in gui
+assert "uiProbeRequested?(uiProbeSmall?400:488):size.second" in gui
 import re as _re
 fit = gui[gui.index("std::pair<int,int> fitWindow("):]
 fit = fit[:fit.index("\n}\n")]
