@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "wenuystudio/ProjectIO.hpp"
+#include "wenuystudio/InstrumentBank.hpp"
 
 #include <cmath>
 
@@ -56,7 +57,7 @@ void validate(const Project& p){
 
   require(validTrackEffects(t.effects),"Invalid track FX");
 
-  require(t.instrument>=0&&t.instrument<=3,"Invalid instrument type");
+  require(instrumentById(t.instrument)!=nullptr,"Invalid instrument type");
 
   clips+=t.clips.size();notes+=t.notes.size();require(clips<=4096&&notes<=50000,"Too many events");
 
@@ -192,7 +193,7 @@ Project loadProject(const std::string& pathstr){
 
    require(ver==5&&active&&!instr,"Invalid INSTR order");
 
-   require(bool(s>>active->instrument)&&active->instrument>=0&&active->instrument<=3,"Invalid instrument");instr=true;
+   require(bool(s>>active->instrument)&&active->instrument>=0&&instrumentById(active->instrument)!=nullptr,"Invalid instrument");instr=true;
 
   }else if(type=="FX"){
 
