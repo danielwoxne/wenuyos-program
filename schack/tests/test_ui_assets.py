@@ -77,8 +77,23 @@ for entry in (
     assert entry in desktop, f"Missing launcher metadata: {entry}"
 
 ET.parse(svg)
-assert 'version = "0.5.0"' in manifest
+assert 'version = "0.5.1"' in manifest
 assert 'needs_network = true' in manifest
+
+# 0.5.1: no sideways scroll or cut-off shortcut text in 252 px sidebar.
+assert 'M(void,gtk_scrolled_window_set_policy,(Ptr,int,int))' in gui
+assert 'g.gtk_scrolled_window_set_policy(app.sidePanel,2,1);' in gui
+assert 'g.gtk_scrolled_window_set_policy(scroll,2,1);' in gui
+assert 'g.gtk_widget_set_size_request(scroll,-1,80);' in gui
+assert 'g.gtk_widget_set_hexpand(side,1);' in gui
+assert 'g.gtk_label_set_wrap_mode(l,2);' in gui
+assert 'g.gtk_label_set_max_width_chars(l,26);' in gui
+assert 'g.gtk_label_set_max_width_chars(app.history,28);' in gui
+assert 'Ctrl+H tips, Ctrl+L fokus.' in gui
+assert 'Ctrl+H hint, Ctrl+L focus.' in gui
+assert 'Drag or click pieces • Ctrl+N new' not in gui
+assert 'g.gtk_widget_set_size_request(scroll,240,80)' not in gui
+
 for marker in (
     "case 14:app.focusBoard=!app.focusBoard",
     "g.gtk_scrolled_window_set_child(app.sidePanel,side)",
