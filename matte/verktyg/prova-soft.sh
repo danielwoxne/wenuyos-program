@@ -52,4 +52,29 @@ if min(w, h) < 300:
 print(f"OK screenshot: {file.name} ({w}x{h}, {len(data)} bytes)")
 PY
 done
-echo "Six Cairo software-rendered screenshots were produced in $out"
+# Äkta återställningsprov över TVÅ GTK-processer, på syntetisk elev i XDG-temp.
+# Första starten skriver på papperet; den andra måste återställa samma försök.
+unset MATTE_TEST_VISUELL MATTE_TEST_KORT_REGEL
+export MATTE_STORLEK=1024x600
+export MATTE_VY='ova:brak-delar;kladd:48|+27'
+export MATTE_SKARMBILD="$out/paper-before-restart.png"
+timeout 35s dbus-run-session -- xvfb-run -a -s '-screen 0 1024x600x24' ./build/matte
+python3 - "$XDG_DATA_HOME/se.wenuyos.app.matte" <<'PY'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+papers = list((root / 'raknepapper').glob('*/*.json'))
+if len(papers) != 1:
+    raise SystemExit(f'Expected exactly one saved paper, got {len(papers)}')
+p = json.loads(papers[0].read_text(encoding='utf-8'))
+if p.get('format') != 'se.wenuyos.matte.raknepapper' or len(p.get('rutor', [])) < 2:
+    raise SystemExit('Working paper was not written after input')
+profile = json.loads((root / 'elev.json').read_text(encoding='utf-8'))
+if profile.get('papper_aktivt', {}).get('id') != p.get('id'):
+    raise SystemExit('Saved pupil profile does not refer to paper')
+print('OK first session: paper and active task saved locally')
+PY
+export MATTE_VY='kort:brak-delar' MATTE_TEST_PAPPER_RESTORE=1
+export MATTE_SKARMBILD="$out/paper-after-restart.png"
+timeout 35s dbus-run-session -- xvfb-run -a -s '-screen 0 1024x600x24' ./build/matte
+unset MATTE_TEST_PAPPER_RESTORE
+echo "Six course screenshots plus two actual autosave/restart screenshots were produced in $out"
