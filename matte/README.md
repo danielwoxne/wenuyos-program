@@ -16,6 +16,21 @@ Python-versionen 0.4**, så elevernas framsteg följer med.
 > CI måste verifiera byggnad, innehåll, 2 GB-programprofil och eventuell grafikstart
 > innan installation rekommenderas. Elevdata från äldre versioner ska bevaras.
 
+## Kursanpassat gränssnitt (etapp B, utvecklingsgren)
+
+Det visuella uttrycket anpassas automatiskt efter valt stadium: lekfullt för förskola och
+åk 1–3, lugnare för åk 4–6, avskalat för åk 7–9 och professionellt för gymnasiet.
+Inställningar → Utseende → **Visuell stil** kan överstyra valet per elev:
+**Automatisk**, **Illustrerad** eller **Avskalad**. Stilvalet lagras som
+`visuell_stil` i befintliga elevprofilen (gamla 1.2-profiler får `automatisk`).
+Det påverkar enbart UI-täthet och dekoration – aldrig elevens svårighetsnivå,
+lättläst, uppläsning, tillgång till förklarande bilder eller penninmatning.
+
+Kurslogiken har GTK-fria C++-prov i `matte-test` och skärmbildskontrollen
+provar dessutom gymnasiet och högstadiet med `WENUYOS_PERF=low` och
+`WENUYOS_GFX=soft`. Se `docs/ETAPP-B-GENOMFORANDEPLAN.md`. Verkliga
+lerikoner och permanent sparning av räknepappret är ännu inte införda.
+
 ## Ren källkod och prov
 
 En ny checkout kan byggas med:
