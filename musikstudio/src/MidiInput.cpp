@@ -85,7 +85,8 @@ struct MidiInput::Impl {
       message=midiNoteMessage(false,event->data.note.note,event->data.note.velocity,
                               event->data.note.channel);break;
      case SND_SEQ_EVENT_CONTROLLER:
-      message=midiControlMessage(event->data.control.param,event->data.control.channel);break;
+      message=midiControlMessage(event->data.control.param,event->data.control.value,
+                                 event->data.control.channel);break;
      default:break;
     }
     if(message)self->emit(*message);

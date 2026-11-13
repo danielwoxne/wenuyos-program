@@ -7,12 +7,13 @@
 #include <vector>
 
 namespace wenuystudio {
-enum class MidiInputKind { NoteOn, NoteOff, AllNotesOff, Disconnected };
+enum class MidiInputKind { NoteOn, NoteOff, Sustain, AllNotesOff, Disconnected };
 struct MidiInputMessage {
  MidiInputKind kind=MidiInputKind::NoteOff;
  int key=-1;
  float velocity=0.f;
  int channel=-1;
+ int value=0; // raw 0..127 controller value, e.g. CC64
 };
 struct MidiInputSource {
  int client=-1,port=-1;
@@ -25,10 +26,12 @@ inline std::optional<MidiInputMessage> midiNoteMessage(bool on,int key,int veloc
  if(on&&velocity>0)return MidiInputMessage{MidiInputKind::NoteOn,key,velocity/127.f,channel};
  return MidiInputMessage{MidiInputKind::NoteOff,key,0.f,channel};
 }
-inline std::optional<MidiInputMessage> midiControlMessage(int controller,int channel) noexcept {
- if(channel<0||channel>15)return std::nullopt;
- if(controller!=120&&controller!=123)return std::nullopt;
- return MidiInputMessage{MidiInputKind::AllNotesOff,-1,0.f,channel};
+inline std::optional<MidiInputMessage> midiControlMessage(int controller,int value,int channel) noexcept {
+ if(channel<0||channel>15||value<0||value>127)return std::nullopt;
+ if(controller==64)return MidiInputMessage{MidiInputKind::Sustain,-1,0.f,channel,value};
+ if(controller==120||controller==123)
+  return MidiInputMessage{MidiInputKind::AllNotesOff,-1,0.f,channel,value};
+ return std::nullopt;
 }
 
 // ALSA Sequencer is an optional, event-driven local MIDI source.

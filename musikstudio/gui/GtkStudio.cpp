@@ -14,6 +14,7 @@
 #include "wenuystudio/KeyboardInput.hpp"
 #include "wenuystudio/MidiTake.hpp"
 #include "wenuystudio/MidiInput.hpp"
+#include "wenuystudio/MidiInputKeys.hpp"
 #include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
 #include <array>
@@ -44,6 +45,7 @@ struct Studio{
  ws::Recording recording{};
  ws::MidiTake midi{};
  ws::MidiInput midiInput{};
+ ws::MidiInputKeys externalNotes{};
  std::vector<ws::MidiInputSource> midiSources{};
  std::array<bool,128> activeKeys{},externalKeys{};
  int pointerKey=-1;
@@ -625,9 +627,9 @@ void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer
  }
 }
 void releaseExternalKeys(Studio* s){
- for(int key=0;key<128;++key)
-  if(s->externalKeys[static_cast<std::size_t>(key)])
-   releaseKeyboard(s,key,true);
+ s->externalNotes.reset([s](int key,bool down,float){
+  if(!down)releaseKeyboard(s,key,true);
+ });
 }
 void refreshExternalMidi(Studio* s){
  if(s->midiInput.connected()){
@@ -678,13 +680,21 @@ void toggleExternalMidi(Studio* s){
  std::string error;
  const auto source=s->midiSources[selected];
  const bool ok=s->midiInput.connect(source,[s](const ws::MidiInputMessage& event){
+  // Aggregate per pitch for GTK/MidiTake, but retain separate MIDI channels
+  // and pedal-held notes until that channel actually releases the pitch.
+  auto keyChange=[s](int key,bool down,float velocity){
+   if(down)pressKeyboard(s,key,velocity,true);
+   else releaseKeyboard(s,key,true);
+  };
   switch(event.kind){
    case ws::MidiInputKind::NoteOn:
-    pressKeyboard(s,event.key,event.velocity,true);break;
+    s->externalNotes.noteOn(event.channel,event.key,event.velocity,keyChange);break;
    case ws::MidiInputKind::NoteOff:
-    releaseKeyboard(s,event.key,true);break;
+    s->externalNotes.noteOff(event.channel,event.key,keyChange);break;
+   case ws::MidiInputKind::Sustain:
+    s->externalNotes.sustain(event.channel,event.value>=64,keyChange);break;
    case ws::MidiInputKind::AllNotesOff:
-    releaseExternalKeys(s);break;
+    s->externalNotes.allNotesOff(event.channel,keyChange);break;
    case ws::MidiInputKind::Disconnected:
     releaseExternalKeys(s);
     if(s->midiDeviceButton)

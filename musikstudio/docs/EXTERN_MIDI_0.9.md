@@ -37,4 +37,11 @@
 6. Mät på fysisk 2 GB-dator: start-RSS, max-RSS, CPU över 30 minuter, ingångslatens och ljudhack i 2 GB/soft. CI mäter bara uppstart, inte långtidsprestanda.
 7. Testa skärm 1024×600 och 1280×720, svenska/engelska och läsbarheten i MIDI-källväljaren.
 
-**Inte implementerat i denna etapp:** Sustain CC64, pitchbend/aftertouch, kanal-separata noter, MIDI 2.0 UMP, lyssning via flera synt-röster samtidigt och MIDI-nätverk. Ingen signering, merge eller release före projektets granskning och Daniels releasegodkännande.
+**Inte implementerat i denna etapp:** pitchbend/aftertouch, separata spår för varje MIDI-kanal, MIDI 2.0 UMP, lyssning via flera synt-röster samtidigt och MIDI-nätverk. Ingen signering, merge eller release före projektets granskning och Daniels releasegodkännande.
+
+## CC64-sustain och kanalsäkra noter (fortsättning i PR #28)
+
+- MIDI-controller 64 hanterar **sustainpedalen**: värden 64–127 håller tonen kvar efter tangentens Note Off; 0–63 släpper pedalen och avslutar bara noter vars tangenter redan släppts. MIDI-inspelningen förlängs då till sustain-släppet. Ljudförhandslyssningen är ännu kort och monofon.
+- Fast tillstånd per kanal (16) och ton (128) skyddar mot att en annan kanals Note Off, CC120 eller CC123 släpper en kvarhållen ton. Samma ton på flera kanaler sammanförs däremot till **en** ton i tagningen; full kanalisolerad spårinspelning är ett senare steg.
+- Vid frånkoppling töms både tangent- och sustain-tillstånd; ingen MIDI-enhet återansluts automatiskt. Inga nätverkspaket eller bakgrundsjobb tillkommer. Extra statiskt tillstånd är cirka 4 KiB.
+- Regressionstest använder syntetiska händelser utan ALSA-enhet. Verklig sustainpedal, USB-hotplug och långtidstest på fysisk 2 GB-dator återstår.
