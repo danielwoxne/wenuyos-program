@@ -6,6 +6,8 @@
 `refresh()` ändrar varje gång `boardSummary`-etikettens text (status, urval och drag). Etiketten kan slå om mellan en och flera rader och får därmed olika höjd. Den lodrätt expanderande GTK-ritningsytan delar samma `GtkBox`; varje höjdändring flyttar eller krymper brädet och dess centrerade geometri.
 
 ## Prov att utföra vid granskning
+Prova också de fyra brädpaletterna: kontrollera kontrast på ljusa och mörka rutor, läsbar kontaktskugga, tunna ramar och att senaste dragets markeringar inte skymmer pjäserna. Jämför före/efter utan animation på mjukvarurendering; mät CPU och minne under en serie drag.
+
 Vid 1024×600: starta parti, markera vit bonde, flytta e2–e4, invänta AI-drag, ångra, växla fokusläge och brädtema. Brädets ytterram får inte ändra koordinater vid statusbyte. Upprepa med `WENUYOS_PERF=low WENUYOS_GFX=soft` och systemets rörelse avstängd. Kontrollera att hela texten går att läsa via skärmläsare och tooltip. Prova även en längre draglista och schackövningar.
 
 ## Plan
