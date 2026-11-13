@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Wenuy Studio
+Name[sv]=Wenuy Musikstudio
+Comment=Create music with MIDI, WAV and multitrack mixing
+Comment[sv]=Skapa musik med MIDI, WAV och flerspårsmixning
+Exec=wenuy-studio %f
+Icon=se.wenuyos.app.musikstudio
+Terminal=false
+Categories=AudioVideo;Audio;AudioVideoEditing;
+Keywords=music;audio;recording;MIDI;mixing;
+Keywords[sv]=musik;ljud;inspelning;MIDI;mixning;
+MimeType=application/x-wenuy-studio;
+StartupWMClass=se.wenuyos.app.musikstudio

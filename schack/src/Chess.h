@@ -45,5 +45,9 @@ struct Game {
     std::string pgn() const;
 };
 struct SearchResult { Move move; uint64_t nodes=0; int depth=0; };
+// Explain a legal move using observable board features, without an extra search.
+// This is not a proof that a move is objectively good.
+enum class MoveReason { Checkmate, Check, Promotion, Castle, Capture, Develop, Center, Quiet };
+MoveReason explainMove(const Board& board, const Move& move);
 SearchResult bestMove(const Board& board, int skill, uint64_t maxNodes = 70000);
 }

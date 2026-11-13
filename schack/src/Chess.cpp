@@ -249,6 +249,26 @@ std::string Game::pgn() const{
     }
     out<<resultText<<"\n";return out.str();
 }
+MoveReason explainMove(const Board& board,const Move& move){
+ const auto moves=board.legalMoves();
+ if(std::find(moves.begin(),moves.end(),move)==moves.end())return MoveReason::Quiet;
+ const char piece=board.squares[move.from];
+ const char captured=board.squares[move.to];
+ Board next=board;
+ if(!next.apply(move))return MoveReason::Quiet;
+ if(next.inCheck(next.white)){
+  if(next.legalMoves().empty())return MoveReason::Checkmate;
+  return MoveReason::Check;
+ }
+ if(move.promotion)return MoveReason::Promotion;
+ if(kind(piece)=='k'&&std::abs(file(move.to)-file(move.from))==2)return MoveReason::Castle;
+ if(captured||(kind(piece)=='p'&&file(move.from)!=file(move.to)))return MoveReason::Capture;
+ if((kind(piece)=='n'||kind(piece)=='b') &&
+    (rank(move.from)==(board.white?0:7)))return MoveReason::Develop;
+ if((file(move.to)==3||file(move.to)==4) &&
+    (rank(move.to)==3||rank(move.to)==4))return MoveReason::Center;
+ return MoveReason::Quiet;
+}
 namespace {
 int evaluate(const Board& b){int score=0;
     for(int i=0;i<64;i++){char p=b.squares[i];if(!p)continue;bool w=isWhite(p);int f=file(i),r=rank(i);int cf=3-std::abs(3-f),cr=3-std::abs(3-r);int positional=0;
@@ -295,8 +315,17 @@ SearchResult bestMove(const Board& b,int skill,uint64_t maxNodes){
     SearchResult answer;auto ms=b.legalMoves();if(ms.empty())return answer;
     answer.move=ms.front();
     if(skill<=1){
+        // Beginner: use a cheap one-ply evaluation, choosing randomly among
+        // the four strongest candidates. Still fallible, but not arbitrary.
+        // Avoid extra search nodes/threads on a 2 GB soft-rendering machine.
+        std::stable_sort(ms.begin(),ms.end(),[&](const Move& a,const Move& c){
+            Board x=b,y=b;x.apply(a);y.apply(c);
+            return evaluate(x)<evaluate(y);
+        });
         std::mt19937 rng(uint32_t(std::random_device{}()));
-        std::shuffle(ms.begin(),ms.end(),rng);answer.move=ms.front();return answer;
+        const unsigned n=static_cast<unsigned>(std::min<std::size_t>(4,ms.size()));
+        std::uniform_int_distribution<unsigned> choose(0,n-1);
+        answer.move=ms[choose(rng)];return answer;
     }
     const int targetDepth=std::clamp(skill,2,5)-1+(skill>=5?1:0);
     if(!maxNodes)return answer;
