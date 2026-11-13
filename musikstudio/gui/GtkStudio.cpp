@@ -10,6 +10,7 @@
 #include "wenuystudio/MidiFile.hpp"
 #include "wenuystudio/PianoInput.hpp"
 #include "wenuystudio/ProjectGuard.hpp"
+#include "wenuystudio/InstrumentBank.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -18,6 +19,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <vector>
 #include <stdexcept>
 #include <string>
 namespace fs=std::filesystem;
@@ -442,10 +444,20 @@ void refresh(Studio* s){
    auto* c=static_cast<Indexed*>(data);c->s->project.tracks[c->index].gain=static_cast<float>(gtk_range_get_value(w));c->s->dirty=true;
   }),c);
   gtk_box_append(GTK_BOX(panel),volume);
-  static const char* instrumentSV[]={"Sinus","Triangel","Orgel","Varm synt",nullptr};
-  static const char* instrumentEN[]={"Sine","Triangle","Organ","Warm synth",nullptr};
-  auto* inst=gtk_drop_down_new_from_strings(sv()?instrumentSV:instrumentEN);
-  gtk_drop_down_set_selected(GTK_DROP_DOWN(inst),std::clamp(t.instrument,0,3));
+  auto* instrumentLabel=gtk_label_new(tr("Instrument","Instrument"));
+  gtk_label_set_xalign(GTK_LABEL(instrumentLabel),0);
+  gtk_box_append(GTK_BOX(panel),instrumentLabel);
+  std::vector<const char*> instrumentNames;
+  instrumentNames.reserve(ws::instrumentCount()+1);
+  for(std::size_t preset=0;preset<ws::instrumentCount();++preset){
+   const auto* item=ws::instrumentById(static_cast<int>(preset));
+   instrumentNames.push_back(sv()?item->swedish:item->english);
+  }
+  instrumentNames.push_back(nullptr);
+  auto* inst=gtk_drop_down_new_from_strings(instrumentNames.data());
+  gtk_widget_set_tooltip_text(inst,tr("Choose this track's synthesized instrument",
+                                      "Välj syntetiserat instrument för spåret"));
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(inst),static_cast<guint>(t.instrument));
   c=index(inst,s,i);
   g_signal_connect(inst,"notify::selected",G_CALLBACK(+[](GtkDropDown* w,GParamSpec*,gpointer data){
    auto* c=static_cast<Indexed*>(data);c->s->project.tracks[c->index].instrument=static_cast<int>(gtk_drop_down_get_selected(w));c->s->dirty=true;
