@@ -21,14 +21,22 @@ export GDK_BACKEND=x11 GSK_RENDERER=cairo
 export LIBGL_ALWAYS_SOFTWARE=1
 # GSK_RENDERER=cairo och LIBGL_ALWAYS_SOFTWARE=1 räcker i Debian 13.
 # GDK_DEBUG=gl-disable stöds inte i GTK 4.18 och ger ett falskt varningsmeddelande.
-for spec in "1024x600 hem" "1024x600 ova:brak-delar;lattlast" "1600x900 karta" "1600x900 ova:brak-procent-decimal"; do
+for spec in "1024x600 hem" "1024x600 ova:brak-delar;lattlast" "1280x720 ova:ekvationer-tva-steg" "1600x900 karta" "1600x900 ova:brak-procent-decimal" "1600x900 ova:gy-andragradsfunktioner"; do
     size=${spec%% *}
     view=${spec#* }
     case "$view" in
         hem) file="small-home.png";;
         ova:brak-delar*) file="small-easy-reading.png";;
+        ova:ekvationer-tva-steg*) file="mid-secondary-school.png";;
+        ova:gy-andragradsfunktioner*) file="large-upper-secondary.png";;
         karta) file="large-map.png";;
         *) file="large-fractions.png";;
+    esac
+    # Bekräfta nivåklassen inne i GTK, inte enbart att PNG:n kunde sparas.
+    case "$view" in
+        ova:ekvationer-tva-steg*) export MATTE_TEST_VISUELL=matte-visuell-akademisk;;
+        ova:gy-andragradsfunktioner*) export MATTE_TEST_VISUELL=matte-visuell-professionell;;
+        *) unset MATTE_TEST_VISUELL;;
     esac
     export MATTE_STORLEK="$size" MATTE_VY="$view" MATTE_SKARMBILD="$out/$file"
     timeout 35s dbus-run-session -- xvfb-run -a -s "-screen 0 ${size}x24" ./build/matte
@@ -44,4 +52,4 @@ if min(w, h) < 300:
 print(f"OK screenshot: {file.name} ({w}x{h}, {len(data)} bytes)")
 PY
 done
-echo "Four Cairo software-rendered screenshots were produced in $out"
+echo "Six Cairo software-rendered screenshots were produced in $out"
