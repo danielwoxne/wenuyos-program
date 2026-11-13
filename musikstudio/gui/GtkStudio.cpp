@@ -11,8 +11,11 @@
 #include "wenuystudio/PianoInput.hpp"
 #include "wenuystudio/ProjectGuard.hpp"
 #include "wenuystudio/InstrumentBank.hpp"
+#include "wenuystudio/KeyboardInput.hpp"
+#include "wenuystudio/MidiTake.hpp"
 #include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -31,9 +34,16 @@ const char* tr(const char* en,const char* se){return sv()?se:en;}
 enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,ExportGfx,Record};
 struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
+ GtkWidget *keyboard=nullptr,*midiButton=nullptr,*keyboardStatus=nullptr;
  ws::Project project{};
  ws::Playback playback{};
+ ws::Playback audition{};
  ws::Recording recording{};
+ ws::MidiTake midi{};
+ std::array<bool,128> activeKeys{};
+ int pointerKey=-1;
+ unsigned midiTrack=0;
+ bool previewUnavailable=false;
  ws::EditHistory history{};
  ws::ProjectGuard guard{};
  std::string file,recordFile;
@@ -56,12 +66,98 @@ void refresh(Studio*);
 void requestProtected(Studio*,ws::ProjectAction);
 void performProtected(Studio*,const ws::ProjectAction&);
 void save(Studio*);
+void finishMidi(Studio*);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
 }
 void change(Studio* s){s->dirty=true;refresh(s);}
 void checkpoint(Studio* s){s->history.checkpoint(s->project);}
+void finishMidi(Studio* s){
+ if(!s->midi.recording())return;
+ auto captured=s->midi.finish(g_get_monotonic_time());
+ if(s->midiButton)gtk_button_set_label(GTK_BUTTON(s->midiButton),tr("Record MIDI","Spela in MIDI"));
+ if(captured.empty()){
+  notice(s,tr("MIDI recording stopped – no notes","MIDI-inspelning stoppad – inga toner"));
+  return;
+ }
+ if(s->midiTrack>=s->project.tracks.size())return;
+ try{
+  ws::Project result=s->project;
+  // The project is limited to 20,000 seconds; grow it only when a note
+  // actually extends past its previous duration.
+  for(const auto& note:captured)
+   result.durationSeconds=std::min(20000.,std::max(result.durationSeconds,
+                                                 note.atSeconds+note.durationSeconds+.01));
+  std::size_t inserted=0;
+  for(const auto& note:captured)
+   if(ws::insertNote(result,s->midiTrack,note,{4,0}).changed)++inserted;
+  if(inserted){
+   checkpoint(s);s->project=std::move(result);
+   s->selected=s->midiTrack;s->selectedNote.reset();
+   change(s);
+   notice(s,tr("MIDI take added – Undo is available","MIDI-tagning tillagd – Ångra är tillgängligt"));
+  }else notice(s,tr("No new MIDI notes – existing music unchanged",
+                    "Inga nya MIDI-toner – den befintliga musiken är oförändrad"));
+ }catch(const std::exception& e){
+  g_warning("MIDI take failed: %s",e.what());
+  notice(s,tr("Could not add MIDI take","Kunde inte lägga till MIDI-tagningen"));
+ }
+}
+void toggleMidi(Studio* s){
+ if(s->midi.recording()){finishMidi(s);return;}
+ if(s->playback.active()||s->recording.active()||!s->recordFile.empty()){
+  notice(s,tr("Stop playback or microphone recording before recording MIDI",
+              "Stoppa uppspelning eller mikrofoninspelning innan du spelar in MIDI"));
+  return;
+ }
+ if(s->selected>=s->project.tracks.size())return;
+ if(!s->midi.begin(s->playhead,g_get_monotonic_time())){
+  notice(s,tr("MIDI recording could not start","Kunde inte starta MIDI-inspelning"));return;
+ }
+ s->midiTrack=s->selected;
+ if(s->midiButton)gtk_button_set_label(GTK_BUTTON(s->midiButton),
+                                       tr("Stop MIDI recording","Stoppa MIDI-inspelning"));
+ notice(s,tr("MIDI recording – play the keyboard, then Stop MIDI",
+             "MIDI-inspelning – spela på tangenterna och tryck sedan Stoppa MIDI"));
+}
+void pressKeyboard(Studio* s,int key){
+ if(key<ws::keyboardLowest||key>ws::keyboardHighest||s->activeKeys[static_cast<std::size_t>(key)])return;
+ s->activeKeys[static_cast<std::size_t>(key)]=true;
+ if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time());
+ if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
+ if(s->keyboardStatus)gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
+ if(s->selected>=s->project.tracks.size()||s->recording.active()||s->previewUnavailable)return;
+ try{
+  // Short-lived voice, no soundfiles and no new audio backend. The preview
+  // has its own player, so it never changes the arrangement playhead.
+  s->audition.stop();
+  ws::Project preview;
+  preview.sampleRate=s->project.sampleRate;
+  preview.durationSeconds=.60;
+  ws::Track track;track.instrument=s->project.tracks[s->selected].instrument;
+  track.notes.push_back({key,.005,.52,.8f});preview.tracks.push_back(std::move(track));
+  s->audition.start(preview,0);
+ }catch(const std::exception& e){
+  g_warning("Keyboard preview failed: %s",e.what());s->previewUnavailable=true;
+  notice(s,tr("No audio output – MIDI recording still works",
+              "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
+ }
+}
+void releaseKeyboard(Studio* s,int key){
+ if(key<ws::keyboardLowest||key>ws::keyboardHighest||
+    !s->activeKeys[static_cast<std::size_t>(key)])return;
+ s->activeKeys[static_cast<std::size_t>(key)]=false;
+ if(s->midi.recording())s->midi.noteOff(key,g_get_monotonic_time());
+ if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
+ s->audition.stop();
+ // PortAudio initialization fails asynchronously when audio is unavailable.
+ if(!s->audition.error().empty()&&!s->previewUnavailable){
+  s->previewUnavailable=true;
+  notice(s,tr("No audio output – MIDI recording still works",
+              "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
+ }
+}
 void finishRecord(Studio* s){
  if(s->recordFile.empty())return;
  s->recording.stop();
@@ -92,10 +188,11 @@ gboolean tick(gpointer data){
 }
 void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
 void play(Studio* s){
+ if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
  try{if(!s->recordFile.empty())finishRecord(s);s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
  startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
 }
-void stop(Studio* s){s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
+void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
 void newProject(Studio* s){
  stop(s);s->project=ws::Project{};ws::Track t;t.name=tr("Track 1","Spår 1");s->project.tracks.push_back(std::move(t));
  s->file.clear();s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
@@ -292,7 +389,7 @@ void performProtected(Studio* s,const ws::ProjectAction& action){
  }
 }
 void requestProtected(Studio* s,ws::ProjectAction action){
- const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen;
+ const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen||s->midi.recording();
  const auto result=s->guard.request(action,s->dirty,blocked);
  if(result==ws::GuardDecision::Busy){
   notice(s,blocked&&(s->recording.active()||!s->recordFile.empty())?
@@ -574,7 +671,7 @@ void activate(GApplication* application,gpointer){
  g_signal_connect(s->window,"close-request",G_CALLBACK(+[](GtkWindow*,gpointer user)->gboolean{
   auto* st=static_cast<Studio*>(user);
   if(st->closeAllowed)return FALSE;
-  if(!st->dirty&&!st->recording.active()&&st->recordFile.empty()&&!st->chooserOpen&&!st->guard.hasPending())return FALSE;
+  if(!st->dirty&&!st->recording.active()&&!st->midi.recording()&&st->recordFile.empty()&&!st->chooserOpen&&!st->guard.hasPending())return FALSE;
   requestProtected(st,{ws::ProjectActionKind::Close,{}});
   return TRUE;
  }),s);
