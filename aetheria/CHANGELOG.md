@@ -1,3 +1,11 @@
+## Under utveckling – 0.6-funktioner återuppbyggda i PR #13 (2026-11-13)
+
+- Återskapad uppdragsnavigering med närmaste verkliga kristall/vakt/altare, riktning, avstånd och minimap-markör.
+- Högerdrag med mus för kamera och mushjul för zoom (begränsade nivåer).
+- Automatisk sparning efter cirka 90 aktiva spelsekunder; pauser och dialoger räknas inte.
+- Bevarar 0.5-modellen, sparformatets extensioner och tangentbords-/muskontroller från UI-etappen.
+- **Utkast/ej släppt:** isolerat rörelse-/autosave-smoke med förenklad modell godkänt, full Program-CI blockerat av SDL2 (#16). Inga utsagor om fungerande 0.6.0 på hårdvara ännu.
+
 # Versionshistorik
 
 ## 0.5.0 — inventarium, utrustning, dialogval och syntetiserat ljud

@@ -94,3 +94,9 @@ endif()
 add_executable(aetheria-datatype-pixels-tests tests/test_datatype_pixels.cpp)
 target_include_directories(aetheria-datatype-pixels-tests PRIVATE src)
 add_test(NAME aetheria-datatype-pixels COMMAND aetheria-datatype-pixels-tests)
+
+# Restored 0.6 gameplay: navigation/zoom/autosave, independent of SDL.
+add_executable(aetheria-stage6-tests tests/test_stage6.cpp)
+target_link_libraries(aetheria-stage6-tests PRIVATE aetheria-model)
+target_compile_options(aetheria-stage6-tests PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)
+add_test(NAME aetheria-stage6-restored-controls COMMAND aetheria-stage6-tests)

@@ -177,3 +177,15 @@ WenuyOS-hårdvara förrän det har provats där.
 - **F3** växlar mellan spelets klassiska SDL-rendering och WenuyGFX 0.9:s **CPU-rendering med djupbuffert** när SDK:t finns. `--wenuygfx` väljer samma för provkörning. Fungerar med `WENUYOS_GFX=soft` och 2 GB-profilen; inga uppmätta FPS-siffror på riktig hårdvara än.
 - **Datatyper:** när `wenuy-datatypes` finns i WenuyOS kan `--screenshot sökväg.png` och `--screenshot sökväg.iff` spara genom det gemensamma filformatsystemet; `.ppm` fortsätter fungera utan det.
 - Spelkod och sparformat ändras inte av dessa alternativ. Aetherias publicerade 0.6.0-huvudkod ska fortfarande återföras till GitHub innan en ny version kan godkännas. Se `docs/WENUYOS-INTEGRATION.md`.
+
+## Återskapade 0.6-funktioner i GitHub-PR #13 (utkast, inte släppt)
+
+Det ursprungliga 0.6.0-arkivet saknas, men beteendet har rekonstruerats från den tidigare utvecklingsspecifikationen ovanpå den existerande 0.5.0-spelmodellen. **Versionsnumret behålls på 0.5.0 i utkastet tills full verifiering och beslut om släpp.**
+
+- **Uppdragsmål:** en panel visar närmaste återstående kristall, levande vakt eller altare med avstånd och kamera-relativ riktning. Målet markeras också gult på den vanliga och stora kartan. Om huvudspelets uppdrag inte har ett tillgängligt mål kan läkeörtsuppdraget visas.
+- **Kamera:** vrid med **höger musknapp och dra** eller **Z/C**; zooma med **mushjulet** (begränsat så att kameran inte hamnar i spelaren). Gäller 3D-vyn; **V** växlar som tidigare till 2D.
+- **Mus:** klicka på Väska, Karta, Hjälp, stridsknappar, val i dialog och tillverkningsrecept. Klick genom öppna dialoger orsakar aldrig stridsanfall.
+- **Autosparning:** ungefär **var 90:e sekund aktiv speltid**, inte under paus, dialog, avslutat spel eller skärmbildsförhandsvisning. Vid skrivfel försöker spelet igen tidigast efter 15 nya aktiva sekunder. F5/F9 fungerar som tidigare.
+- **Sparkompatibilitet:** exakt samma `World::save/load` och befintliga `AETHERIA_EXTRA_4/5` används. Kamera-, mål- och autosparningsklocka är enbart tillfälliga tillstånd.
+
+**Kontroll som återstår:** testsviten `aetheria-stage6-restored-controls`, full GUI/SDL2-kompilering på Debian 13, `wenuyos verify`, verkliga skärmbilder och 2 GB-hårdvaruprov. Kod finns på GitHub-grenen `ai/chatgpt/aetheria-ui`; inga nya `.wapp` har släppts. Beroende motorintegrering finns i separat PR #15.
