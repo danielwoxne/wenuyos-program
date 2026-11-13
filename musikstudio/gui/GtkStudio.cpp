@@ -156,8 +156,14 @@ void releaseKeyboard(Studio* s,int key){
     !s->activeKeys[static_cast<std::size_t>(key)])return;
  s->activeKeys[static_cast<std::size_t>(key)]=false;
  if(s->midi.recording()){
-  try{(void)s->midi.noteOff(key,g_get_monotonic_time());}
-  catch(const std::exception& e){
+  try{
+   if(!s->midi.noteOff(key,g_get_monotonic_time())&&
+      s->midi.recorded()>=ws::MidiTake::maxTakeNotes){
+    finishMidi(s);
+    notice(s,tr("MIDI note limit reached – take preserved",
+                "Gränsen för MIDI-toner nådd – tagningen sparad i projektet"));
+   }
+  }catch(const std::exception& e){
    g_warning("MIDI note buffering failed: %s",e.what());
    notice(s,tr("MIDI recording memory limit reached",
                "Minnesgränsen för MIDI-inspelning har nåtts"));
