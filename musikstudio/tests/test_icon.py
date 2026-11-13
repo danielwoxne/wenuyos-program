@@ -66,7 +66,11 @@ assert 's->midi.noteOn(key,g_get_monotonic_time(),velocity)' in code
 assert 's->midi.noteOff(key,g_get_monotonic_time())' in code
 assert 's->midi.finish(g_get_monotonic_time())' in code
 assert 's->midi.recording()' in code
-assert 's->audition.start(preview,0)' in code
+# Polyphonic playback keeps one stream open; no start/stop for each key.
+assert 'ws::LivePreview audition{}' in code
+assert 's->audition.noteOn(key,s->project.tracks[s->selected].instrument,velocity)' in code
+assert 's->audition.noteOff(key)' in code
+assert 's->audition.start(preview,0)' not in code
 # External MIDI is opt-in only; no enumeration or connection occurs at startup.
 assert '#include "wenuystudio/MidiInput.hpp"' in code
 assert 'gtk_button_new_with_label(tr("Scan MIDI devices","Sök MIDI-enheter"))' in code

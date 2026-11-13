@@ -131,7 +131,12 @@ void LivePreview::run()noexcept{
   LiveSynth synth;
   std::array<float,512> pcm{};
   while(running_){
-   if(panic_.exchange(false,std::memory_order_acq_rel))synth.allNotesOff();
+   if(panic_.exchange(false,std::memory_order_acq_rel)){
+    // Drop all older queued On events together with a lost Off.
+    // Otherwise an old On processed after panic could stick forever.
+    read_.store(written_.load(std::memory_order_acquire),std::memory_order_release);
+    synth.allNotesOff();
+   }
    for(unsigned i=0;i<128;++i){
     const unsigned r=read_.load(std::memory_order_relaxed);
     if(r==written_.load(std::memory_order_acquire))break;
