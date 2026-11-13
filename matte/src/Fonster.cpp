@@ -3857,6 +3857,12 @@ void skarmbild() {
             else if (del.rfind("namn:", 0) == 0) { M->elev.visningsnamn = del.substr(5); }
         }
     }
+    // CI-krok: högre kurser ska visa frågan utan en lång introduktion först.
+    if (g_getenv("MATTE_TEST_KORT_REGEL") && M->regelHel) {
+        g_warning("Matte: expected a compact initial rule for the current stage");
+        g_application_quit(g_application_get_default());
+        return;  // ingen PNG => CI-provet misslyckas
+    }
     // CI-krok: verifiera att kursen verkligen aktiverat rätt GTK-stilklass.
     if (const char* forvantad = g_getenv("MATTE_TEST_VISUELL")) {
         if (*forvantad && !gtk_widget_has_css_class(M->win, forvantad)) {
