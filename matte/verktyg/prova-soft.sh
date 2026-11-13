@@ -34,9 +34,9 @@ for spec in "1024x600 hem" "1024x600 ova:brak-delar;lattlast" "1280x720 ova:ekva
     esac
     # Bekräfta nivåklassen inne i GTK, inte enbart att PNG:n kunde sparas.
     case "$view" in
-        ova:ekvationer-tva-steg*) export MATTE_TEST_VISUELL=matte-visuell-akademisk;;
-        ova:gy-andragradsfunktioner*) export MATTE_TEST_VISUELL=matte-visuell-professionell;;
-        *) unset MATTE_TEST_VISUELL;;
+        ova:ekvationer-tva-steg*) export MATTE_TEST_VISUELL=matte-visuell-akademisk MATTE_TEST_KORT_REGEL=1;;
+        ova:gy-andragradsfunktioner*) export MATTE_TEST_VISUELL=matte-visuell-professionell MATTE_TEST_KORT_REGEL=1;;
+        *) unset MATTE_TEST_VISUELL MATTE_TEST_KORT_REGEL;;
     esac
     export MATTE_STORLEK="$size" MATTE_VY="$view" MATTE_SKARMBILD="$out/$file"
     timeout 35s dbus-run-session -- xvfb-run -a -s "-screen 0 ${size}x24" ./build/matte
