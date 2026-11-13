@@ -921,8 +921,9 @@ void Matte::bygg(GtkApplication* app) {
 
     g_signal_connect(win, "close-request",
         G_CALLBACK(+[](GtkWindow*, gpointer) -> gboolean {
-            if (M) M->sparaPapper();
-            return FALSE;  // lämna stängningen till GTK
+            // Vid diskfel får fönstret inte stängas och kasta osparad handskrift.
+            if (M && !M->sparaPapper()) return TRUE;
+            return FALSE;  // lämna stängningen till GTK när sparning lyckats
         }), nullptr);
     tillampaLeklage();
     tillampaZoom(false);
