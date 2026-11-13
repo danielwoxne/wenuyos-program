@@ -22,6 +22,14 @@ Välj ett spår i Arrangemang och öppna fliken **Instrumentbibliotek**. Välj e
 
 Detta är ett resurssnålt, helt lokalt syntesbibliotek utan SF2/SFZ, samplingar eller ljudbanker att ladda ner. En framtida separat etapp i [ärende #20](https://github.com/danielwoxne/wenuyos-program/issues/20) hanterar mer realistiska instrumentpaket samt stöd för systemets Datatyper.
 
+## Importera ljud via WenuyOS Datatyper (utveckling)
+
+I **Arkiv → Importera ljud** kan Musikstudion läsa vanlig WAV direkt. Med WenuyOS systembibliotek **Datatyper** installerat kan den också använda de ljudformat som systemet har aktiverat, exempelvis FLAC, Ogg, MP3, AIFF och Amiga 8SVX. Formaten beror på vilka Datatyper-tillägg som finns; Musikstudion hämtar inga codecs från nätet.
+
+De format som inte är en direkt spelbar WAV avkodas till en permanent stereo-WAV i `~/.local/share/se.wenuyos.app.musikstudio/imports/`. Detta gör att ett sparat projekt kan öppnas igen efter en omstart. Flyttas projektet till en annan dator behöver även de importerade ljudfilerna kopieras. Systemets 2 GB-ljudgräns gäller, och importen avvisar mer än 64 MiB avkodade 16-bits ljuddata. Ingen konvertering görs i bakgrunden när man inte importerar.
+
+I byggen som saknar Datatyper är vanlig WAV-import fortfarande möjlig. Se [Datatyper-etappen](https://github.com/danielwoxne/wenuyos-program/pull/23) och `docs/DATATYPER_0.9.md`.
+
 ## Pianorullen (utvecklingsversion 0.9.0)
 
 1. Välj ett spår genom att klicka på dess rad i **Arrangemang**. Gå till fliken **Pianorulle**.
