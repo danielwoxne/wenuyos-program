@@ -71,6 +71,14 @@ int main() {
     assert(std::abs(actual-static_cast<float>(legacy[static_cast<std::size_t>(id)]))<1e-6f);
    }
   }
+  // Percussive synthesized sounds have time-dependent brightness, not a
+  // static waveform or an external recorded sample.
+  for(int id: {4,5,7,8,15}){
+   const float transient=instrumentSample(id,1.37,220.,.02,2.0,48000);
+   const float sustained=instrumentSample(id,1.37,220.,.35,2.0,48000);
+   assert(std::isfinite(transient)&&std::isfinite(sustained));
+   assert(std::abs(transient-sustained)>.004f);
+  }
   // Eight simultaneous tracks, four overlapping MIDI notes per track.
   // Offline playback exercises the same BlockMixer as PortAudio / WAV export.
   Project eight;
@@ -112,6 +120,6 @@ int main() {
   std::cout<<"Eight-track offline mix 48 kHz, 32 notes: "<<elapsed
            <<" ms, peak="<<peak<<"\n";
   std::filesystem::remove_all(dir);
-  std::cout<<"PASS: 16 presets, audio energy, project v5, old IDs, invalid IDs\n";
+  std::cout<<"PASS: 16 presets, damped attacks, project v5, old IDs, invalid IDs\n";
  }catch(...){std::filesystem::remove_all(dir);throw;}
 }
