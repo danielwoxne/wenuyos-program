@@ -564,13 +564,27 @@ void refresh(){
  const std::string materialText=materialBalance==0?tr("Material: equal","Material: jämnt"):
     std::string(tr("Material: ","Material: "))+(materialBalance>0?tr("White","vit"):tr("Black","svart"))+" +"+std::to_string(std::abs(materialBalance));
  g.gtk_label_set_label(app.material,materialText.c_str());
- g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);
+ // Keep a compact school card visible during normal games, with actual saved progress.
+ unsigned completed=0;
+ const auto lessonTotal=chess::lessonCount();
+ for(std::size_t i=0;i<lessonTotal;++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
+ if(app.lessonBar){
+  g.gtk_progress_bar_set_fraction(app.lessonBar,lessonTotal?double(completed)/double(lessonTotal):0.);
+  const std::string percent=std::to_string(lessonTotal?(100*completed)/lessonTotal:0)+" %";
+  g.gtk_progress_bar_set_text(app.lessonBar,percent.c_str());
+ }
+ if(app.lessonToggleBtn)g.gtk_button_set_label(app.lessonToggleBtn,
+  app.training?tr("Exit chess school","Avsluta schackskolan"):
+               tr("Start chess school","Starta schackskolan"));
+ if(app.lessonTask)g.gtk_widget_set_visible(app.lessonTask,app.training?1:0);
+ if(app.lessonFeedback)g.gtk_widget_set_visible(app.lessonFeedback,app.training?1:0);
+ if(app.lessonProfile)g.gtk_widget_set_visible(app.lessonProfile,app.training?1:0);
+ if(app.lessonButtons)g.gtk_widget_set_visible(app.lessonButtons,app.training?1:0);
+ if(app.lessonRecommendBtn)g.gtk_widget_set_visible(app.lessonRecommendBtn,app.training?1:0);
  if(app.training){
   const auto& l=chess::lesson(app.lessonIndex);
-  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" · "+tr(chess::lessonLevelEn(app.lessonIndex),chess::lessonLevelSv(app.lessonIndex))+" – "+tr(l.titleEn,l.titleSv)).c_str());
-  unsigned completed=0;
-  for(std::size_t i=0;i<chess::lessonCount();++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
-  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))+" · "+std::to_string(app.lessonMistakes[app.lessonIndex])+tr(" mistakes"," fel")).c_str());
+  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(lessonTotal)+" · "+tr(chess::lessonLevelEn(app.lessonIndex),chess::lessonLevelSv(app.lessonIndex))+" – "+tr(l.titleEn,l.titleSv)).c_str());
+  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(lessonTotal)+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))+" · "+std::to_string(app.lessonMistakes[app.lessonIndex])+tr(" mistakes"," fel")).c_str());
   // One inexpensive profile refresh over at most 64 exercises.
   if(app.lessonProfile){
    std::string profile=tr("Knowledge profile:","Kunskapsprofil:");
@@ -611,6 +625,10 @@ void refresh(){
     tr("Make the move on the board. A hint is available below.",
        "Gör draget på brädet. Ledtråd finns nedan.");
   g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):coaching);
+ }else{
+  g.gtk_label_set_label(app.lessonTitle,tr("Learn step by step","Lär dig steg för steg"));
+  const std::string count=std::string(tr("Exercises completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(lessonTotal);
+  g.gtk_label_set_label(app.lessonProgress,count.c_str());
  }
  repaint();
 }
