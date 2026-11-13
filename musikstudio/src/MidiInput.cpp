@@ -20,9 +20,11 @@ struct MidiInput::Impl {
  MidiInputSource source{};
  Sink sink{};
  std::vector<guint> watches{};
+ guint pendingIdle=0;
 
  bool active()const noexcept {return seq!=nullptr;}
  void close()noexcept {
+  if(pendingIdle){g_source_remove(pendingIdle);pendingIdle=0;}
   for(auto id:watches)if(id)g_source_remove(id);
   watches.clear();
   if(seq) {
@@ -42,6 +44,12 @@ struct MidiInput::Impl {
   close();
   try{if(callback)callback({MidiInputKind::Disconnected,-1,0.f,-1});}
   catch(...){g_warning("MIDI disconnect handler failed");}
+ }
+ static gboolean idle(gpointer data){
+  auto* self=static_cast<Impl*>(data);
+  self->pendingIdle=0;
+  (void)ready(-1,G_IO_IN,self);
+  return G_SOURCE_REMOVE;
  }
  static gboolean ready(gint,GIOCondition flags,gpointer data) {
   auto* self=static_cast<Impl*>(data);
@@ -88,6 +96,12 @@ struct MidiInput::Impl {
    // event fetch. Always process the event before checking the count.
    if(rc==0)break;
   }
+  // snd_seq_event_input() can read a whole kernel batch into ALSA's user
+  // buffer. After 128 events the fd might no longer be readable, so drain
+  // remaining buffered notes in another bounded idle dispatch.
+  if(self->active()&&snd_seq_event_input_pending(self->seq,0)>0&&!self->pendingIdle)
+   self->pendingIdle=g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                                    &Impl::idle,self,nullptr);
   return G_SOURCE_CONTINUE;
  }
 #else
