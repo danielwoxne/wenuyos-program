@@ -329,7 +329,7 @@ struct App {
  std::size_t lessonIndex=0,lessonPly=0,lessonVariation=0; unsigned epoch=0; std::string transient;
 };
 App app;
-bool uiProbeRequested=false;
+bool uiProbeRequested=false,uiProbeSmall=false;
 int uiProbeResult=0;
 
 std::string userDir(){
@@ -1326,7 +1326,9 @@ void activate(Ptr application,void*){
  if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
  g.gtk_window_set_title(app.window,tr("Wenuy Chess","Wenuy Schack"));
- {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);}
+ {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,
+   uiProbeRequested?(uiProbeSmall?768:960):size.first,
+   uiProbeRequested?(uiProbeSmall?400:488):size.second);}
  connect(app.window,"close-request",onClose,nullptr);
  Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
  Ptr header=g.gtk_box_new(0,8);margin(header,10,8);
@@ -1455,7 +1457,9 @@ void activate(Ptr application,void*){
 int main(int argc,char** argv){
  // This is needed for gettext to honour LANG/LC_MESSAGES/LANGUAGE at process start.
  // --ui-probe is a local test-only option, never forwarded to GTK.
- if(argc==2&&std::strcmp(argv[1],"--ui-probe")==0){uiProbeRequested=true;argc=1;}
+ if(argc==2&&(std::strcmp(argv[1],"--ui-probe")==0||std::strcmp(argv[1],"--ui-probe-small")==0)){
+  uiProbeRequested=true;uiProbeSmall=std::strcmp(argv[1],"--ui-probe-small")==0;argc=1;
+ }
  schack_system::initI18n();
  if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
