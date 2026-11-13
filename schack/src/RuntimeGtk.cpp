@@ -89,6 +89,14 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_label_set_max_width_chars,(Ptr,int)) \
  M(Ptr,gtk_button_new_with_label,(const char*)) \
  M(void,gtk_button_set_label,(Ptr,const char*)) \
+ M(void,gtk_button_set_child,(Ptr,Ptr)) \
+ M(Ptr,gtk_image_new_from_icon_name,(const char*)) \
+ M(Ptr,gtk_icon_theme_get_for_display,(Ptr)) \
+ M(int,gtk_icon_theme_has_icon,(Ptr,const char*)) \
+ M(Ptr,gtk_progress_bar_new,()) \
+ M(void,gtk_progress_bar_set_fraction,(Ptr,double)) \
+ M(void,gtk_progress_bar_set_show_text,(Ptr,int)) \
+ M(void,gtk_progress_bar_set_text,(Ptr,const char*)) \
  M(Ptr,gtk_drawing_area_new,()) \
  M(void,gtk_drawing_area_set_draw_func,(Ptr,void(*)(Ptr,cairo_t*,int,int,void*),void*,void(*)(void*))) \
  M(Ptr,gtk_gesture_click_new,()) \
@@ -299,6 +307,7 @@ struct App {
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
  Ptr lanStatus=nullptr,lanEntry=nullptr,lanCodeEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,lessonProfile=nullptr,promoteBtn=nullptr;
+ Ptr lessonBar=nullptr,lessonButtons=nullptr,lessonRecommendBtn=nullptr,lessonToggleBtn=nullptr;
  chess::Game game, savedGame;
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
@@ -394,9 +403,10 @@ void theme(){
  const std::string css=std::string(".wenuy-topbar {padding: 6px 8px; border-bottom: 1px solid alpha(currentColor, 0.13);}")
   +".wenuy-toolbar {padding: 5px 8px; border-bottom: 1px solid alpha(currentColor, 0.10);}"
   +".wenuy-panel {padding: 6px;}"
-  +".wenuy-section {padding: 8px; border-bottom: 1px solid alpha(currentColor, 0.13);}"
+  +".wenuy-section {padding: 10px; margin-bottom: 5px;}"
   +".wenuy-section-title {font-weight: 700; opacity: .84;}"
   +".wenuy-control {padding: 6px 10px;}"
+  +".wenuy-option {padding: 8px 10px;}"
   +".wenuy-brand {font-weight: 700; letter-spacing: .4px;}"
   +".wenuy-dim {opacity: .70;}";
  if(!app.cssProvider){
@@ -1153,10 +1163,26 @@ void perform(int id){
 struct ButtonData{int id;};
 std::vector<std::unique_ptr<ButtonData>> buttonDatas;
 void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
-Ptr button(Ptr container,const char* label,int id,bool primary=false){
+// Use theme-provided icons only when that icon is actually installed.
+Ptr themeIcon(const char* iconName){
+ if(!iconName||!g.gtk_widget_get_display||!app.window)return nullptr;
+ Ptr display=g.gtk_widget_get_display(app.window);
+ Ptr theme=display?g.gtk_icon_theme_get_for_display(display):nullptr;
+ if(!theme||!g.gtk_icon_theme_has_icon(theme,iconName))return nullptr;
+ return g.gtk_image_new_from_icon_name(iconName);
+}
+Ptr button(Ptr container,const char* label,int id,bool primary=false,const char* iconName=nullptr){
  Ptr btn=g.gtk_button_new_with_label(label);
  if(primary)g.gtk_widget_add_css_class(btn,"suggested-action");
  g.gtk_widget_add_css_class(btn,"wenuy-control");
+ if(id==3||id==4||id==5||id==11||id==13)g.gtk_widget_add_css_class(btn,"wenuy-option");
+ if(Ptr icon=themeIcon(iconName)){
+  Ptr content=g.gtk_box_new(0,6);
+  g.gtk_box_append(content,icon);
+  g.gtk_box_append(content,g.gtk_label_new(label));
+  g.gtk_button_set_child(btn,content);
+  g.gtk_accessible_update_property(btn,4,label,-1); // Accessible label
+ }
  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id}));
  connect(btn,"clicked",onButton,buttonDatas.back().get());
  g.gtk_box_append(container,btn);return btn;
@@ -1178,13 +1204,21 @@ void margin(Ptr w,int x,int y){
  g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
  g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
 }
+// Only installed theme icons are shown; absent ones silently fall back to text.
+void sectionHeading(Ptr parent,const char* title,const char* iconName){
+ Ptr heading=g.gtk_box_new(0,6);
+ if(Ptr icon=themeIcon(iconName))g.gtk_box_append(heading,icon);
+ label(heading,title,false,"wenuy-section-title");
+ g.gtk_box_append(parent,heading);
+}
 // The controls in each section are allocated only once, not during moves.
-Ptr section(Ptr parent,const char* title){
+Ptr section(Ptr parent,const char* title,const char* iconName=nullptr){
  Ptr card=g.gtk_box_new(1,6);
  g.gtk_widget_add_css_class(card,"wenuy-section");
+ g.gtk_widget_add_css_class(card,"card"); // WenuyOS / GTK theme chooses the surface
  g.gtk_widget_set_hexpand(card,1);
  g.gtk_box_append(parent,card);
- if(title)label(card,title,false,"wenuy-section-title");
+ if(title)sectionHeading(card,title,iconName);
  return card;
 }
 int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
@@ -1205,13 +1239,13 @@ void activate(Ptr application,void*){
  app.brand=g.gtk_label_new(tr("♞  WENUY CHESS","♞  WENUY SCHACK"));Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
- button(header,tr("New game","Nytt parti"),0,true);app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
+ button(header,tr("New game","Nytt parti"),0,true,"document-new-symbolic");app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2,false,"view-refresh-symbolic");
  // A separate compact toolbar keeps the game controls legible on smaller screens.
  app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;
  g.gtk_widget_add_css_class(tools,"wenuy-toolbar");g.gtk_box_append(root,tools);
- button(tools,tr("Chess school","Schackskolan"),6);
- app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
- app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);
+ button(tools,tr("Chess school","Schackskolan"),6,false,"applications-education-symbolic");
+ app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12,false,"dialog-information-symbolic");
+ app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18,false,"system-search-symbolic");
  app.focusBtn=button(tools,tr("Focus on board","Fokus på brädet"),14);
  app.mainBox=g.gtk_box_new(0,0);Ptr main=app.mainBox;g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
@@ -1261,30 +1295,35 @@ void activate(Ptr application,void*){
  margin(side,8,6);g.gtk_widget_add_css_class(side,"wenuy-panel");
  g.gtk_scrolled_window_set_child(app.sidePanel,side);
  // Main game state comes first; training remains directly below.
- Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"));
+ Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"),"applications-games-symbolic");
  app.turn=label(gameSection,"",false,"title-3");
  app.status=label(gameSection,"",true);
  app.material=label(gameSection,"",false,"wenuy-dim");
  // The school is visible above all secondary controls.
  app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
  g.gtk_widget_add_css_class(app.lessonBox,"wenuy-section");
+ g.gtk_widget_add_css_class(app.lessonBox,"card");
+ sectionHeading(app.lessonBox,tr("CHESS SCHOOL","SCHACKSKOLAN"),"applications-education-symbolic");
  app.lessonTitle=label(app.lessonBox,"",true,"heading");
+ app.lessonBar=g.gtk_progress_bar_new();
+ g.gtk_progress_bar_set_show_text(app.lessonBar,1);
+ g.gtk_box_append(app.lessonBox,app.lessonBar);
  app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
  app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");
  app.lessonTask=label(app.lessonBox,"",true);
  app.lessonFeedback=label(app.lessonBox,"",true);
- Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
- button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
- button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
- button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
+ app.lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,app.lessonButtons);
+ button(app.lessonButtons,tr("Previous","Föreg."),7);button(app.lessonButtons,tr("Hint","Ledtråd"),8);button(app.lessonButtons,tr("Next","Nästa"),9);
+ app.lessonRecommendBtn=button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
+ app.lessonToggleBtn=button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
  // Ordinary game tools are now above the advanced LAN settings.
- Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"));
+ Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"),"preferences-system-symbolic");
  app.modeBtn=button(settingsSection,tr("Mode: vs computer","Läge: mot datorn"),3);
  app.levelBtn=button(settingsSection,tr("Level: 2 / 5","Nivå: 2 / 5"),4);
  app.sideBtn=button(settingsSection,tr("You play: White","Du spelar: vit"),5);
  app.promoteBtn=button(settingsSection,tr("Promotion: Queen","Bondeförvandling: Dam"),11);
  app.themeBtn=button(settingsSection,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
- Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"));
+ Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"),"view-list-symbolic");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
  g.gtk_scrolled_window_set_policy(scroll,2,1);
  g.gtk_widget_set_size_request(scroll,-1,80);g.gtk_widget_set_hexpand(scroll,1);g.gtk_box_append(movesSection,scroll);
@@ -1293,9 +1332,9 @@ void activate(Ptr application,void*){
  g.gtk_label_set_max_width_chars(app.history,28);
  g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
  g.gtk_scrolled_window_set_child(scroll,app.history);
- button(movesSection,tr("Export game (PGN)","Exportera parti (PGN)"),10);
+ button(movesSection,tr("Export game (PGN)","Exportera parti (PGN)"),10,false,"document-save-symbolic");
  // The network feature remains opt-in, but no longer obscures routine tools.
- Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"));
+ Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"),"network-workgroup-symbolic");
  label(lanSection,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
  app.lanEntry=g.gtk_entry_new();
  g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
