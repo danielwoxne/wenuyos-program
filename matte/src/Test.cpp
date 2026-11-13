@@ -4,6 +4,7 @@
 #include "Bedom.h"
 #include "Data.h"
 #include "Penntryck.h"
+#include "VisuellNiva.h"
 #include "Framsteg.h"
 #include "Json.h"
 #include "Rita.h"
@@ -59,6 +60,30 @@ static void testaPenntryck() {
     KOLLA(pennbredd(3, .5, false) == 3, "mouse and touch retain constant width");
     KOLLA(pennbredd(3, 0, true) > 0 && pennbredd(3, 1, true) > pennbredd(3, 0, true),
           "pressure controls visual stroke thickness");
+}
+
+static void testaVisuellNiva() {
+    KOLLA(automatiskVisuellNiva("forskola") == VisuellNiva::Lekfull, "förskola illustrerad");
+    KOLLA(automatiskVisuellNiva("lgr22.1-3") == VisuellNiva::Lekfull, "åk 1–3 illustrerad");
+    KOLLA(automatiskVisuellNiva("lgr22.4-6") == VisuellNiva::Lugn, "mellanstadiet lugnt");
+    KOLLA(automatiskVisuellNiva("lgr22.7-9") == VisuellNiva::Akademisk, "högstadiet avskalat");
+    KOLLA(automatiskVisuellNiva("gy25.1") == VisuellNiva::Professionell &&
+          automatiskVisuellNiva("gy25.fortsattning") == VisuellNiva::Professionell,
+          "gymnasiet professionellt");
+    KOLLA(automatiskVisuellNiva("okand") == VisuellNiva::Lugn, "okänt stadium får säker reserv");
+    KOLLA(visuellNiva("gy25.2", "illustrerad") == VisuellNiva::Lugn,
+          "bildstöd på gymnasiet betyder inte maskotläge");
+    KOLLA(visuellNiva("lgr22.1-3", "avskalad") == VisuellNiva::Akademisk,
+          "elevens val kan ge avskalad stil på lågstadiet");
+    KOLLA(visuellNiva("lgr22.7-9", "automatisk") == VisuellNiva::Akademisk,
+          "automatiskt högstadieutseende");
+    KOLLA(normaliseraVisuellStil("främmande") == "automatisk" &&
+          visuellStilIndex("främmande") == 0, "oväntat profilvärde återgår till automatisk");
+    KOLLA(std::string(visuellStilVarde(1)) == "illustrerad" &&
+          std::string(visuellStilVarde(2)) == "avskalad" &&
+          std::string(visuellStilVarde(200)) == "automatisk", "stilkoderna är säkra");
+    KOLLA(std::string(visuellNivaKlass(VisuellNiva::Professionell)) ==
+          "matte-visuell-professionell", "CSS-klass för gymnasiet");
 }
 
 static void testaBrak() {
@@ -170,8 +195,10 @@ static void testaUppgraderingFran12() {
             it->second.antal == 16 && it->second.antalRatt == 12 &&
             it->second.nasta == "2026-11-20" && it->second.feltankeTotalt["0|fel"] == 3 &&
             e.lattlast && e.sifferknappar && e.zoom > 1.39 && e.zoom < 1.41 &&
-            e.dagensSvit == 4 && e.regelbok.size() == 1 && e.ritningar.size() == 1;
+            e.dagensSvit == 4 && e.regelbok.size() == 1 && e.ritningar.size() == 1 &&
+            e.visuellStil == "automatisk";
         KOLLA(loaded, "1.2: framsteg, fellogik, repetition, lässtöd, textstorlek och ritning läses");
+        e.visuellStil = "avskalad";
         bool saved = e.spara();
         Elev again = Elev::ladda("elev12");
         auto second = again.kort.find("brak-delar");
@@ -179,7 +206,8 @@ static void testaUppgraderingFran12() {
             second->second.antalRatt == 12 && second->second.steg == 3 &&
             second->second.feltankeTotalt["0|fel"] == 3 &&
             again.lattlast && again.sifferknappar && again.regelbok.size() == 1 &&
-            again.ritningar.size() == 1 && again.dagensKlar == "2026-11-10",
+            again.ritningar.size() == 1 && again.dagensKlar == "2026-11-10" &&
+            again.visuellStil == "avskalad",
             "1.2 -> 1.3: sparning/återläsning bevarar elevens historik och stöd");
         g_unsetenv("XDG_DATA_HOME");
     }
@@ -196,6 +224,7 @@ int main(int argc, char** argv) {
     testaStavningOchSiffror();
     testaBrak();
     testaPenntryck();
+    testaVisuellNiva();
     testaJson();
     testaTolkning(mapp);
     if (argc > 2) {   // data-mappen: alla uppgifter bedöms rätt med sitt eget facit
