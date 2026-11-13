@@ -11,8 +11,11 @@
 #include "wenuystudio/PianoInput.hpp"
 #include "wenuystudio/ProjectGuard.hpp"
 #include "wenuystudio/InstrumentBank.hpp"
+#include "wenuystudio/KeyboardInput.hpp"
+#include "wenuystudio/MidiTake.hpp"
 #include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -31,9 +34,16 @@ const char* tr(const char* en,const char* se){return sv()?se:en;}
 enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,ExportGfx,Record};
 struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
+ GtkWidget *keyboard=nullptr,*midiButton=nullptr,*keyboardStatus=nullptr;
  ws::Project project{};
  ws::Playback playback{};
+ ws::Playback audition{};
  ws::Recording recording{};
+ ws::MidiTake midi{};
+ std::array<bool,128> activeKeys{};
+ int pointerKey=-1;
+ unsigned midiTrack=0;
+ bool previewUnavailable=false;
  ws::EditHistory history{};
  ws::ProjectGuard guard{};
  std::string file,recordFile;
@@ -56,12 +66,118 @@ void refresh(Studio*);
 void requestProtected(Studio*,ws::ProjectAction);
 void performProtected(Studio*,const ws::ProjectAction&);
 void save(Studio*);
+void finishMidi(Studio*);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
 }
 void change(Studio* s){s->dirty=true;refresh(s);}
 void checkpoint(Studio* s){s->history.checkpoint(s->project);}
+void finishMidi(Studio* s){
+ if(!s->midi.recording())return;
+ std::vector<ws::MidiNote> captured;
+ try{captured=s->midi.finish(g_get_monotonic_time());}
+ catch(const std::exception& e){
+  g_warning("MIDI buffer could not finalize: %s",e.what());
+  notice(s,tr("Not enough memory to finalize MIDI take",
+              "Inte tillräckligt med minne för att avsluta MIDI-tagningen"));
+  return;
+ }
+ if(s->midiButton)gtk_button_set_label(GTK_BUTTON(s->midiButton),tr("Record MIDI","Spela in MIDI"));
+ if(captured.empty()){
+  notice(s,tr("MIDI recording stopped – no notes","MIDI-inspelning stoppad – inga toner"));
+  return;
+ }
+ if(s->midiTrack>=s->project.tracks.size())return;
+ try{
+  ws::Project result=s->project;
+  // The project is limited to 20,000 seconds; grow it only when a note
+  // actually extends past its previous duration.
+  for(const auto& note:captured)
+   result.durationSeconds=std::min(20000.,std::max(result.durationSeconds,
+                                                 note.atSeconds+note.durationSeconds+.01));
+  std::size_t inserted=0;
+  for(const auto& note:captured)
+   if(ws::insertNote(result,s->midiTrack,note,{4,0}).changed)++inserted;
+  if(inserted){
+   checkpoint(s);s->project=std::move(result);
+   s->selected=s->midiTrack;s->selectedNote.reset();
+   change(s);
+   notice(s,tr("MIDI take added – Undo is available","MIDI-tagning tillagd – Ångra är tillgängligt"));
+  }else notice(s,tr("No new MIDI notes – existing music unchanged",
+                    "Inga nya MIDI-toner – den befintliga musiken är oförändrad"));
+ }catch(const std::exception& e){
+  g_warning("MIDI take failed: %s",e.what());
+  notice(s,tr("Could not add MIDI take","Kunde inte lägga till MIDI-tagningen"));
+ }
+}
+void toggleMidi(Studio* s){
+ if(s->midi.recording()){finishMidi(s);return;}
+ if(s->playback.active()||s->recording.active()||!s->recordFile.empty()){
+  notice(s,tr("Stop playback or microphone recording before recording MIDI",
+              "Stoppa uppspelning eller mikrofoninspelning innan du spelar in MIDI"));
+  return;
+ }
+ if(s->selected>=s->project.tracks.size())return;
+ if(!s->midi.begin(s->playhead,g_get_monotonic_time())){
+  notice(s,tr("MIDI recording could not start","Kunde inte starta MIDI-inspelning"));return;
+ }
+ s->midiTrack=s->selected;
+ if(s->midiButton)gtk_button_set_label(GTK_BUTTON(s->midiButton),
+                                       tr("Stop MIDI recording","Stoppa MIDI-inspelning"));
+ notice(s,tr("MIDI recording – play the keyboard, then Stop MIDI",
+             "MIDI-inspelning – spela på tangenterna och tryck sedan Stoppa MIDI"));
+}
+void pressKeyboard(Studio* s,int key){
+ if(key<ws::keyboardLowest||key>ws::keyboardHighest||s->activeKeys[static_cast<std::size_t>(key)])return;
+ s->activeKeys[static_cast<std::size_t>(key)]=true;
+ if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time());
+ if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
+ if(s->keyboardStatus)gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
+ if(s->selected>=s->project.tracks.size()||s->recording.active()||s->playback.active()||s->previewUnavailable)return;
+ try{
+  // Short-lived voice, no soundfiles and no new audio backend. The preview
+  // has its own player, so it never changes the arrangement playhead.
+  s->audition.stop();
+  ws::Project preview;
+  preview.sampleRate=s->project.sampleRate;
+  preview.durationSeconds=.60;
+  ws::Track track;track.instrument=s->project.tracks[s->selected].instrument;
+  track.notes.push_back({key,.005,.52,.8f});preview.tracks.push_back(std::move(track));
+  s->audition.start(preview,0);
+ }catch(const std::exception& e){
+  g_warning("Keyboard preview failed: %s",e.what());s->previewUnavailable=true;
+  notice(s,tr("No audio output – MIDI recording still works",
+              "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
+ }
+}
+void releaseKeyboard(Studio* s,int key){
+ if(key<ws::keyboardLowest||key>ws::keyboardHighest||
+    !s->activeKeys[static_cast<std::size_t>(key)])return;
+ s->activeKeys[static_cast<std::size_t>(key)]=false;
+ if(s->midi.recording()){
+  try{
+   if(!s->midi.noteOff(key,g_get_monotonic_time())&&
+      s->midi.recorded()>=ws::MidiTake::maxTakeNotes){
+    finishMidi(s);
+    notice(s,tr("MIDI note limit reached – take preserved",
+                "Gränsen för MIDI-toner nådd – tagningen sparad i projektet"));
+   }
+  }catch(const std::exception& e){
+   g_warning("MIDI note buffering failed: %s",e.what());
+   notice(s,tr("MIDI recording memory limit reached",
+               "Minnesgränsen för MIDI-inspelning har nåtts"));
+  }
+ }
+ if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
+ s->audition.stop();
+ // PortAudio initialization fails asynchronously when audio is unavailable.
+ if(!s->audition.error().empty()&&!s->previewUnavailable){
+  s->previewUnavailable=true;
+  notice(s,tr("No audio output – MIDI recording still works",
+              "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
+ }
+}
 void finishRecord(Studio* s){
  if(s->recordFile.empty())return;
  s->recording.stop();
@@ -92,10 +208,11 @@ gboolean tick(gpointer data){
 }
 void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
 void play(Studio* s){
+ if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
  try{if(!s->recordFile.empty())finishRecord(s);s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
  startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
 }
-void stop(Studio* s){s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
+void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
 void newProject(Studio* s){
  stop(s);s->project=ws::Project{};ws::Track t;t.name=tr("Track 1","Spår 1");s->project.tracks.push_back(std::move(t));
  s->file.clear();s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
@@ -266,7 +383,14 @@ void choose(Studio* s,Pick pick){
  }),req);
  gtk_native_dialog_show(GTK_NATIVE_DIALOG(dialog));
 }
-void save(Studio* s){if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);}
+void save(Studio* s){
+ if(s->midi.recording()){
+  notice(s,tr("Stop MIDI recording before saving the project",
+              "Stoppa MIDI-inspelningen innan du sparar projektet"));
+  return;
+ }
+ if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);
+}
 
 // Executes only AFTER the dirty guard allows the action, and only commits a
 // loaded file after its full parse/validation succeeded.
@@ -292,10 +416,10 @@ void performProtected(Studio* s,const ws::ProjectAction& action){
  }
 }
 void requestProtected(Studio* s,ws::ProjectAction action){
- const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen;
+ const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen||s->midi.recording();
  const auto result=s->guard.request(action,s->dirty,blocked);
  if(result==ws::GuardDecision::Busy){
-  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty())?
+  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty()||s->midi.recording())?
    tr("Stop recording before switching projects or closing",
       "Avsluta inspelningen innan du byter projekt eller stänger"):
    tr("Finish the current dialog first","Avsluta den pågående dialogen först"));
@@ -323,7 +447,14 @@ void requestProtected(Studio* s,ws::ProjectAction action){
  }),s);
  gtk_window_present(GTK_WINDOW(dialog));
 }
-void record(Studio* s){if(s->recording.active())finishRecord(s);else choose(s,Pick::Record);}
+void record(Studio* s){
+ if(s->midi.recording()){
+  notice(s,tr("Stop MIDI recording before microphone recording",
+              "Stoppa MIDI-inspelningen innan du spelar in mikrofonljud"));
+  return;
+ }
+ if(s->recording.active())finishRecord(s);else choose(s,Pick::Record);
+}
 GtkWidget* button(GtkWidget* box,Studio* s,const char* label,void(*callback)(Studio*)){
  GtkWidget* b=gtk_button_new_with_label(label);gtk_box_append(GTK_BOX(box),b);
  g_signal_connect_swapped(b,"clicked",G_CALLBACK(callback),s);return b;
@@ -438,6 +569,106 @@ void rightPressed(GtkGestureClick*,int,double x,double y,gpointer data){
  if(auto found=ws::pianoNoteAt(s->project.tracks[s->selected],*point)){
   s->selectedNote=*found;deleteSelectedNote(s);
  }
+}
+void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer user){
+ auto* s=static_cast<Studio*>(user);
+ GdkRGBA foreground{};
+ gtk_style_context_get_color(gtk_widget_get_style_context(GTK_WIDGET(area)),&foreground);
+ auto color=[&](double alpha){
+  cairo_set_source_rgba(cr,foreground.red,foreground.green,foreground.blue,alpha);
+ };
+ const double white=double(width)/ws::keyboardWhiteCount;
+ // Use the current GTK foreground color with differing alpha; no hardcoded
+ // theme RGB values, custom skin, image atlas or graphics dependency.
+ for(int i=0;i<ws::keyboardWhiteCount;++i){
+  const int key=ws::keyboardWhiteKey(i);
+  const double x=i*white;
+  color(s->activeKeys[static_cast<std::size_t>(key)]?.27:.055);
+  cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_fill(cr);
+  color(.55);cairo_set_line_width(cr,1);
+  cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_stroke(cr);
+  color(.95);cairo_set_font_size(cr,11);
+  cairo_move_to(cr,x+4,height-8);
+  cairo_show_text(cr,ws::pitchName(key).c_str());
+ }
+ for(int i=0;i<ws::keyboardWhiteCount;++i){
+  const int key=ws::keyboardBlackAfter(i);
+  if(key<0)continue;
+  const double x=(i+1-ws::keyboardBlackWidth*.5)*white;
+  color(s->activeKeys[static_cast<std::size_t>(key)]?.98:.75);
+  cairo_rectangle(cr,x,0,white*ws::keyboardBlackWidth,
+                  height*ws::keyboardBlackHeight);cairo_fill(cr);
+ }
+}
+GtkWidget* createKeyboard(Studio* s){
+ auto* box=gtk_box_new(GTK_ORIENTATION_VERTICAL,3);
+ auto* instruction=gtk_label_new(tr(
+  "Play C4–B5 with mouse or Z/X/C… and Q/W/E… keys. Record MIDI to save played notes.",
+  "Spela C4–B5 med mus eller Z/X/C… och Q/W/E… Tryck Spela in MIDI för att spara toner."));
+ gtk_label_set_wrap(GTK_LABEL(instruction),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(instruction),0);
+ gtk_widget_set_margin_start(instruction,10);
+ gtk_widget_set_margin_end(instruction,10);
+ gtk_widget_add_css_class(instruction,"dim-label");
+ gtk_box_append(GTK_BOX(box),instruction);
+ auto* scroll=gtk_scrolled_window_new();
+ gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),GTK_POLICY_AUTOMATIC,GTK_POLICY_NEVER);
+ gtk_widget_set_size_request(scroll,-1,112);
+ auto* draw=gtk_drawing_area_new();
+ s->keyboard=draw;
+ gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(draw),560);
+ gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(draw),106);
+ gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(draw),drawKeyboard,s,nullptr);
+ gtk_widget_set_focusable(draw,TRUE);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(draw),GTK_ACCESSIBLE_PROPERTY_LABEL,
+  tr("Virtual keyboard C4 to B5 – press a key to hear it",
+     "Virtuellt keyboard C4 till B5 – tryck en tangent för att höra den"),-1);
+ auto* pointer=gtk_gesture_click_new();
+ gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(pointer),GDK_BUTTON_PRIMARY);
+ g_signal_connect(pointer,"pressed",G_CALLBACK(+[](GtkGestureClick*,gint,double x,double y,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  gtk_widget_grab_focus(st->keyboard);
+  if(auto key=ws::keyboardKeyAt(x,y,gtk_widget_get_width(st->keyboard),
+                                     gtk_widget_get_height(st->keyboard))){
+   st->pointerKey=*key;pressKeyboard(st,*key);
+  }
+ }),s);
+ g_signal_connect(pointer,"released",G_CALLBACK(+[](GtkGestureClick*,gint,double,double,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  if(st->pointerKey>=0)releaseKeyboard(st,st->pointerKey);
+  st->pointerKey=-1;
+ }),s);
+ gtk_widget_add_controller(draw,GTK_EVENT_CONTROLLER(pointer));
+ auto* keys=gtk_event_controller_key_new();
+ g_signal_connect(keys,"key-pressed",G_CALLBACK(+[](GtkEventControllerKey*,guint keyval,
+     guint,GdkModifierType mod,gpointer data)->gboolean{
+  if(mod&(GDK_CONTROL_MASK|GDK_ALT_MASK|GDK_SUPER_MASK))return FALSE;
+  auto* st=static_cast<Studio*>(data);
+  const int key=ws::keyboardComputerKey(gdk_keyval_to_lower(keyval));
+  if(key<0)return FALSE;
+  pressKeyboard(st,key);return TRUE;
+ }),s);
+ g_signal_connect(keys,"key-released",G_CALLBACK(+[](GtkEventControllerKey*,guint keyval,
+     guint,GdkModifierType,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  releaseKeyboard(st,ws::keyboardComputerKey(gdk_keyval_to_lower(keyval)));
+ }),s);
+ gtk_widget_add_controller(draw,keys);
+ auto* focus=gtk_event_controller_focus_new();
+ g_signal_connect(focus,"leave",G_CALLBACK(+[](GtkEventControllerFocus*,gpointer data){
+  auto* st=static_cast<Studio*>(data);
+  for(int key=ws::keyboardLowest;key<=ws::keyboardHighest;++key)releaseKeyboard(st,key);
+  st->pointerKey=-1;
+ }),s);
+ gtk_widget_add_controller(draw,focus);
+ gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),draw);
+ gtk_box_append(GTK_BOX(box),scroll);
+ s->keyboardStatus=gtk_label_new(tr("Keyboard ready","Keyboard redo"));
+ gtk_label_set_xalign(GTK_LABEL(s->keyboardStatus),0);
+ gtk_widget_set_margin_start(s->keyboardStatus,10);
+ gtk_widget_add_css_class(s->keyboardStatus,"dim-label");
+ gtk_box_append(GTK_BOX(box),s->keyboardStatus);
+ return box;
 }
 GtkWidget* area(Studio* s,bool piano){
  GtkWidget* sc=gtk_scrolled_window_new();auto* draw=gtk_drawing_area_new();
@@ -574,7 +805,7 @@ void activate(GApplication* application,gpointer){
  g_signal_connect(s->window,"close-request",G_CALLBACK(+[](GtkWindow*,gpointer user)->gboolean{
   auto* st=static_cast<Studio*>(user);
   if(st->closeAllowed)return FALSE;
-  if(!st->dirty&&!st->recording.active()&&st->recordFile.empty()&&!st->chooserOpen&&!st->guard.hasPending())return FALSE;
+  if(!st->dirty&&!st->recording.active()&&!st->midi.recording()&&st->recordFile.empty()&&!st->chooserOpen&&!st->guard.hasPending())return FALSE;
   requestProtected(st,{ws::ProjectActionKind::Close,{}});
   return TRUE;
  }),s);
@@ -669,6 +900,7 @@ void activate(GApplication* application,gpointer){
  gtk_widget_set_margin_start(pianoBar,8);gtk_widget_set_margin_top(pianoBar,6);
  button(pianoBar,s,tr("Add C4 note","Lägg till C4-ton"),addNote);
  button(pianoBar,s,tr("Quantize","Kvantisera"),quantize);
+ s->midiButton=button(pianoBar,s,tr("Record MIDI","Spela in MIDI"),toggleMidi);
  gtk_box_append(GTK_BOX(pianoPage),pianoBar);
  auto* hint=gtk_label_new(tr("Click: add/select note · Right-click/Delete: remove · Arrows: move",
                           "Klick: lägg till/välj ton · Högerklick/Delete: ta bort · Pilar: flytta"));
@@ -677,6 +909,7 @@ void activate(GApplication* application,gpointer){
  gtk_widget_set_margin_start(hint,10);gtk_widget_set_margin_end(hint,10);
  gtk_widget_add_css_class(hint,"dim-label");
  gtk_box_append(GTK_BOX(pianoPage),hint);
+ gtk_box_append(GTK_BOX(pianoPage),createKeyboard(s));
  auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
  gtk_box_append(GTK_BOX(pianoPage),pianoArea);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));

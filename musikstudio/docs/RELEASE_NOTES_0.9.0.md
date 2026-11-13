@@ -24,6 +24,15 @@ Version 0.8.1 finns redan som signerad `.wapp`; detta dokument gäller **utveckl
 
 Inget av detta ingår i signerade 0.8.1 förrän ny release godkänts och publicerats.
 
+## Keyboard och MIDI-tagningar (stackad PR #27)
+
+- Tvåoktavers temaanpassat virtuellt keyboard för C4–B5. Spel med mus eller datortangentbord på svenska/engelska.
+- Kort förhandslyssning av valt spårs syntinstrument via redan befintlig PortAudio-motor.
+- **Spela in MIDI / Stoppa MIDI-inspelning:** note-on/off, samtidiga tangenter, monotona tidsstämplar, uppmätt tonlängd, kvantiserad start, allting på valt spår. Ångra återställer hela tagningen.
+- Blockering av sparning/stängning/projektbyte medan MIDI-tagningen pågår.
+- Tak 4 096 händelser per tagning; inget nät eller ny audio-drivrutin. MIDI via fysisk USB-enhet och samplingsbank är framtida etapper, inte levererade här.
+- Dokumenterad separat licens- och RAM-budget för framtida fria samplingar, inga ljudfiler tillagda.
+
 ## Föreslagna prov före merge
 
 - C++17-regressionsprov av pixlar→ton, randvärden, dubblettskydd, markerad ton, förflyttning, ångra/borttagning.

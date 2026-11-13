@@ -54,4 +54,17 @@ assert 'GSubprocess* process=g_subprocess_newv' in code
 assert 'Pick::ExportGfx' in code
 assert 'tr("Export 3D note map…","Exportera 3D-notkarta…")' in code
 assert 'WenuyGFX::wenuygfx' not in (root/"gui"/"GtkStudio.cpp").read_text()
+# Virtual keyboard: live GTK controls must be present on both languages.
+assert '#include "wenuystudio/KeyboardInput.hpp"' in code
+assert '#include "wenuystudio/MidiTake.hpp"' in code
+assert 'createKeyboard(s)' in code
+assert 'ws::keyboardKeyAt(x,y' in code
+assert 'ws::keyboardComputerKey(gdk_keyval_to_lower(keyval))' in code
+assert 'tr("Record MIDI","Spela in MIDI")' in code
+assert 'tr("Stop MIDI recording","Stoppa MIDI-inspelning")' in code
+assert 's->midi.noteOn(key,g_get_monotonic_time())' in code
+assert 's->midi.noteOff(key,g_get_monotonic_time())' in code
+assert 's->midi.finish(g_get_monotonic_time())' in code
+assert 's->midi.recording()' in code
+assert 's->audition.start(preview,0)' in code
 print("Desktop, MIME, project guard, icon and compact layout PASS")
