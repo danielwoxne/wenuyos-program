@@ -65,6 +65,16 @@ inline float directionToTarget(legends::Vec2 from,legends::Vec2 to,
   return std::remainder(std::atan2(dy,dx)-cameraYaw,6.283185307179586f);
 }
 
+
+struct CompassOffset { float x=0.f,y=0.f; };
+// Angle is measured counter-clockwise in world coordinates. Aetheria's
+// camera right points clockwise from forward, while screen Y grows downwards.
+// E.g. facing east: a goal north is LEFT, not right.
+inline CompassOffset compassOffset(float relativeAngle) noexcept {
+  if(!std::isfinite(relativeAngle)) return {};
+  return {-std::sin(relativeAngle),-std::cos(relativeAngle)};
+}
+
 class CameraControl {
 public:
   float zoom()const noexcept{return zoom_;}

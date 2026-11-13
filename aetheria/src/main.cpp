@@ -640,18 +640,20 @@ struct App {
       drawText(r,std::to_string(static_cast<int>(std::round(target.distance)))+
                   tr(" M"," M"),620,176,2,{255,228,157});
       const float angle=aetheria::directionToTarget(world.hero.pos,target.point,cameraYaw);
+      const auto arrow=aetheria::compassOffset(angle);
       const int cx=755,cy=176;
-      const int tipx=cx+static_cast<int>(std::round(std::sin(angle)*16.f));
-      const int tipy=cy-static_cast<int>(std::round(std::cos(angle)*16.f));
-      const int stemx=cx+static_cast<int>(std::round(std::sin(angle)*6.f));
-      const int stemy=cy-static_cast<int>(std::round(std::cos(angle)*6.f));
+      const int tipx=cx+static_cast<int>(std::round(arrow.x*16.f));
+      const int tipy=cy+static_cast<int>(std::round(arrow.y*16.f));
+      const int stemx=cx+static_cast<int>(std::round(arrow.x*6.f));
+      const int stemy=cy+static_cast<int>(std::round(arrow.y*6.f));
       render::line(r,cx,cy,tipx,tipy,{255,230,154});
+      // Arrowhead uses a perpendicular to the camera-relative direction.
       render::line(r,tipx,tipy,
-                   stemx+static_cast<int>(std::round(std::cos(angle)*5.f)),
-                   stemy+static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+                   stemx+static_cast<int>(std::round(-arrow.y*5.f)),
+                   stemy+static_cast<int>(std::round( arrow.x*5.f)),{255,230,154});
       render::line(r,tipx,tipy,
-                   stemx-static_cast<int>(std::round(std::cos(angle)*5.f)),
-                   stemy-static_cast<int>(std::round(std::sin(angle)*5.f)),{255,230,154});
+                   stemx-static_cast<int>(std::round(-arrow.y*5.f)),
+                   stemy-static_cast<int>(std::round( arrow.x*5.f)),{255,230,154});
     }
     drawText(r,tr("NORTH","NORR"),847,154,1,sub);
     drawText(r,world.daylight()<.35f?tr("NIGHT","NATT"):

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 using namespace aetheria;
@@ -26,6 +27,20 @@ int main(){
   check(near(directionToTarget({0,0},{10,0},0.f),0.f),"east is camera forward");
   check(near(directionToTarget({0,0},{0,10},0.f),1.5707963f),
         "north relative angle uses world coordinates");
+  // The camera faces east at yaw=0, so north must show on the LEFT of the
+  // HUD compass (camera right is south). Rotation must preserve orientation.
+  const auto east=compassOffset(directionToTarget({0,0},{10,0},0.f));
+  check(near(east.x,0.f)&&near(east.y,-1.f),"east appears straight ahead");
+  const auto north=compassOffset(directionToTarget({0,0},{0,10},0.f));
+  check(near(north.x,-1.f)&&near(north.y,0.f),"north appears left of east camera");
+  const auto south=compassOffset(directionToTarget({0,0},{0,-10},0.f));
+  check(near(south.x,1.f)&&near(south.y,0.f),"south appears right of east camera");
+  const auto northCamera=compassOffset(directionToTarget({0,0},{0,10},1.5707963f));
+  check(near(northCamera.x,0.f)&&near(northCamera.y,-1.f),
+        "camera rotation keeps its forward goal at the top");
+  const auto invalid=compassOffset(std::numeric_limits<float>::infinity());
+  check(near(invalid.x,0.f)&&near(invalid.y,0.f),"invalid compass angle stays inert");
+
   for(auto& c:w.crystals)c.taken=true;
   w.collected=5;
   goal=nearestQuestTarget(w);
