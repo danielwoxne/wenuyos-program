@@ -1,6 +1,16 @@
 # Versionshistorik
 
-## 0.5.1 (under utveckling)
+## 0.5.2 (utkast – ej publicerad)
+- Visuell målbild, etapp 2: tydliga temastyrda kort, valfria symboliska ikoner för statiska knappar och rubriker (visar text om ikonen saknas), och alltid synlig Schackskola med riktig framstegsprocent från sparade övningar. Vid träning visas uppgiftsknapparna; annars visas en kompakt introduktion och startknapp. Nya källbaserade UI-regressioner och manuell acceptansplan i `docs/UTSEENDE-052.md`.
+- Ny sammanhållen sidopanel: partistatus och övningar överst, därefter spelinställningar och draglista, med frivilligt LAN längst ned. Stilhjälpare använder temats förgrundsfärg för tunna avskiljare; GTK-temat styr knapparnas hörn och färger. Ny diskret verktygsrad.
+- Vektorformerna för springare, löpare och kung har fått finare detaljer som framträder på små rutor, fortsatt utan externa filer eller bildfilter.
+- Grafisk finputsning utan större minnesfotavtryck: diskret kontaktskugga under vektorpjäserna, smal inre ram runt brädet, diskret markering av senaste draget med palettens accentfärg och hörnlinjer, samt palettanpassade punkter för tillåtna drag. Allt ritas direkt i befintlig Cairo-yta, utan bitmap, oskärpa, GPU eller nya beroenden.
+- Vid markering eller flytt av pjäs kunde den dynamiska brädstatusraden brytas på nytt, så brädets GTK-ritningsyta ändrade höjd och centrerades om. Den synliga statusen hålls nu på en enda rad med ellips vid behov. Hela texten finns kvar i etiketten och som muspekartips.
+- UI-regression provar förekomsten av höjdstabil etikett. Visuell bekräftelse i Debian 13, 1024×600 och på faktisk 2 GB-maskin återstår.
+- Spelregler, lokala sparfiler och LAN-funktioner är oförändrade.
+
+
+## 0.5.1 (2026-11-13)
 - Sidopanelen visar bara vertikal rullning. Långa ledtrådar och draglistan får radbrytning och begränsad naturlig bredd; draglistans fasta minsta bredd är borttagen så panelen inte trycks ut i smala fönster.
 - Hjälpraden för tangentbordsgenvägar är kortare på svenska/engelska och radbryts. Ctrl+L, Ctrl+H, Ctrl+N och Ctrl+Z behålls oförändrade.
 - Regressionstester verifierar policyn för rullning, radbrytning och hjälprad. Fönsterstart i CI:s 2 GB-profil, visuell granskning på 1024×600 samt Orca och fysisk 30-minuters prestandamätning dokumenteras separat.

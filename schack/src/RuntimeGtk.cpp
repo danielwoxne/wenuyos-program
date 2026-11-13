@@ -37,6 +37,7 @@ unsigned int gtk_get_major_version(void);
 // GLib and GIO ABI: these signatures are stable on Debian 13 / WenuyOS.
 unsigned long g_signal_connect_data(void*, const char*, void (*)(), void*, void (*)(void*,void*), unsigned int);
 int g_application_run(void*, int, char**);
+void g_application_quit(void*);
 void g_object_unref(void*);
 unsigned int g_idle_add(int (*)(void*),void*);
 unsigned int g_timeout_add(unsigned int,int (*)(void*),void*);
@@ -73,6 +74,8 @@ const char* tr(const char* en,const char* sv){
  M(Ptr,gtk_box_new,(int,int)) \
  M(void,gtk_orientable_set_orientation,(Ptr,int)) \
  M(int,gtk_widget_get_width,(Ptr)) \
+ M(int,gtk_widget_get_height,(Ptr)) \
+ M(int,gtk_widget_compute_bounds,(Ptr,Ptr,void*)) \
  M(void,gtk_box_append,(Ptr,Ptr)) \
  M(Ptr,gtk_label_new,(const char*)) \
  M(Ptr,gtk_entry_new,()) \
@@ -83,10 +86,21 @@ const char* tr(const char* en,const char* sv){
  M(void,gtk_label_set_xalign,(Ptr,float)) \
  M(void,gtk_label_set_yalign,(Ptr,float)) \
  M(void,gtk_label_set_wrap,(Ptr,int)) \
+ M(void,gtk_label_set_ellipsize,(Ptr,int)) \
+ M(void,gtk_label_set_single_line_mode,(Ptr,int)) \
  M(void,gtk_label_set_wrap_mode,(Ptr,int)) \
  M(void,gtk_label_set_max_width_chars,(Ptr,int)) \
  M(Ptr,gtk_button_new_with_label,(const char*)) \
  M(void,gtk_button_set_label,(Ptr,const char*)) \
+ M(void,gtk_button_set_child,(Ptr,Ptr)) \
+ M(Ptr,gtk_button_get_child,(Ptr)) \
+ M(Ptr,gtk_image_new_from_icon_name,(const char*)) \
+ M(Ptr,gtk_icon_theme_get_for_display,(Ptr)) \
+ M(int,gtk_icon_theme_has_icon,(Ptr,const char*)) \
+ M(Ptr,gtk_progress_bar_new,()) \
+ M(void,gtk_progress_bar_set_fraction,(Ptr,double)) \
+ M(void,gtk_progress_bar_set_show_text,(Ptr,int)) \
+ M(void,gtk_progress_bar_set_text,(Ptr,const char*)) \
  M(Ptr,gtk_drawing_area_new,()) \
  M(void,gtk_drawing_area_set_draw_func,(Ptr,void(*)(Ptr,cairo_t*,int,int,void*),void*,void(*)(void*))) \
  M(Ptr,gtk_gesture_click_new,()) \
@@ -190,6 +204,14 @@ void piece(cairo_t* c,char p,double x,double y,double s){
  if(!p)return;
  const bool w=std::isupper(static_cast<unsigned char>(p));
  const char k=static_cast<char>(std::tolower(static_cast<unsigned char>(p)));
+ // An inexpensive contact shadow anchors the vector piece to its square.
+ // One flat Cairo ellipse: no blur, bitmap, offscreen surface or GPU dependency.
+ cairo_save(c);
+ cairo_translate(c,x+s*.50,y+s*.845);
+ cairo_scale(c,s*.30,s*.055);
+ cairo_new_path(c);cairo_arc(c,0,0,1,0,6.28318530718);
+ rgba(c,.06,.09,.13,w?.18:.26);cairo_fill(c);
+ cairo_restore(c);
  cairo_save(c);cairo_translate(c,x+s*.065,y+s*.065);cairo_scale(c,s*.87/100,s*.87/100);
  cairo_set_line_join(c,1);cairo_set_line_cap(c,1);
  switch(k){
@@ -229,7 +251,14 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   // Ear and bridle are simple Cairo strokes, not filtered assets.
   cairo_move_to(c,35,22);cairo_line_to(c,40,30);
   cairo_move_to(c,29,52);cairo_curve_to(c,37,56,42,57,47,58);
-  cairo_stroke(c);break;
+  cairo_stroke(c);
+  // A stepped mane and nostril improve the knight silhouette at small sizes.
+  rgba(c,w?.20:.90,w?.28:.93,w?.37:.96,.86);
+  cairo_set_line_width(c,2.0);
+  cairo_move_to(c,57,34);cairo_line_to(c,53,41);
+  cairo_move_to(c,63,41);cairo_line_to(c,59,48);
+  cairo_stroke(c);
+  cairo_new_path(c);cairo_arc(c,22,49,2.1,0,6.28318530718);cairo_fill(c);break;
  case 'b':
   cairo_new_path(c);cairo_move_to(c,50,15);cairo_curve_to(c,67,31,69,43,61,54);
   cairo_curve_to(c,75,63,69,70,67,76);cairo_line_to(c,33,76);
@@ -238,7 +267,12 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_new_path(c);cairo_move_to(c,58,27);cairo_line_to(c,44,54);
   rgba(c,w?.23:.8,w?.29:.86,w?.39:.92);cairo_set_line_width(c,4);cairo_stroke(c);
   cairo_set_line_width(c,2.0);cairo_move_to(c,37,65);cairo_line_to(c,63,65);
-  cairo_stroke(c);break;
+  cairo_stroke(c);
+  // A neck ring makes the bishop readable on small squares.
+  rgba(c,w?.58:.72,w?.64:.78,w?.72:.86,.86);
+  cairo_set_line_width(c,2.2);
+  cairo_move_to(c,37,58);cairo_curve_to(c,46,61,54,61,63,58);cairo_stroke(c);
+  cairo_new_path(c);cairo_arc(c,50,25,4.1,0,6.28318530718);cairo_fill(c);break;
  case 'q':
   cairo_new_path(c);cairo_move_to(c,20,27);cairo_line_to(c,34,43);cairo_line_to(c,39,20);
   cairo_line_to(c,50,42);cairo_line_to(c,61,20);cairo_line_to(c,66,43);
@@ -261,7 +295,12 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.5);
   cairo_move_to(c,39,63);cairo_line_to(c,61,63);cairo_stroke(c);
   cairo_set_line_width(c,1.8);cairo_move_to(c,44,51);
-  cairo_curve_to(c,48,47,52,47,56,51);cairo_stroke(c);break;
+  cairo_curve_to(c,48,47,52,47,56,51);cairo_stroke(c);
+  // Shoulder folds add dimension without bitmap shading.
+  cairo_set_line_width(c,2.0);
+  cairo_move_to(c,39,47);cairo_curve_to(c,36,51,36,57,40,61);
+  cairo_move_to(c,61,47);cairo_curve_to(c,64,51,64,57,60,61);
+  cairo_stroke(c);break;
  }
  base(c,w);cairo_restore(c);
 }
@@ -272,6 +311,7 @@ struct App {
  Ptr sidePanel=nullptr,focusBtn=nullptr,mainBox=nullptr,toolBar=nullptr,brand=nullptr,boardSummary=nullptr;
  Ptr lanStatus=nullptr,lanEntry=nullptr,lanCodeEntry=nullptr,lanHostBtn=nullptr,lanJoinBtn=nullptr,lanStopBtn=nullptr;
  Ptr lessonBox=nullptr,lessonTitle=nullptr,lessonTask=nullptr,lessonFeedback=nullptr,lessonProfile=nullptr,promoteBtn=nullptr;
+ Ptr lessonBar=nullptr,lessonButtons=nullptr,lessonRecommendBtn=nullptr,lessonToggleBtn=nullptr;
  chess::Game game, savedGame;
  int selected=-1,cursor=12,skill=2,mode=0,human=0,palette=0,hintFrom=-1,hintTo=-1;
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
@@ -290,6 +330,8 @@ struct App {
  std::size_t lessonIndex=0,lessonPly=0,lessonVariation=0; unsigned epoch=0; std::string transient;
 };
 App app;
+bool uiProbeRequested=false,uiProbeSmall=false;
+int uiProbeResult=0;
 
 std::string userDir(){
  const char* x=std::getenv("XDG_DATA_HOME");if(x&&*x)return std::string(x)+"/wenuy-schack";
@@ -362,10 +404,16 @@ void theme(){
     !g.gtk_css_provider_load_from_data || !g.gtk_style_context_add_provider_for_display)return;
  // Let GTK/WenuyOS provide application foreground and background colours.
  // Only the chessboard's four deliberate palettes are rendered in Cairo.
- const std::string css=std::string(".wenuy-topbar {padding: 2px 3px 5px;}")
-  +".wenuy-panel {border-radius: 16px; padding: 12px; }"
-  +".wenuy-control {border-radius: 9px; padding: 5px 9px; }"
-  +".wenuy-brand {font-weight: 800; letter-spacing: 1.1px;}"
+ // Theme colours and corners are inherited from GTK/libadwaita.
+ // Separators use the active theme foreground with low opacity.
+ const std::string css=std::string(".wenuy-topbar {padding: 6px 8px; border-bottom: 1px solid alpha(currentColor, 0.13);}")
+  +".wenuy-toolbar {padding: 5px 8px; border-bottom: 1px solid alpha(currentColor, 0.10);}"
+  +".wenuy-panel {padding: 6px;}"
+  +".wenuy-section {padding: 10px; margin-bottom: 5px;}"
+  +".wenuy-section-title {font-weight: 700; opacity: .84;}"
+  +".wenuy-control {padding: 6px 10px;}"
+  +".wenuy-option {padding: 8px 10px;}"
+  +".wenuy-brand {font-weight: 700; letter-spacing: .4px;}"
   +".wenuy-dim {opacity: .70;}";
  if(!app.cssProvider){
   app.cssProvider=g.gtk_css_provider_new();
@@ -447,11 +495,12 @@ void updateBoardAccessibility(){
  if(b.inCheck(b.white))label+=tr(". Check."," . Schack.");
  g.gtk_accessible_update_property(app.board,4,label.c_str(),-1); // GtkAccessibleProperty LABEL
 }
+void updateButtonLabel(Ptr button,const char* text);
 void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
- if(app.focusBtn)g.gtk_button_set_label(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
- if(app.undoBtn)g.gtk_button_set_label(app.undoBtn,app.training?tr("Restart exercise","Starta om övningen"):tr("Undo","Ångra"));
+ if(app.focusBtn)updateButtonLabel(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
+ if(app.undoBtn)updateButtonLabel(app.undoBtn,app.training?tr("Restart exercise","Starta om övningen"):tr("Undo","Ångra"));
  if(app.lanStatus)g.gtk_label_set_label(app.lanStatus,app.lanMessage.c_str());
  if(app.lanHostBtn)g.gtk_widget_set_sensitive(app.lanHostBtn,!app.lanConnecting&&!app.lanPeer);
  if(app.lanJoinBtn)g.gtk_widget_set_sensitive(app.lanJoinBtn,!app.lanConnecting&&!app.lanPeer);
@@ -490,6 +539,8 @@ void refresh(){
   if(app.mode==2){summary+=" · ";summary+=tr("LAN game","Nätverksparti");}
   if(app.keyboardCursor)summary+=" · "+chess::squareName(app.cursor);
   g.gtk_label_set_label(app.boardSummary,summary.c_str());
+  // Preserve the complete status in a tooltip when the visible line is shortened.
+  g.gtk_widget_set_tooltip_text(app.boardSummary,summary.c_str());
   updateBoardAccessibility();
  }
  g.gtk_label_set_label(app.turn,result=="ongoing"?(app.game.board().white?tr("White to move","Vit vid draget"):tr("Black to move","Svart vid draget")):tr("Game over","Partiet avslutat"));
@@ -501,17 +552,17 @@ void refresh(){
  if(history.empty())history=tr("No moves yet","Inga drag ännu");
  if(history.size()>1800)history=history.substr(history.size()-1800);
  g.gtk_label_set_label(app.history,history.c_str());
- g.gtk_button_set_label(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
+ updateButtonLabel(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
  const char* skills[]={"",tr("Beginner","Nybörjare"),tr("Easy","Lätt"),tr("Medium","Medel"),tr("Hard","Svår"),tr("Challenge","Utmaning")};
- g.gtk_button_set_label(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
+ updateButtonLabel(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
  const char* paletteNames[]={tr("Nordic blue","Nordiskt blått"),tr("Light","Ljust läge"),tr("Classic wood","Klassiskt trä"),tr("High contrast","Hög kontrast")};
- g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
+ updateButtonLabel(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
  if(app.analyzeBtn)g.gtk_widget_set_sensitive(app.analyzeBtn,!app.training&&!app.analysisBusy&&!app.game.moves.empty()&&app.mode!=2);
 
- g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
+ updateButtonLabel(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
  const char* promoname=(app.promotion=='q'?tr("Queen","Dam"):app.promotion=='r'?tr("Rook","Torn"):app.promotion=='b'?tr("Bishop","Löpare"):tr("Knight","Springare"));
- g.gtk_button_set_label(app.promoteBtn,(std::string(tr("Promotion: ","Bondeförvandling: "))+promoname).c_str());
+ updateButtonLabel(app.promoteBtn,(std::string(tr("Promotion: ","Bondeförvandling: "))+promoname).c_str());
  int materialBalance=0;
  for(char pc:app.game.board().squares){
   int val=0;switch(std::tolower(static_cast<unsigned char>(pc))){case 'p':val=1;break;case 'n':case 'b':val=3;break;case 'r':val=5;break;case 'q':val=9;break;default:break;}
@@ -520,13 +571,27 @@ void refresh(){
  const std::string materialText=materialBalance==0?tr("Material: equal","Material: jämnt"):
     std::string(tr("Material: ","Material: "))+(materialBalance>0?tr("White","vit"):tr("Black","svart"))+" +"+std::to_string(std::abs(materialBalance));
  g.gtk_label_set_label(app.material,materialText.c_str());
- g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);
+ // Keep a compact school card visible during normal games, with actual saved progress.
+ unsigned completed=0;
+ const auto lessonTotal=chess::lessonCount();
+ for(std::size_t i=0;i<lessonTotal;++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
+ if(app.lessonBar){
+  g.gtk_progress_bar_set_fraction(app.lessonBar,lessonTotal?double(completed)/double(lessonTotal):0.);
+  const std::string percent=std::to_string(lessonTotal?(100*completed)/lessonTotal:0)+" %";
+  g.gtk_progress_bar_set_text(app.lessonBar,percent.c_str());
+ }
+ if(app.lessonToggleBtn)updateButtonLabel(app.lessonToggleBtn,
+  app.training?tr("Exit chess school","Avsluta schackskolan"):
+               tr("Start chess school","Starta schackskolan"));
+ if(app.lessonTask)g.gtk_widget_set_visible(app.lessonTask,app.training?1:0);
+ if(app.lessonFeedback)g.gtk_widget_set_visible(app.lessonFeedback,app.training?1:0);
+ if(app.lessonProfile)g.gtk_widget_set_visible(app.lessonProfile,app.training?1:0);
+ if(app.lessonButtons)g.gtk_widget_set_visible(app.lessonButtons,app.training?1:0);
+ if(app.lessonRecommendBtn)g.gtk_widget_set_visible(app.lessonRecommendBtn,app.training?1:0);
  if(app.training){
   const auto& l=chess::lesson(app.lessonIndex);
-  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(chess::lessonCount())+" · "+tr(chess::lessonLevelEn(app.lessonIndex),chess::lessonLevelSv(app.lessonIndex))+" – "+tr(l.titleEn,l.titleSv)).c_str());
-  unsigned completed=0;
-  for(std::size_t i=0;i<chess::lessonCount();++i)if(app.lessonMask & (std::uint64_t(1)<<i))++completed;
-  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(chess::lessonCount())+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))+" · "+std::to_string(app.lessonMistakes[app.lessonIndex])+tr(" mistakes"," fel")).c_str());
+  g.gtk_label_set_label(app.lessonTitle,(std::string(tr("Lesson ","Övning "))+std::to_string(app.lessonIndex+1)+" / "+std::to_string(lessonTotal)+" · "+tr(chess::lessonLevelEn(app.lessonIndex),chess::lessonLevelSv(app.lessonIndex))+" – "+tr(l.titleEn,l.titleSv)).c_str());
+  g.gtk_label_set_label(app.lessonProgress,(std::string(tr("Lessons completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(lessonTotal)+"  •  "+((app.lessonMask & (std::uint64_t(1)<<app.lessonIndex))?tr("✓ Previously completed","✓ Klar tidigare"):tr("New lesson","Ny övning"))+" · "+std::to_string(app.lessonMistakes[app.lessonIndex])+tr(" mistakes"," fel")).c_str());
   // One inexpensive profile refresh over at most 64 exercises.
   if(app.lessonProfile){
    std::string profile=tr("Knowledge profile:","Kunskapsprofil:");
@@ -567,6 +632,10 @@ void refresh(){
     tr("Make the move on the board. A hint is available below.",
        "Gör draget på brädet. Ledtråd finns nedan.");
   g.gtk_label_set_label(app.lessonFeedback,app.lessonSolved?tr(l.successEn,l.successSv):coaching);
+ }else{
+  g.gtk_label_set_label(app.lessonTitle,tr("Learn step by step","Lär dig steg för steg"));
+  const std::string count=std::string(tr("Exercises completed: ","Avklarade övningar: "))+std::to_string(completed)+" / "+std::to_string(lessonTotal);
+  g.gtk_label_set_label(app.lessonProgress,count.c_str());
  }
  repaint();
 }
@@ -742,6 +811,10 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
  const auto& pal=colors();
  rgba(c,pal.bg[0],pal.bg[1],pal.bg[2]);cairo_rectangle(c,0,0,width,height);cairo_fill(c);
  rgba(c,pal.edge[0],pal.edge[1],pal.edge[2]);cairo_rectangle(c,geo.x-4,geo.y-4,geo.s*8+8,geo.s*8+8);cairo_fill(c);
+ // Fine inner rim adds depth to the frame without blurs or shadows.
+ rgba(c,pal.light[0],pal.light[1],pal.light[2],.44);
+ cairo_set_line_width(c,1.2);
+ cairo_rectangle(c,geo.x-2,geo.y-2,geo.s*8+4,geo.s*8+4);cairo_stroke(c);
  std::vector<chess::Move> allowed;
  if(app.selected>=0)allowed=b.legalMoves();
  int checked=-1;if(b.inCheck(b.white))for(int sq=0;sq<64;sq++)if(b.squares[sq]==(b.white?'K':'k')){checked=sq;break;}
@@ -752,7 +825,18 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
   rgba(c,baseColor[0],baseColor[1],baseColor[2]);
   cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
   if(!app.game.moves.empty()&&(sq==app.game.moves.back().from||sq==app.game.moves.back().to)){
-   rgba(c,1,.75,.22,.3);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+   // Theme-aware last-move tint plus corner brackets: visible, not a full bright flash.
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.18);
+   cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.78);
+   cairo_set_line_width(c,std::clamp(geo.s*.035,1.5,3.0));
+   const double margin=geo.s*.09,length=geo.s*.19;
+   cairo_move_to(c,x+margin,y+margin+length);
+   cairo_line_to(c,x+margin,y+margin);cairo_line_to(c,x+margin+length,y+margin);
+   cairo_move_to(c,x+geo.s-margin-length,y+geo.s-margin);
+   cairo_line_to(c,x+geo.s-margin,y+geo.s-margin);
+   cairo_line_to(c,x+geo.s-margin,y+geo.s-margin-length);
+   cairo_stroke(c);
   }
   if(sq==checked){rgba(c,.89,.22,.23,.37);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
   if(sq==app.selected){
@@ -764,7 +848,8 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
    cairo_rectangle(c,x+3,y+3,geo.s-6,geo.s-6);cairo_stroke(c);
   }
   if(std::any_of(allowed.begin(),allowed.end(),[&](const chess::Move& m){return m.from==app.selected&&m.to==sq;})){
-   rgba(c,.12,.27,.42,.47);cairo_new_path(c);
+   // Reuse the chosen board palette for possible-move hints on all four themes.
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.54);cairo_new_path(c);
    if(b.squares[sq]){cairo_set_line_width(c,std::max(2.,geo.s*.075));cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.44,0,6.28318530718);cairo_stroke(c);}
    else{cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.12,0,6.28318530718);cairo_fill(c);}
   }
@@ -1100,14 +1185,56 @@ void perform(int id){
  default:break;
  }
 }
-struct ButtonData{int id;};
+// Keep the text widget owned by a themed icon button. Updating GtkButton's
+// label directly would replace its custom image+label child on each move.
+struct ButtonData{int id;Ptr button=nullptr,caption=nullptr,customChild=nullptr;};
 std::vector<std::unique_ptr<ButtonData>> buttonDatas;
+void updateButtonLabel(Ptr button,const char* text){
+ if(!button)return;
+ for(const auto& entry:buttonDatas)if(entry->button==button){
+  if(entry->caption){
+   g.gtk_label_set_label(entry->caption,text);
+   g.gtk_accessible_update_property(button,4,text,-1);
+  }else g.gtk_button_set_label(button,text);
+  return;
+ }
+ g.gtk_button_set_label(button,text);
+}
+
+bool themedButtonsIntact(){
+ // Never inspect a detached caption: compare GTK's current child to the
+ // previously installed box. This is also safe when no icon was installed.
+ for(const auto& data:buttonDatas)if(data->customChild &&
+   g.gtk_button_get_child(data->button)!=data->customChild)return false;
+ return true;
+}
 void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
-Ptr button(Ptr container,const char* label,int id,bool primary=false){
+// Use theme-provided icons only when that icon is actually installed.
+Ptr themeIcon(const char* iconName){
+ if(!iconName||!g.gtk_widget_get_display||!app.window)return nullptr;
+ Ptr display=g.gtk_widget_get_display(app.window);
+ Ptr theme=display?g.gtk_icon_theme_get_for_display(display):nullptr;
+ if(!theme||!g.gtk_icon_theme_has_icon(theme,iconName))return nullptr;
+ return g.gtk_image_new_from_icon_name(iconName);
+}
+Ptr button(Ptr container,const char* label,int id,bool primary=false,const char* iconName=nullptr){
  Ptr btn=g.gtk_button_new_with_label(label);
  if(primary)g.gtk_widget_add_css_class(btn,"suggested-action");
  g.gtk_widget_add_css_class(btn,"wenuy-control");
- buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id}));
+ if(id==3||id==4||id==5||id==11||id==13)g.gtk_widget_add_css_class(btn,"wenuy-option");
+ if(Ptr icon=themeIcon(iconName)){
+  Ptr content=g.gtk_box_new(0,6);
+  Ptr caption=g.gtk_label_new(label);
+  g.gtk_box_append(content,icon);
+  g.gtk_box_append(content,caption);
+  g.gtk_button_set_child(btn,content);
+  g.gtk_accessible_update_property(btn,4,label,-1); // Accessible label
+  // This caption is updated in place; never discard the themed icon.
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption,content}));
+ }else{
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,nullptr,nullptr}));
+ }
+
  connect(btn,"clicked",onButton,buttonDatas.back().get());
  g.gtk_box_append(container,btn);return btn;
 }
@@ -1128,6 +1255,80 @@ void margin(Ptr w,int x,int y){
  g.gtk_widget_set_margin_start(w,x);g.gtk_widget_set_margin_end(w,x);
  g.gtk_widget_set_margin_top(w,y);g.gtk_widget_set_margin_bottom(w,y);
 }
+// Only installed theme icons are shown; absent ones silently fall back to text.
+void sectionHeading(Ptr parent,const char* title,const char* iconName){
+ Ptr heading=g.gtk_box_new(0,6);
+ if(Ptr icon=themeIcon(iconName))g.gtk_box_append(heading,icon);
+ label(heading,title,false,"wenuy-section-title");
+ g.gtk_box_append(parent,heading);
+}
+// The controls in each section are allocated only once, not during moves.
+Ptr section(Ptr parent,const char* title,const char* iconName=nullptr){
+ Ptr card=g.gtk_box_new(1,6);
+ g.gtk_widget_add_css_class(card,"wenuy-section");
+ g.gtk_widget_add_css_class(card,"card"); // WenuyOS / GTK theme chooses the surface
+ g.gtk_widget_set_hexpand(card,1);
+ g.gtk_box_append(parent,card);
+ if(title)sectionHeading(card,title,iconName);
+ return card;
+}
+// Integration probe runs only on explicit --ui-probe, in an isolated home.
+// The graphene_rect_t layout is four floats; GTK computes board bounds in
+// window coordinates, so both changes in size and position are detected.
+bool themedButtonsIntact();
+struct UiProbeRect{float x=0,y=0,width=0,height=0;};
+UiProbeRect probeBaseline{};
+int probePhase=0,probeWait=0;
+Ptr probeApplication=nullptr;
+bool probeBounds(UiProbeRect& r){
+ return app.board&&app.window&&g.gtk_widget_compute_bounds(app.board,app.window,&r)!=0
+        &&r.width>=260 &&r.height>=260;
+}
+bool probeStable(){
+ UiProbeRect current{};
+ if(!probeBounds(current))return false;
+ const auto near=[](float a,float b){return std::abs(a-b)<.6f;};
+ return near(current.x,probeBaseline.x)&&near(current.y,probeBaseline.y)
+     &&near(current.width,probeBaseline.width)&&near(current.height,probeBaseline.height);
+}
+int guiProbeTick(void*){
+ UiProbeRect r{};
+ if(app.closed){uiProbeResult=2;g_application_quit(probeApplication);return 0;}
+ if(!probeBounds(r)){
+  if(++probeWait<20)return 1;
+  std::fputs("ui-probe: board not allocated\n",stderr);
+  uiProbeResult=3;g_application_quit(probeApplication);return 0;
+ }
+ probeWait=0;
+ if(probePhase==0){
+  app.mode=1;app.flipped=false;app.training=false;
+  app.game.reset();app.selected=-1;stopPieceMotion();refresh();
+  probePhase=1;return 1;
+ }
+ if(probePhase==1){probeBaseline=r;chosen(12);probePhase=2;return 1;} // e2
+ if(!themedButtonsIntact()){
+  std::fprintf(stderr,"ui-probe: themed icon removed after a label update (phase %d)\n",probePhase);
+  uiProbeResult=8;g_application_quit(probeApplication);return 0;
+ }
+ if(!probeStable()){
+  std::fprintf(stderr,"ui-probe: board jumped in phase %d: (%.1f,%.1f %.1fx%.1f) -> (%.1f,%.1f %.1fx%.1f)\n",
+       probePhase,probeBaseline.x,probeBaseline.y,probeBaseline.width,probeBaseline.height,
+       r.x,r.y,r.width,r.height);
+  uiProbeResult=4;g_application_quit(probeApplication);return 0;
+ }
+ if(probePhase==2){chosen(28);probePhase=3;return 1;} // e2-e4
+ if(probePhase==3){
+  if(app.game.sans.size()!=1){uiProbeResult=5;g_application_quit(probeApplication);return 0;}
+  perform(6);probePhase=4;return 1;
+ }
+ if(probePhase==4){
+  if(!app.training){uiProbeResult=6;g_application_quit(probeApplication);return 0;}
+  perform(6);probePhase=5;return 1;
+ }
+ if(probePhase==5&&app.training){uiProbeResult=7;g_application_quit(probeApplication);return 0;}
+ std::puts("ui-probe: board bounds stable across e2/e4 and school toggle");
+ g_application_quit(probeApplication);return 0;
+}
 int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
  if(app.lanCancel)app.lanCancel->store(true);
  if(app.lanPeer)app.lanPeer->close();
@@ -1137,21 +1338,24 @@ void activate(Ptr application,void*){
  app.closed=false;app.analysisBusy=false;clearHint();
  if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
- g.gtk_window_set_title(app.window,"Wenuy Schack");
- {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);}
+ g.gtk_window_set_title(app.window,tr("Wenuy Chess","Wenuy Schack"));
+ {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,
+   uiProbeRequested?(uiProbeSmall?768:960):size.first,
+   uiProbeRequested?(uiProbeSmall?400:488):size.second);}
  connect(app.window,"close-request",onClose,nullptr);
  Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
  Ptr header=g.gtk_box_new(0,8);margin(header,10,8);
  g.gtk_widget_add_css_class(header,"wenuy-topbar");g.gtk_box_append(root,header);
- app.brand=g.gtk_label_new("♞  WENUY SCHACK");Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
+ app.brand=g.gtk_label_new(tr("♞  WENUY CHESS","♞  WENUY SCHACK"));Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
- button(header,tr("New game","Nytt parti"),0,true);app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
+ button(header,tr("New game","Nytt parti"),0,true,"document-new-symbolic");app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2,false,"view-refresh-symbolic");
  // A separate compact toolbar keeps the game controls legible on smaller screens.
- app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;margin(tools,10,4);g.gtk_box_append(root,tools);
- button(tools,tr("Chess school","Schackskolan"),6);
- app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12);
- app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);
+ app.toolBar=g.gtk_box_new(0,5);Ptr tools=app.toolBar;
+ g.gtk_widget_add_css_class(tools,"wenuy-toolbar");g.gtk_box_append(root,tools);
+ button(tools,tr("Chess school","Schackskolan"),6,false,"applications-education-symbolic");
+ app.hintBtn=button(tools,tr("Suggest move","Visa dragförslag"),12,false,"dialog-information-symbolic");
+ app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18,false,"system-search-symbolic");
  app.focusBtn=button(tools,tr("Focus on board","Fokus på brädet"),14);
  app.mainBox=g.gtk_box_new(0,0);Ptr main=app.mainBox;g.gtk_widget_set_vexpand(main,1);g.gtk_box_append(root,main);
  Ptr boardBox=g.gtk_box_new(1,0);g.gtk_widget_set_hexpand(boardBox,1);g.gtk_widget_set_vexpand(boardBox,1);
@@ -1172,7 +1376,14 @@ void activate(Ptr application,void*){
  g.gtk_widget_add_controller(app.board,keys);g.gtk_box_append(boardBox,app.board);
  // A persistent text equivalent of the custom-drawn board, also visible in focus mode.
  app.boardSummary=g.gtk_label_new("");
- g.gtk_label_set_wrap(app.boardSummary,1);
+ // Wrapping this line makes its height change on selection and after a move;
+ // GTK then resizes/recentres the expanding chessboard (visible as a jump).
+ // Keep its height to one line, preserving the full text for accessibility.
+ g.gtk_label_set_wrap(app.boardSummary,0);
+ g.gtk_label_set_single_line_mode(app.boardSummary,1);
+ g.gtk_label_set_ellipsize(app.boardSummary,3); // PANGO_ELLIPSIZE_END
+ g.gtk_label_set_max_width_chars(app.boardSummary,36);
+ g.gtk_widget_set_hexpand(app.boardSummary,1);
  g.gtk_label_set_xalign(app.boardSummary,0);
  g.gtk_widget_add_css_class(app.boardSummary,"wenuy-dim");
  g.gtk_widget_set_margin_start(app.boardSummary,12);
@@ -1189,64 +1400,79 @@ void activate(Ptr application,void*){
  g.gtk_widget_set_vexpand(app.sidePanel,1);
  g.gtk_widget_set_size_request(app.sidePanel,252,-1);
  g.gtk_box_append(main,app.sidePanel);
- Ptr side=g.gtk_box_new(1,9);
+ Ptr side=g.gtk_box_new(1,4);
  g.gtk_widget_set_hexpand(side,1);
- margin(side,12,8);g.gtk_widget_add_css_class(side,"wenuy-panel");
+ margin(side,8,6);g.gtk_widget_add_css_class(side,"wenuy-panel");
  g.gtk_scrolled_window_set_child(app.sidePanel,side);
- label(side,tr("YOUR GAME","DITT PARTI"),false,"title-3");
- app.turn=label(side,"",false,"heading");
- app.status=label(side,"",true);
- app.material=label(side,"",false,"wenuy-dim");
- // Chess school right under the game status: the task and Next/Hint are visible without scrolling.
+ // Main game state comes first; training remains directly below.
+ Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"),"applications-games-symbolic");
+ app.turn=label(gameSection,"",false,"title-3");
+ app.status=label(gameSection,"",true);
+ app.material=label(gameSection,"",false,"wenuy-dim");
+ // The school is visible above all secondary controls.
  app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);
+ g.gtk_widget_add_css_class(app.lessonBox,"wenuy-section");
+ g.gtk_widget_add_css_class(app.lessonBox,"card");
+ sectionHeading(app.lessonBox,tr("CHESS SCHOOL","SCHACKSKOLAN"),"applications-education-symbolic");
  app.lessonTitle=label(app.lessonBox,"",true,"heading");
+ app.lessonBar=g.gtk_progress_bar_new();
+ g.gtk_progress_bar_set_show_text(app.lessonBar,1);
+ g.gtk_box_append(app.lessonBox,app.lessonBar);
  app.lessonProgress=label(app.lessonBox,"",true,"wenuy-dim");
  app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");
  app.lessonTask=label(app.lessonBox,"",true);
  app.lessonFeedback=label(app.lessonBox,"",true);
- Ptr lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,lessonButtons);
- button(lessonButtons,tr("Previous","Föreg."),7);button(lessonButtons,tr("Hint","Ledtråd"),8);button(lessonButtons,tr("Next","Nästa"),9);
- button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
- button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
- label(side,tr("LAN GAME","NÄTVERKSPARTI"),false,"heading");
- label(side,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
- app.lanEntry=g.gtk_entry_new();
- g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
- g.gtk_accessible_update_property(app.lanEntry,4,tr("Host IPv4 address","Värdens IPv4-adress"),-1);
- g.gtk_box_append(side,app.lanEntry);
- app.lanCodeEntry=g.gtk_entry_new();
- g.gtk_entry_set_placeholder_text(app.lanCodeEntry,tr("Six-digit pairing code","Sexsiffrig parningskod"));
- g.gtk_accessible_update_property(app.lanCodeEntry,4,tr("Six-digit pairing code","Sexsiffrig parningskod"),-1);
- g.gtk_box_append(side,app.lanCodeEntry);
- app.lanHostBtn=button(side,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);
- app.lanJoinBtn=button(side,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);
- app.lanStopBtn=button(side,tr("Disconnect / Cancel","Koppla från / Avbryt"),17);
- app.lanStatus=label(side,tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik."),true,"wenuy-dim");
- app.modeBtn=button(side,tr("Mode: vs computer","Läge: mot datorn"),3);
- app.levelBtn=button(side,tr("Level: 2 / 5","Nivå: 2 / 5"),4);
- app.sideBtn=button(side,tr("You play: White","Du spelar: vit"),5);
- app.promoteBtn=button(side,tr("Promotion: Queen","Bondeförvandling: Dam"),11);
- app.themeBtn=button(side,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
- label(side,tr("MOVE HISTORY","DRAGLISTA"),false,"heading");
+ app.lessonButtons=g.gtk_box_new(0,5);g.gtk_box_append(app.lessonBox,app.lessonButtons);
+ button(app.lessonButtons,tr("Previous","Föreg."),7);button(app.lessonButtons,tr("Hint","Ledtråd"),8);button(app.lessonButtons,tr("Next","Nästa"),9);
+ app.lessonRecommendBtn=button(app.lessonBox,tr("Recommended practice","Rekommenderad övning"),19);
+ app.lessonToggleBtn=button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);
+ // Ordinary game tools are now above the advanced LAN settings.
+ Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"),"preferences-system-symbolic");
+ app.modeBtn=button(settingsSection,tr("Mode: vs computer","Läge: mot datorn"),3);
+ app.levelBtn=button(settingsSection,tr("Level: 2 / 5","Nivå: 2 / 5"),4);
+ app.sideBtn=button(settingsSection,tr("You play: White","Du spelar: vit"),5);
+ app.promoteBtn=button(settingsSection,tr("Promotion: Queen","Bondeförvandling: Dam"),11);
+ app.themeBtn=button(settingsSection,tr("Board: Nordic blue","Bräde: Nordiskt blått"),13);
+ Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"),"view-list-symbolic");
  Ptr scroll=g.gtk_scrolled_window_new();g.gtk_widget_set_vexpand(scroll,1);
  g.gtk_scrolled_window_set_policy(scroll,2,1);
- g.gtk_widget_set_size_request(scroll,-1,80);g.gtk_widget_set_hexpand(scroll,1);g.gtk_box_append(side,scroll);
+ g.gtk_widget_set_size_request(scroll,-1,80);g.gtk_widget_set_hexpand(scroll,1);g.gtk_box_append(movesSection,scroll);
  app.history=g.gtk_label_new(tr("No moves yet","Inga drag ännu"));g.gtk_label_set_xalign(app.history,0);
  g.gtk_label_set_wrap(app.history,1);g.gtk_label_set_wrap_mode(app.history,2);
  g.gtk_label_set_max_width_chars(app.history,28);
  g.gtk_label_set_yalign(app.history,0);margin(app.history,8,10);
  g.gtk_scrolled_window_set_child(scroll,app.history);
- button(side,tr("Export game (PGN)","Exportera parti (PGN)"),10);
+ button(movesSection,tr("Export game (PGN)","Exportera parti (PGN)"),10,false,"document-save-symbolic");
+ // The network feature remains opt-in, but no longer obscures routine tools.
+ Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"),"network-workgroup-symbolic");
+ label(lanSection,tr("Trusted LAN only. Pairing code is unencrypted. Never open a router port.","Endast betrott LAN. Parningskoden är okrypterad. Öppna aldrig en port i routern."),true,"wenuy-dim");
+ app.lanEntry=g.gtk_entry_new();
+ g.gtk_entry_set_placeholder_text(app.lanEntry,tr("Host IPv4: 192.168.1.20","Värdens IPv4: 192.168.1.20"));
+ g.gtk_accessible_update_property(app.lanEntry,4,tr("Host IPv4 address","Värdens IPv4-adress"),-1);
+ g.gtk_box_append(lanSection,app.lanEntry);
+ app.lanCodeEntry=g.gtk_entry_new();
+ g.gtk_entry_set_placeholder_text(app.lanCodeEntry,tr("Six-digit pairing code","Sexsiffrig parningskod"));
+ g.gtk_accessible_update_property(app.lanCodeEntry,4,tr("Six-digit pairing code","Sexsiffrig parningskod"),-1);
+ g.gtk_box_append(lanSection,app.lanCodeEntry);
+ app.lanHostBtn=button(lanSection,tr("Host LAN game (White)","Bjud in på LAN (vit)"),15);
+ app.lanJoinBtn=button(lanSection,tr("Join LAN game (Black)","Anslut till LAN (svart)"),16);
+ app.lanStopBtn=button(lanSection,tr("Disconnect / Cancel","Koppla från / Avbryt"),17);
+ app.lanStatus=label(lanSection,tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik."),true,"wenuy-dim");
  label(side,tr("Move: drag or click. Shortcuts: Ctrl+N new, Ctrl+Z undo. Ctrl+H hint, Ctrl+L focus.","Flytta: dra eller klicka. Genvägar: Ctrl+N nytt, Ctrl+Z ångra. Ctrl+H tips, Ctrl+L fokus."),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  connect(app.window,"notify::width",onWindowWidth,nullptr);
  theme();schack_system::applyStyle();refresh();g.gtk_window_present(app.window);responsive();
+ if(uiProbeRequested){probeApplication=application;g_timeout_add(90,guiProbeTick,nullptr);}
  g_timeout_add(120,pollLan,nullptr);startAI();
 }
 } // namespace
 
 int main(int argc,char** argv){
  // This is needed for gettext to honour LANG/LC_MESSAGES/LANGUAGE at process start.
+ // --ui-probe is a local test-only option, never forwarded to GTK.
+ if(argc==2&&(std::strcmp(argv[1],"--ui-probe")==0||std::strcmp(argv[1],"--ui-probe-small")==0)){
+  uiProbeRequested=true;uiProbeSmall=std::strcmp(argv[1],"--ui-probe-small")==0;argc=1;
+ }
  schack_system::initI18n();
  if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
@@ -1263,5 +1489,5 @@ int main(int argc,char** argv){
  connect(application,"activate",activate,nullptr);
  const int code=g_application_run(application,argc,argv);
  app.closed=true;g_object_unref(application);
- return code;
+ return uiProbeRequested&&uiProbeResult!=0?uiProbeResult:code;
 }
