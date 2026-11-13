@@ -607,6 +607,56 @@ void activate(GApplication* application,gpointer){
  auto* mixerScroll=gtk_scrolled_window_new();s->mixer=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(mixerScroll),s->mixer);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),mixerScroll,gtk_label_new(tr("Mixer","Mixer")));
+ // Compact, discoverable catalogue: changing instrument affects only the selected track.
+ auto* instrumentScroll=gtk_scrolled_window_new();
+ auto* library=gtk_box_new(GTK_ORIENTATION_VERTICAL,10);
+ gtk_widget_set_margin_start(library,12);gtk_widget_set_margin_end(library,12);
+ gtk_widget_set_margin_top(library,10);gtk_widget_set_margin_bottom(library,12);
+ auto* libraryHint=gtk_label_new(tr(
+  "Choose an instrument for the selected track. Sounds are synthesized and work offline.",
+  "Välj instrument för markerat spår. Ljuden skapas med syntes och fungerar offline."));
+ gtk_label_set_wrap(GTK_LABEL(libraryHint),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(libraryHint),0);
+ gtk_box_append(GTK_BOX(library),libraryHint);
+ const char* families[]={"Synthesizers","Keyboards","Strings","Winds","Percussion","Voices"};
+ for(const char* family:families){
+  const ws::InstrumentPreset* first=nullptr;
+  for(std::size_t i=0;i<ws::instrumentCount();++i){
+   const auto* preset=ws::instrumentById(static_cast<int>(i));
+   if(std::strcmp(preset->familyEnglish,family)==0){first=preset;break;}
+  }
+  if(!first)continue;
+  auto* groupTitle=gtk_label_new(sv()?first->familySwedish:first->familyEnglish);
+  gtk_widget_set_halign(groupTitle,GTK_ALIGN_START);
+  gtk_widget_add_css_class(groupTitle,"heading");
+  gtk_box_append(GTK_BOX(library),groupTitle);
+  auto* wrap=gtk_flow_box_new();
+  gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(wrap),GTK_SELECTION_NONE);
+  gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(wrap),3);
+  gtk_flow_box_set_row_spacing(GTK_FLOW_BOX(wrap),6);
+  gtk_flow_box_set_column_spacing(GTK_FLOW_BOX(wrap),6);
+  for(std::size_t i=0;i<ws::instrumentCount();++i){
+   const auto* preset=ws::instrumentById(static_cast<int>(i));
+   if(std::strcmp(preset->familyEnglish,family)!=0)continue;
+   auto* presetButton=gtk_button_new_with_label(sv()?preset->swedish:preset->english);
+   auto* binding=index(presetButton,s,i);
+   g_signal_connect(presetButton,"clicked",G_CALLBACK(+[](GtkButton*,gpointer user){
+    auto* choice=static_cast<Indexed*>(user);
+    auto* st=choice->s;
+    if(st->selected>=st->project.tracks.size())return;
+    if(st->project.tracks[st->selected].instrument==static_cast<int>(choice->index))return;
+    checkpoint(st);
+    st->project.tracks[st->selected].instrument=static_cast<int>(choice->index);
+    change(st);
+    notice(st,tr("Instrument applied to selected track","Instrument valt för markerat spår"));
+   }),binding);
+   gtk_flow_box_insert(GTK_FLOW_BOX(wrap),presetButton,-1);
+  }
+  gtk_box_append(GTK_BOX(library),wrap);
+ }
+ gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(instrumentScroll),library);
+ gtk_notebook_append_page(GTK_NOTEBOOK(notebook),instrumentScroll,
+                          gtk_label_new(tr("Instrument library","Instrumentbibliotek")));
  gtk_paned_set_end_child(GTK_PANED(split),notebook);gtk_paned_set_position(GTK_PANED(split),235);
  gtk_box_append(GTK_BOX(main),split);
  s->status=gtk_label_new(tr("Ready – open a project or create music","Redo – öppna ett projekt eller skapa musik"));
