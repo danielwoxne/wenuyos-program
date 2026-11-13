@@ -93,6 +93,7 @@ const char* tr(const char* en,const char* sv){
  M(Ptr,gtk_button_new_with_label,(const char*)) \
  M(void,gtk_button_set_label,(Ptr,const char*)) \
  M(void,gtk_button_set_child,(Ptr,Ptr)) \
+ M(Ptr,gtk_button_get_child,(Ptr)) \
  M(Ptr,gtk_image_new_from_icon_name,(const char*)) \
  M(Ptr,gtk_icon_theme_get_for_display,(Ptr)) \
  M(int,gtk_icon_theme_has_icon,(Ptr,const char*)) \
@@ -1186,7 +1187,7 @@ void perform(int id){
 }
 // Keep the text widget owned by a themed icon button. Updating GtkButton's
 // label directly would replace its custom image+label child on each move.
-struct ButtonData{int id;Ptr button=nullptr,caption=nullptr;};
+struct ButtonData{int id;Ptr button=nullptr,caption=nullptr,customChild=nullptr;};
 std::vector<std::unique_ptr<ButtonData>> buttonDatas;
 void updateButtonLabel(Ptr button,const char* text){
  if(!button)return;
@@ -1200,6 +1201,13 @@ void updateButtonLabel(Ptr button,const char* text){
  g.gtk_button_set_label(button,text);
 }
 
+bool themedButtonsIntact(){
+ // Never inspect a detached caption: compare GTK's current child to the
+ // previously installed box. This is also safe when no icon was installed.
+ for(const auto& data:buttonDatas)if(data->customChild &&
+   g.gtk_button_get_child(data->button)!=data->customChild)return false;
+ return true;
+}
 void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
 // Use theme-provided icons only when that icon is actually installed.
 Ptr themeIcon(const char* iconName){
@@ -1222,9 +1230,9 @@ Ptr button(Ptr container,const char* label,int id,bool primary=false,const char*
   g.gtk_button_set_child(btn,content);
   g.gtk_accessible_update_property(btn,4,label,-1); // Accessible label
   // This caption is updated in place; never discard the themed icon.
-  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption}));
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption,content}));
  }else{
-  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,nullptr}));
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,nullptr,nullptr}));
  }
 
  connect(btn,"clicked",onButton,buttonDatas.back().get());
@@ -1267,6 +1275,7 @@ Ptr section(Ptr parent,const char* title,const char* iconName=nullptr){
 // Integration probe runs only on explicit --ui-probe, in an isolated home.
 // The graphene_rect_t layout is four floats; GTK computes board bounds in
 // window coordinates, so both changes in size and position are detected.
+bool themedButtonsIntact();
 struct UiProbeRect{float x=0,y=0,width=0,height=0;};
 UiProbeRect probeBaseline{};
 int probePhase=0,probeWait=0;
@@ -1297,6 +1306,10 @@ int guiProbeTick(void*){
   probePhase=1;return 1;
  }
  if(probePhase==1){probeBaseline=r;chosen(12);probePhase=2;return 1;} // e2
+ if(!themedButtonsIntact()){
+  std::fprintf(stderr,"ui-probe: themed icon removed after a label update (phase %d)\n",probePhase);
+  uiProbeResult=8;g_application_quit(probeApplication);return 0;
+ }
  if(!probeStable()){
   std::fprintf(stderr,"ui-probe: board jumped in phase %d: (%.1f,%.1f %.1fx%.1f) -> (%.1f,%.1f %.1fx%.1f)\n",
        probePhase,probeBaseline.x,probeBaseline.y,probeBaseline.width,probeBaseline.height,
