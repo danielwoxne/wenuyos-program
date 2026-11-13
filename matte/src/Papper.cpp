@@ -626,6 +626,7 @@ void raknepapper_fyll(GtkWidget* w, const std::string& rader) {
     }
     p->rad = rad; p->kol = p->start = 2;
     uppdatera(p);
+    markeraAndring(p);  // används även av CI:s återställningstest
 }
 
 }  // namespace matte
