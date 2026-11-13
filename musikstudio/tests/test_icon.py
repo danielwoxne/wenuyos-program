@@ -49,4 +49,9 @@ assert '#include "wenuystudio/AudioImport.hpp"' in code
 assert 'ws::importAudioFile(path,importDir.u8string())' in code
 assert 'tr("Import audio","Importera ljud")' in code
 assert 'tr("Import audio…","Importera ljud…")' in code
+# The 3D renderer runs in a separate process: the GTK client never links GFX.
+assert 'GSubprocess* process=g_subprocess_newv' in code
+assert 'Pick::ExportGfx' in code
+assert 'tr("Export 3D note map…","Exportera 3D-notkarta…")' in code
+assert 'WenuyGFX::wenuygfx' not in (root/"gui"/"GtkStudio.cpp").read_text()
 print("Desktop, MIME, project guard, icon and compact layout PASS")
