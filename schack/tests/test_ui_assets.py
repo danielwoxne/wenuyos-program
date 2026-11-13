@@ -77,8 +77,23 @@ for entry in (
     assert entry in desktop, f"Missing launcher metadata: {entry}"
 
 ET.parse(svg)
-assert 'version = "0.5.1"' in manifest
+assert 'version = "0.5.2"' in manifest
 assert 'needs_network = true' in manifest
+
+# 0.5.2: a changing status message must never wrap and resize the board.
+# These are structure checks; actual pixel stability still requires a GTK test.
+for marker in (
+    "M(void,gtk_label_set_ellipsize,(Ptr,int))",
+    "M(void,gtk_label_set_single_line_mode,(Ptr,int))",
+    "g.gtk_label_set_wrap(app.boardSummary,0);",
+    "g.gtk_label_set_single_line_mode(app.boardSummary,1);",
+    "g.gtk_label_set_ellipsize(app.boardSummary,3);",
+    "g.gtk_label_set_max_width_chars(app.boardSummary,36);",
+    "g.gtk_widget_set_hexpand(app.boardSummary,1);",
+    "g.gtk_widget_set_tooltip_text(app.boardSummary,summary.c_str());",
+):
+    assert marker in gui, f"Board status may reflow and shake: {marker}"
+assert "g.gtk_label_set_wrap(app.boardSummary,1);" not in gui
 
 # 0.5.1: no sideways scroll or cut-off shortcut text in 252 px sidebar.
 assert 'M(void,gtk_scrolled_window_set_policy,(Ptr,int,int))' in gui
