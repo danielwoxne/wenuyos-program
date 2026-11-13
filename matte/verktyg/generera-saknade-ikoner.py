@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Skapar tydliga reservikoner om bildpaketet saknas i Matte 1.2-kallkoden.
+"""Skapar reservikoner i en separat byggmapp (aldrig i källkodsmappen).
 
-Kräver bara Python 3-standardbiblioteket. Skriver aldrig över riktiga lerikoner.
-Beroende på vilka ikonreferenser projektet innehåller skapas 96x96 PNG-filer.
+Kräver bara Python 3-standardbiblioteket. Originalikonerna kopieras senare
+före reserven av expandera.py och ersätts aldrig av bokstavsikoner.
+Beroende på referenser skapas 96x96 PNG-filer.
 """
 from pathlib import Path
 import re, sys, struct, zlib, hashlib
@@ -99,8 +100,10 @@ def all_names(root):
     return {x for x in names if re.fullmatch('[A-Za-z0-9_-]{1,55}',x)}
 
 def main():
-    if len(sys.argv)!=2:raise SystemExit('Användning: python3 generera-saknade-ikoner.py /path/to/matte-cpp')
-    root=Path(sys.argv[1]); dst=root/'innehall'/'data'/'ikoner'
+    if len(sys.argv) != 3:
+        raise SystemExit("Användning: python3 generera-saknade-ikoner.py KÄLLMAPP UTMAPP")
+    root = Path(sys.argv[1]).resolve()
+    dst = Path(sys.argv[2]).resolve()  # alltid byggmappen – skriv aldrig in i källkodsträdet
     if not (root/'src'/'Fonster.cpp').is_file():raise SystemExit('Saknar Matte-programmets källkod')
     dst.mkdir(parents=True,exist_ok=True)
     new=0
