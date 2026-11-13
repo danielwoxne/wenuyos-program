@@ -62,9 +62,20 @@ assert 'ws::keyboardKeyAt(x,y' in code
 assert 'ws::keyboardComputerKey(gdk_keyval_to_lower(keyval))' in code
 assert 'tr("Record MIDI","Spela in MIDI")' in code
 assert 'tr("Stop MIDI recording","Stoppa MIDI-inspelning")' in code
-assert 's->midi.noteOn(key,g_get_monotonic_time())' in code
+assert 's->midi.noteOn(key,g_get_monotonic_time(),velocity)' in code
 assert 's->midi.noteOff(key,g_get_monotonic_time())' in code
 assert 's->midi.finish(g_get_monotonic_time())' in code
 assert 's->midi.recording()' in code
 assert 's->audition.start(preview,0)' in code
+# External MIDI is opt-in only; no enumeration or connection occurs at startup.
+assert '#include "wenuystudio/MidiInput.hpp"' in code
+assert 'gtk_button_new_with_label(tr("Scan MIDI devices","Sök MIDI-enheter"))' in code
+assert 'tr("Connect MIDI","Anslut MIDI")' in code
+assert 'tr("Disconnect MIDI","Koppla från MIDI")' in code
+assert 's->midiInput.scan(error)' in code
+assert 's->midiInput.connect(source,' in code
+assert 's->midiInput.disconnect()' in code
+assert 'releaseExternalKeys(s)' in code
+assert 's->externalKeys' in code
+assert 'createExternalMidiUi(s)' in code
 print("Desktop, MIME, project guard, icon and compact layout PASS")
