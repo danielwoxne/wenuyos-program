@@ -192,6 +192,14 @@ void piece(cairo_t* c,char p,double x,double y,double s){
  if(!p)return;
  const bool w=std::isupper(static_cast<unsigned char>(p));
  const char k=static_cast<char>(std::tolower(static_cast<unsigned char>(p)));
+ // An inexpensive contact shadow anchors the vector piece to its square.
+ // One flat Cairo ellipse: no blur, bitmap, offscreen surface or GPU dependency.
+ cairo_save(c);
+ cairo_translate(c,x+s*.50,y+s*.845);
+ cairo_scale(c,s*.30,s*.055);
+ cairo_new_path(c);cairo_arc(c,0,0,1,0,6.28318530718);
+ rgba(c,.06,.09,.13,w?.18:.26);cairo_fill(c);
+ cairo_restore(c);
  cairo_save(c);cairo_translate(c,x+s*.065,y+s*.065);cairo_scale(c,s*.87/100,s*.87/100);
  cairo_set_line_join(c,1);cairo_set_line_cap(c,1);
  switch(k){
@@ -746,6 +754,10 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
  const auto& pal=colors();
  rgba(c,pal.bg[0],pal.bg[1],pal.bg[2]);cairo_rectangle(c,0,0,width,height);cairo_fill(c);
  rgba(c,pal.edge[0],pal.edge[1],pal.edge[2]);cairo_rectangle(c,geo.x-4,geo.y-4,geo.s*8+8,geo.s*8+8);cairo_fill(c);
+ // Fine inner rim adds depth to the frame without blurs or shadows.
+ rgba(c,pal.light[0],pal.light[1],pal.light[2],.44);
+ cairo_set_line_width(c,1.2);
+ cairo_rectangle(c,geo.x-2,geo.y-2,geo.s*8+4,geo.s*8+4);cairo_stroke(c);
  std::vector<chess::Move> allowed;
  if(app.selected>=0)allowed=b.legalMoves();
  int checked=-1;if(b.inCheck(b.white))for(int sq=0;sq<64;sq++)if(b.squares[sq]==(b.white?'K':'k')){checked=sq;break;}
@@ -756,7 +768,18 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
   rgba(c,baseColor[0],baseColor[1],baseColor[2]);
   cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
   if(!app.game.moves.empty()&&(sq==app.game.moves.back().from||sq==app.game.moves.back().to)){
-   rgba(c,1,.75,.22,.3);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+   // Theme-aware last-move tint plus corner brackets: visible, not a full bright flash.
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.18);
+   cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.78);
+   cairo_set_line_width(c,std::clamp(geo.s*.035,1.5,3.0));
+   const double margin=geo.s*.09,length=geo.s*.19;
+   cairo_move_to(c,x+margin,y+margin+length);
+   cairo_line_to(c,x+margin,y+margin);cairo_line_to(c,x+margin+length,y+margin);
+   cairo_move_to(c,x+geo.s-margin-length,y+geo.s-margin);
+   cairo_line_to(c,x+geo.s-margin,y+geo.s-margin);
+   cairo_line_to(c,x+geo.s-margin,y+geo.s-margin-length);
+   cairo_stroke(c);
   }
   if(sq==checked){rgba(c,.89,.22,.23,.37);cairo_rectangle(c,x,y,geo.s,geo.s);cairo_fill(c);}
   if(sq==app.selected){
@@ -768,7 +791,8 @@ void draw(Ptr,cairo_t* c,int width,int height,void*){
    cairo_rectangle(c,x+3,y+3,geo.s-6,geo.s-6);cairo_stroke(c);
   }
   if(std::any_of(allowed.begin(),allowed.end(),[&](const chess::Move& m){return m.from==app.selected&&m.to==sq;})){
-   rgba(c,.12,.27,.42,.47);cairo_new_path(c);
+   // Reuse the chosen board palette for possible-move hints on all four themes.
+   rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.54);cairo_new_path(c);
    if(b.squares[sq]){cairo_set_line_width(c,std::max(2.,geo.s*.075));cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.44,0,6.28318530718);cairo_stroke(c);}
    else{cairo_arc(c,x+geo.s/2,y+geo.s/2,geo.s*.12,0,6.28318530718);cairo_fill(c);}
   }
