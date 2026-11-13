@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstring>
 #include <map>
+#include <utility>
 #include <cstdio>
 #include <algorithm>
 #include <set>
@@ -97,7 +98,7 @@ static void testaPapperLagring() {
     p.id = nyttPapperId(); p.kort = "brak-delar";
     p.fraga = "Hur stor del är 3/4?";
     p.mallIndex = 2; p.variantIndex = 4;
-    p.c[{1,2}] = {"3", "1"};
+    p.c[std::make_pair(1, 2)] = {"3", "1"};
     p.streck.push_back({2, 1, 4});
     p.drag.push_back({{1.125, 2.5, .25, true}, {2.75, 3.0, .95, true}});
     std::string fil, err;
@@ -106,14 +107,14 @@ static void testaPapperLagring() {
     KOLLA(papperTillJson(p, fil, &err), "JSON från giltigt papper: %s", err.c_str());
     PapperData d;
     KOLLA(papperFranJson(fil, d, &err) &&
-          d.id == p.id && d.c[{1,2}].t == "3" && d.c[{1,2}].liten == "1" &&
+          d.id == p.id && d.c[std::make_pair(1, 2)].t == "3" && d.c[std::make_pair(1, 2)].liten == "1" &&
           d.streck.size() == 1 && d.drag.size() == 1 &&
           d.drag[0][1].tryckFinns && d.drag[0][1].tryck > .94,
           "tryck, minnessiffra och streck överlever JSON-rundgång");
     KOLLA(papperSpara("forsta-elev", p, &err), "atomär lokal sparning: %s", err.c_str());
     PapperData igen;
     KOLLA(papperLadda("forsta-elev", p.id, igen, &err) &&
-          igen.fraga == p.fraga && igen.c[{1,2}].liten == "1" &&
+          igen.fraga == p.fraga && igen.c[std::make_pair(1, 2)].liten == "1" &&
           igen.drag[0][1].first == 2.75, "återställ efter omstart");
     KOLLA(!papperLadda("andra-elev", p.id, d, &err),
           "elev B får inte läsa elev A:s papper");
@@ -191,7 +192,7 @@ static void testaFlytt() {
     papper.id = nyttPapperId();
     papper.kort = "brak-delar"; papper.fraga = "1/2 + 1/4";
     papper.mallIndex = 0; papper.variantIndex = 3;
-    papper.c[{3, 2}] = {"7", ""};
+    papper.c[std::make_pair(3, 2)] = {"7", ""};
     papper.drag.push_back({{1.25, 2.5, .8, true}});
     e.papperId = papper.id; e.papperKort = papper.kort;
     e.papperFraga = papper.fraga;
@@ -214,7 +215,7 @@ static void testaFlytt() {
           igen.papperVariant == 3, "framstegen och aktiva uppgiften följer med");
     PapperData papperIgen;
     KOLLA(papperLadda("test-elev", papper.id, papperIgen) &&
-          papperIgen.c[{3, 2}].t == "7" &&
+          papperIgen.c[std::make_pair(3, 2)].t == "7" &&
           papperIgen.drag.size() == 1 &&
           papperIgen.drag[0][0].tryck > .79,
           "handskrift och tryck följer med elevexport/import");
