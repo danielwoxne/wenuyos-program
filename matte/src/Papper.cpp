@@ -18,28 +18,42 @@ namespace {
 
 using wenuy::tr;
 
-struct Cell { std::string t, liten; };
-struct Streck { int rad, fran, till; };
-struct Pennpunkt { double first, second, tryck = 1.0; bool tryckFinns = false; };
+using Cell = PapperCell;
+using Streck = PapperStreck;
+using Pennpunkt = PapperPunkt;
 
-struct Papper {
+struct Papper : PapperData {
     GtkWidget* w = nullptr;
-    std::map<std::pair<int, int>, Cell> c;            // (rad, kolumn)
-    std::vector<Streck> streck;                       // linje under en rad (summastrecket)
-    std::vector<std::vector<Pennpunkt>> drag;   // pennans streck, tryck och rutor
-    int rad = 1, kol = 2, start = 2;                  // markören och var raden började (Enter går dit)
-    int lage = 0;                                     // 0 skriv, 1 penna, 2 sudda
-    bool liten = false, vanster = false;              // nästa siffra som minnessiffra · skriv åt vänster
     double zoom = 1;
     int rader = 10;
     std::string uppgift;
     GtkWidget *lageK[3] = {}, *litenK = nullptr, *vansterK = nullptr, *stallK = nullptr;
     bool synkar = false;
     bool stylusAktiv = false;
+    bool varnadOmGrans = false;
+    size_t antalPunkter = 0;
+    std::function<void()> andrad, begransad;
     double ruta() const { return 34 * zoom; }
 };
 
 Papper* av(GtkWidget* w) { return w ? static_cast<Papper*>(g_object_get_data(G_OBJECT(w), "matte-papper")) : nullptr; }
+
+// Sparning körs först efter avslutat pennstreck eller tangentändring, inte
+// för varje rörelsepunkt. Därmed belastas 2 GB-datorn inte med upprepad JSON.
+void markeraAndring(Papper* p) {
+    if (p && p->andrad) p->andrad();
+}
+bool kanLaggaTill(Papper* p, bool nyttStreck) {
+    constexpr size_t MAX_UI_PUNKTER = 16000; // JSON-filen kan alltid hålla sig under 2 MiB
+    if (p->antalPunkter < MAX_UI_PUNKTER &&
+        (!nyttStreck || p->drag.size() < PAPPER_MAX_STRECK)) return true;
+    if (!p->varnadOmGrans) {
+        p->varnadOmGrans = true;
+        if (p->begransad) p->begransad();
+    }
+    return false;
+}
+
 
 void uppdatera(Papper* p) {
     int maxRad = std::max(p->rad, 0);
@@ -231,6 +245,7 @@ gboolean tangent(GtkEventControllerKey*, guint key, guint, GdkModifierType mod, 
         }
     }
     uppdatera(p);
+    markeraAndring(p);
     return TRUE;
 }
 
@@ -249,7 +264,10 @@ void suddaVid(Papper* p, double x, double y) {
     double cx = x / p->ruta(), cy = y / p->ruta();
     p->c.erase({(int)cy, (int)cx});
     p->drag.erase(std::remove_if(p->drag.begin(), p->drag.end(), [&](auto& d) {
-        for (auto& pt : d) if (std::hypot(pt.first - cx, pt.second - cy) < 0.4) return true;
+        for (auto& pt : d) if (std::hypot(pt.first - cx, pt.second - cy) < 0.4) {
+            p->antalPunkter -= std::min(p->antalPunkter, d.size());
+            return true;
+        }
         return false;
     }), p->drag.end());
 }
@@ -264,8 +282,10 @@ void dragBorjar(GtkGestureDrag* g, double x, double y, gpointer data) {
     Papper* p = static_cast<Papper*>(data);
     if (arStylus(gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(g)))) return;
     gtk_widget_grab_focus(p->w);
-    if (p->lage == 1) p->drag.push_back({{x / p->ruta(), y / p->ruta()}});
-    else if (p->lage == 2) suddaVid(p, x, y);
+    if (p->lage == 1) {
+        if (!kanLaggaTill(p, true)) return;
+        p->drag.push_back({{x / p->ruta(), y / p->ruta()}}); ++p->antalPunkter;
+    } else if (p->lage == 2) suddaVid(p, x, y);
     else return;
     uppdatera(p);
 }
@@ -276,14 +296,20 @@ void dragFlyttas(GtkGestureDrag* g, double dx, double dy, gpointer data) {
     double sx, sy;
     if (p->lage == 0 || !gtk_gesture_drag_get_start_point(g, &sx, &sy)) return;
     double x = sx + dx, y = sy + dy;
-    if (p->lage == 1 && !p->drag.empty()) p->drag.back().push_back({x / p->ruta(), y / p->ruta()});
-    else if (p->lage == 2) suddaVid(p, x, y);
+    if (p->lage == 1 && !p->drag.empty()) {
+        if (kanLaggaTill(p, false)) {
+            p->drag.back().push_back({x / p->ruta(), y / p->ruta()});
+            ++p->antalPunkter;
+        }
+    } else if (p->lage == 2) suddaVid(p, x, y);
     gtk_widget_queue_draw(p->w);
 }
 
 void dragSlut(GtkGestureDrag* g, double, double, gpointer data) {
     if (arStylus(gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(g)))) return;
-    uppdatera(static_cast<Papper*>(data));
+    Papper* p = static_cast<Papper*>(data);
+    uppdatera(p);
+    markeraAndring(p);
 }
 
 // GTK4 stylus events are separate from generic mouse/touch drag events.
@@ -294,8 +320,12 @@ void stylusNer(GtkGestureStylus* g, double x, double y, gpointer data) {
     if (p->lage == 0) p->lage = 1;
     double pressure = 1.0;
     bool has = gtk_gesture_stylus_get_axis(g, GDK_AXIS_PRESSURE, &pressure);
-    if (p->lage == 1) p->drag.push_back({{x / p->ruta(), y / p->ruta(), penntryck(pressure, has), has}});
-    else if (p->lage == 2) suddaVid(p, x, y);
+    if (p->lage == 1) {
+        if (kanLaggaTill(p, true)) {
+            p->drag.push_back({{x / p->ruta(), y / p->ruta(), penntryck(pressure, has), has}});
+            ++p->antalPunkter;
+        }
+    } else if (p->lage == 2) suddaVid(p, x, y);
     gtk_gesture_set_state(GTK_GESTURE(g), GTK_EVENT_SEQUENCE_CLAIMED);
     uppdatera(p);
 }
@@ -307,9 +337,10 @@ void stylusRor(GtkGestureStylus* g, double x, double y, gpointer data) {
     if (p->lage == 1 && !p->drag.empty()) {
         auto& points = p->drag.back();
         const double px = x / p->ruta(), py = y / p->ruta();
-        if (points.size() >= 10000) return;
+        if (points.size() >= 10000 || !kanLaggaTill(p, false)) return;
         if (!points.empty() && std::hypot(points.back().first - px, points.back().second - py) < .004) return;
         points.push_back({px, py, penntryck(pressure, has), has});
+        ++p->antalPunkter;
     } else if (p->lage == 2) suddaVid(p, x, y);
     gtk_widget_queue_draw(p->w);
 }
@@ -317,6 +348,7 @@ void stylusUpp(GtkGestureStylus*, double, double, gpointer data) {
     Papper* p = static_cast<Papper*>(data);
     p->stylusAktiv = false;
     uppdatera(p);
+    markeraAndring(p);
 }
 
 GtkWidget* knapp(GtkWidget* rad, const char* text, const char* tips, bool toggle) {
@@ -428,7 +460,7 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
     }), p);
     GtkWidget* li = knapp(rad, tr("Line", "Streck"), tr("A line under the row (also _)", "Ett streck under raden (också _)"), false);
     g_signal_connect(li, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
-        Papper* p = static_cast<Papper*>(d); strecka(p); gtk_widget_grab_focus(p->w); uppdatera(p);
+        Papper* p = static_cast<Papper*>(d); strecka(p); gtk_widget_grab_focus(p->w); uppdatera(p); markeraAndring(p);
     }), p);
     adw_wrap_box_append(ADW_WRAP_BOX(rad), gtk_separator_new(GTK_ORIENTATION_VERTICAL));
     p->stallK = knapp(rad, tr("Set it up", "Ställ upp"), tr("Write the numbers in the task in columns", "Skriv talen i uppgiften i kolumner"), false);
@@ -441,10 +473,14 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
                             tr("Remove your most recent handwritten stroke", "Ta bort det senaste handskrivna strecket"), false);
     g_signal_connect(undo, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
         Papper* p = static_cast<Papper*>(d);
-        if (!p->drag.empty()) p->drag.pop_back();
+        if (!p->drag.empty()) {
+            p->antalPunkter -= std::min(p->antalPunkter, p->drag.back().size());
+            p->drag.pop_back();
+        }
         p->stylusAktiv = false;
         gtk_widget_grab_focus(p->w);
         uppdatera(p);
+        markeraAndring(p);
     }), p);
     GtkWidget* re = knapp(rad, tr("Clear", "Rensa"), tr("An empty paper", "Ett tomt papper"), false);
     g_signal_connect(re, "clicked", G_CALLBACK(+[](GtkButton*, gpointer d) {
@@ -458,8 +494,10 @@ void raknepapper_rensa(GtkWidget* w) {
     Papper* p = av(w);
     if (!p) return;
     p->c.clear(); p->streck.clear(); p->drag.clear(); p->stylusAktiv = false;
+    p->antalPunkter = 0; p->varnadOmGrans = false;
     p->rad = 1; p->kol = p->start = 2; p->liten = p->vanster = false; p->lage = 0;
     uppdatera(p);
+    markeraAndring(p);
 }
 
 void raknepapper_skriv(GtkWidget* w, const std::string& t) {
@@ -468,6 +506,7 @@ void raknepapper_skriv(GtkWidget* w, const std::string& t) {
     if (t == "⌫") sudda(p);
     else skrivTecken(p, t == "−" ? "-" : t);
     uppdatera(p);
+    markeraAndring(p);
 }
 
 void raknepapper_zoom(GtkWidget* w, double zoom) {
@@ -480,6 +519,42 @@ int raknepapper_rader(GtkWidget* w) {
     std::set<int> r;
     for (auto& [k, v] : p->c) if (!v.t.empty() || !v.liten.empty()) r.insert(k.first);
     return (int)r.size() + (p->drag.empty() ? 0 : 1);
+}
+
+void raknepapper_andringar(GtkWidget* w, std::function<void()> spara,
+                            std::function<void()> begransning) {
+    if (Papper* p = av(w)) {
+        p->andrad = std::move(spara);
+        p->begransad = std::move(begransning);
+    }
+}
+
+PapperData raknepapper_hamta(GtkWidget* w) {
+    if (Papper* p = av(w)) return static_cast<const PapperData&>(*p);
+    return PapperData{};
+}
+
+void raknepapper_ny_session(GtkWidget* w, const std::string& id,
+                           const std::string& kort, const std::string& fraga,
+                           int mall, int variant) {
+    if (Papper* p = av(w)) {
+        static_cast<PapperData&>(*p) = PapperData{};
+        p->id = id; p->kort = kort; p->fraga = fraga;
+        p->mallIndex = mall; p->variantIndex = variant;
+        p->antalPunkter = 0; p->varnadOmGrans = false; p->stylusAktiv = false;
+        uppdatera(p); // ingen sparsignal vid byte av session
+    }
+}
+
+bool raknepapper_ladda_session(GtkWidget* w, const PapperData& v) {
+    Papper* p = av(w);
+    if (!p || !papperKontroll(v)) return false;
+    static_cast<PapperData&>(*p) = v;
+    p->antalPunkter = 0;
+    for (const auto& line : p->drag) p->antalPunkter += line.size();
+    p->varnadOmGrans = false; p->stylusAktiv = false;
+    uppdatera(p); // återläsning är inte en redigering
+    return true;
 }
 
 bool raknepapper_tomt(GtkWidget* w) {
@@ -526,6 +601,7 @@ bool raknepapper_stall_upp(GtkWidget* w, const std::string& text) {
     p->streck.push_back({2, L, sista});
     p->rad = 3; p->kol = p->start = sista; p->vanster = true; p->lage = 0;
     uppdatera(p);
+    markeraAndring(p);
     return true;
 }
 
