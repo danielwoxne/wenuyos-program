@@ -155,7 +155,7 @@ void exportNoteMap(Studio* s,const std::string& output){
   GError* error=nullptr;
   const gboolean ok=g_subprocess_wait_check_finish(G_SUBPROCESS(process),result,&error);
   if(error){g_warning("WenuyGFX note-map export: %s",error->message);g_error_free(error);}
-  GObject* obj=g_weak_ref_get(&request->overlay);
+  GObject* obj=static_cast<GObject*>(g_weak_ref_get(&request->overlay));
   if(obj){
    adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(obj),adw_toast_new(
     ok?tr("3D note map exported","3D-notkartan exporterad"):
