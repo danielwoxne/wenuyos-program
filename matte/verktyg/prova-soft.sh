@@ -19,7 +19,8 @@ export XDG_CONFIG_HOME="$tmp/config"
 export MATTE_DATA="$data" WENUYOS_PERF=low WENUYOS_GFX=soft
 export GDK_BACKEND=x11 GSK_RENDERER=cairo
 export LIBGL_ALWAYS_SOFTWARE=1
-export GDK_DEBUG=gl-disable
+# GSK_RENDERER=cairo och LIBGL_ALWAYS_SOFTWARE=1 räcker i Debian 13.
+# GDK_DEBUG=gl-disable stöds inte i GTK 4.18 och ger ett falskt varningsmeddelande.
 for spec in "1024x600 hem" "1024x600 ova:brak-delar;lattlast" "1600x900 karta" "1600x900 ova:brak-procent-decimal"; do
     size=${spec%% *}
     view=${spec#* }
