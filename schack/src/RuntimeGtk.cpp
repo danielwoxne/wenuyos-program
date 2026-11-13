@@ -1196,13 +1196,13 @@ void activate(Ptr application,void*){
  app.closed=false;app.analysisBusy=false;clearHint();
  if(app.lanMessage.empty())app.lanMessage=tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik.");
  app.window=g.gtk_application_window_new(application);
- g.gtk_window_set_title(app.window,"Wenuy Schack");
+ g.gtk_window_set_title(app.window,tr("Wenuy Chess","Wenuy Schack"));
  {const auto size=firstWindowSize();g.gtk_window_set_default_size(app.window,size.first,size.second);}
  connect(app.window,"close-request",onClose,nullptr);
  Ptr root=g.gtk_box_new(1,0);g.gtk_window_set_child(app.window,root);
  Ptr header=g.gtk_box_new(0,8);margin(header,10,8);
  g.gtk_widget_add_css_class(header,"wenuy-topbar");g.gtk_box_append(root,header);
- app.brand=g.gtk_label_new("♞  WENUY SCHACK");Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
+ app.brand=g.gtk_label_new(tr("♞  WENUY CHESS","♞  WENUY SCHACK"));Ptr brand=app.brand;g.gtk_widget_add_css_class(brand,"title-2");
  g.gtk_widget_add_css_class(brand,"wenuy-brand");
  g.gtk_widget_set_hexpand(brand,1);g.gtk_label_set_xalign(brand,0);g.gtk_box_append(header,brand);
  button(header,tr("New game","Nytt parti"),0,true);app.undoBtn=button(header,tr("Undo","Ångra"),1);button(header,tr("Flip board","Vänd brädet"),2);
