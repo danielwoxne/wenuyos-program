@@ -1,0 +1,186 @@
+# Regelkort: samma tal i tre former
+# Förlagan: tabellen "Bråkform, procentform, decimalform" i regelboken.
+
+id = "brak-procent-decimal"
+titel = "Bråkform, procentform, decimalform"
+omrade = "tal"
+ikon = "procent"
+bild = "prislapp.jpg"
+bildtext = "25 % rabatt – en fjärdedel, 1/4, 0,25. Samma del på tre sätt."
+sager = "Samma del av en hel kan skrivas på tre sätt. Bilden är densamma – bara skrivsättet byts."
+galler = "Alltid. Procent betyder hundradelar: 50 % = 50/100 = 0,50."
+galler_inte = "”Procent är aldrig mer än 100” gäller bara när man menar en del av något. Ökar ett pris med 150 % eller växer en planta till 200 % av sin höjd är det mer än en hel – och då går procenten över 100."
+forkunskap = ["brak-delar"]
+kalla = "Flera representationer av samma tal (Lesh). Förståelsen sitter i att kunna växla mellan formerna."
+
+[[rad]]
+figur = { typ = "tiostaplar", fyllda = 10, farg = "orange" }
+skriver = ["10/10", "100 %", "1,00"]
+
+[[rad]]
+figur = { typ = "tiostaplar", fyllda = 8, farg = "magenta" }
+skriver = ["8/10", "80 %", "0,80"]
+
+[[rad]]
+figur = { typ = "tiostaplar", fyllda = 5, farg = "skog" }
+skriver = ["5/10", "50 %", "0,50"]
+
+[[rad]]
+figur = { typ = "tiostaplar", fyllda = 2, farg = "citron" }
+skriver = ["2/10", "20 %", "0,20"]
+
+[[rad]]
+figur = { typ = "tiostaplar", fyllda = 1, farg = "himmel" }
+skriver = ["1/10", "10 %", "0,10"]
+
+[[rad]]
+figur = { typ = "staende", delar = 4, fyllda = 3, farg = "tegel" }
+skriver = ["3/4", "75 %", "0,75"]
+
+[[rad]]
+figur = { typ = "staende", delar = 4, fyllda = 2, farg = "stal" }
+skriver = ["2/4", "50 %", "0,50"]
+kommentar = "2/4 och 5/10 är samma tal som 1/2."
+
+[[rad]]
+figur = { typ = "staende", delar = 4, fyllda = 1, farg = "rod" }
+skriver = ["1/4", "25 %", "0,25"]
+
+[[exempel]]
+rubrik = "Från bråk till procent"
+text = "3/4 av stapeln är färgad. Hur många procent är det?"
+steg = [
+  "Procent betyder hundradelar. Gör nämnaren till 100: 3/4 = 75/100.",
+  "75/100 skrivs 75 %.",
+  "Och som decimaltal: 75 hundradelar = 0,75.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "{k} av 10 staplar är färgade. Skriv det i procent."
+figur = { typ = "tiostaplar", fyllda = "{k}", farg = "magenta" }
+svar = "{k*10} %"
+form = "procent"
+var = { k = "1..10" }
+ledtrad = "En tiondel är 10 %. {k} tiondelar är alltså {k} gånger 10 %."
+feltankar = { "{k} %" = "{k}/10 är inte {k} %. Procent är hundradelar: en tiondel = tio hundradelar = 10 %." }
+losning = ["En tiondel = 10 hundradelar = 10 %.", "{k} tiondelar = {k} · 10 % = {k*10} %."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skriv {k}/10 som decimaltal."
+svar = "{k}/10"
+form = "decimal"
+var = { k = "1..9" }
+ledtrad = "Tiondelar står på första platsen efter kommat: 0,{k}."
+losning = ["Tiondelar står på första platsen efter kommat.", "{k}/10 = 0,{k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skriv {p} % i bråkform (så enkelt du kan)."
+svar = "{p}/100"
+form = "brak-enklast"
+var = { p = "[25, 50, 75, 20, 40, 60, 80, 10, 30, 90]" }
+ledtrad = "{p} % = {p}/100. Går täljare och nämnare att dela med samma tal?"
+losning = ["{p} % = {p}/100.", "Förkorta så långt det går."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "farga"
+fraga = "Färga {p} % av hundrarutan."
+figur = { typ = "hundraruta", fyllda = 0, farg = "lila" }
+svar = "{p}"
+var = { p = "[5, 10, 20, 25, 30, 50, 75]" }
+ledtrad = "Procent betyder hundradelar: {p} % är {p} rutor av 100."
+feltankar = { "{p//10}" = "Du färgade {p//10} rutor – det är {p//10} %. Varje ruta är en hundradel, så {p} % är {p} rutor." }
+
+[[exempel]]
+rubrik = "Från procent till decimal och bråk"
+figur = { typ = "hundraruta", fyllda = 35, farg = "lila" }
+steg = [
+  "35 % betyder 35 hundradelar – 35 rutor av 100.",
+  "Som decimaltal: 35/100 = 0,35.",
+  "Som bråk i enklaste form: dela med 5 – 35/100 = 7/20.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Skriv {k}/4 i procent."
+steg = ["Procent betyder hundradelar: {k}/4 = ?/100", "4 · 25 = 100, så förläng med 25: {k} · 25 = ?"]
+figur = { typ = "staende", delar = 4, fyllda = "{k}", farg = "tegel" }
+svar = "{k*25} %"
+form = "procent"
+var = { k = "1..3" }
+ledtrad = "{k} · 25."
+losning = ["{k}/4 = {k*25}/100.", "{k*25}/100 = {k*25} %."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "{k} av 10 delar är färgade. Skriv det i procentform och decimalform."
+figur = { typ = "tiostaplar", fyllda = "{k}", farg = "skog" }
+falt = ["Procent", "Decimal"]
+svar = ["{k*10} %", "0,{k}"]
+var = { k = "1..9" }
+ledtrad = "En tiondel = 10 % = 0,1."
+losning = ["{k}/10 = {k*10}/100 = {k*10} %.", "{k}/10 = 0,{k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket är INTE samma tal som 1/2?"
+alternativ = ["0,5", "50 %", "5 %", "2/4"]
+svar = "5 %"
+form = "text"
+ledtrad = "Skriv om alla som hundradelar."
+feltankar = { "2/4" = "2/4 är 1/2 – två av fyra delar är hälften.", "0,5" = "0,5 = 5 tiondelar = 50 hundradelar = 1/2." }
+losning = ["1/2 = 50/100.", "0,5 = 50/100 och 50 % = 50/100. 2/4 = 1/2.", "5 % = 5/100 – det är en tiondel av 1/2."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Skriv {p} % i bråkform och decimalform."
+falt = ["Bråk", "Decimal"]
+svar = ["{p}/100", "{p/100}"]
+var = { p = "[5, 20, 25, 40, 50, 75, 80]" }
+ledtrad = "{p} % = {p}/100. Decimalform: {p} hundradelar."
+feltankar = { "{p/10}" = "{p} % är {p} hundradelar, inte tiondelar." }
+losning = ["{p} % = {p}/100.", "{p} hundradelar = {p/100}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Skriv 0,{p} i procent."
+svar = "{p} %"
+form = "procent"
+var = { p = "11..99" }
+ledtrad = "Två decimaler är hundradelar. Hundradelar = procent."
+feltankar = { "{p/10} %" = "0,{p} är {p} hundradelar – och hundradelar är procent: {p} %." }
+losning = ["0,{p} = {p}/100.", "{p}/100 = {p} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "Skriv {k}/5 i procent."
+svar = "{k*20} %"
+form = "procent"
+var = { k = "1..4" }
+ledtrad = "5 · 20 = 100. Förläng med 20."
+feltankar = { "{k*5} %" = "Du multiplicerade med 5. Nämnaren ska bli 100: 5 · 20 = 100, så förläng med 20." }
+losning = ["{k}/5 = ?/100.", "Förläng med 20: {k*20}/100.", "= {k*20} %."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje mellan bråket och decimaltalet som är lika stora."
+par = [["1/2", "0,5"], ["1/4", "0,25"], ["3/4", "0,75"], ["1/5", "0,2"], ["1/10", "0,1"]]
+ledtrad = "Bråkstrecket betyder delat med: 1/4 = 1 delat med 4."
+feltankar = { "1/5 → 0,5" = "1/5 är en femtedel – 1 delat med 5 = 0,2. 0,5 är en halv.", "1/10 → 0,5" = "1/10 är en tiondel = 0,1. 0,5 är fem tiondelar.", "1/2 → 0,2" = "1/2 är en halv = 0,5. Tvåan i nämnaren betyder inte 0,2." }
+losning = ["1/2 = 0,5 och 1/4 = 0,25 (en kvart).", "3/4 = 0,75 (tre kvartar).", "1/5 = 0,2 och 1/10 = 0,1."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "para"
+fraga = "Dra en linje mellan bråket och procenten som är lika stora."
+par = [["1/2", "50 %"], ["1/4", "25 %"], ["3/4", "75 %"], ["1/10", "10 %"], ["1/5", "20 %"]]
+ledtrad = "Procent betyder hundradelar. Skriv om bråket med nämnaren 100."
+feltankar = { "1/5 → 50 %" = "1/5 = 20/100 = 20 %. 50 % är en halv.", "1/4 → 40 %" = "1/4 = 25/100 = 25 %." }
+losning = ["1/2 = 50/100 = 50 % och 1/4 = 25/100 = 25 %.", "3/4 = 75/100 = 75 %.", "1/10 = 10/100 = 10 % och 1/5 = 20/100 = 20 %."]

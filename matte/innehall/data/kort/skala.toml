@@ -1,0 +1,122 @@
+id = "skala"
+titel = "Skala"
+omrade = "geometri"
+ikon = "linjal"
+bild = "karta.jpg"
+bildtext = "Skalstocken längst ned visar hur långt en sträcka på kartan är i verkligheten."
+sager = "Skala 1:100 betyder att 1 cm på ritningen är 100 cm i verkligheten. Skala 2:1 betyder att bilden är dubbelt så stor som verkligheten (förstoring)."
+galler = "Alltid: första talet är bilden, andra talet verkligheten."
+galler_inte = "Skalan gäller längder – inte areor. I skala 1:2 blir en kvadrat hälften så lång och hälften så bred. Då blir arean en fjärdedel, inte hälften."
+forkunskap = ["proportionalitet"]
+kalla = "Skala som proportionalitet. Vanlig feltanke: dividera när man ska multiplicera (och tvärtom)."
+
+[[rad]]
+sager = "ett till hundra"
+figur = { typ = "tabell", rubriker = ["ritning", "verklighet"], rader = [["1 cm", "100 cm = 1 m"], ["3 cm", "300 cm = 3 m"], ["12 cm", "12 m"]], kolbredd = 130 }
+skriver = ["1:100 – förminskning"]
+
+[[rad]]
+sager = "fem till ett"
+figur = { typ = "tabell", rubriker = ["bild", "verklighet"], rader = [["5 cm", "1 cm"], ["15 cm", "3 cm"]], kolbredd = 130 }
+skriver = ["5:1 – förstoring"]
+
+[[uppgift]]
+niva = 1
+fraga = "Skala 1:{s}. Ritningen visar {b} cm. Hur många cm är det i verkligheten?"
+svar = "{b*s}"
+var = { s = "[10, 100, 1000]", b = "2..9" }
+ledtrad = "Verkligheten är {s} gånger större."
+losning = ["1 cm på ritningen = {s} cm i verkligheten.", "{b} cm = {b} · {s} = {b*s} cm."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skala 1:{s}. I verkligheten är sträckan {b*s} cm. Hur lång blir den på ritningen (cm)?"
+svar = "{b}"
+var = { s = "[20, 50, 100, 200]", b = "2..9" }
+ledtrad = "Ritningen är {s} gånger mindre: dela med {s}."
+feltankar = { "{b*s*s}" = "Åt fel håll – ritningen är MINDRE än verkligheten vid 1:{s}. Dela med {s}." }
+losning = ["Ritningen är {s} gånger mindre.", "{b*s} / {s} = {b} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "En insekt är {b} mm lång och ritas i skala {s}:1. Hur lång blir bilden i mm?"
+svar = "{b*s}"
+var = { s = "[2, 4, 5, 10]", b = "3..9" }
+ledtrad = "{s}:1 är en förstoring – bilden är {s} gånger större."
+feltankar = { "{b}/{s}" = "{s}:1 betyder förstoring: bilden är större än verkligheten. Multiplicera med {s}." }
+losning = ["{s}:1 = förstoring: bilden är {s} gånger större.", "{b} · {s} = {b*s} mm."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skalstocken på kartan visar 0–200 m. Stigen från sjön till stugan är ungefär lika lång som 1,5 skalstockar. Hur lång är stigen i meter?"
+figur = { typ = "scen", bild = "karta.jpg", bredd = 560 }
+svar = "300"
+ledtrad = "En hel skalstock är 200 m. En halv är 100 m."
+feltankar = { "1,5" = "1,5 är antalet skalstockar. Varje skalstock är 200 m: 1,5 · 200." }
+losning = ["En skalstock = 200 m.", "En halv = 100 m.", "200 + 100 = 300 m."]
+
+[[exempel]]
+rubrik = "Skala 1:100 – från ritning till rum"
+figur = { typ = "tabell", rubriker = ["ritning", "verklighet"], rader = [["1 cm", "100 cm = 1 m"], ["4 cm", "400 cm = 4 m"], ["3,5 cm", "350 cm = 3,5 m"]], kolbredd = 140 }
+steg = [
+  "1:100 – första talet är ritningen, andra verkligheten.",
+  "Varje centimeter på ritningen är 100 cm, alltså 1 meter.",
+  "Ett rum som är 4 cm på ritningen är 4 m i verkligheten.",
+]
+
+[[exempel]]
+rubrik = "Förstoring 5:1"
+text = "En myra är 6 mm lång. I en bok är den ritad i skala 5:1."
+steg = [
+  "5:1 – bilden är 5, verkligheten 1. Bilden är större: en förstoring.",
+  "6 mm · 5 = 30 mm.",
+  "Myran är 3 cm lång i boken.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Skala 1:{s}. Hur många cm i verkligheten är {b} cm på ritningen?"
+steg = ["1 cm på ritningen = {s} cm i verkligheten.", "{b} cm = {b} · {s} cm"]
+svar = "{b*s}"
+var = { s = "[10, 20, 50, 100]", b = "2..9" }
+ledtrad = "Multiplicera."
+losning = ["{b} · {s} = {b*s} cm."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skala 1:100. Ett rum är {b} cm långt på ritningen. Hur många meter är det i verkligheten?"
+svar = "{b}"
+var = { b = "3..9" }
+ledtrad = "1 cm på ritningen = 100 cm = 1 m."
+feltankar = { "{b*100}" = "{b*100} är centimeter. Frågan gäller meter: 100 cm = 1 m." }
+losning = ["{b} cm · 100 = {b*100} cm.", "{b*100} cm = {b} m."]
+
+[[uppgift]]
+niva = 2
+fraga = "Kartan har skala 1:{ts(s*1000)}. Två hus ligger {b} cm från varandra på kartan. Hur många meter är det i verkligheten?"
+svar = "{b*s*10}"
+var = { s = "[10, 25, 50]", b = "2..8" }
+ledtrad = "1 cm på kartan = {ts(s*1000)} cm = {s*10} m."
+feltankar = { "{b*s*1000}" = "{ts(b*s*1000)} är centimeter. Dela med 100 för att få meter." }
+losning = ["1 cm = {ts(s*1000)} cm = {s*10} m.", "{b} cm = {b} · {s*10} = {b*s*10} m."]
+
+[[uppgift]]
+niva = 3
+fraga = "På en ritning är ett bord {b} cm långt. I verkligheten är det {b*s/100} m. Vilken skala? Skriv talet som ska stå efter 1:"
+svar = "{s}"
+var = { b = "2..8", s = "[20, 25, 50, 100]" }
+ledtrad = "Gör om meter till centimeter. Hur många gånger större är verkligheten?"
+feltankar = { "{b*s}" = "Det är verklighetens längd i cm. Skalan är hur många gånger större: {b*s} / {b}." }
+losning = ["{b*s/100} m = {b*s} cm.", "{b*s} / {b} = {s}.", "Skala 1:{s}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilken skala är en förstoring?"
+alternativ = ["1:{s}", "{s}:1"]
+svar = "{s}:1"
+form = "text"
+var = { s = "[2, 5, 10, 20]" }
+ledtrad = "Första talet är bilden. Är bilden större eller mindre än verkligheten?"
+feltankar = { "1:{s}" = "1:{s} betyder att 1 cm på bilden är {s} cm i verkligheten – bilden är mindre: en förminskning." }
+losning = ["{s}:1 – bilden är {s}, verkligheten 1.", "Bilden är större: förstoring."]

@@ -1,0 +1,182 @@
+id = "talkamrater-10"
+titel = "Tiokamraterna"
+omrade = "tal"
+ikon = "tioram"
+bild = "tioram.jpg"
+bildtext = "Tioramen är full: 7 blå och 3 gula. Man behöver inte räkna – full ram är tio. 7 + 3 = 10."
+sager = "Två tal som tillsammans blir tio är tiokamrater. Kan man dem utantill går all räkning fortare."
+galler = "Alltid. Samma par gäller för 100 (40 + 60) och för 1 000 (400 + 600)."
+galler_inte = "Kamraterna till 100 är inte bara tiokamrater två gånger: 34 + 66 = 100, inte 34 + 76. Entalen ska bli 10 (4 + 6), och den tian följer med till tiotalen – därför ska tiotalen bara bli 9 (3 + 6)."
+forkunskap = ["rakna-antal"]
+kalla = "Automatisering av talfakta (Baroody); del–del–helhet (Resnick)."
+
+[[rad]]
+sager = "ett och nio"
+figur = { typ = "talkamrater", summa = 10, del1 = 1 }
+skriver = ["1 + 9 = 10"]
+
+[[rad]]
+sager = "två och åtta"
+figur = { typ = "talkamrater", summa = 10, del1 = 2 }
+skriver = ["2 + 8 = 10"]
+
+[[rad]]
+sager = "tre och sju"
+figur = { typ = "talkamrater", summa = 10, del1 = 3 }
+skriver = ["3 + 7 = 10"]
+
+[[rad]]
+sager = "fyra och sex"
+figur = { typ = "talkamrater", summa = 10, del1 = 4 }
+skriver = ["4 + 6 = 10"]
+
+[[rad]]
+sager = "fem och fem"
+figur = { typ = "talkamrater", summa = 10, del1 = 5 }
+skriver = ["5 + 5 = 10"]
+
+[[uppgift]]
+niva = 1
+fraga = "{a} + ? = 10. Hur många blå rutor saknas?"
+figur = { typ = "talkamrater", summa = 10, del1 = "{a}", visa = false }
+svar = "{10-a}"
+var = { a = "1..9" }
+ledtrad = "Räkna de blå rutorna."
+losning = ["Räkna de blå rutorna som saknas.", "{a} + {10-a} = 10."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} + ? = 10"
+svar = "{10-a}"
+var = { a = "1..9" }
+ledtrad = "Vilket tal är {a}:s tiokamrat? Tänk på rutorna på kortet."
+feltankar = { "{10+a}" = "Du lade ihop i stället för att hitta det som saknas. {a} plus vad blir 10?" }
+losning = ["Tänk på tioramen: {a} brickor ligger i.", "{10-a} rutor är tomma.", "{a} + {10-a} = 10."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a}0 + ? = 100"
+svar = "{100-a*10}"
+var = { a = "1..9" }
+ledtrad = "Samma kamrater som för tio: {a} + {10-a} = 10, så {a}0 + {10-a}0 = 100."
+losning = ["Tänk tiotal i stället för ental: {a} + {10-a} = 10.", "Då är {a} tiotal + {10-a} tiotal = 10 tiotal.", "{a}0 + {10-a}0 = 100."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "markera"
+fraga = "Klicka på de gula brickorna i tioramen."
+figur = { typ = "scen", bild = "tioram.jpg", bredd = 560, omraden = [[0.1866, 0.279, 0.1017, 0.186], [0.311, 0.279, 0.1017, 0.186], [0.4354, 0.279, 0.1017, 0.186], [0.5604, 0.279, 0.1017, 0.186], [0.686, 0.279, 0.1017, 0.186], [0.1866, 0.5234, 0.1017, 0.186], [0.311, 0.5234, 0.1017, 0.186], [0.4354, 0.5234, 0.1017, 0.186], [0.5604, 0.5234, 0.1017, 0.186], [0.686, 0.5234, 0.1017, 0.186]], namn = ["blå", "blå", "blå", "blå", "blå", "blå", "blå", "gul", "gul", "gul"] }
+svar = "gul,gul,gul"
+ledtrad = "Gula brickor – bara de."
+feltankar = { "blå,blå,blå,blå,blå,blå,blå" = "Det är de blå. Klicka på de gula i stället – de som fyller upp till tio." }
+
+[[uppgift]]
+niva = 2
+fraga = "Tioramen på bilden har 7 blå brickor. Hur många gula behövs för att den ska bli full?"
+figur = { typ = "scen", bild = "tioram.jpg", bredd = 560 }
+svar = "3"
+ledtrad = "En full tioram är 10. 7 + ? = 10."
+losning = ["En full tioram är tio.", "7 brickor ligger i.", "7 + 3 = 10 – tre gula behövs."]
+
+[[exempel]]
+rubrik = "Tiokamraterna i tioramen"
+figur = { typ = "tioram", fyllda = 7, extra = 3 }
+steg = [
+  "Sju blå brickor ligger i ramen.",
+  "Tre rutor är tomma – de fylls med gula.",
+  "7 + 3 = 10. Sju och tre är tiokamrater.",
+]
+
+[[exempel]]
+rubrik = "Från tio till hundra och tusen"
+figur = { typ = "talkamrater", summa = 10, del1 = 4 }
+steg = [
+  "4 + 6 = 10",
+  "40 + 60 = 100 – samma kamrater, fast tiotal.",
+  "400 + 600 = 1 000 – samma kamrater, fast hundratal.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "dra"
+fraga = "Fyll tioramen. Hur många brickor behöver du lägga dit?"
+figur = { typ = "tioram", fyllda = "{a}" }
+svar = "{10-a}"
+var = { a = "2..8" }
+ledtrad = "Lägg en bricka i varje tom ruta."
+feltankar = { "{10-a-1}" = "En ruta är fortfarande tom.", "{10-a+1}" = "Ramen rymmer bara tio." }
+losning = ["{a} brickor ligger redan.", "{10-a} rutor är tomma.", "{a} + {10-a} = 10."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Hur många rutor är tomma? Det är {a}:s tiokamrat."
+figur = { typ = "tioram", fyllda = "{a}" }
+alternativ = ["{10-a-1}", "{10-a}", "{10-a+1}"]
+svar = "{10-a}"
+var = { a = "1..9" }
+ledtrad = "En full rad är fem. Räkna de tomma rutorna."
+losning = ["Ramen har tio rutor.", "{a} är fyllda.", "{10-a} är tomma."]
+
+[[uppgift]]
+niva = 2
+fraga = "Fyll i det som saknas."
+steg = ["{a} + {10-a} = 10", "så 10 − {a} = ?"]
+svar = "{10-a}"
+var = { a = "1..9" }
+ledtrad = "Använd tiokamraterna baklänges: tar du bort {a} från 10 blir kamraten kvar."
+feltankar = { "{10+a}" = "Det är minus: tio minus {a}. Tänk på tiokamraten till {a}." }
+losning = ["{a} och {10-a} är tiokamrater.", "Tar du bort {a} från 10 blir {10-a} kvar."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Skriv tiokamraterna."
+falt = ["{a} + ? = 10", "{b} + ? = 10", "{c} + ? = 10"]
+svar = ["{10-a}", "{10-b}", "{10-c}"]
+var = { a = "1..3", b = "4..6", c = "7..9" }
+ledtrad = "Tänk på tioramen: hur många rutor är tomma?"
+losning = ["{a} + {10-a} = 10", "{b} + {10-b} = 10", "{c} + {10-c} = 10"]
+
+[[uppgift]]
+niva = 2
+fraga = "? + {a} = 10"
+svar = "{10-a}"
+var = { a = "1..9" }
+ledtrad = "Det spelar ingen roll vilket tal som står först. Vilket tal är {a}:s kamrat?"
+feltankar = { "{a}" = "{a} står redan där. Vilket tal behövs för att det ska bli tio?" }
+losning = ["Ordningen spelar ingen roll i addition: ? + {a} är samma som {a} + ?.", "{a}:s tiokamrat är {10-a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} + {b} + {10-a} = ?"
+svar = "{10+b}"
+var = { a = "1..9", b = "2..8" }
+ledtrad = "Leta efter två tal som blir tio tillsammans."
+losning = ["{a} och {10-a} är tiokamrater: de blir 10.", "Lägg till {b}: 10 + {b} = {10+b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{10*a+b} + ? = 100"
+svar = "{100-10*a-b}"
+var = { a = "1..8", b = "1..9" }
+ledtrad = "Entalen ska bli 10 – då följer en tia med. Tiotalen ska bli 9."
+feltankar = { "{(10-a)*10 + 10-b}" = "Det blev en tia för mycket. Entalen {b} + {10-b} blir 10 – en hel tia. Därför ska tiotalen bara bli 9: {a} + {9-a}." }
+losning = ["Entalen: {b} + {10-b} = 10. Den tian följer med.", "Tiotalen: {a} tiotal + {9-a} tiotal + den extra tian = 10 tiotal.", "Svaret: {9-a} tiotal och {10-b} ental = {100-10*a-b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a}00 + ? = 1 000"
+svar = "{1000-100*a}"
+var = { a = "1..9" }
+ledtrad = "Samma kamrater: {a} + {10-a} = 10. Fast hundratal."
+losning = ["{a} + {10-a} = 10", "{a} hundratal + {10-a} hundratal = 10 hundratal = 1 000.", "Svaret: {10-a}00."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje mellan talen som tillsammans blir 10."
+par = [["{a}", "{10-a}"], ["{b}", "{10-b}"], ["{c}", "{10-c}"]]
+var = { a = "1..2", b = "3..4", c = "6..7" }
+ledtrad = "Tänk på tioramen: hur många tomma rutor blir kvar?"
+losning = ["{a} + {10-a} = 10.", "{b} + {10-b} = 10.", "{c} + {10-c} = 10."]

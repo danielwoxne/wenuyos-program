@@ -1,0 +1,160 @@
+id = "linjara-funktioner"
+titel = "Räta linjen y = kx + m"
+omrade = "samband"
+ikon = "koordinatsystem"
+bild = "taxameter.jpg"
+bildtext = "Taxametern: en startavgift (m) och ett pris per km (k). Priset följer en rät linje: y = kx + m."
+sager = "m är där linjen skär y-axeln (värdet när x = 0). k är lutningen: hur mycket y ökar när x ökar med 1."
+galler = "Alla räta linjer. Negativt k = linjen lutar nedåt."
+galler_inte = "Linjen går genom origo bara när m = 0 – då är sambandet proportionellt. Och k läses som steg upp per steg åt höger, inte som hur brant linjen ser ut: det beror på skalan på axlarna."
+forkunskap = ["proportionalitet", "ekvationer-enkla"]
+kalla = "k som 'steg upp per steg åt höger' (trappsteget) innan formeln. Proportionalitet = specialfallet m = 0."
+
+[[rad]]
+sager = "y = x + 1"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6, linje = [1, 1], punkter = [[0, 1], [1, 2], [2, 3]] }
+skriver = ["k = 1, m = 1"]
+
+[[rad]]
+sager = "y = 2x"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6, linje = [2, 0], punkter = [[0, 0], [1, 2], [2, 4]] }
+skriver = ["k = 2, m = 0 (proportionell)"]
+
+[[rad]]
+sager = "y = −x + 4"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6, linje = [-1, 4], punkter = [[0, 4], [1, 3], [4, 0]] }
+skriver = ["k = −1, m = 4"]
+
+[[uppgift]]
+niva = 1
+fraga = "Var skär linjen y-axeln? (det är m)"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6, linje = ["{k}", "{m}"], punkter = [[0, "{m}"]] }
+svar = "{m}"
+var = { k = "[-1, 1]", m = "1..5" }
+ledtrad = "Punkten där x = 0."
+losning = ["Leta upp punkten där linjen korsar y-axeln (x = 0).", "Där är y = {m}.", "m = {m}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är k för linjen y = {k}x + {m}?"
+svar = "{k}"
+var = { k = "[-3, -2, -1, 2, 3, 4]", m = "0..5" }
+ledtrad = "Talet framför x."
+feltankar = { "{m}" = "{m} är m – där linjen skär y-axeln. k är lutningen: talet framför x, alltså {k}." }
+losning = ["k är talet framför x.", "k = {k}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Linjen y = {k}x + {m}. Vad är y när x = {x}?"
+svar = "{k*x+m}"
+var = { k = "[-2, -1, 2, 3]", m = "0..5", x = "1..5" }
+ledtrad = "Sätt in x = {x}: {k} · {x} + {m}."
+feltankar = { "{k+x+m}" = "{k}x betyder {k} GÅNGER x. Räkna {k} · {x} = {k*x} och lägg sedan till {m}." }
+losning = ["Sätt in x = {x}.", "{k} · {x} = {k*x}.", "{k*x} + {m} = {k*x+m}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "punkt"
+fraga = "Sätt ut punkten ({x}, {y})."
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6 }
+svar = "{x};{y}"
+var = { x = "1..6", y = "1..6 != x" }
+ledtrad = "Först {x} steg åt höger, sedan {y} steg upp."
+feltankar = { "{y};{x}" = "Du bytte plats på x och y. Första talet är x (åt höger), andra är y (uppåt)." }
+losning = ["{x} steg åt höger.", "{y} steg uppåt."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "linje"
+fraga = "Rita linjen y = {'' if k == 1 else k}x{'' if m == 0 else ' + ' + str(m)}. Klicka på två punkter som linjen går genom."
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6 }
+svar = "{k};{m}"
+var = { k = "[1, 2]", m = "0..3" }
+ledtrad = "När x = 0 är y = {m} – det är en punkt. Gå sedan 1 åt höger och {k} upp."
+feltankar = { "{m};{k}" = "k och m har bytt plats. m = {m} är där linjen skär y-axeln, k = {k} är lutningen.", "{k};0" = "Linjen går inte genom origo – den skär y-axeln i {m}." }
+losning = ["Startpunkt: (0, {m}).", "Ett steg åt höger, {k} upp: (1, {m+k}).", "Klicka på båda punkterna."]
+
+[[uppgift]]
+niva = 3
+fraga = "Taxin tar 45 kr i startavgift och 10 kr per km. Mätaren visar 75 kr. Hur många km har taxin kört?"
+figur = { typ = "scen", bild = "taxameter.jpg", bredd = 560 }
+svar = "3"
+ledtrad = "Priset är y = 10x + 45. Sätt y = 75: 10x + 45 = 75."
+feltankar = { "7,5" = "Startavgiften räknas inte per km. Dra av den först: 75 − 45 = 30 kr, och 30 / 10.", "12" = "Du lade ihop 75 och 45. Startavgiften ska dras av: 75 − 45 = 30 kr för själva körningen." }
+losning = ["y = 10x + 45. Sätt y = 75.", "10x = 75 − 45 = 30.", "x = 3 km."]
+
+[[exempel]]
+rubrik = "Läs av k och m: y = 2x + 1"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 7, linje = [2, 1], punkter = [[0, 1], [1, 3], [2, 5]] }
+steg = [
+  "Linjen skär y-axeln i 1: m = 1.",
+  "Gå ett steg åt höger – linjen går två steg upp: k = 2.",
+  "Ekvationen: y = 2x + 1.",
+]
+
+[[exempel]]
+rubrik = "Taxametern som funktion"
+figur = { typ = "tabell", rubriker = ["km (x)", "pris (y)"], rader = [["0", "45 kr"], ["1", "55 kr"], ["2", "65 kr"], ["3", "75 kr"]], kolbredd = 110 }
+steg = [
+  "Utan att köra kostar det 45 kr – startavgiften: m = 45.",
+  "Varje km kostar 10 kr till: k = 10.",
+  "y = 10x + 45. Inte proportionellt – linjen startar inte i origo.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Hur stort är k?"
+steg = ["Från x = 0 till x = 1 är ett steg åt höger.", "Samtidigt går y från {m} till {m+k}."]
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 7, linje = ["{k}", "{m}"], punkter = [[0, "{m}"], [1, "{m+k}"]] }
+svar = "{k}"
+var = { k = "1..3", m = "0..3" }
+ledtrad = "Hur många steg upp?"
+feltankar = { "{m}" = "{m} är m – startvärdet. k är hur mycket y ökar per steg åt höger." }
+losning = ["{m+k} − {m} = {k}.", "k = {k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Fyll i värdetabellen för y = {k}x + {m}."
+falt = ["x = 0", "x = 1", "x = 2"]
+svar = ["{m}", "{k+m}", "{2*k+m}"]
+var = { k = "[-2, -1, 2, 3, 4]", m = "0..5" }
+ledtrad = "Sätt in varje x-värde."
+losning = ["x = 0: y = {m}.", "x = 1: y = {k} + {m} = {k+m}.", "x = 2: y = {2*k} + {m} = {2*k+m}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är k? Läs av i grafen."
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 7, linje = ["{k}", "{m}"], punkter = [[0, "{m}"], [2, "{m+2*k}"]] }
+svar = "{k}"
+var = { k = "[-1, 1, 2]", m = "[1, 2, 3]" }
+ledtrad = "Från punkten (0, {m}) till (2, {m+2*k}): två steg åt höger. Hur långt upp eller ned?"
+feltankar = { "{2*k}" = "{2*k} är förändringen på TVÅ steg åt höger. k är per steg: {2*k} / 2." }
+losning = ["Två steg åt höger: y ändras med {2*k}.", "Per steg: {2*k} / 2 = {k}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En linje går genom (0, {m}) och ({x}, {m+k*x}). Vad är k?"
+svar = "{k}"
+var = { k = "[-2, -1, 2, 3]", m = "0..5", x = "2..4" }
+ledtrad = "Förändring i y delat med förändring i x."
+losning = ["y ändras med {m+k*x} − {m} = {k*x}.", "x ändras med {x}.", "k = {k*x} / {x} = {k}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett gymkort kostar {m} kr i månaden plus {k} kr per besök. Vad kostar en månad med {x} besök?"
+svar = "{k*x+m}"
+var = { m = "[100, 150, 200]", k = "[20, 25, 30]", x = "4..12" }
+ledtrad = "y = {k}x + {m}."
+feltankar = { "{(k+m)*x}" = "Månadsavgiften betalas en gång – inte per besök." }
+losning = ["y = {k}x + {m}.", "x = {x}: {k} · {x} + {m} = {k*x} + {m}.", "= {k*x+m} kr."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje från varje funktion till dess k och m."
+par = [["y = {k}x + {m}", "k = {k}, m = {m}"], ["y = {m}x + {k}", "k = {m}, m = {k}"], ["y = {k}x − {n}", "k = {k}, m = −{n}"]]
+var = { k = "2..5", m = "1..6 != k", n = "1..6" }
+ledtrad = "k står framför x. m är talet som står ensamt (med sitt tecken)."
+feltankar = { "y = {k}x + {m} → k = {m}, m = {k}" = "k är talet framför x (lutningen), m är talet som står ensamt (där linjen skär y-axeln).", "y = {m}x + {k} → k = {k}, m = {m}" = "k är talet framför x (lutningen), m är talet som står ensamt (där linjen skär y-axeln)." }
+losning = ["y = {k}x + {m}: k = {k}, m = {m}.", "y = {m}x + {k}: k = {m}, m = {k}.", "y = {k}x − {n}: k = {k}, m = −{n} – minustecknet följer med."]

@@ -1,0 +1,133 @@
+id = "gy-rotter"
+titel = "Rötter och bråkexponenter"
+omrade = "tal"
+ikon = "kvadrat"
+sager = "√a är det positiva tal som gånger sig själv blir a. Den n:te roten är samma sak som exponenten 1/n: √a = a^(1/2), ∛a = a^(1/3)."
+galler = "√ av ett negativt tal finns inte bland de reella talen. ∛ av ett negativt tal finns: ∛(−8) = −2."
+galler_inte = "√(a + b) är inte √a + √b. √(9 + 16) = √25 = 5, men √9 + √16 = 7. Rötter kan delas upp vid multiplikation – √(4 · 9) = 2 · 3 – men inte vid addition."
+forkunskap = ["potenser", "pythagoras"]
+kalla = "Kvadraten som bild för kvadratroten (sidan i en kvadrat med arean a). Bråkexponenter som fortsättning på potenslagarna."
+
+[[rad]]
+sager = "roten ur sexton"
+figur = { typ = "rektangel", bredd = 4, hojd = 4, farg = "gul", matt = true }
+skriver = ["√16 = 4", "16^(1/2) = 4"]
+kommentar = "En kvadrat med arean 16 har sidan 4."
+
+[[rad]]
+sager = "tredje roten ur åtta"
+figur = { typ = "tabell", rubriker = ["∛8", "= 8^(1/3)", "= 2"], rader = [["2 · 2 · 2 = 8", "", ""]], kolbredd = 110 }
+skriver = ["∛8 = 2"]
+
+[[uppgift]]
+niva = 1
+fraga = "√{a*a} = ?"
+svar = "{a}"
+var = { a = "2..15" }
+ledtrad = "Vilket tal gånger sig självt blir {a*a}?"
+feltankar = { "{a*a/2}" = "Roten är inte hälften. Vilket tal gånger SIG SJÄLVT blir {a*a}?" }
+losning = ["Vilket tal gånger sig självt blir {a*a}?", "{a} · {a} = {a*a}.", "√{a*a} = {a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a**3}^(1/3) = ?"
+svar = "{a}"
+var = { a = "2..6" }
+ledtrad = "Exponenten 1/3 är tredje roten: vilket tal gånger sig självt tre gånger blir {a**3}?"
+feltankar = { "{a**3/3}" = "^(1/3) betyder inte 'dela med 3' utan tredje roten: {a} · {a} · {a} = {a**3}." }
+losning = ["^(1/3) = tredje roten.", "{a} · {a} · {a} = {a**3}.", "{a**3}^(1/3) = {a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a**2}^(3/2) = ?"
+svar = "{a**3}"
+var = { a = "2..5" }
+ledtrad = "Ta roten först ({a**2}^(1/2) = {a}), upphöj sedan till 3."
+losning = ["{a**2}^(3/2) = ({a**2}^(1/2))³.", "{a**2}^(1/2) = {a}.", "{a}³ = {a**3}."]
+
+[[rad]]
+sager = "roten ur en produkt"
+skriver = ["√(a · b) = √a · √b"]
+kommentar = "√(4 · 25) = √100 = 10, och √4 · √25 = 2 · 5 = 10. Det fungerar för multiplikation – inte för addition."
+
+[[rad]]
+sager = "bråkexponent"
+skriver = ["a^(m/n) = (ⁿ√a)ᵐ"]
+kommentar = "Nämnaren är roten, täljaren är potensen: 8^(2/3) = (∛8)² = 2² = 4."
+
+[[rad]]
+sager = "√2 går inte att skriva som bråk"
+skriver = ["√2 ≈ 1,414 …"]
+kommentar = "Decimalerna tar aldrig slut och upprepas inte – √2 är irrationellt. Därför skriver man ofta √2 i svaret i stället för en avrundning."
+
+[[exempel]]
+rubrik = "Roten som kvadratens sida"
+figur = { typ = "rektangel", bredd = 5, hojd = 5, farg = "gul", matt = true }
+steg = [
+  "En kvadrat med arean 25 cm² har sidan √25 = 5 cm.",
+  "Roten frågar: vilken sida ger den här arean?",
+  "En kvadrat med arean 2 cm² har sidan √2 ≈ 1,41 cm – inget heltal.",
+]
+
+[[exempel]]
+rubrik = "8^(2/3) steg för steg"
+steg = [
+  "Nämnaren 3 betyder tredje roten: ∛8 = 2, eftersom 2 · 2 · 2 = 8.",
+  "Täljaren 2 betyder i kvadrat: 2² = 4.",
+  "8^(2/3) = 4. Kontroll med potenslagarna: (8^(1/3))² = 8^(2/3).",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {a**3}^(1/3) = ?"
+steg = ["^(1/3) betyder tredje roten.", "Vilket tal gånger sig självt gånger sig självt blir {a**3}?"]
+svar = "{a}"
+var = { a = "2..6" }
+ledtrad = "Pröva: 2 · 2 · 2 = 8, 3 · 3 · 3 = 27 …"
+losning = ["{a} · {a} · {a} = {a**3}.", "{a**3}^(1/3) = {a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "√({a*a} · {b*b}) = ?"
+svar = "{a*b}"
+var = { a = "2..6", b = "2..6" }
+ledtrad = "Dela upp: √{a*a} · √{b*b}."
+losning = ["√({a*a} · {b*b}) = √{a*a} · √{b*b}.", "= {a} · {b} = {a*b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "√({9*k*k} + {16*k*k}) = ?"
+svar = "{5*k}"
+var = { k = "1..4" }
+ledtrad = "Räkna ut summan under rottecknet först."
+feltankar = { "{7*k}" = "Rötter kan inte delas upp vid addition: √{9*k*k} + √{16*k*k} = {7*k}, men √({9*k*k} + {16*k*k}) = √{25*k*k}." }
+losning = ["{9*k*k} + {16*k*k} = {25*k*k}.", "√{25*k*k} = {5*k}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Lös ekvationen x² = {a*a}."
+falt = ["x₁", "x₂"]
+svar = ["{a}", "-{a}"]
+oordnad = true
+var = { a = "2..12" }
+ledtrad = "Både {a} · {a} och (−{a}) · (−{a}) blir {a*a}."
+losning = ["x = ±√{a*a}.", "x₁ = {a} och x₂ = −{a}.", "√ ger bara den positiva – ekvationen har två lösningar."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a**3}^(2/3) = ?"
+svar = "{a*a}"
+var = { a = "2..5" }
+ledtrad = "Tredje roten först, sedan i kvadrat."
+feltankar = { "{a**3*2/3}" = "Bråkexponenten betyder inte gånger 2/3. Ta tredje roten ({a}) och kvadrera." }
+losning = ["∛{a**3} = {a}.", "{a}² = {a*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är √{n}? Svara med två decimaler."
+svar = "sqrt({n})"
+tolerans = 0.005
+var = { n = "[2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15]" }
+ledtrad = "√{n} ligger mellan två heltal – vilka? Pröva dig fram, eller använd räknaren."
+losning = ["√{n} ligger mellan {int(n**0.5)} och {int(n**0.5)+1}.", "√{n} ≈ {round(n**0.5, 2)}.", "Kontroll: {round(n**0.5, 2)}² ≈ {round(round(n**0.5, 2)**2, 2)}."]

@@ -1,0 +1,126 @@
+id = "gy-trigonometri"
+titel = "Trigonometri i rätvinkliga trianglar"
+omrade = "geometri"
+ikon = "gradskiva"
+bild = "stege.jpg"
+bildtext = "Stegen, väggen och marken bildar en rätvinklig triangel. Vinkeln vid marken bestämmer hur högt stegen når."
+sager = "sin v = motstående / hypotenusan, cos v = närliggande / hypotenusan, tan v = motstående / närliggande."
+galler = "BARA i rätvinkliga trianglar, och vinkeln v är en av de spetsiga vinklarna. Räknaren ska stå i grader."
+galler_inte = "Vilken katet som är ”motstående” beror på vilken vinkel du utgår från. Byter du vinkel byter kateterna namn – och sin och cos byter plats. Och alltihop gäller bara i rätvinkliga trianglar."
+forkunskap = ["pythagoras"]
+kalla = "Likformighet: kvoterna är desamma i alla rätvinkliga trianglar med samma vinkel – därför har de namn."
+
+[[rad]]
+sager = "trettio grader"
+figur = { typ = "tabell", rubriker = ["v", "sin v", "cos v", "tan v"], rader = [["30°", "0,5", "≈ 0,87", "≈ 0,58"], ["45°", "≈ 0,71", "≈ 0,71", "1"], ["60°", "≈ 0,87", "0,5", "≈ 1,73"]], kolbredd = 80 }
+skriver = ["sin 30° = 1/2"]
+
+[[uppgift]]
+niva = 1
+fraga = "I en rätvinklig triangel är hypotenusan {h} cm och vinkeln v = 30°. Hur lång är den motstående kateten?"
+svar = "{h}*sin(30)"
+var = { h = "[4, 6, 8, 10, 12, 20]" }
+ledtrad = "Motstående = hypotenusan · sin v = {h} · 0,5."
+feltankar = { "{h}*cos(30)" = "cos ger den NÄRLIGGANDE kateten. Den motstående får man med sin." }
+losning = ["sin v = motstående / hypotenusan.", "Motstående = {h} · sin 30° = {h} · 0,5.", "= {h/2} cm."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hypotenusan är {h} cm och vinkeln v = {v}°. Hur lång är den motstående kateten? (en decimal)"
+svar = "{h}*sin({v})"
+tolerans = 0.05
+var = { h = "5..15", v = "[20, 25, 35, 40, 50, 55, 70]" }
+ledtrad = "{h} · sin {v}°"
+feltankar = { "{h}*cos({v})" = "cos ger den närliggande kateten. Motstående = hypotenusan · sin v." }
+losning = ["Motstående = hypotenusan · sin v.", "{h} · sin {v}°.", "≈ {round(h*sin(v), 1)} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "Den närliggande kateten är {a} m och vinkeln v = {v}°. Hur hög är den motstående kateten? (en decimal)"
+svar = "{a}*tan({v})"
+tolerans = 0.05
+var = { a = "3..12", v = "[25, 30, 35, 40, 50, 60]" }
+ledtrad = "tan v = motstående / närliggande, så motstående = {a} · tan {v}°."
+feltankar = { "{a}/tan({v})" = "Du delade. tan v = motstående / närliggande ⇒ motstående = närliggande · tan v." }
+losning = ["tan v = motstående / närliggande.", "Motstående = {a} · tan {v}°.", "≈ {round(a*tan(v), 1)} m."]
+
+[[rad]]
+sager = "vilken funktion?"
+figur = { typ = "tabell", rubriker = ["du vet", "du söker", "använd"], rader = [["hypotenusa", "motstående", "sin"], ["hypotenusa", "närliggande", "cos"], ["närliggande", "motstående", "tan"]], kolbredd = 110 }
+skriver = ["den med båda sidorna"]
+
+[[rad]]
+sager = "hitta vinkeln"
+skriver = ["v = sin⁻¹(0,5) = 30°"]
+kommentar = "Baklänges: känner du kvoten ger sin⁻¹, cos⁻¹ eller tan⁻¹ vinkeln."
+
+[[rad]]
+sager = "varför fungerar det?"
+skriver = ["samma vinkel ⇒ likformiga"]
+kommentar = "Därför är kvoten mellan två sidor alltid densamma för en viss vinkel – och den kvoten har fått ett namn."
+
+[[exempel]]
+rubrik = "Stegen: hur högt når den?"
+figur = { typ = "scen", bild = "stege.jpg", bredd = 420 }
+steg = [
+  "Stegen är 5 m (hypotenusan) och lutar 70° mot marken.",
+  "Höjden är kateten mittemot vinkeln: motstående. Hypotenusa och motstående – sin.",
+  "Höjden = 5 · sin 70° ≈ 5 · 0,94 ≈ 4,7 m.",
+]
+
+[[exempel]]
+rubrik = "Hitta vinkeln i en ramp"
+steg = [
+  "Rampen stiger 1 m på 4 m vågrätt. Motstående 1, närliggande 4 – tan.",
+  "tan v = 1/4 = 0,25.",
+  "v = tan⁻¹(0,25) ≈ 14°.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Hypotenusan är {h} cm och vinkeln v = 60°. Hur lång är den närliggande kateten?"
+steg = ["cos v = närliggande / hypotenusan", "Närliggande = {h} · cos 60° = {h} · 0,5 = ?"]
+svar = "{h/2}"
+var = { h = "[4, 6, 8, 10, 12, 20]" }
+ledtrad = "cos 60° = 0,5."
+losning = ["{h} · 0,5 = {h/2} cm."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Du vet den närliggande kateten och hypotenusan. Vilken funktion använder du för att hitta vinkeln?"
+alternativ = ["sin", "cos", "tan"]
+svar = "cos"
+form = "text"
+ledtrad = "Vilken kvot innehåller närliggande och hypotenusa?"
+feltankar = { "sin" = "sin = motstående / hypotenusa. Här har du den närliggande.", "tan" = "tan = motstående / närliggande – hypotenusan finns inte med." }
+losning = ["cos v = närliggande / hypotenusan.", "Då är v = cos⁻¹(närliggande / hypotenusan)."]
+
+[[uppgift]]
+niva = 2
+fraga = "Den motstående kateten är {a} cm och hypotenusan {2*a} cm. Hur stor är vinkeln v (i grader)?"
+svar = "30"
+var = { a = "2..9" }
+ledtrad = "sin v = {a} / {2*a} = 0,5."
+feltankar = { "60" = "60° har cos v = 0,5. Här är det sin v = 0,5 – motstående delat med hypotenusan." }
+losning = ["sin v = {a} / {2*a} = 0,5.", "v = sin⁻¹(0,5) = 30°."]
+
+[[uppgift]]
+niva = 3
+fraga = "En {L} m lång stege lutar mot en vägg. Vinkeln mot marken är {v}°. Hur högt upp når stegen? (en decimal)"
+svar = "{L}*sin({v})"
+tolerans = 0.05
+var = { L = "[4, 5, 6]", v = "[60, 65, 70, 75]" }
+ledtrad = "Höjden är motstående katet. Stegen är hypotenusan."
+feltankar = { "{L}*cos({v})" = "cos ger avståndet från väggen längs marken (närliggande). Höjden är motstående: sin." }
+losning = ["Höjden = {L} · sin {v}°.", "≈ {L} · {round(sin(v), 3)}.", "≈ {round(L*sin(v), 1)} m."]
+
+[[uppgift]]
+niva = 3
+fraga = "En ramp ska stiga {h} dm på {l} dm vågrätt. Vilken lutningsvinkel får den? (hela grader)"
+svar = "{round(atand(h/l))}"
+tolerans = 0.5
+var = { h = "1..4", l = "[8, 10, 12, 15, 20]" }
+ledtrad = "tan v = {h} / {l}."
+feltankar = { "{round(asind(h/l))}" = "Den vågräta sträckan är den närliggande kateten, inte hypotenusan – använd tan." }
+losning = ["tan v = {h} / {l} = {round(h/l, 3)}.", "v = tan⁻¹({round(h/l, 3)}).", "≈ {round(atand(h/l))}°."]

@@ -1,0 +1,133 @@
+id = "forskola-monster"
+titel = "Vad kommer sedan?"
+omrade = "algebra"
+ikon = "stjarna"
+bild = "monster-brickor.jpg"
+bildtext = "Blå, gul, röd – blå, gul, röd. Säg mönstret högt!"
+sager = "I ett mönster upprepas samma sak om och om igen. Säg mönstret högt: cirkel, kvadrat, cirkel, kvadrat …"
+galler = "När samma ordning kommer tillbaka hela tiden. Den del som upprepas kallas mönstrets kärna."
+galler_inte = "Alla mönster upprepas inte. Ett växande mönster – 1, 2, 3, 4 … – blir större för varje steg. Då letar man efter hur mycket det växer, inte efter en kärna."
+kalla = "Mönster som tidig algebra: hitta kärnan, säg den högt, fortsätt den (Clements & Sarama; Lpfö 18: ordning och mönster)."
+
+[[rad]]
+sager = "cirkel, kvadrat, cirkel, kvadrat"
+figur = { typ = "ikonval", fore = ["cirkel", "kvadrat", "cirkel", "kvadrat"], ikoner = [], d = 1 }
+skriver = ["A B A B"]
+
+[[rad]]
+sager = "äpple, banan, banan – och igen"
+figur = { typ = "ikonval", fore = ["apple", "banan", "banan", "apple", "banan", "banan"], ikoner = [], d = 1 }
+skriver = ["A B B A B B"]
+
+[[exempel]]
+rubrik = "Hitta kärnan"
+figur = { typ = "ikonval", fore = ["apple", "banan", "banan", "apple", "banan", "banan"], ikoner = [], d = 1 }
+steg = [
+  "Säg högt: äpple, banan, banan, äpple, banan, banan …",
+  "Det som upprepas är äpple – banan – banan. Det är mönstrets kärna.",
+  "När kärnan är slut börjar den om. Nästa sak blir ett äpple.",
+]
+
+[[exempel]]
+rubrik = "Ett mönster som växer"
+figur = { typ = "ikonval", fore = ["siffra-1", "siffra-2", "siffra-3", "siffra-4"], ikoner = [], d = 1 }
+steg = [
+  "1, 2, 3, 4 – varje gång blir det en till.",
+  "Inget upprepas. Mönstret växer.",
+  "Nästa blir 5.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["cirkel", "kvadrat", "cirkel", "kvadrat", "cirkel"], ikoner = ["cirkel", "kvadrat", "triangel"] }
+svar = "kvadrat"
+ledtrad = "Säg mönstret högt: cirkel, kvadrat, cirkel, kvadrat, cirkel …"
+feltankar = { "cirkel" = "Efter cirkel kommer kvadrat i det här mönstret. Säg det högt!", "triangel" = "Det finns ingen triangel i mönstret. Bara cirkel och kvadrat." }
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Säg mönstret med mig. Vad kommer sedan?"
+steg = ["stjärna – cirkel", "stjärna – cirkel", "stjärna – ?"]
+figur = { typ = "ikonval", fore = ["stjarna", "cirkel", "stjarna", "cirkel", "stjarna"], ikoner = ["stjarna", "hjarta", "cirkel"] }
+svar = "cirkel"
+ledtrad = "Kärnan är stjärna – cirkel. Efter stjärnan kommer …"
+feltankar = { "stjarna" = "Det kom just en stjärna. Efter stjärnan kommer cirkeln." }
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["{['cirkel','kvadrat','triangel','stjarna','hjarta'][a]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][b]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][a]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][b]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][a]}"], ikoner = ["{['cirkel','kvadrat','triangel','stjarna','hjarta'][a]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][(b+1)%5 if (b+1)%5 != a else (b+2)%5]}", "{['cirkel','kvadrat','triangel','stjarna','hjarta'][b]}"] }
+svar = "{['cirkel','kvadrat','triangel','stjarna','hjarta'][b]}"
+var = { a = "0..4", b = "0..4 != a" }
+ledtrad = "Säg mönstret högt från början. Vad kommer efter den sista?"
+feltankar = { "{['cirkel','kvadrat','triangel','stjarna','hjarta'][a]}" = "Den kom just. Säg mönstret högt – två saker turas om." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["apple", "banan", "banan", "apple", "banan", "banan", "apple"], ikoner = ["apple", "banan", "paron"] }
+svar = "banan"
+ledtrad = "Äpple, banan, banan – och så igen."
+feltankar = { "apple" = "Efter ett äpple kommer två bananer. Kärnan är äpple – banan – banan." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["stjarna", "hjarta", "cirkel", "stjarna", "hjarta"], ikoner = ["stjarna", "hjarta", "cirkel"] }
+svar = "cirkel"
+ledtrad = "Stjärna, hjärta, cirkel – och så börjar det om."
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["kvadrat", "kvadrat", "triangel", "kvadrat", "kvadrat"], ikoner = ["kvadrat", "triangel", "cirkel"] }
+svar = "triangel"
+ledtrad = "Kvadrat, kvadrat, triangel – och igen."
+feltankar = { "kvadrat" = "Det har redan kommit två kvadrater. Efter två kvadrater kommer en triangel." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["apelsin", "banan", "paron", "apelsin", "banan"], ikoner = ["paron", "apelsin", "banan"] }
+svar = "paron"
+ledtrad = "Apelsin, banan, päron – och så börjar det om."
+feltankar = { "apelsin" = "Kärnan har tre saker: apelsin, banan, päron. Päronet har inte kommit än." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "valj"
+fraga = "Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["hjarta", "hjarta", "stjarna", "stjarna", "hjarta", "hjarta"], ikoner = ["hjarta", "stjarna", "cirkel"] }
+svar = "stjarna"
+ledtrad = "Två hjärtan, två stjärnor – och igen."
+feltankar = { "hjarta" = "Det har redan kommit två hjärtan. Nu är det stjärnornas tur." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "valj"
+fraga = "Det här mönstret växer. Vad kommer sedan?"
+figur = { typ = "ikonval", fore = ["siffra-{a}", "siffra-{a+1}", "siffra-{a+2}"], ikoner = ["siffra-{a}", "siffra-{a+3}", "siffra-{a+4}"] }
+svar = "siffra-{a+3}"
+var = { a = "1..5" }
+ledtrad = "Varje gång blir det en till. Vad kommer efter {a+2}?"
+feltankar = { "siffra-{a}" = "Det här mönstret börjar inte om – det växer. Efter {a+2} kommer {a+3}.", "siffra-{a+4}" = "Du hoppade över en. Mönstret växer med en i taget." }
+losning = ["{a}, {a+1}, {a+2} – varje gång en till.", "Mönstret växer, det börjar inte om.", "Efter {a+2} kommer {a+3}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla ett mönster i rutorna: {['röd','blå','lila'][n]}, {['gul','grön','orange'][n]}, {['röd','blå','lila'][n]}, {['gul','grön','orange'][n]} … ända till slutet."
+figur = { typ = "malrutor", kolumner = 8, ruta = 64, objekt = "|||||||", farger = ["{['röd','blå','lila'][n]}", "{['gul','grön','orange'][n]}"] }
+svar = "{'|'.join(['röd','blå','lila'][n] if i % 2 == 0 else ['gul','grön','orange'][n] for i in range(8))}"
+var = { n = "0..2" }
+ledtrad = "Säg färgerna högt medan du målar: {['röd','blå','lila'][n]}, {['gul','grön','orange'][n]}, {['röd','blå','lila'][n]} …"
+feltankar = { "{'|'.join(['gul','grön','orange'][n] if i % 2 == 0 else ['röd','blå','lila'][n] for i in range(8))}" = "Mönstret börjar med {['röd','blå','lila'][n]}. Börja om från första rutan." }
+losning = ["Första rutan: {['röd','blå','lila'][n]}. Andra: {['gul','grön','orange'][n]}.", "Sedan börjar det om: {['röd','blå','lila'][n]}, {['gul','grön','orange'][n]} …", "Varannan ruta har samma färg."]

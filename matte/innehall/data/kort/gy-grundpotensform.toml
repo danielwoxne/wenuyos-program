@@ -1,0 +1,129 @@
+id = "gy-grundpotensform"
+titel = "Grundpotensform"
+omrade = "tal"
+ikon = "raket"
+sager = "Stora och små tal skrivs som ett tal mellan 1 och 10 gånger en tiopotens: 45 000 = 4,5 · 10⁴ och 0,003 = 3 · 10⁻³."
+galler = "Siffran framför ska vara minst 1 och mindre än 10. Exponenten räknar hur många steg kommat flyttats."
+galler_inte = "En negativ exponent gör inte talet negativt. 3 · 10⁻³ = 0,003 är positivt men litet – minustecknet i exponenten betyder bara att kommat flyttar åt vänster."
+forkunskap = ["potenser", "mult-10-100-1000"]
+kalla = "Positionssystemet (kommat flyttar) kopplat till tiopotenser – samma bild som kortet om · 10, 100, 1 000."
+
+[[rad]]
+sager = "fyrtiofem tusen"
+figur = { typ = "positionstabell", tal = "4,5", skift = 3 }
+skriver = ["45 000 = 4,5 · 10⁴"]
+kommentar = "Kommat flyttar fyra steg åt höger från 4,5 till 45 000."
+
+[[uppgift]]
+niva = 1
+fraga = "Skriv {a},{b} · 10^{n} som vanligt tal."
+svar = "{a},{b}*10^{n}"
+var = { a = "1..9", b = "1..9", n = "3..6" }
+ledtrad = "Flytta kommat {n} steg åt höger."
+losning = ["10^{n}: flytta kommat {n} steg åt höger.", "{a},{b} · 10^{n} = {ts(int((10*a+b)*10**(n-1)))}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Skriv {ts(int(str(a)+str(b)+'0'*(n-1)))} i grundpotensform: a · 10ⁿ."
+falt = ["a", "n"]
+svar = ["{a},{b}", "{n}"]
+var = { a = "1..9", b = "1..9", n = "3..7" }
+ledtrad = "a ska vara mellan 1 och 10: {a},{b}. Hur många steg flyttar kommat?"
+feltankar = { "{a}{b};{n-1}" = "{a}{b} är större än 10. I grundpotensform ska talet framför vara mellan 1 och 10: {a},{b}." }
+losning = ["a ska vara mellan 1 och 10: {a},{b}.", "Från {a},{b} till talet flyttar kommat {n} steg.", "{a},{b} · 10^{n}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Skriv 0,{'0'*(n-1)}{a} i grundpotensform: a · 10ⁿ."
+falt = ["a", "n"]
+svar = ["{a}", "-{n}"]
+var = { a = "2..9", n = "2..5" }
+ledtrad = "Små tal får negativ exponent. Kommat flyttar {n} steg åt höger för att komma till {a}."
+feltankar = { "{a};{n}" = "Talet är mindre än 1 – då är exponenten negativ: 10^-{n}." }
+losning = ["a = {a}.", "Från 0,{'0'*(n-1)}{a} till {a} flyttar kommat {n} steg åt höger.", "Litet tal – negativ exponent: {a} · 10^-{n}."]
+
+[[rad]]
+sager = "tre tusendelar"
+figur = { typ = "tabell", rubriker = ["tal", "grundpotensform"], rader = [["0,003", "3 · 10⁻³"], ["0,045", "4,5 · 10⁻²"]], kolbredd = 130 }
+skriver = ["0,003 = 3 · 10⁻³"]
+kommentar = "Kommat flyttar tre steg åt höger för att komma till 3 – litet tal, negativ exponent."
+
+[[rad]]
+sager = "storleksordningar"
+figur = { typ = "tabell", rubriker = ["", "ungefär"], rader = [["jordens massa", "6 · 10²⁴ kg"], ["en människas hårstrå", "8 · 10⁻⁵ m"], ["ljusets fart", "3 · 10⁸ m/s"]], kolbredd = 170 }
+skriver = ["exponenten = storleksordningen"]
+
+[[exempel]]
+rubrik = "Skriv 34 000 i grundpotensform"
+figur = { typ = "positionstabell", tal = "3,4", skift = 4 }
+steg = [
+  "Flytta kommat tills det står ett tal mellan 1 och 10: 3,4.",
+  "Kommat flyttade 4 steg åt vänster (från 34 000,0 till 3,4).",
+  "34 000 = 3,4 · 10⁴. Kontroll: 3,4 · 10 000 = 34 000.",
+]
+
+[[exempel]]
+rubrik = "Multiplicera i grundpotensform"
+text = "(4 · 10⁵) · (5 · 10³)"
+steg = [
+  "Multiplicera talen för sig och tiopotenserna för sig: 4 · 5 = 20 och 10⁵ · 10³ = 10⁸.",
+  "20 · 10⁸ – men 20 är inte mellan 1 och 10.",
+  "20 = 2 · 10¹, så svaret blir 2 · 10⁹.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "tabell"
+fraga = "Följ stegen. Skriv {ts(int(str(a)+str(b)+'0'*(n-1)))} i grundpotensform: a · 10ⁿ."
+steg = ["Flytta kommat tills det står ett tal mellan 1 och 10: {a},{b}", "Räkna stegen kommat flyttade: det är n."]
+falt = ["a", "n"]
+svar = ["{a},{b}", "{n}"]
+var = { a = "1..9", b = "1..9", n = "3..6" }
+ledtrad = "Räkna siffrorna efter den första: {n}."
+losning = ["{ts(int(str(a)+str(b)+'0'*(n-1)))} = {a},{b} · 10^{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Skriv {a} · 10^-{n} som decimaltal."
+svar = "{a}/{10**n}"
+form = "decimal"
+var = { a = "2..9", n = "1..4" }
+ledtrad = "Flytta kommat {n} steg åt vänster."
+feltankar = { "-{a*10**n}" = "Negativ exponent ger inte ett negativt tal. Det betyder att kommat flyttar åt vänster: talet blir litet." }
+losning = ["10^-{n} = 1/{ts(10**n)}.", "{a} / {ts(10**n)} = {a/10**n}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Räkna ut (2 · 10^{a}) · (3 · 10^{b}). Svara i grundpotensform."
+falt = ["a", "n"]
+svar = ["6", "{a+b}"]
+var = { a = "2..6", b = "2..6" }
+ledtrad = "Talen för sig, tiopotenserna för sig."
+feltankar = { "6;{a*b}" = "10^{a} · 10^{b}: exponenterna adderas, de multipliceras inte." }
+losning = ["2 · 3 = 6.", "10^{a} · 10^{b} = 10^{a+b}.", "6 · 10^{a+b}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Räkna ut (8 · 10^{a}) · (5 · 10^{b}). Svara i grundpotensform."
+falt = ["a", "n"]
+svar = ["4", "{a+b+1}"]
+var = { a = "2..6", b = "2..6" }
+ledtrad = "8 · 5 = 40. Men a ska vara mellan 1 och 10."
+feltankar = { "40;{a+b}" = "40 är inte mellan 1 och 10. 40 = 4 · 10¹ – då ökar exponenten med ett." }
+losning = ["8 · 5 = 40 och 10^{a} · 10^{b} = 10^{a+b}.", "40 · 10^{a+b} = 4 · 10¹ · 10^{a+b}.", "= 4 · 10^{a+b+1}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilket tal är störst?"
+alternativ = ["{a} · 10^{n}", "{b} · 10^{n-1}"]
+svar = "{a} · 10^{n}"
+form = "text"
+var = { a = "1..4", b = "5..9", n = "3..8" }
+ledtrad = "Jämför exponenterna först – de visar storleksordningen."
+feltankar = { "{b} · 10^{n-1}" = "{b} är större än {a}, men 10^{n-1} är tio gånger mindre än 10^{n}. {b} · 10^{n-1} = {b/10} · 10^{n}." }
+losning = ["Skriv om: {b} · 10^{n-1} = {b/10} · 10^{n}.", "{a} > {b/10}.", "{a} · 10^{n} är störst."]

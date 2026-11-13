@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Matte
+Name[sv]=Matte
+Comment=Learn mathematics step by step – from preschool to upper secondary
+Comment[sv]=Lär dig matematik steg för steg – från förskola till gymnasium
+Exec=matte
+Icon=se.wenuyos.app.matte
+Terminal=false
+Categories=Education;
+Keywords=math;mathematics;fractions;percent;equations;
+Keywords[sv]=matte;matematik;räkna;bråk;procent;ekvation;
+StartupWMClass=se.wenuyos.app.matte

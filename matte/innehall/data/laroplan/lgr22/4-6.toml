@@ -1,0 +1,62 @@
+# Lgr22, årskurs 4–6 – centralt innehåll i matematik (förkortat ur Skolverkets kursplan).
+stadium = "lgr22.4-6"
+
+[[mal]]
+id = "lgr22.4-6.tal.rationella"
+omrade = "tal"
+text = "Rationella tal, däribland negativa tal, och deras egenskaper; positionssystemet; tal i bråk-, decimal- och procentform och hur de förhåller sig till varandra"
+kort = ["brak-delar", "brak-procent-decimal", "decimaltal-tallinjen", "jamfora-decimaltal", "negativa-tal"]
+
+[[mal]]
+id = "lgr22.4-6.tal.rakna"
+omrade = "tal"
+text = "Metoder för de fyra räknesätten med naturliga tal och tal i decimalform; huvudräkning, skriftliga metoder och digitala verktyg"
+kort = ["mult-10-100-1000", "brak-addition", "mult-decimaltal"]
+
+[[mal]]
+id = "lgr22.4-6.tal.rimlighet"
+omrade = "tal"
+text = "Rimlighetsbedömning vid uppskattningar och beräkningar"
+kort = ["avrundning"]
+
+[[mal]]
+id = "lgr22.4-6.algebra.uttryck"
+omrade = "algebra"
+text = "Obekanta tal och deras egenskaper; enkla algebraiska uttryck och ekvationer; metoder för att lösa enkla ekvationer"
+kort = ["ekvationer-enkla"]
+
+[[mal]]
+id = "lgr22.4-6.algebra.monster"
+omrade = "algebra"
+text = "Mönster i talföljder och geometriska mönster; hur de kan konstrueras, beskrivas och uttryckas"
+kort = ["monster"]
+
+[[mal]]
+id = "lgr22.4-6.geometri.objekt"
+omrade = "geometri"
+text = "Grundläggande geometriska objekt (polygoner, cirklar, klot, koner, cylindrar, pyramider, rätblock), deras egenskaper och inbördes relationer; skala"
+kort = ["geometriska-former", "skala"]
+
+[[mal]]
+id = "lgr22.4-6.geometri.matning"
+omrade = "geometri"
+text = "Metoder för hur omkrets och area hos olika tvådimensionella figurer kan bestämmas och uppskattas; jämförelse och uppskattning av vinklar, längd, area, volym, massa, tid"
+kort = ["omkrets-area", "triangel-area"]
+
+[[mal]]
+id = "lgr22.4-6.sannolikhet.tabeller"
+omrade = "sannolikhet"
+text = "Tabeller och diagram för att beskriva resultat från undersökningar; lägesmåtten medelvärde, typvärde och median; sannolikhet i vardagliga situationer"
+kort = ["stapeldiagram-lasa", "medelvarde-median"]
+
+[[mal]]
+id = "lgr22.4-6.samband.proportion"
+omrade = "samband"
+text = "Proportionalitet samt hur proportionella samband uttrycks i bråk-, decimal- och procentform; koordinatsystem och grafer"
+kort = ["proportionalitet", "procent-av-tal"]
+
+[[mal]]
+id = "lgr22.4-6.problem.strategier"
+omrade = "problem"
+text = "Strategier för problemlösning i vardagliga situationer och inom olika ämnesområden; formulering av matematiska frågeställningar"
+kort = ["problemlosning-rita"]

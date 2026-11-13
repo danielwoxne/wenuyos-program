@@ -1,0 +1,128 @@
+id = "gy-logaritmer"
+titel = "Logaritmer"
+omrade = "tal"
+ikon = "raket"
+sager = "lg a är den exponent som 10 ska upphöjas till för att bli a: lg 1000 = 3 eftersom 10³ = 1000. Logaritmen löser ekvationer där x står i exponenten."
+galler = "lg finns bara för positiva tal. lg(a · b) = lg a + lg b och lg(aˣ) = x · lg a."
+galler_inte = "lg(a + b) är inte lg a + lg b. Lagen gäller produkter: lg(a · b) = lg a + lg b. Och lg finns inte för 0 eller negativa tal – 10 upphöjt till något blir aldrig noll eller negativt."
+forkunskap = ["gy-potenslagar", "gy-grundpotensform"]
+kalla = "Logaritmen som 'vilken exponent?' – kopplad till tiopotenserna eleven redan kan."
+
+[[rad]]
+sager = "logaritmen av tusen"
+figur = { typ = "tabell", rubriker = ["a", "1", "10", "100", "1 000", "0,01"], rader = [["lg a", 0, 1, 2, 3, -2]], kolbredd = 64 }
+skriver = ["lg 1000 = 3"]
+
+[[uppgift]]
+niva = 1
+fraga = "lg {ts(10**n)} = ?"
+svar = "{n}"
+var = { n = "1..6" }
+ledtrad = "10 upphöjt till vad blir {ts(10**n)}? Räkna nollorna."
+feltankar = { "{10**n/10}" = "lg ger EXPONENTEN: 10^? = {10**n}." }
+losning = ["10^? = {ts(10**n)}.", "Räkna nollorna: {n}.", "lg {ts(10**n)} = {n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös 10ˣ = {a}. (två decimaler)"
+svar = "lg({a})"
+tolerans = 0.005
+var = { a = "[2, 3, 5, 7, 20, 50, 300]" }
+ledtrad = "x = lg {a}."
+losning = ["10ˣ = {a} ger x = lg {a}.", "lg {a} ≈ {round(lg(a), 2)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{ts(s)} kr växer med {p} % per år. Efter hur många år har beloppet fördubblats? (en decimal)"
+svar = "lg(2)/lg(1+{p}/100)"
+tolerans = 0.05
+var = { s = "[1000, 5000]", p = "[2, 3, 4, 5, 7, 10]" }
+ledtrad = "{1+p/100}ˣ = 2 ⇒ x = lg 2 / lg {1+p/100}."
+feltankar = { "100/{p}" = "Det vore sant om beloppet ökade med samma antal kronor varje år. Med ränta på ränta: x = lg 2 / lg {1+p/100}." }
+losning = ["{1+p/100}ˣ = 2.", "x = lg 2 / lg {1+p/100}.", "≈ {round(lg(2)/lg(1+p/100), 1)} år."]
+
+[[rad]]
+sager = "lagarna"
+figur = { typ = "tabell", rubriker = ["lag", "exempel"], rader = [["lg(a · b) = lg a + lg b", "lg 200 = lg 2 + lg 100"], ["lg(a / b) = lg a − lg b", "lg 5 = lg 10 − lg 2"], ["lg(aˣ) = x · lg a", "lg 8 = 3 · lg 2"]], kolbredd = 190 }
+skriver = ["samma lagar som för potenser"]
+
+[[rad]]
+sager = "små tal"
+skriver = ["lg 0,01 = −2"]
+kommentar = "0,01 = 10⁻². Tal mellan 0 och 1 har negativ logaritm."
+
+[[rad]]
+sager = "x i exponenten"
+skriver = ["x = lg 10 / lg 2 ≈ 3,32"]
+kommentar = "Ta lg av båda sidor: x · lg 2 = lg 10. Dela med lg 2."
+
+[[exempel]]
+rubrik = "Vad betyder lg 1 000 = 3?"
+figur = { typ = "tabell", rubriker = ["a", "1", "10", "100", "1 000"], rader = [["lg a", 0, 1, 2, 3]], kolbredd = 64 }
+steg = [
+  "lg frågar: 10 upphöjt till vad blir talet?",
+  "10³ = 1 000, alltså lg 1 000 = 3.",
+  "lg 500 ligger mellan 2 och 3 – närmare 3 (lg 500 ≈ 2,7).",
+]
+
+[[exempel]]
+rubrik = "Lös 3ˣ = 50"
+steg = [
+  "Ta lg av båda sidor: lg(3ˣ) = lg 50.",
+  "Lagen lg(aˣ) = x · lg a ger x · lg 3 = lg 50.",
+  "x = lg 50 / lg 3 ≈ 1,699 / 0,477 ≈ 3,56. Kontroll: 3³ = 27 och 3⁴ = 81 – rimligt.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. lg 0,{'0'*(n-1)}1 = ?"
+steg = ["Skriv som tiopotens: 0,{'0'*(n-1)}1 = 10^?", "Kommat flyttar {n} steg åt höger för att komma till 1."]
+svar = "-{n}"
+var = { n = "1..5" }
+ledtrad = "Små tal ger negativ exponent."
+feltankar = { "{n}" = "0,{'0'*(n-1)}1 är mindre än 1 – exponenten är negativ: 10^-{n}." }
+losning = ["0,{'0'*(n-1)}1 = 10^-{n}.", "lg 0,{'0'*(n-1)}1 = −{n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "lg {[2, 4, 5, 20, 25][p]} + lg {[50, 25, 20, 50, 40][p]} = ?"
+svar = "{[2, 2, 2, 3, 3][p]}"
+var = { p = "0..4" }
+ledtrad = "lg a + lg b = lg(a · b)."
+losning = ["lg {[2, 4, 5, 20, 25][p]} + lg {[50, 25, 20, 50, 40][p]} = lg({[2, 4, 5, 20, 25][p]} · {[50, 25, 20, 50, 40][p]}).", "= lg {[100, 100, 100, 1000, 1000][p]}.", "= {[2, 2, 2, 3, 3][p]}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös 2ˣ = {2**n}."
+svar = "{n}"
+var = { n = "3..10" }
+ledtrad = "2 · 2 · 2 … – hur många tvåor blir {2**n}? Eller: x = lg {2**n} / lg 2."
+losning = ["2^{n} = {2**n}.", "x = {n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös {c} · 3ˣ = {c*3**n}."
+svar = "{n}"
+var = { c = "[2, 4, 5, 10]", n = "2..6" }
+ledtrad = "Dela med {c} först: 3ˣ = {3**n}."
+losning = ["3ˣ = {c*3**n} / {c} = {3**n}.", "x = lg {3**n} / lg 3 = {n}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Lisa skriver: lg(100 + 1 000) = lg 100 + lg 1 000 = 5. Stämmer det?"
+alternativ = ["Ja", "Nej, lg 1 100 ≈ 3,04"]
+svar = "Nej, lg 1 100 ≈ 3,04"
+form = "text"
+ledtrad = "Lagen gäller lg(a · b), inte lg(a + b)."
+feltankar = { "Ja" = "lg 100 + lg 1 000 = lg(100 · 1 000) = lg 100 000 = 5. Men det står 100 + 1 000 = 1 100 – och lg 1 100 ≈ 3,04." }
+losning = ["100 + 1 000 = 1 100.", "lg 1 100 ≈ 3,04.", "lg a + lg b = lg(a · b) – inte lg(a + b)."]
+
+[[uppgift]]
+niva = 3
+fraga = "På Richterskalan betyder ett steg upp att jordskalvet är 10 gånger starkare. Hur många gånger starkare är ett skalv med magnitud {m+d} än ett med magnitud {m}?"
+svar = "{10**d}"
+var = { m = "3..5", d = "1..3" }
+ledtrad = "{d} steg – tio gånger för varje steg."
+feltankar = { "{10*d}" = "Varje steg multiplicerar med 10: 10^{d}, inte 10 · {d}." }
+losning = ["Skillnaden är {d} steg.", "10^{d} = {ts(10**d)}.", "{ts(10**d)} gånger starkare."]

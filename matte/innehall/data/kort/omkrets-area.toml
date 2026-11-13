@@ -1,0 +1,146 @@
+id = "omkrets-area"
+titel = "Omkrets och area"
+omrade = "geometri"
+ikon = "rektangel"
+bild = "matning.jpg"
+bildtext = "Tumstocken mäter längd (cm), vågen mäter massa (g). Omkrets är en längd – runt om."
+sager = "Omkretsen är sträckan runt om (en längd, i cm). Arean är ytan innanför (antal rutor, i cm²)."
+galler = "Rektangel: omkrets = 2 · (bredd + höjd), area = bredd · höjd. Andra former har andra formler – men omkrets är alltid 'runt om' och area alltid 'innanför'."
+galler_inte = "”Större omkrets ger större area” stämmer inte. En rektangel 1 × 9 och en kvadrat 5 × 5 har båda omkretsen 20 cm – men arean är 9 cm² och 25 cm²."
+kalla = "Area som 'antal rutor' (rutnätet) innan formeln. Vanlig feltanke: blanda ihop omkrets och area."
+
+[[rad]]
+sager = "en rektangel 5 gånger 3"
+figur = { typ = "rektangel", bredd = 5, hojd = 3 }
+skriver = ["omkrets 5 + 3 + 5 + 3 = 16 cm", "area 5 · 3 = 15 cm²"]
+kommentar = "Räkna rutorna: tre rader med fem – femton."
+
+[[rad]]
+sager = "en kvadrat 4 gånger 4"
+figur = { typ = "rektangel", bredd = 4, hojd = 4, farg = "gul" }
+skriver = ["omkrets 4 · 4 = 16 cm", "area 4 · 4 = 16 cm²"]
+kommentar = "Samma siffra, men olika saker: 16 cm runt om och 16 rutor innanför."
+
+[[uppgift]]
+niva = 1
+fraga = "Hur många rutor är det i rektangeln? (det är arean i cm²)"
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}" }
+svar = "{b*h}"
+var = { b = "2..7", h = "2..5" }
+ledtrad = "{h} rader med {b} rutor i varje."
+losning = ["{h} rader med {b} rutor.", "{h} · {b} = {b*h} rutor.", "Arean är {b*h} cm²."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är rektangelns omkrets i cm?"
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}", rutnat = false }
+svar = "{2*(b+h)}"
+var = { b = "2..9", h = "2..6" }
+ledtrad = "Runt om: {b} + {h} + {b} + {h}."
+feltankar = { "{b*h}" = "Det är arean (ytan innanför). Omkretsen är sträckan runt om: {b} + {h} + {b} + {h}.", "{b+h}" = "Du tog bara två sidor. En rektangel har fyra: {b} + {h} + {b} + {h}." }
+losning = ["Gå runt: {b} + {h} + {b} + {h}.", "= {2*(b+h)} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är rektangelns area i cm²?"
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}", rutnat = false }
+svar = "{b*h}"
+var = { b = "3..12", h = "2..9" }
+ledtrad = "Bredd gånger höjd."
+feltankar = { "{2*(b+h)}" = "Det är omkretsen (runt om). Arean är ytan innanför: {b} · {h} rutor." }
+losning = ["Bredd · höjd.", "{b} · {h} = {b*h} cm²."]
+
+[[exempel]]
+rubrik = "Omkrets: gå runt"
+figur = { typ = "rektangel", bredd = 5, hojd = 3, rutnat = false }
+steg = [
+  "Följ kanten med fingret: 5 + 3 + 5 + 3.",
+  "= 16 cm.",
+  "Omkrets är en längd – den mäts i cm.",
+]
+
+[[exempel]]
+rubrik = "Area: räkna rutor"
+figur = { typ = "rektangel", bredd = 5, hojd = 3 }
+steg = [
+  "Varje ruta är 1 cm · 1 cm = 1 cm².",
+  "3 rader med 5 rutor: 3 · 5 = 15.",
+  "Arean är 15 cm² – ytan innanför.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är omkretsen i cm?"
+steg = ["Gå runt: {b} + {h} + {b} + {h}", "= ?"]
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}", rutnat = false }
+svar = "{2*(b+h)}"
+var = { b = "2..9", h = "2..6" }
+ledtrad = "Lägg ihop alla fyra sidor."
+feltankar = { "{b*h}" = "Det är arean. Omkretsen är summan av sidorna." }
+losning = ["{b} + {h} + {b} + {h} = {2*(b+h)} cm."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Räkna ut rektangelns omkrets och area."
+figur = { typ = "rektangel", bredd = "{b}", hojd = "{h}" }
+falt = ["Omkrets (cm)", "Area (cm²)"]
+svar = ["{2*(b+h)}", "{b*h}"]
+var = { b = "2..8", h = "2..5" }
+ledtrad = "Omkrets = runt om. Area = rutorna innanför."
+losning = ["Omkrets: {b} + {h} + {b} + {h} = {2*(b+h)} cm.", "Area: {b} · {h} = {b*h} cm²."]
+
+[[uppgift]]
+niva = 2
+fraga = "En kvadrat har sidan {s} cm. Vad är arean i cm²?"
+figur = { typ = "rektangel", bredd = "{s}", hojd = "{s}", farg = "gul" }
+svar = "{s*s}"
+var = { s = "2..9" }
+ledtrad = "Sidan gånger sidan."
+feltankar = { "{4*s}" = "{4*s} cm är omkretsen – fyra sidor runt om. Arean är {s} · {s}." }
+losning = ["Kvadraten är en rektangel med lika långa sidor.", "{s} · {s} = {s*s} cm²."]
+
+[[uppgift]]
+niva = 3
+fraga = "En rektangel har arean {b*h} cm² och bredden {b} cm. Hur hög är den?"
+svar = "{h}"
+var = { b = "2..9", h = "2..9" }
+ledtrad = "{b} · ? = {b*h}."
+losning = ["Area = bredd · höjd.", "{b} · ? = {b*h}.", "Höjden = {b*h} / {b} = {h} cm."]
+
+[[uppgift]]
+niva = 3
+fraga = "En rektangel har omkretsen {2*(b+h)} cm och bredden {b} cm. Hur hög är den?"
+svar = "{h}"
+var = { b = "2..9", h = "2..9" }
+ledtrad = "Halva omkretsen är en bredd och en höjd."
+feltankar = { "{2*(b+h)-b}" = "Omkretsen har två bredder och två höjder. Ta halva omkretsen först: {b+h}." }
+losning = ["Halva omkretsen: {2*(b+h)} / 2 = {b+h}.", "Det är bredd + höjd: {b} + ? = {b+h}.", "Höjden = {h} cm."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Alla tre rektanglarna har omkretsen 20 cm. Vilken har störst area?"
+alternativ = ["1 × 9", "3 × 7", "5 × 5"]
+svar = "5 × 5"
+form = "text"
+ledtrad = "Räkna ut arean för varje: bredd · höjd."
+feltankar = { "1 × 9" = "1 · 9 = 9 cm² – den minsta. Samma omkrets ger inte samma area.", "3 × 7" = "3 · 7 = 21 cm². Prova 5 · 5." }
+losning = ["1 · 9 = 9 cm².", "3 · 7 = 21 cm².", "5 · 5 = 25 cm² – kvadraten har störst area."]
+
+[[uppgift]]
+niva = 3
+fraga = "En L-formad rabatt består av två rektanglar: {a} m · {b} m och {c} m · {d} m. Hur stor är arean i m²?"
+svar = "{a*b+c*d}"
+var = { a = "2..6", b = "2..5", c = "2..4", d = "1..3" }
+ledtrad = "Räkna ut varje rektangel för sig och lägg ihop."
+losning = ["Första: {a} · {b} = {a*b} m².", "Andra: {c} · {d} = {c*d} m².", "{a*b} + {c*d} = {a*b+c*d} m²."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "rita"
+fraga = "Rita två olika rektanglar som båda har arean {n} rutor."
+figur = { typ = "rutpapper", bredd = 18, hojd = 10, ruta = 28 }
+var = { n = "[12,16,18,24]" }
+ledtrad = "Arean är längden gånger bredden. Vilka två tal blir {n} när man multiplicerar dem?"
+losning = ["Arean räknas i rutor: längd · bredd.", "Rektanglar med arean {n}: {', '.join(str(i) + ' · ' + str(n // i) for i in range(1, n + 1) if n % i == 0 and i <= n // i)}.", "Har de samma omkrets? Räkna efter!"]

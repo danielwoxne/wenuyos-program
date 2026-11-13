@@ -1,0 +1,412 @@
+# Ordlistan – matteorden förklarade med en bild.
+#
+# Ord i frågorna, stegen och lösningarna som finns här blir klickbara i programmet: eleven får en kort
+# förklaring, ett exempel och en bild, och kan få det uppläst. Särskilt viktigt vid läs- och skrivsvårigheter
+# och för elever med svenska som andraspråk – ofta är det ordet, inte matten, som är svårt.
+#
+#   ord        ordet som rubrik
+#   former     alla former som ska kännas igen i texten (små bokstäver): täljare, täljaren, täljarna …
+#   forklaring en eller två korta meningar, vardagliga ord
+#   exempel    valfritt
+#   figur      valfri, samma figurer som i korten
+#   se         valfritt: ord som hör ihop
+#
+# `matte check` kontrollerar att figurerna går att rita och att ingen form finns i två ord.
+
+[[ord]]
+ord = "täljare"
+former = ["täljare", "täljaren", "täljarna"]
+forklaring = "Talet ovanför bråkstrecket. Det säger hur många delar vi menar."
+exempel = "I 3/4 är täljaren 3 – tre av delarna är färgade."
+figur = { typ = "stapel", delar = 4, fyllda = 3 }
+se = ["nämnare", "bråk"]
+
+[[ord]]
+ord = "nämnare"
+former = ["nämnare", "nämnaren", "nämnarna", "nämnarens"]
+forklaring = "Talet under bråkstrecket. Det säger hur många lika stora delar det hela är delat i."
+exempel = "I 3/4 är nämnaren 4 – stapeln är delad i fyra delar."
+figur = { typ = "stapel", delar = 4, fyllda = 3 }
+se = ["täljare", "bråk"]
+
+[[ord]]
+ord = "bråk"
+former = ["bråk", "bråket", "bråken", "bråkform", "bråkstreck", "bråkstrecket"]
+forklaring = "Ett tal som visar en del av något helt. Det skrivs med täljare, bråkstreck och nämnare."
+exempel = "1/2 är ett bråk: en av två lika stora delar."
+figur = { typ = "brak", taljare = 1, namnare = 2 }
+se = ["täljare", "nämnare"]
+
+[[ord]]
+ord = "summa"
+former = ["summa", "summan", "summor", "summorna"]
+forklaring = "Svaret när man lägger ihop – adderar – tal."
+exempel = "Summan av 3 och 4 är 7, för 3 + 4 = 7."
+figur = { typ = "talkamrater", summa = 7, del1 = 3 }
+se = ["addition"]
+
+[[ord]]
+ord = "differens"
+former = ["differens", "differensen", "differenser"]
+forklaring = "Svaret när man tar bort – subtraherar. Hur stor skillnaden är mellan två tal."
+exempel = "Differensen mellan 9 och 4 är 5, för 9 − 4 = 5."
+figur = { typ = "tallinje", fran = 0, till = 10, markera = [4, 9] }
+se = ["subtraktion"]
+
+[[ord]]
+ord = "produkt"
+former = ["produkt", "produkten", "produkter"]
+forklaring = "Svaret när man multiplicerar – tar gånger."
+exempel = "Produkten av 3 och 4 är 12, för 3 · 4 = 12."
+figur = { typ = "prickar", antal = 12, per_rad = 4 }
+se = ["multiplikation", "faktor"]
+
+[[ord]]
+ord = "kvot"
+former = ["kvot", "kvoten", "kvoter"]
+forklaring = "Svaret när man dividerar – delar."
+exempel = "Kvoten av 12 och 3 är 4, för 12 / 3 = 4."
+figur = { typ = "grupper", namn = "apple", antal = [4, 4, 4] }
+se = ["division"]
+
+[[ord]]
+ord = "addition"
+former = ["addition", "additionen", "addera", "adderar", "adderas"]
+forklaring = "Att lägga ihop. Tecknet är +."
+exempel = "3 + 4 = 7"
+figur = { typ = "talkamrater", summa = 7, del1 = 3 }
+se = ["summa"]
+
+[[ord]]
+ord = "subtraktion"
+former = ["subtraktion", "subtraktionen", "subtrahera", "subtraherar"]
+forklaring = "Att ta bort, eller att jämföra hur mycket större något är. Tecknet är −."
+exempel = "9 − 4 = 5"
+figur = { typ = "tallinje", fran = 0, till = 10, markera = [4, 9] }
+se = ["differens"]
+
+[[ord]]
+ord = "multiplikation"
+former = ["multiplikation", "multiplikationen", "multiplicera", "multiplicerar", "multipliceras"]
+forklaring = "Att ta gånger – lika stora grupper. Tecknet är · eller ×."
+exempel = "3 · 4 = 4 + 4 + 4 = 12"
+figur = { typ = "grupper", namn = "apple", antal = [4, 4, 4] }
+se = ["produkt", "faktor"]
+
+[[ord]]
+ord = "division"
+former = ["division", "divisionen", "dividera", "dividerar", "divideras"]
+forklaring = "Att dela lika. Tecknet är / eller ÷."
+exempel = "12 / 3 = 4 – tolv delat på tre blir fyra var."
+figur = { typ = "grupper", namn = "apple", antal = [4, 4, 4] }
+se = ["kvot"]
+
+[[ord]]
+ord = "faktor"
+former = ["faktor", "faktorn", "faktorer", "faktorerna"]
+forklaring = "Talen man multiplicerar med varandra."
+exempel = "I 3 · 4 = 12 är 3 och 4 faktorer."
+se = ["produkt", "multiplikation"]
+
+[[ord]]
+ord = "ental"
+former = ["ental", "entalet", "entalen", "entalssiffra", "entalssiffran"]
+forklaring = "Siffran längst till höger i ett heltal. Den säger hur många ettor."
+exempel = "I 23 är entalssiffran 3."
+figur = { typ = "tiobas", tiotal = 2, ental = 3 }
+se = ["tiotal", "hundratal"]
+
+[[ord]]
+ord = "tiotal"
+former = ["tiotal", "tiotalet", "tiotalen", "tiotals", "tiotalssiffra", "tiotalssiffran"]
+forklaring = "Siffran näst längst till höger. Den säger hur många tior."
+exempel = "I 23 är tiotalssiffran 2 – två tior."
+figur = { typ = "tiobas", tiotal = 2, ental = 3 }
+se = ["ental", "hundratal"]
+
+[[ord]]
+ord = "hundratal"
+former = ["hundratal", "hundratalet", "hundratalen", "hundratals", "hundratalssiffra", "hundratalssiffran"]
+forklaring = "Siffran som säger hur många hundra. I ett tredelat tal står den först."
+exempel = "I 457 är hundratalssiffran 4."
+figur = { typ = "positionstabell", tal = "457" }
+se = ["tiotal", "ental"]
+
+[[ord]]
+ord = "decimaltal"
+former = ["decimaltal", "decimaltalet", "decimaltalen", "decimal", "decimaler", "decimalerna", "decimalform", "decimalen"]
+forklaring = "Ett tal med decimaltecken (komma). Siffrorna efter kommat är delar av en hel: tiondelar, hundradelar."
+exempel = "0,5 är fem tiondelar – en halv."
+figur = { typ = "positionstabell", tal = "2,75" }
+se = ["procent", "bråk"]
+
+[[ord]]
+ord = "procent"
+former = ["procent", "procentform", "procenten", "procentsats", "procentsatsen"]
+forklaring = "Hundradelar. 1 procent (1 %) är en del av hundra."
+exempel = "50 % är 50 av 100 – hälften."
+figur = { typ = "hundraruta", fyllda = 50 }
+se = ["decimaltal", "bråk"]
+
+[[ord]]
+ord = "jämn"
+former = ["jämn", "jämna", "jämnt"]
+forklaring = "Ett jämnt tal går att dela i två lika stora högar. Det slutar på 0, 2, 4, 6 eller 8."
+exempel = "8 är jämnt: 4 + 4. 7 är inte jämnt."
+figur = { typ = "prickar", antal = 8, per_rad = 2 }
+se = ["udda"]
+
+[[ord]]
+ord = "udda"
+former = ["udda"]
+forklaring = "Ett udda tal går inte att dela i två lika stora högar – en blir över. Det slutar på 1, 3, 5, 7 eller 9."
+exempel = "7 är udda: 3 + 3 och en över."
+figur = { typ = "prickar", antal = 7, per_rad = 2 }
+se = ["jämn"]
+
+[[ord]]
+ord = "dubbelt"
+former = ["dubbelt", "dubbla", "dubbel", "dubblera", "dubblerar"]
+forklaring = "Två gånger så mycket."
+exempel = "Dubbelt så mycket som 4 är 8."
+figur = { typ = "grupper", namn = "apple", antal = [4, 4] }
+se = ["hälften"]
+
+[[ord]]
+ord = "hälften"
+former = ["hälften", "hälft", "halva", "halvera", "halverar"]
+forklaring = "En av två lika stora delar."
+exempel = "Hälften av 8 är 4."
+figur = { typ = "stapel", delar = 2, fyllda = 1 }
+se = ["dubbelt", "bråk"]
+
+[[ord]]
+ord = "tallinje"
+former = ["tallinje", "tallinjen", "tallinjer"]
+forklaring = "En linje där talen står i ordning med lika långt mellan. Större tal längre åt höger."
+figur = { typ = "tallinje", fran = 0, till = 10 }
+se = ["negativa tal"]
+
+[[ord]]
+ord = "negativa tal"
+former = ["negativ", "negativa", "negativt"]
+forklaring = "Tal som är mindre än noll. De skrivs med minustecken och ligger till vänster om noll på tallinjen."
+exempel = "−3 är tre steg till vänster om noll. Som när det är tre minusgrader."
+figur = { typ = "tallinje", fran = -5, till = 5, markera = [-3] }
+se = ["tallinje"]
+
+[[ord]]
+ord = "ekvation"
+former = ["ekvation", "ekvationen", "ekvationer", "ekvationerna"]
+forklaring = "Två saker som är lika stora, med ett likhetstecken emellan. Ofta finns ett okänt tal, x, att ta reda på."
+exempel = "x + 3 = 7. Vad är x? x = 4."
+se = ["variabel", "uttryck"]
+
+[[ord]]
+ord = "uttryck"
+former = ["uttryck", "uttrycket", "uttrycken"]
+forklaring = "Tal, bokstäver och räknetecken tillsammans – men utan likhetstecken."
+exempel = "2x + 3 är ett uttryck."
+se = ["ekvation", "term"]
+
+[[ord]]
+ord = "term"
+former = ["term", "termen", "termer", "termerna"]
+forklaring = "De delar i ett uttryck som skiljs åt med plus eller minus."
+exempel = "I 3x + 5 är 3x och 5 termer."
+se = ["uttryck"]
+
+[[ord]]
+ord = "variabel"
+former = ["variabel", "variabeln", "variabler", "variablerna"]
+forklaring = "En bokstav, ofta x, som står för ett tal som kan ändras eller som vi inte vet än."
+exempel = "I y = 2x kan x vara vilket tal som helst."
+se = ["ekvation"]
+
+[[ord]]
+ord = "parentes"
+former = ["parentes", "parentesen", "parenteser", "parenteserna"]
+forklaring = "Tecknen ( och ). Det som står inuti räknas först."
+exempel = "2 · (3 + 4) = 2 · 7 = 14"
+se = ["uttryck"]
+
+[[ord]]
+ord = "potens"
+former = ["potens", "potensen", "potenser"]
+forklaring = "Ett tal som multipliceras med sig självt flera gånger. Den lilla siffran uppe till höger säger hur många gånger."
+exempel = "2³ = 2 · 2 · 2 = 8"
+se = ["exponent"]
+
+[[ord]]
+ord = "exponent"
+former = ["exponent", "exponenten", "exponenter"]
+forklaring = "Den lilla siffran i en potens. Den säger hur många gånger talet multipliceras med sig självt."
+exempel = "I 2³ är exponenten 3."
+se = ["potens"]
+
+[[ord]]
+ord = "kvadratrot"
+former = ["kvadratrot", "kvadratroten", "roten"]
+forklaring = "Det tal som gånger sig självt blir talet. Tecknet är √."
+exempel = "√9 = 3, för 3 · 3 = 9."
+figur = { typ = "rektangel", bredd = 3, hojd = 3 }
+se = ["kvadrat", "potens"]
+
+[[ord]]
+ord = "koordinatsystem"
+former = ["koordinatsystem", "koordinatsystemet", "koordinat", "koordinater", "koordinaterna", "koordinaten"]
+forklaring = "Två tallinjer i kors, x-axeln och y-axeln. En punkt skrivs (x, y): först åt höger, sedan uppåt."
+exempel = "Punkten (3, 2) är 3 steg åt höger och 2 steg uppåt."
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 4, punkter = [[3, 2]] }
+se = ["funktion"]
+
+[[ord]]
+ord = "funktion"
+former = ["funktion", "funktionen", "funktioner", "funktionens"]
+forklaring = "En regel som ger ett y för varje x. Den kan ritas som en linje eller kurva."
+exempel = "y = 2x + 1: när x = 3 blir y = 7."
+figur = { typ = "koordinatsystem", xmax = 4, ymax = 9, linje = [2, 1] }
+se = ["lutning", "koordinatsystem"]
+
+[[ord]]
+ord = "lutning"
+former = ["lutning", "lutningen", "lutar"]
+forklaring = "Hur brant en linje är: hur mycket y ändras när x ökar med 1. Kallas k."
+exempel = "I y = 2x + 1 är lutningen 2: ett steg åt höger, två steg uppåt."
+figur = { typ = "koordinatsystem", xmax = 4, ymax = 9, linje = [2, 1] }
+se = ["funktion"]
+
+[[ord]]
+ord = "diagram"
+former = ["diagram", "diagrammet", "diagrammen", "stapeldiagram", "stapeldiagrammet"]
+forklaring = "En bild som visar tal. I ett stapeldiagram är högre stapel = större tal."
+figur = { typ = "stapeldiagram", varden = [3, 5, 2, 4], namn = ["mån", "tis", "ons", "tor"] }
+se = ["medelvärde", "median", "typvärde"]
+
+[[ord]]
+ord = "medelvärde"
+former = ["medelvärde", "medelvärdet", "medelvärden", "medeltal"]
+forklaring = "Lägg ihop alla tal och dela med hur många de är. Som om alla fick lika mycket."
+exempel = "Medelvärdet av 2, 4 och 6 är (2 + 4 + 6) / 3 = 4."
+figur = { typ = "stapeldiagram", varden = [2, 4, 6], namn = ["A", "B", "C"] }
+se = ["median", "typvärde"]
+
+[[ord]]
+ord = "median"
+former = ["median", "medianen"]
+forklaring = "Talet i mitten när talen står i storleksordning."
+exempel = "Medianen av 1, 3, 8 är 3."
+se = ["medelvärde", "typvärde"]
+
+[[ord]]
+ord = "typvärde"
+former = ["typvärde", "typvärdet"]
+forklaring = "Det tal som finns flest gånger."
+exempel = "Typvärdet av 2, 5, 5, 7 är 5."
+se = ["medelvärde", "median"]
+
+[[ord]]
+ord = "sannolikhet"
+former = ["sannolikhet", "sannolikheten", "sannolikheter"]
+forklaring = "Hur troligt något är. Ett tal mellan 0 (aldrig) och 1 (alltid)."
+exempel = "Att slå en sexa med en tärning: 1 av 6, alltså 1/6."
+figur = { typ = "malrutor", objekt = "prickar:1|prickar:2|prickar:3|prickar:4|prickar:5|prickar:6", kolumner = 6, ruta = 56 }
+
+[[ord]]
+ord = "omkrets"
+former = ["omkrets", "omkretsen", "omkretsar"]
+forklaring = "Hur långt det är runt en figur. Lägg ihop alla sidor."
+exempel = "En rektangel 4 och 2: 4 + 2 + 4 + 2 = 12."
+figur = { typ = "rektangel", bredd = 4, hojd = 2 }
+se = ["area"]
+
+[[ord]]
+ord = "area"
+former = ["area", "arean", "areor", "ytan"]
+forklaring = "Hur stor ytan är – hur många rutor som får plats inuti."
+exempel = "En rektangel 4 och 2: 4 · 2 = 8 rutor."
+figur = { typ = "rektangel", bredd = 4, hojd = 2 }
+se = ["omkrets"]
+
+[[ord]]
+ord = "volym"
+former = ["volym", "volymen", "volymer"]
+forklaring = "Hur mycket som får plats inuti något – hur många kuber det rymmer."
+exempel = "En låda 2 · 3 · 4 rymmer 24 kuber."
+se = ["area"]
+
+[[ord]]
+ord = "vinkel"
+former = ["vinkel", "vinkeln", "vinklar", "vinklarna"]
+forklaring = "Hur mycket två linjer som möts öppnar sig. Mäts i grader (°). En rät vinkel är 90°, som ett hörn på ett papper."
+figur = { typ = "triangel", bas = 4, hojd = 3 }
+
+[[ord]]
+ord = "triangel"
+former = ["triangel", "triangeln", "trianglar", "trianglarna"]
+forklaring = "En form med tre raka sidor och tre hörn."
+figur = { typ = "malrutor", objekt = "form:triangel", kolumner = 1, ruta = 80 }
+
+[[ord]]
+ord = "rektangel"
+former = ["rektangel", "rektangeln", "rektanglar", "rektanglarna"]
+forklaring = "En fyrhörning där alla hörn är räta. Motstående sidor är lika långa."
+figur = { typ = "malrutor", objekt = "form:rektangel", kolumner = 1, ruta = 80 }
+se = ["kvadrat"]
+
+[[ord]]
+ord = "kvadrat"
+former = ["kvadrat", "kvadraten", "kvadrater", "kvadraterna"]
+forklaring = "En rektangel där alla fyra sidor är lika långa."
+figur = { typ = "malrutor", objekt = "form:kvadrat", kolumner = 1, ruta = 80 }
+se = ["rektangel"]
+
+[[ord]]
+ord = "cirkel"
+former = ["cirkel", "cirkeln", "cirklar", "cirklarna"]
+forklaring = "En helt rund form. Alla punkter på kanten ligger lika långt från mitten."
+figur = { typ = "malrutor", objekt = "form:cirkel", kolumner = 1, ruta = 80 }
+se = ["radie", "diameter"]
+
+[[ord]]
+ord = "radie"
+former = ["radie", "radien", "radier"]
+forklaring = "Avståndet från mitten av en cirkel ut till kanten. Hälften av diametern."
+se = ["diameter", "cirkel"]
+
+[[ord]]
+ord = "diameter"
+former = ["diameter", "diametern"]
+forklaring = "En rak linje tvärs över en cirkel, genom mitten. Dubbelt så lång som radien."
+se = ["radie", "cirkel"]
+
+[[ord]]
+ord = "fyrhörning"
+former = ["fyrhörning", "fyrhörningen", "fyrhörningar", "fyrhörningarna"]
+forklaring = "En form med fyra raka sidor och fyra hörn."
+figur = { typ = "malrutor", objekt = "form:kvadrat|form:rektangel|form:romb", kolumner = 3, ruta = 70 }
+
+[[ord]]
+ord = "mönster"
+former = ["mönster", "mönstret", "mönstren"]
+forklaring = "Något som upprepas på samma sätt om och om igen. Då kan man gissa vad som kommer sedan."
+figur = { typ = "malrutor", objekt = "form:cirkel|form:triangel|form:cirkel|form:triangel|form:cirkel", kolumner = 5, ruta = 56 }
+
+[[ord]]
+ord = "enhet"
+former = ["enhet", "enheten", "enheter", "enheterna"]
+forklaring = "Det man mäter i, till exempel meter, kilogram eller liter. Skriv alltid enheten efter talet."
+exempel = "5 m, 2 kg, 3 l"
+
+[[ord]]
+ord = "avrunda"
+former = ["avrunda", "avrundar", "avrundat", "avrundning", "avrundningen"]
+forklaring = "Att göra ett tal enklare, till närmaste hela tiotal, heltal eller liknande. 5 och uppåt avrundas uppåt."
+exempel = "47 avrundat till tiotal blir 50."
+figur = { typ = "tallinje", fran = 40, till = 50, markera = [47] }
+
+[[ord]]
+ord = "uppskatta"
+former = ["uppskatta", "uppskattar", "uppskattning", "uppskattningen", "ungefär"]
+forklaring = "Att räkna ut ungefär hur mycket, utan att räkna exakt. Bra för att kontrollera svaret."
+exempel = "49 + 52 är ungefär 50 + 50 = 100."

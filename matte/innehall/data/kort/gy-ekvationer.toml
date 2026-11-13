@@ -1,0 +1,123 @@
+id = "gy-ekvationer"
+titel = "Ekvationer med parenteser och bråk"
+omrade = "algebra"
+ikon = "vag"
+sager = "Ta bort parenteser först (multiplicera in), ta bort bråk genom att multiplicera båda sidor med nämnaren – sedan som vanligt."
+galler = "Alla linjära ekvationer. Kontrollera alltid genom att sätta in svaret."
+galler_inte = "Ett minustecken framför en parentes byter tecken på allt inuti: −(x − 3) = −x + 3. Och när du multiplicerar bort ett bråk måste ALLA termer på båda sidor multipliceras – även de som inte har någon nämnare."
+forkunskap = ["ekvationer-tva-steg", "forenkla-uttryck"]
+kalla = "Balansmodellen. Vanliga fel: glömma att multiplicera in i alla termer, och tecknet framför en parentes."
+
+[[rad]]
+sager = "tre gånger parentesen x minus två är tolv"
+figur = { typ = "tabell", rubriker = ["", "=", ""], rader = [["3(x − 2)", "=", "12"], ["3x − 6", "=", "12"], ["3x", "=", "18"], ["x", "=", "6"]], kolbredd = 110 }
+skriver = ["x = 6"]
+
+[[uppgift]]
+niva = 1
+fraga = "Lös {a}(x − {b}) = {a*(s-b)}. (Tips: dela båda sidor med {a} först.)"
+svar = "{s}"
+var = { a = "2..5", b = "1..6", s = "b+1..12" }
+ledtrad = "x − {b} = {s-b}."
+losning = ["Dela med {a}: x − {b} = {s-b}.", "+ {b}: x = {s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös {a}(x + {b}) = {c}x + {a*b + (a-c)*s}"
+svar = "{s}"
+var = { c = "1..3", a = "c+1..6", b = "1..5", s = "1..9" }
+ledtrad = "Multiplicera in: {a}x + {a*b}. Samla x på ena sidan."
+feltankar = { "{(a*b + (a-c)*s - b)/(a-c)}" = "{a} ska multipliceras med BÅDA termerna i parentesen: {a}x + {a*b}." }
+losning = ["Multiplicera in: {a}x + {a*b} = {c}x + {a*b + (a-c)*s}.", "− {c}x och − {a*b}: {a-c}x = {(a-c)*s}.", "x = {s}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös x/{a} + {b} = {c}"
+svar = "{a*(c-b)}"
+var = { a = "2..6", b = "1..5", c = "b+1..10" }
+ledtrad = "Ta bort {b} på båda sidor, multiplicera sedan med {a}."
+feltankar = { "{(c-b)/a}" = "x/{a} = {c-b} betyder att x delat med {a} är {c-b}. Då är x = {c-b} · {a}." }
+losning = ["− {b}: x/{a} = {c-b}.", "· {a}: x = {a*(c-b)}."]
+
+[[rad]]
+sager = "minus framför en parentes"
+figur = { typ = "tabell", rubriker = ["", "=", ""], rader = [["10 − (x − 3)", "=", "4"], ["10 − x + 3", "=", "4"], ["13 − x", "=", "4"], ["x", "=", "9"]], kolbredd = 110 }
+skriver = ["x = 9"]
+kommentar = "Minus framför parentesen: −3 blir +3."
+
+[[rad]]
+sager = "bråk i ekvationen"
+figur = { typ = "tabell", rubriker = ["", "=", ""], rader = [["x/3 + 2", "=", "5"], ["x + 6", "=", "15"], ["x", "=", "9"]], kolbredd = 110 }
+skriver = ["x = 9"]
+kommentar = "Multiplicera ALLA termer med 3 – även tvåan och femman."
+
+[[exempel]]
+rubrik = "3(x − 2) = 12"
+figur = { typ = "tabell", rubriker = ["", "=", "", "vad gjordes"], rader = [["3(x − 2)", "=", "12", ""], ["3x − 6", "=", "12", "multiplicera in"], ["3x", "=", "18", "+ 6"], ["x", "=", "6", "/ 3"]], kolbredd = 100 }
+steg = [
+  "Multiplicera in trean i båda termerna: 3x − 6.",
+  "Lös som vanligt: 3x = 18, x = 6.",
+  "Kontroll: 3 · (6 − 2) = 3 · 4 = 12. Stämmer.",
+]
+
+[[exempel]]
+rubrik = "x/2 + x/3 = 10"
+steg = [
+  "Minsta gemensamma nämnare är 6. Multiplicera alla termer med 6.",
+  "3x + 2x = 60, alltså 5x = 60.",
+  "x = 12. Kontroll: 12/2 + 12/3 = 6 + 4 = 10.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och lös {a}(x − {b}) = {a*(s-b)}."
+steg = ["Multiplicera in: {a}x − {a*b} = {a*(s-b)}", "+ {a*b}: {a}x = {a*s}", "x = ?"]
+svar = "{s}"
+var = { a = "2..5", b = "1..6", s = "b+1..12" }
+ledtrad = "{a*s} / {a}."
+losning = ["x = {a*s} / {a} = {s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen {c} − (x − {b}) = {c+b-s}"
+svar = "{s}"
+var = { c = "10..20", b = "2..6", s = "1..9" }
+ledtrad = "Minus framför parentesen byter tecken: {c} − x + {b}."
+feltankar = { "{s-2*b}" = "Minustecknet framför parentesen gör −{b} till +{b}: {c} − x + {b}." }
+losning = ["{c} − x + {b} = {c+b-s}.", "{c+b} − x = {c+b-s}.", "x = {s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen (x + {b})/{a} = {s}"
+svar = "{a*s-b}"
+var = { a = "2..6", b = "1..9", s = "2..9" }
+ledtrad = "Multiplicera båda sidor med {a} först."
+feltankar = { "{a*s}" = "Det är x + {b}. Dra bort {b} också." }
+losning = ["· {a}: x + {b} = {a*s}.", "− {b}: x = {a*s-b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen x/{[2,3,2][p]} + x/{[3,6,6][p]} = {c}"
+svar = "{[6*c/5, 2*c, 3*c/2][p]}"
+var = { p = "0..2", c = "[10, 20, 30]" }
+ledtrad = "Multiplicera alla termer med {[6,6,6][p]}."
+losning = ["· 6: {[3,2,3][p]}x + {[2,1,1][p]}x = {6*c}.", "{[5,3,4][p]}x = {6*c}.", "x = {[6*c/5, 2*c, 3*c/2][p]}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hälften av ett tal plus {b} är lika med talet minus {c}. Vilket är talet?"
+svar = "{2*(b+c)}"
+var = { b = "2..9", c = "2..9" }
+ledtrad = "Skriv ekvationen: x/2 + {b} = x − {c}."
+losning = ["x/2 + {b} = x − {c}.", "· 2: x + {2*b} = 2x − {2*c}.", "x = {2*b} + {2*c} = {2*(b+c)}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Lisa löser {a}(x + {b}) = {a*(s+b)} och skriver {a}x + {b} = {a*(s+b)} som första steg. Vad har hon gjort fel?"
+alternativ = ["Hon har glömt att multiplicera {b} med {a}", "Hon borde ha delat med {b}", "Inget – det är rätt"]
+svar = "Hon har glömt att multiplicera {b} med {a}"
+form = "text"
+var = { a = "2..5", b = "1..6", s = "1..9" }
+ledtrad = "Multiplicera in i båda termerna."
+losning = ["{a}(x + {b}) = {a}x + {a*b}.", "Lisa skrev {b} i stället för {a*b}."]

@@ -1,0 +1,143 @@
+id = "ekvationer-tva-steg"
+titel = "Ekvationer i två steg"
+omrade = "algebra"
+ikon = "vag"
+sager = "2x + 3 = 11: ta först bort 3 på båda sidor (2x = 8), dela sedan med 2 (x = 4). Gör alltid samma sak på båda sidor."
+galler = "Alla ekvationer. Kontrollera genom att sätta in svaret: 2 · 4 + 3 = 11. Stämmer."
+galler_inte = "Ordningen spelar roll: ta bort det som är adderat först, dela sist. Delar du först måste du dela allt på båda sidor – (2x + 3) / 2 = x + 1,5 – inte bara x-termen."
+forkunskap = ["ekvationer-enkla", "forenkla-uttryck"]
+kalla = "Balansmodellen i två steg; kontroll genom insättning (se tillbaka, Pólya)."
+
+[[rad]]
+sager = "två x plus tre är elva"
+figur = { typ = "tabell", rubriker = ["vänster", "=", "höger"], rader = [["2x + 3", "=", "11"], ["2x", "=", "8"], ["x", "=", "4"]], kolbredd = 110 }
+skriver = ["x = 4"]
+
+[[rad]]
+sager = "x på båda sidor"
+figur = { typ = "tabell", rubriker = ["vänster", "=", "höger"], rader = [["5x − 2", "=", "3x + 8"], ["2x − 2", "=", "8"], ["2x", "=", "10"], ["x", "=", "5"]], kolbredd = 110 }
+skriver = ["x = 5"]
+
+[[uppgift]]
+niva = 1
+fraga = "Lös {a}x + {b} = {a*s+b}. Första steget: {a}x = ?"
+svar = "{a*s}"
+var = { a = "2..6", b = "1..9", s = "1..9" }
+ledtrad = "Ta bort {b} på båda sidor."
+losning = ["Ta bort {b} på båda sidor.", "{a}x = {a*s+b} − {b} = {a*s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen {a}x + {b} = {a*s+b}"
+svar = "{s}"
+var = { a = "2..6", b = "1..9", s = "1..9" }
+ledtrad = "Först minus {b} på båda sidor, sedan dela med {a}."
+feltankar = { "{a*s}" = "Du är halvvägs: {a}x = {a*s}. Dela nu med {a}.", "{(a*s+b)//a if (a*s+b) % a == 0 else -1}" = "Du delade med {a} innan du tog bort {b}. Ta bort {b} först: {a}x = {a*s}." }
+losning = ["Ta bort {b}: {a}x = {a*s}.", "Dela med {a}: x = {s}.", "Kontroll: {a} · {s} + {b} = {a*s+b}. Stämmer."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen {a}x − {b} = {c}x + {d}"
+svar = "{(b+d)}/{a-c}"
+var = { c = "1..4", a = "c+1..8", b = "1..9", d = "1..9" }
+ledtrad = "Samla x på ena sidan: {a}x − {c}x = {a-c}x. Samla talen på andra: {d} + {b}."
+losning = ["Samla x till vänster: {a}x − {c}x = {a-c}x.", "Samla talen till höger: {d} + {b} = {b+d}.", "{a-c}x = {b+d}, x = {b+d}/{a-c}."]
+
+[[exempel]]
+rubrik = "2x + 3 = 11"
+figur = { typ = "tabell", rubriker = ["vänster", "=", "höger", "vad gjordes"], rader = [["2x + 3", "=", "11", ""], ["2x", "=", "8", "− 3 på båda"], ["x", "=", "4", "/ 2 på båda"]], kolbredd = 100 }
+steg = [
+  "Ta bort det som är adderat: −3 på båda sidor ger 2x = 8.",
+  "Dela med det som x är multiplicerat med: x = 4.",
+  "Kontroll: 2 · 4 + 3 = 11. Stämmer.",
+]
+
+[[exempel]]
+rubrik = "x på båda sidor: 5x − 2 = 3x + 8"
+steg = [
+  "Samla x på en sida: −3x på båda sidor ger 2x − 2 = 8.",
+  "Samla talen: +2 på båda sidor ger 2x = 10.",
+  "x = 5. Kontroll: 5 · 5 − 2 = 23 och 3 · 5 + 8 = 23.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen och lös {a}x + {b} = {a*s+b}."
+steg = ["{a}x + {b} = {a*s+b}", "{a}x = {a*s+b} − {b} = {a*s}", "x = {a*s} / {a} = ?"]
+svar = "{s}"
+var = { a = "2..6", b = "1..9", s = "1..9" }
+ledtrad = "{a*s} delat med {a}."
+losning = ["x = {s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen {a}x − {b} = {a*s-b}"
+svar = "{s}"
+var = { a = "2..6", b = "1..9", s = "2..9" }
+ledtrad = "Lägg till {b} på båda sidor först."
+feltankar = { "{(a*s-2*b)/a}" = "Det står minus {b} – då ska {b} läggas TILL på båda sidor, inte dras ifrån." }
+losning = ["+ {b} på båda sidor: {a}x = {a*s}.", "/ {a}: x = {s}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Lös ekvationen x/{a} + {b} = {s+b}"
+svar = "{a*s}"
+var = { a = "2..6", b = "1..9", s = "2..9" }
+ledtrad = "Ta bort {b} först. Sedan: x delat med {a} är {s} – vad är x?"
+feltankar = { "{s}" = "Det är x/{a}. Multiplicera med {a} för att få x." }
+losning = ["− {b}: x/{a} = {s}.", "· {a}: x = {a*s}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen {a}(x + {b}) = {a*(s+b)}"
+svar = "{s}"
+var = { a = "2..5", b = "1..6", s = "1..9" }
+ledtrad = "Dela båda sidor med {a} först – eller multiplicera in."
+losning = ["/ {a}: x + {b} = {s+b}.", "− {b}: x = {s}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Tre kompisar köper var sin biobiljett och delar på en popcorn för {p} kr. Totalt betalar de {3*b+p} kr. Vad kostar en biljett?"
+svar = "{b}"
+var = { b = "[80, 90, 100, 110, 120]", p = "[45, 50, 60]" }
+ledtrad = "Skriv ekvationen: 3x + {p} = {3*b+p}."
+feltankar = { "{(3*b+p)//3}" = "Popcornen ska dras bort först: 3x = {3*b+p} − {p}." }
+losning = ["3x + {p} = {3*b+p}.", "3x = {3*b}.", "x = {b} kr."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Är x = {s} en lösning till {a}x + {b} = {a*s+b+e}?"
+alternativ = ["ja", "nej"]
+svar = "{['ja','nej'][e]}"
+form = "text"
+var = { a = "2..6", b = "1..9", s = "1..9", e = "0..1" }
+ledtrad = "Sätt in {s} i stället för x och räkna ut vänster sida."
+losning = ["Vänster: {a} · {s} + {b} = {a*s+b}.", "Höger: {a*s+b+e}.", "{'Lika – x = ' + str(s) + ' är en lösning.' if e == 0 else 'Inte lika – x = ' + str(s) + ' är ingen lösning.'}"]
+
+[[uppgift]]
+niva = 1
+svarstyp = "para"
+fraga = "Dra en linje från varje ekvation till dess första steg."
+par = [["{a}x + {b} = {c}", "ta bort {b} på båda sidor"], ["{a}x − {b} = {c}", "lägg till {b} på båda sidor"], ["x/{a} = {b}", "multiplicera båda sidor med {a}"]]
+var = { a = "2..5", b = "2..9", c = "20..40" }
+ledtrad = "Gör det motsatta mot det som står bredvid x – plus tas bort med minus."
+losning = ["+ {b} tas bort med − {b}.", "− {b} tas bort med + {b}.", "Delat med {a} tas bort med gånger {a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Tänk på ett tal. Gånger {a}, plus {b} blir {a*s+b}. Vilket tal tänkte du på?"
+svar = "{s}"
+var = { a = "2..6", b = "1..9", s = "2..12" }
+ledtrad = "Skriv det som en ekvation: {a}x + {b} = {a*s+b}. Gå baklänges."
+feltankar = { "{a*s}" = "Halvvägs! {a}x = {a*s}. Dela nu med {a}." }
+losning = ["Ekvationen: {a}x + {b} = {a*s+b}.", "Baklänges: {a*s+b} − {b} = {a*s}.", "{a*s} / {a} = {s}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Lös ekvationen {a}(x + {b}) = {a*(s+b)}"
+svar = "{s}"
+var = { a = "2..5", b = "1..6", s = "1..9" }
+ledtrad = "Dela båda sidor med {a} först – då försvinner parentesen."
+feltankar = { "{a*(s+b)-b}" = "Du tog bort {b} innan parentesen var borta. Dela med {a} först: x + {b} = {s+b}." }
+losning = ["Dela med {a}: x + {b} = {s+b}.", "Ta bort {b}: x = {s}.", "Kontroll: {a} · ({s} + {b}) = {a*(s+b)}."]

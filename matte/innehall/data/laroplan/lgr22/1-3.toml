@@ -1,0 +1,68 @@
+# Lgr22, årskurs 1–3 – centralt innehåll i matematik (förkortat ur Skolverkets kursplan).
+stadium = "lgr22.1-3"
+
+[[mal]]
+id = "lgr22.1-3.tal.naturliga"
+omrade = "tal"
+text = "Naturliga tal och deras egenskaper; hur talen kan delas upp och användas för att ange antal och ordning"
+kort = ["rakna-antal", "talkamrater-10"]
+
+[[mal]]
+id = "lgr22.1-3.tal.positionssystemet"
+omrade = "tal"
+text = "Positionssystemet och hur talen skrivs; symboler för tal och deras utveckling i några kulturer"
+kort = ["tiotal-ental", "tallinjen-0-20"]
+
+[[mal]]
+id = "lgr22.1-3.tal.rakna"
+omrade = "tal"
+text = "De fyra räknesätten, deras egenskaper och samband; huvudräkning och skriftliga metoder med naturliga tal"
+kort = ["addition-tiotalsovergang", "subtraktion-till-20", "multiplikation-upprepad-addition"]
+
+[[mal]]
+id = "lgr22.1-3.tal.brak"
+omrade = "tal"
+text = "Enkla tal i bråkform: del av helhet och del av antal"
+kort = ["brak-delar"]
+
+[[mal]]
+id = "lgr22.1-3.algebra.likhetstecknet"
+omrade = "algebra"
+text = "Likhetstecknets innebörd; obekanta tal i enkla likheter"
+kort = ["ekvationer-enkla"]
+
+[[mal]]
+id = "lgr22.1-3.algebra.monster"
+omrade = "algebra"
+text = "Hur enkla mönster i talföljder och geometriska mönster kan konstrueras, beskrivas och uttryckas"
+kort = ["monster"]
+
+[[mal]]
+id = "lgr22.1-3.geometri.objekt"
+omrade = "geometri"
+text = "Vanliga lägesord; grundläggande geometriska objekt (punkter, linjer, sträckor, fyrhörningar, trianglar, cirklar, klot, koner, cylindrar, rätblock) och deras egenskaper"
+kort = ["geometriska-former"]
+
+[[mal]]
+id = "lgr22.1-3.geometri.matning"
+omrade = "geometri"
+text = "Jämförelser och uppskattningar av storheter; mätning av längd, massa, volym och tid med vanliga måttenheter"
+kort = ["klockan"]
+
+[[mal]]
+id = "lgr22.1-3.sannolikhet.slump"
+omrade = "sannolikhet"
+text = "Slumphändelser i experiment och spel; enkla tabeller och diagram och hur de kan användas"
+kort = ["stapeldiagram-lasa"]
+
+[[mal]]
+id = "lgr22.1-3.samband.proportion"
+omrade = "samband"
+text = "Proportionella samband, däribland dubbelt och hälften"
+kort = ["dubbelt-halften"]
+
+[[mal]]
+id = "lgr22.1-3.problem.strategier"
+omrade = "problem"
+text = "Strategier för att lösa matematiska problem i vardagliga situationer; formulering av matematiska frågeställningar"
+kort = ["problemlosning-rita"]

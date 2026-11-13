@@ -1,0 +1,27 @@
+# Gy25 – ämnet Matematik, nivå 2 (2a/2b/2c). Förkortat och omskrivet; kontrollera
+# mot Skolverkets ämnesplan.
+stadium = "gy25.2"
+
+[[mal]]
+id = "gy25.2.algebra.andragrad"
+omrade = "algebra"
+text = "Algebraiska uttryck med kvadreringsreglerna och konjugatregeln; andragradsekvationer"
+kort = ["gy-kvadreringsregler", "gy-andragradsekvationer"]
+
+[[mal]]
+id = "gy25.2.algebra.system"
+omrade = "algebra"
+text = "Linjära ekvationssystem, grafiskt och algebraiskt"
+kort = ["gy-ekvationssystem"]
+
+[[mal]]
+id = "gy25.2.samband.funktioner"
+omrade = "samband"
+text = "Andragradsfunktioner: graf, nollställen, symmetrilinje och vändpunkt"
+kort = ["gy-andragradsfunktioner"]
+
+[[mal]]
+id = "gy25.2.tal.logaritmer"
+omrade = "tal"
+text = "Logaritmer och exponentialekvationer"
+kort = ["gy-logaritmer"]

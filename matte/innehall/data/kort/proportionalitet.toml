@@ -1,0 +1,140 @@
+id = "proportionalitet"
+titel = "Proportionalitet"
+omrade = "samband"
+ikon = "linjediagram"
+bild = "fruktstand.jpg"
+bildtext = "Päronen vägs på vågen: priset per kilo är detsamma vare sig man köper ett eller fem kilo. Det är proportionalitet."
+sager = "Dubbelt så mycket kostar dubbelt så mycket. När två saker ändras i samma takt är de proportionella, och grafen är en rak linje genom origo."
+galler = "När priset per styck (eller farten) är detsamma hela tiden. En startavgift gör att linjen inte går genom origo – då är det inte proportionellt."
+galler_inte = "Allt som växer är inte proportionellt. En taxiresa med startavgift kostar inte dubbelt så mycket för dubbelt så lång väg. Och ett barn som är dubbelt så gammalt är inte dubbelt så långt."
+kalla = "Proportionellt resonemang (Lamon). Grafen, tabellen och räkningen är tre bilder av samma samband."
+
+[[rad]]
+sager = "ett kilo kostar 20 kr"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 100, linje = [20, 0], ruta = 32, punkter = [[3, 60]] }
+skriver = ["3 kg kostar 3 · 20 = 60 kr"]
+
+[[rad]]
+sager = "samma sak i en tabell"
+figur = { typ = "tabell", rubriker = ["kg", "kr"], rader = [[1, 20], [2, 40], [3, 60], [4, 80]] }
+skriver = ["kr = 20 · kg"]
+
+[[uppgift]]
+niva = 1
+fraga = "Ett kilo kostar {k} kr. Vad kostar 2 kg?"
+figur = { typ = "tabell", rubriker = ["kg", "kr"], rader = [[1, "{k}"], [2, "?"]] }
+svar = "{2*k}"
+var = { k = "[10, 15, 20, 25, 30]" }
+ledtrad = "Dubbelt så mycket – dubbelt så dyrt."
+losning = ["1 kg → {k} kr.", "2 kg → 2 · {k} = {2*k} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "Ett kilo kostar {k} kr. Vad kostar {n} kg?"
+svar = "{n*k}"
+var = { k = "[10, 15, 20, 25, 30]", n = "3..6" }
+ledtrad = "{n} gånger priset för ett kilo."
+feltankar = { "{n+k}" = "Du adderade. Varje kilo kostar {k} kr, så {n} kilo kostar {n} · {k} kr." }
+losning = ["1 kg → {k} kr.", "{n} kg → {n} · {k} = {n*k} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "{n} kg kostar {n*k} kr. Vad kostar 1 kg?"
+svar = "{k}"
+var = { k = "[10, 15, 20, 25, 30]", n = "3..6" }
+ledtrad = "Dela priset med antalet kilo."
+feltankar = { "{n*k-n}" = "Priset per kilo får man genom att dela, inte dra ifrån: {n*k} / {n}." }
+losning = ["{n} kg → {n*k} kr.", "1 kg → {n*k} / {n} = {k} kr."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "punkt"
+fraga = "1 kg kostar {k} kr. Sätt ut punkten som visar vad {n} kg kostar."
+figur = { typ = "koordinatsystem", xmax = 5, ymax = "{k*5}", ruta = 32, linje = ["{k}", 0] }
+svar = "{n};{n*k}"
+var = { k = "[10, 20]", n = "2..4" }
+ledtrad = "Gå till {n} på x-axeln och upp till linjen."
+feltankar = { "{n*k};{n}" = "x och y bytta: kilo går åt höger (x), kronor uppåt (y)." }
+losning = ["Gå till {n} på x-axeln.", "Upp till {n*k} kr.", "Punkten ({n}, {n*k})."]
+
+[[uppgift]]
+niva = 2
+fraga = "Päron kostar 30 kr/kg på torget. Vad kostar 3 kg?"
+figur = { typ = "scen", bild = "fruktstand.jpg", bredd = 560 }
+svar = "90"
+ledtrad = "Tre gånger så mycket – tre gånger så dyrt."
+feltankar = { "33" = "Du adderade. Varje kilo kostar 30 kr: 3 · 30." }
+losning = ["1 kg → 30 kr.", "3 kg → 3 · 30 = 90 kr."]
+
+[[exempel]]
+rubrik = "Gå via ett"
+figur = { typ = "tabell", rubriker = ["biljetter", "kostnad"], rader = [["3", "120 kr"], ["1", "40 kr"], ["5", "200 kr"]], kolbredd = 120 }
+steg = [
+  "3 biljetter kostar 120 kr. Vad kostar 5?",
+  "Gå via en: 120 / 3 = 40 kr per biljett.",
+  "5 biljetter: 5 · 40 = 200 kr.",
+]
+
+[[exempel]]
+rubrik = "Proportionellt eller inte?"
+figur = { typ = "tabell", rubriker = ["km", "taxi (40 kr + 10 kr/km)"], rader = [["1", "50 kr"], ["2", "60 kr"], ["4", "80 kr"]], kolbredd = 170 }
+steg = [
+  "Dubbelt så långt (2 → 4 km) kostar inte dubbelt så mycket (60 → 80 kr).",
+  "Startavgiften gör att sambandet inte är proportionellt.",
+  "Proportionellt = 0 ger 0, och dubbelt ger dubbelt. Linjen går genom origo.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. 1 kg kostar {k} kr. Vad kostar {n} kg?"
+steg = ["1 kg → {k} kr", "{n} kg → {n} · {k} kr = ?"]
+svar = "{n*k}"
+var = { k = "[12, 15, 18, 25, 30]", n = "3..6" }
+ledtrad = "{n} · {k}."
+losning = ["{n} · {k} = {n*k} kr."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "1 kg kostar {k} kr. Fyll i tabellen."
+falt = ["2 kg", "5 kg", "10 kg"]
+svar = ["{2*k}", "{5*k}", "{10*k}"]
+var = { k = "[8, 12, 15, 24, 30]" }
+ledtrad = "Varje kilo kostar lika mycket."
+losning = ["2 · {k} = {2*k}.", "5 · {k} = {5*k}.", "10 · {k} = {10*k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "3 biljetter kostar {3*p} kr. Vad kostar 5 biljetter?"
+svar = "{5*p}"
+var = { p = "[20, 25, 40, 45, 60]" }
+ledtrad = "Gå via en biljett."
+feltankar = { "{3*p+2}" = "Två biljetter till kostar inte 2 kr. Räkna ut vad en biljett kostar först." }
+losning = ["En biljett: {3*p} / 3 = {p} kr.", "5 biljetter: 5 · {p} = {5*p} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett recept för {a} personer behöver {a*g} g mjöl. Hur mycket behövs för {b} personer?"
+svar = "{b*g}"
+var = { a = "[2, 4, 5]", g = "[50, 60, 75, 100]", b = "[3, 6, 8, 10]" }
+ledtrad = "Hur mycket mjöl per person?"
+losning = ["Per person: {a*g} / {a} = {g} g.", "{b} personer: {b} · {g} = {b*g} g."]
+
+[[uppgift]]
+niva = 3
+fraga = "En bil kör {k*n} km på {n} timmar med samma fart hela tiden. Hur långt kör den på {m} timmar?"
+svar = "{k*m}"
+var = { k = "[50, 60, 70, 80]", n = "2..4", m = "5..7" }
+ledtrad = "Hur långt på en timme?"
+losning = ["På en timme: {k*n} / {n} = {k} km.", "På {m} timmar: {m} · {k} = {k*m} km."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilket samband är proportionellt?"
+alternativ = ["Taxi: 40 kr i start + 10 kr/km", "Äpplen: 25 kr/kg", "Gym: 200 kr/månad + 20 kr per besök"]
+svar = "Äpplen: 25 kr/kg"
+form = "text"
+ledtrad = "Proportionellt: noll ger noll, och dubbelt ger dubbelt."
+feltankar = { "Taxi: 40 kr i start + 10 kr/km" = "Startavgiften gör att 0 km ändå kostar 40 kr – inte proportionellt." }
+losning = ["0 kg äpplen kostar 0 kr, och dubbelt så mycket kostar dubbelt.", "Taxi och gym har en fast avgift – noll ger inte noll."]

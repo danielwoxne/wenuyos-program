@@ -1,0 +1,179 @@
+id = "klockan"
+titel = "Klockan – hel, halv, kvart"
+omrade = "geometri"
+ikon = "klocka"
+bild = "klockan.jpg"
+bildtext = "Stationsklockan visar klockan tre: den korta visaren på tre, den långa rakt upp."
+sager = "Den korta visaren visar timmen, den långa minuterna. Rakt upp är hel, rakt ner är halv."
+galler = "Analoga klockan. 'Halv fyra' betyder halvvägs TILL fyra, alltså 3:30."
+galler_inte = "”Halv fyra” betyder inte fyra och en halv. Halv säger vilken timme vi är på väg till: halv fyra är 3.30. (På engelska är det tvärtom – ”half past three”.)"
+kalla = "Tid i Lgr22 åk 1–3 (geometri: tid som storhet). Vanlig feltanke: 'halv fyra' = 4:30."
+
+[[rad]]
+sager = "klockan tre"
+figur = { typ = "klocka", timme = 3, minut = 0 }
+skriver = ["3.00"]
+
+[[rad]]
+sager = "halv fyra"
+figur = { typ = "klocka", timme = 3, minut = 30 }
+skriver = ["3.30"]
+kommentar = "Långa visaren rakt ner. Korta visaren mitt emellan tre och fyra – på väg mot fyra."
+
+[[rad]]
+sager = "kvart över tre"
+figur = { typ = "klocka", timme = 3, minut = 15 }
+skriver = ["3.15"]
+
+[[rad]]
+sager = "kvart i fyra"
+figur = { typ = "klocka", timme = 3, minut = 45 }
+skriver = ["3.45"]
+
+[[uppgift]]
+niva = 1
+fraga = "Vad är klockan? Svara med timmen."
+figur = { typ = "klocka", timme = "{h}", minut = 0 }
+svar = "{h}"
+var = { h = "1..12" }
+ledtrad = "Den korta visaren pekar på timmen."
+losning = ["Den korta visaren pekar på {h}.", "Den långa pekar rakt upp: hel.", "Klockan är {h}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är klockan?"
+figur = { typ = "klocka", timme = "{h}", minut = 30 }
+svar = "halv {h+1}"
+var = { h = "1..11" }
+alternativ = ["halv {h+1}", "halv {h}", "{h+1}"]
+ledtrad = "Långa visaren rakt ner = halv. Korta visaren är på väg mot nästa timme."
+feltankar = { "halv {h}" = "Korta visaren har lämnat {h} och är på väg mot {h+1}. 'Halv' säger vilken timme vi är på väg TILL: halv {h+1}." }
+losning = ["Långa visaren rakt ner: halv.", "Korta visaren är på väg från {h} till {h+1}.", "Halv {h+1} = {h}.30."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är klockan?"
+figur = { typ = "klocka", timme = "{h}", minut = "{m}" }
+svar = "{h}.{m}"
+form = "text"
+var = { h = "1..11", m = "[15, 45]" }
+alternativ = ["{h}.{m}", "{h+1}.{m}", "{h}.{60-m}"]
+ledtrad = "Kvart över = 15, kvart i = 45. Timmen är den som korta visaren senast passerade."
+losning = ["Långa visaren på 3 = kvart över. På 9 = kvart i.", "Korta visaren har senast passerat {h}.", "Klockan är {h}.{m}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Vad är klockan på stationen? Svara med timmen."
+figur = { typ = "scen", bild = "klockan.jpg", bredd = 560 }
+svar = "3"
+ledtrad = "Den korta visaren pekar på timmen. Den långa rakt upp betyder 'hel'."
+feltankar = { "12" = "Den långa visaren pekar på 12 – men den visar minuterna. Den korta visaren visar timmen." }
+losning = ["Den korta visaren pekar på 3.", "Den långa rakt upp.", "Klockan är tre."]
+
+[[exempel]]
+rubrik = "Halv fyra – på väg mot fyra"
+figur = { typ = "klocka", timme = 3, minut = 30 }
+steg = [
+  "Den långa visaren pekar rakt ner: halv.",
+  "Den korta visaren har lämnat tre och är på väg mot fyra.",
+  "Vi säger halv fyra och skriver 3.30.",
+]
+
+[[exempel]]
+rubrik = "Kvart över och kvart i"
+figur = { typ = "klocka", timme = 3, minut = 45 }
+steg = [
+  "En timme är 60 minuter. En kvart är en fjärdedel: 15 minuter.",
+  "Långa visaren på 3 = kvart över. Långa visaren på 9 = kvart i.",
+  "Här är det kvart i fyra: 3.45. Om 15 minuter är klockan fyra.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Följ stegen. Vad är klockan?"
+steg = ["Långa visaren rakt ner: halv.", "Korta visaren mellan {h} och {h+1} – på väg mot {h+1}."]
+figur = { typ = "klocka", timme = "{h}", minut = 30 }
+alternativ = ["halv {h}", "halv {h+1}"]
+svar = "halv {h+1}"
+form = "text"
+var = { h = "1..11" }
+ledtrad = "Vilken timme är visaren på väg mot?"
+feltankar = { "halv {h}" = "Halv säger vilken timme vi är på väg till – och visaren är på väg mot {h+1}." }
+losning = ["Halv = långa visaren rakt ner.", "Korta visaren är på väg mot {h+1}.", "Halv {h+1}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Klockan är {h}.30. Hur säger man det?"
+alternativ = ["halv {h}", "halv {h+1}"]
+svar = "halv {h+1}"
+form = "text"
+var = { h = "1..11" }
+ledtrad = "Efter {h}.30 är det en halvtimme kvar till {h+1}."
+feltankar = { "halv {h}" = "{h}.30 är halvvägs till {h+1}. Halv {h} vore {h-1}.30 – en timme tidigare." }
+losning = ["{h}.30 är halvvägs mellan {h} och {h+1}.", "Halv säger vart vi är på väg: halv {h+1}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vad är klockan?"
+figur = { typ = "klocka", timme = "{h}", minut = 15 }
+alternativ = ["kvart över {h}", "kvart i {h}", "kvart över {h+1}"]
+svar = "kvart över {h}"
+form = "text"
+var = { h = "1..11" }
+ledtrad = "Långa visaren på 3 betyder kvart över. Vilken timme har korta visaren just passerat?"
+feltankar = { "kvart i {h}" = "Kvart i är när långa visaren pekar på 9. Här pekar den på 3: kvart över." }
+losning = ["Långa visaren på 3: kvart över.", "Korta visaren har just passerat {h}.", "Kvart över {h} = {h}.15."]
+
+[[uppgift]]
+niva = 2
+fraga = "Klockan är {h}. Vad är klockan om en timme? Svara med timmen."
+figur = { typ = "klocka", timme = "{h}", minut = 0 }
+svar = "{h+1}"
+var = { h = "1..11" }
+ledtrad = "Korta visaren flyttar till nästa siffra."
+losning = ["På en timme går korta visaren till nästa siffra.", "{h} + 1 = {h+1}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vad är klockan?"
+figur = { typ = "klocka", timme = "{h}", minut = 45 }
+alternativ = ["kvart i {h+1}", "kvart över {h}", "kvart i {h}"]
+svar = "kvart i {h+1}"
+form = "text"
+var = { h = "1..11" }
+ledtrad = "Långa visaren på 9 betyder kvart i. Vilken timme är korta visaren nästan framme vid?"
+feltankar = { "kvart i {h}" = "Korta visaren har passerat {h} och är nästan vid {h+1}. Kvart i {h+1}." }
+losning = ["Långa visaren på 9: kvart i.", "Korta visaren är nästan vid {h+1}.", "Kvart i {h+1} = {h}.45."]
+
+[[uppgift]]
+niva = 3
+fraga = "Hur många minuter är det från kvart över {h} till kvart i {h+1}?"
+svar = "30"
+var = { h = "1..11" }
+ledtrad = "Från {h}.15 till {h}.45."
+feltankar = { "15" = "En kvart är 15 minuter. Från kvart över till kvart i är det två kvartar." }
+losning = ["Kvart över {h} = {h}.15.", "Kvart i {h+1} = {h}.45.", "45 − 15 = 30 minuter – en halvtimme."]
+
+[[uppgift]]
+niva = 3
+fraga = "Filmen börjar halv {h+1} och är en timme lång. När slutar den? Skriv som {h+1}.30."
+svar = "{h+1}.30"
+form = "text"
+var = { h = "1..10" }
+ledtrad = "Halv {h+1} är {h}.30. En timme senare."
+feltankar = { "{h+2}.30" = "Halv {h+1} är {h}.30 – inte {h+1}.30. En timme senare är {h+1}.30." }
+losning = ["Halv {h+1} = {h}.30.", "En timme senare: {h+1}.30.", "Det är halv {h+2}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje mellan klockslaget i ord och i siffror."
+par = [["klockan {h}", "{h}:00"], ["kvart över {h}", "{h}:15"], ["halv {h+1}", "{h}:30"], ["kvart i {h+1}", "{h}:45"]]
+var = { h = "1..10" }
+ledtrad = "Halv {h+1} betyder en halvtimme kvar till {h+1} – alltså {h}:30."
+feltankar = { "halv {h+1} → {h}:15" = "Halv {h+1} är en halvtimme före {h+1}, alltså {h}:30.", "kvart i {h+1} → {h}:15" = "Kvart i {h+1} är en kvart före {h+1}: {h}:45. Kvart över {h} är {h}:15." }
+losning = ["Klockan {h} = {h}:00.", "Kvart över {h} = {h}:15.", "Halv {h+1} = {h}:30 – halvvägs till {h+1}.", "Kvart i {h+1} = {h}:45."]

@@ -1,0 +1,138 @@
+id = "tallinjen-0-20"
+titel = "Tallinjen"
+omrade = "tal"
+ikon = "tallinje"
+bild = "tallinje-40-50.jpg"
+bildtext = "En tallinje på bordet: talen står i ordning med lika långt mellanrum."
+sager = "På tallinjen ligger talen i ordning med lika stort avstånd. Åt höger blir talen större."
+galler = "Alltid. Längre fram får tallinjen också tal under noll och tal mellan heltalen."
+galler_inte = "Det är inte alltid ett steg mellan strecken. På många tallinjer är varje streck två, fem eller tio. Läs av siffrorna först och räkna ut hur mycket ett streck är värt."
+kalla = "Tallinjen som mental modell (Siegler): linjär uppfattning av tal förutsäger senare matematik."
+
+[[rad]]
+sager = "sju"
+figur = { typ = "tallinje", fran = 0, till = 10, markera = [7] }
+skriver = ["7"]
+
+[[rad]]
+sager = "tretton"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = [13], etikett = 5 }
+skriver = ["13"]
+kommentar = "Bara var femte streck har en siffra. Räkna strecken från 10."
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = 0, till = 10, markera = ["{n}"] }
+svar = "{n}"
+var = { n = "1..9" }
+ledtrad = "Varje streck har sin siffra under."
+losning = ["Läs siffran under markeringen: {n}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{n}"], etikett = 5 }
+svar = "{n}"
+var = { n = "1..19" }
+ledtrad = "Hitta närmaste siffra och räkna strecken därifrån."
+feltankar = { "{n+1}" = "Ett steg för långt. Räkna strecken från {(n//5)*5}: {(n//5)*5+1}, {(n//5)*5+2} …", "{n-1}" = "Ett steg för lite. Räkna strecken från {(n//5)*5}." }
+losning = ["Närmaste siffra före markeringen är {(n//5)*5}.", "Räkna strecken därifrån.", "Markeringen pekar på {n}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vilket tal ligger mitt emellan {a} och {a+2*d}?"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{a}", "{a+2*d}"], etikett = 5 }
+svar = "{a+d}"
+var = { d = "1..4", a = "1..12" }
+ledtrad = "Lika långt från båda. Hur många steg är det mellan dem? Gå hälften."
+losning = ["Från {a} till {a+2*d} är det {2*d} steg.", "Hälften av {2*d} är {d}.", "{a} + {d} = {a+d}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "punkt"
+fraga = "Pricka in talet {n} på tallinjen."
+figur = { typ = "tallinje", fran = 0, till = 20, etikett = 5 }
+svar = "{n}"
+var = { n = "1..19" }
+ledtrad = "Hitta närmaste siffra under linjen och räkna strecken."
+feltankar = { "{n+1}" = "Ett streck för långt. Räkna från {(n//5)*5}.", "{n-1}" = "Ett streck för kort. Räkna från {(n//5)*5}." }
+losning = ["Hitta {(n//5)*5} under linjen.", "Räkna {n%5} streck till höger.", "Där ligger {n}."]
+
+[[exempel]]
+rubrik = "Läs av 13"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = [13], etikett = 5 }
+steg = [
+  "Bara var femte streck har en siffra.",
+  "Närmaste siffra före markeringen är 10.",
+  "Räkna strecken därifrån: 11, 12, 13.",
+]
+
+[[exempel]]
+rubrik = "Mitt emellan 4 och 10"
+figur = { typ = "tallinje", fran = 0, till = 12, markera = [4, 7, 10] }
+steg = [
+  "Från 4 till 10 är det 6 steg.",
+  "Hälften av 6 är 3.",
+  "4 + 3 = 7. Kontroll: från 7 till 10 är också 3 steg.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket tal pekar markeringen på?"
+steg = ["Närmaste siffra före: {(n//5)*5}", "Räkna strecken: {', '.join(str(i) for i in range((n//5)*5+1, n+1))}"]
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{n}"], etikett = 5 }
+svar = "{n}"
+var = { n = "[1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19]" }
+ledtrad = "Det sista talet du räknade."
+losning = ["Börja på {(n//5)*5}.", "Räkna strecken: {', '.join(str(i) for i in range((n//5)*5+1, n+1))}.", "Markeringen pekar på {n}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Vilket tal är störst? Det ligger längst till höger på tallinjen."
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{a}", "{b}"], etikett = 5 }
+alternativ = ["{a}", "{b}"]
+svar = "{max(a,b)}"
+var = { a = "1..19", b = "1..19 != a" }
+ledtrad = "Åt höger blir talen större."
+losning = ["Åt höger på tallinjen blir talen större.", "{max(a,b)} ligger längre till höger än {min(a,b)}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Börja på {a} och hoppa {d} steg framåt. Var hamnar du?"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{a}"], etikett = 5 }
+svar = "{a+d}"
+var = { a = "2..12", d = "3..7" }
+ledtrad = "Framåt är åt höger. Räkna {d} hopp från {a}."
+feltankar = { "{a+d-1}" = "Ett hopp för kort. Räkna inte {a} som ett hopp – det första hoppet landar på {a+1}." }
+losning = ["Framåt = åt höger.", "Hopp från {a}: {', '.join(str(a+i) for i in range(1, d+1))}.", "Du hamnar på {a+d}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Börja på {a} och hoppa {d} steg bakåt. Var hamnar du?"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = ["{a}"], etikett = 5 }
+svar = "{a-d}"
+var = { a = "9..19", d = "3..7" }
+ledtrad = "Bakåt är åt vänster. Räkna {d} hopp från {a}."
+feltankar = { "{a-d+1}" = "Ett hopp för kort. Det första hoppet landar på {a-1}.", "{a+d}" = "Bakåt är åt vänster – talen blir mindre." }
+losning = ["Bakåt = åt vänster.", "Hopp från {a}: {', '.join(str(a-i) for i in range(1, d+1))}.", "Du hamnar på {a-d}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Här är varje streck värt 10. Vilket tal pekar markeringen på?"
+figur = { typ = "tallinje", fran = 0, till = 100, steg = 10, markera = ["{10*k}"], etikett = 5 }
+svar = "{10*k}"
+var = { k = "[1, 2, 3, 4, 6, 7, 8, 9]" }
+ledtrad = "Räkna strecken från 0 eller 50 – tio för varje streck."
+feltankar = { "{k}" = "Varje streck är tio, inte ett. Räkna i tiotal: {', '.join(str(10*i) for i in range(1, k+1))}." }
+losning = ["Det är 50 under mitten. Varje streck är 10.", "Räkna i tiotal: {', '.join(str(10*i) for i in range(1, k+1))}.", "Markeringen pekar på {10*k}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje mellan talet och talet som är {d} mer."
+par = [["{a}", "{a+d}"], ["{b}", "{b+d}"], ["{c}", "{c+d}"]]
+var = { d = "[2, 3, 5, 10]", a = "0..3", b = "4..7", c = "8..10" }
+ledtrad = "Hoppa {d} steg framåt på tallinjen."
+losning = ["{a} + {d} = {a+d}.", "{b} + {d} = {b+d}.", "{c} + {d} = {c+d}."]

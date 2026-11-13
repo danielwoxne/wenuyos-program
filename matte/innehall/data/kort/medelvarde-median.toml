@@ -1,0 +1,131 @@
+id = "medelvarde-median"
+titel = "Medelvärde, median och typvärde"
+omrade = "sannolikhet"
+ikon = "stapeldiagram"
+bild = "jordgubbar-tallrikar.jpg"
+bildtext = "2, 4 och 6 jordgubbar. Flytta två från den högra tallriken till den vänstra – då har alla 4. Det är medelvärdet."
+sager = "Tre sätt att säga 'ett typiskt värde': medelvärdet jämnar ut (summan delat med antalet), medianen är det mittersta när man sorterat, typvärdet är det vanligaste."
+galler = "Alltid – men de kan ge olika svar på samma data, och ett extremt värde drar medelvärdet men inte medianen."
+galler_inte = "Medelvärdet beskriver inte alltid den vanliga. Tjänar fyra personer 25 000 kr och en 1 000 000 kr blir medelvärdet 220 000 kr – fast ingen tjänar så. Då säger medianen mer."
+forkunskap = ["stapeldiagram-lasa"]
+kalla = "Medelvärde som utjämning (Mokros & Russell) – stapeldiagrammet där man flyttar över från höga till låga staplar."
+
+[[rad]]
+sager = "3, 5 och 7"
+figur = { typ = "stapeldiagram", varden = [3, 5, 7], namn = ["A", "B", "C"] }
+skriver = ["medelvärde (3 + 5 + 7) / 3 = 5", "median 5"]
+kommentar = "Flytta två från C till A – då är alla 5. Det är medelvärdet."
+
+[[rad]]
+sager = "2, 2, 5, 9"
+figur = { typ = "stapeldiagram", varden = [2, 2, 5, 9], namn = ["A", "B", "C", "D"] }
+skriver = ["medelvärde 18 / 4 = 4,5", "median (2 + 5) / 2 = 3,5", "typvärde 2"]
+
+[[uppgift]]
+niva = 1
+fraga = "Tre staplar: {m-d}, {m} och {m+d}. Flytta från den höga till den låga så alla blir lika. Vad är medelvärdet?"
+figur = { typ = "stapeldiagram", varden = ["{m-d}", "{m}", "{m+d}"], namn = ["A", "B", "C"] }
+svar = "{m}"
+var = { m = "3..8", d = "1..2" }
+ledtrad = "Flytta {d} från C till A."
+losning = ["Flytta {d} från C till A.", "Nu är alla {m}.", "Medelvärdet är {m}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är medelvärdet av {a}, {b} och {3*m-a-b}?"
+svar = "{m}"
+var = { m = "3..9", a = "1..m-1", b = "m+1..m+3" }
+ledtrad = "Summan {3*m} delat med antalet, 3."
+feltankar = { "{3*m}" = "Det är summan. Medelvärdet är summan delat med antalet värden: {3*m} / 3.", "{b}" = "Det mittersta talet (sorterat) är medianen, inte medelvärdet. Medelvärdet är summan delat med 3." }
+losning = ["Summan: {a} + {b} + {3*m-a-b} = {3*m}.", "Antal värden: 3.", "{3*m} / 3 = {m}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vad är medianen av {a}, {b}, {c}, {d} och {e}?"
+svar = "{sorted([a,b,c,d,e])[2]}"
+var = { a = "1..20", b = "1..20", c = "1..20", d = "1..20", e = "1..20" }
+ledtrad = "Sortera talen i storleksordning först. Medianen är det som hamnar i mitten (det tredje av fem)."
+feltankar = { "{c}" = "Det mittersta talet i den ordning de stod är inte medianen – du måste sortera först." }
+losning = ["Sortera: {', '.join(str(x) for x in sorted([a,b,c,d,e]))}.", "Mitten är det tredje talet.", "Medianen är {sorted([a,b,c,d,e])[2]}."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på tallriken som har lika många jordgubbar som medelvärdet."
+figur = { typ = "scen", bild = "jordgubbar-tallrikar.jpg", bredd = 560, omraden = [[0.1136, 0.3348, 0.2392, 0.4038], [0.372, 0.3209, 0.2392, 0.3932], [0.6328, 0.3209, 0.2392, 0.3932]], namn = ["vänster", "mitten", "höger"] }
+svar = "mitten"
+ledtrad = "Medelvärdet: (2 + 4 + 6) / 3. Eller flytta två jordgubbar från höger till vänster – vilken tallrik behöver inte ändras?"
+feltankar = { "höger" = "Den högra har flest, 6. Medelvärdet är det man får om alla delar lika: 12 / 3 = 4.", "vänster" = "Den vänstra har minst, 2. Medelvärdet är det man får om alla delar lika: 12 / 3 = 4." }
+losning = ["2 + 4 + 6 = 12 jordgubbar.", "12 / 3 = 4.", "Mitten har 4."]
+
+[[exempel]]
+rubrik = "Medelvärde: dela lika"
+figur = { typ = "stapeldiagram", varden = [2, 4, 6], namn = ["A", "B", "C"] }
+steg = [
+  "Summan: 2 + 4 + 6 = 12.",
+  "Dela lika på tre: 12 / 3 = 4.",
+  "Det är samma som att flytta 2 från C till A – då har alla 4.",
+]
+
+[[exempel]]
+rubrik = "Median: sortera och ta mitten"
+text = "7, 3, 9, 3, 5"
+steg = [
+  "Sortera: 3, 3, 5, 7, 9.",
+  "Fem tal – mitten är det tredje: 5.",
+  "Med ett jämnt antal tal finns två i mitten. Då är medianen medelvärdet av dem.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vad är medianen av {a}, {b}, {c}, {d} och {e}?"
+steg = ["Sortera: {', '.join(str(x) for x in sorted([a,b,c,d,e]))}", "Fem tal – mitten är det tredje."]
+svar = "{sorted([a,b,c,d,e])[2]}"
+var = { a = "1..20", b = "1..20", c = "1..20", d = "1..20", e = "1..20" }
+ledtrad = "Räkna till det tredje i den sorterade raden."
+losning = ["Medianen är {sorted([a,b,c,d,e])[2]}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är typvärdet av {a}, {b}, {a}, {c}, {a}?"
+svar = "{a}"
+var = { a = "1..9", b = "1..9 != a", c = "1..9 != a" }
+ledtrad = "Typvärdet är det värde som förekommer flest gånger."
+losning = ["{a} förekommer tre gånger.", "Typvärdet är {a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är medelvärdet?"
+figur = { typ = "stapeldiagram", varden = ["{m-d}", "{m+d}", "{m-e}", "{m+e}"], namn = ["A", "B", "C", "D"] }
+svar = "{m}"
+var = { m = "4..8", d = "1..3", e = "1..3" }
+ledtrad = "Lägg ihop alla fyra och dela med 4."
+feltankar = { "{4*m}" = "Det är summan. Dela med antalet staplar, 4." }
+losning = ["Summan: {m-d} + {m+d} + {m-e} + {m+e} = {4*m}.", "{4*m} / 4 = {m}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vad är medianen av {a}, {b}, {c} och {d}?"
+svar = "{(sorted([a,b,c,d])[1] + sorted([a,b,c,d])[2]) / 2}"
+var = { a = "1..20", b = "1..20", c = "1..20", d = "1..20" }
+ledtrad = "Fyra tal – två i mitten. Ta medelvärdet av dem."
+losning = ["Sortera: {', '.join(str(x) for x in sorted([a,b,c,d]))}.", "Mitten: {sorted([a,b,c,d])[1]} och {sorted([a,b,c,d])[2]}.", "Medelvärdet av dem: {(sorted([a,b,c,d])[1] + sorted([a,b,c,d])[2]) / 2}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Medelvärdet av fyra tal är {m}. Tre av dem är {a}, {b} och {c}. Vilket är det fjärde?"
+svar = "{4*m-a-b-c}"
+var = { m = "5..10", a = "1..m", b = "1..m", c = "1..m" }
+ledtrad = "Medelvärdet {m} gånger 4 är summan av alla fyra."
+losning = ["Summan av alla fyra: 4 · {m} = {4*m}.", "De tre kända: {a} + {b} + {c} = {a+b+c}.", "Det fjärde: {4*m} − {a+b+c} = {4*m-a-b-c}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Fem personer tjänar 24 000, 25 000, 26 000, 27 000 och 900 000 kr i månaden. Vilket mått beskriver bäst vad en typisk person tjänar?"
+alternativ = ["medelvärdet", "medianen"]
+svar = "medianen"
+form = "text"
+ledtrad = "Räkna ut båda. Vilket ligger nära de flesta lönerna?"
+feltankar = { "medelvärdet" = "Medelvärdet blir 200 400 kr – mer än fyra av fem tjänar. Den höga lönen drar upp det. Medianen, 26 000, beskriver de flesta bättre." }
+losning = ["Medelvärdet: 1 002 000 / 5 = 200 400 kr.", "Medianen: 26 000 kr.", "En enda hög lön drar upp medelvärdet. Medianen påverkas inte."]

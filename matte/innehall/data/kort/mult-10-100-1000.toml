@@ -1,0 +1,131 @@
+# Regelkort: multiplikation med 10, 100 och 1 000
+# Förlagan: sidan "Multiplikation – 10, 100, 1 000" med positionstabellen och
+# de röda pilarna – och den överstrukna meningen "Multiplikation gör talet
+# större". Det här kortet är programmets första "regel som slutar gälla".
+
+id = "mult-10-100-1000"
+titel = "Multiplikation med 10, 100 och 1 000"
+omrade = "tal"
+ikon = "ganger"
+sager = "När du multiplicerar med 10, 100 eller 1 000 flyttar siffrorna ett, två eller tre steg åt vänster i positionstabellen."
+galler = "Det här gäller alltid, för alla tal – även decimaltal."
+galler_inte = "Regeln 'multiplikation gör talet större' gäller bara för heltal större än 1. Multiplicerar du med ett tal mellan 0 och 1 (t.ex. 0,5) blir svaret MINDRE. Den regeln tar programmet upp igen när du kommer till multiplikation med decimaltal."
+kalla = "Lösta exempel som tunnas ut (Sweller). Regler som slutar gälla (Karp m.fl.)."
+
+[[exempel]]
+rubrik = "Exempel: 8,50 · 10"
+text = "8,50 ska göras 10 gånger större. Siffrorna flyttar ett steg åt vänster – kommat står kvar."
+figur = { typ = "positionstabell", tal = "8,50", skift = 1 }
+steg = [
+  "· 10 → siffrorna flyttar ett steg åt vänster.",
+  "· 100 → två steg åt vänster.",
+  "· 1 000 → tre steg åt vänster.",
+  "Svar: 8,50 · 10 = 85,0 = 85.",
+]
+
+[[rad]]
+sager = "gånger tio"
+figur = { typ = "positionstabell", tal = "7", skift = 1 }
+skriver = ["7 · 10 = 70"]
+
+[[rad]]
+sager = "gånger hundra"
+figur = { typ = "positionstabell", tal = "7", skift = 2 }
+skriver = ["7 · 100 = 700"]
+
+[[rad]]
+sager = "gånger tusen"
+figur = { typ = "positionstabell", tal = "7", skift = 3 }
+skriver = ["7 · 1 000 = 7 000"]
+
+# Nivå 1 – nästan löst: tabellen visas med pilarna, eleven skriver bara svaret.
+[[uppgift]]
+niva = 1
+fraga = "Tabellen visar {a} · 10. Vad blir det?"
+figur = { typ = "positionstabell", tal = "{a}", skift = 1 }
+svar = "{a*10}"
+var = { a = "2..99" }
+ledtrad = "Läs av den undre raden i tabellen."
+losning = ["· 10 flyttar siffrorna ett steg åt vänster.", "{a} · 10 = {a*10}."]
+
+# Nivå 2 – bara talet, ingen tabell.
+[[uppgift]]
+niva = 2
+fraga = "Räkna ut {a} · {m}."
+svar = "{a*m}"
+var = { a = "3..99", m = "[10, 100, 1000]" }
+ledtrad = "Hur många steg åt vänster? 10 = ett, 100 = två, 1 000 = tre. Fyll på med nollor."
+feltankar = { "{a*m*10}" = "Ett steg för mycket. 10 flyttar ETT steg, 100 TVÅ, 1 000 TRE.", "{a*m//10}" = "Ett steg för lite. 10 flyttar ETT steg, 100 TVÅ, 1 000 TRE." }
+losning = ["{['Ett', 'Två', 'Tre'][len(str(m))-2]} steg åt vänster.", "{a} · {m} = {a*m}."]
+
+# Nivå 3 – decimaltal. Här syns att det är siffrorna, inte "nollor", som flyttar.
+[[uppgift]]
+niva = 3
+fraga = "Räkna ut {h},{d} · {m}."
+svar = "{h},{d} * {m}"
+var = { h = "1..9", d = "1..9", m = "[10, 100]" }
+ledtrad = "Skriv {h},{d} i positionstabellen och flytta siffrorna åt vänster. Kommat står kvar."
+feltankar = { "{h},{d}" = "Att lägga till nollor sist i ett decimaltal ändrar ingenting – {h},{d}0 är samma tal. Siffrorna ska flytta åt vänster förbi kommat.", "{h}{d}" = "{h}{d} är {h},{d} · 10 – ett steg. Med · 100 ska siffrorna flytta två steg." }
+losning = ["Skriv {h},{d} i positionstabellen.", "Flytta siffrorna {1 if m == 10 else 2} steg åt vänster – kommat står kvar.", "{h},{d} · {m} = {(10*h+d)*m/10}."]
+
+[[exempel]]
+rubrik = "Exempel: 3,5 · 100"
+figur = { typ = "positionstabell", tal = "3,5", skift = 2 }
+steg = [
+  "· 100 – siffrorna flyttar två steg åt vänster.",
+  "3 hamnar på hundratalsplatsen, 5 på tiotalsplatsen.",
+  "Entalsplatsen blir tom – fyll den med en nolla: 350.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. {a} · 100 = ?"
+steg = ["· 100 = två steg åt vänster.", "Ett steg: {a} → {a*10}", "Två steg: {a*10} → ?"]
+svar = "{a*100}"
+var = { a = "2..99" }
+ledtrad = "Ett steg till."
+losning = ["{a} · 10 = {a*10}.", "{a*10} · 10 = {a*100}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många steg åt vänster flyttar siffrorna när du multiplicerar med 1 000?"
+alternativ = ["1", "2", "3"]
+svar = "3"
+ledtrad = "Räkna nollorna i 1 000."
+losning = ["1 000 = 10 · 10 · 10.", "Ett steg för varje tio: tre steg."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} · ? = {a*m}"
+svar = "{m}"
+var = { a = "3..99", m = "[10, 100, 1000]" }
+ledtrad = "Hur många steg har siffrorna flyttat?"
+losning = ["{a} har blivit {a*m}.", "Siffrorna har flyttat {len(str(m))-1} steg.", "Faktorn är {m}."]
+
+[[uppgift]]
+niva = 2
+fraga = "0,{d} · 10 = ?"
+svar = "{d}"
+var = { d = "1..9" }
+ledtrad = "Siffran {d} flyttar ett steg åt vänster – från tiondelsplatsen till entalsplatsen."
+feltankar = { "0,{d}0" = "En nolla sist ändrar inte ett decimaltal: 0,{d}0 = 0,{d}. Siffran ska flytta ett steg åt vänster: {d}." }
+losning = ["0,{d} = {d} tiondelar.", "· 10: tiondelar blir ental.", "{d}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{h},{d}{c} · 1 000 = ?"
+svar = "{h*1000+d*100+c*10}"
+var = { h = "1..9", d = "0..9", c = "1..9" }
+ledtrad = "Tre steg åt vänster. Fyll tomma platser med nollor."
+feltankar = { "{h},{d}{c}000" = "Nollor sist i ett decimaltal ändrar ingenting. Siffrorna ska flytta tre steg åt vänster förbi kommat." }
+losning = ["Tre steg åt vänster.", "{h} → tusental, {d} → hundratal, {c} → tiotal.", "{ts(h*1000+d*100+c*10)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En pärla kostar {p},50 kr. Vad kostar 100 pärlor?"
+svar = "{p*100+50}"
+var = { p = "1..9" }
+ledtrad = "{p},50 · 100: två steg åt vänster."
+feltankar = { "{p}50" = "Det är {p},50 · 10 · 10 – två steg. {p},50 · 100 = {p*100+50}." }
+losning = ["{p},50 · 100: siffrorna flyttar två steg.", "{p},50 → {p*10+5} → {p*100+50}.", "100 pärlor kostar {p*100+50} kr."]

@@ -1,0 +1,137 @@
+id = "monster"
+titel = "Mönster och talföljder"
+omrade = "algebra"
+ikon = "pinnar"
+bild = "monster-brickor.jpg"
+bildtext = "Blå, gul, röd – och så igen. Mönstret upprepas fyra gånger. Nedanför: 5 + 5 = 10."
+sager = "I ett mönster upprepas eller ändras något på samma sätt varje gång. Hittar du regeln kan du fortsätta mönstret hur länge som helst."
+galler = "När regeln är densamma hela tiden. Kontrollera regeln på minst två steg innan du litar på den."
+galler_inte = "Två tal räcker inte för att veta regeln. 2, 4 kan fortsätta 6, 8 (plus två) eller 8, 16 (gånger två). Kontrollera regeln på flera steg innan du fortsätter mönstret."
+kalla = "Algebraiskt tänkande före bokstäverna (Kaput; Lgr22 åk 1–3: mönster i talföljder och geometriska mönster)."
+
+[[rad]]
+sager = "två i taget"
+figur = { typ = "tallinje", fran = 0, till = 12, markera = [2, 4, 6, 8] }
+skriver = ["2, 4, 6, 8, …"]
+
+[[rad]]
+sager = "fem i taget"
+figur = { typ = "tallinje", fran = 0, till = 25, markera = [5, 10, 15, 20], etikett = 5 }
+skriver = ["5, 10, 15, 20, …"]
+
+[[uppgift]]
+niva = 1
+fraga = "{a}, {a+d}, {a+2*d}, ? – vilket tal kommer sedan? (det ökar med {d} varje gång)"
+svar = "{a+3*d}"
+var = { d = "[2, 5, 10]", a = "[0, 1, 3]" }
+ledtrad = "Lägg till {d} på {a+2*d}."
+losning = ["Det ökar med {d} varje gång.", "{a+2*d} + {d} = {a+3*d}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a}, {a+d}, {a+2*d}, {a+3*d}, ? – vilket tal kommer sedan?"
+svar = "{a+4*d}"
+var = { d = "2..9", a = "1..9" }
+ledtrad = "Hur mycket ökar det varje gång? Från {a} till {a+d} är {d}."
+feltankar = { "{a+3*d+1}" = "Det ökar inte med ett. Titta på skillnaden mellan två tal som står bredvid varandra: {a+d} − {a} = {d}." }
+losning = ["Skillnaden mellan två tal bredvid varandra: {a+d} − {a} = {d}.", "Det ökar med {d} varje gång.", "{a+3*d} + {d} = {a+4*d}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a+4*d}, {a+3*d}, {a+2*d}, ? – vilket tal kommer sedan?"
+svar = "{a+d}"
+var = { d = "2..9", a = "1..9" }
+ledtrad = "Det minskar. Med hur mycket varje gång?"
+feltankar = { "{a+3*d}" = "Mönstret går nedåt – nästa tal ska vara MINDRE än {a+2*d}." }
+losning = ["Det minskar: {a+4*d} − {a+3*d} = {d}.", "Varje tal är {d} mindre än det förra.", "{a+2*d} − {d} = {a+d}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Brickorna på bilden går blå, gul, röd, blå, gul, röd … Vilken färg kommer efter röd?"
+figur = { typ = "scen", bild = "monster-brickor.jpg", bredd = 560 }
+svar = "blå"
+alternativ = ["blå", "gul", "röd"]
+ledtrad = "Mönstret börjar om efter röd."
+
+[[exempel]]
+rubrik = "Hitta regeln: 3, 7, 11, 15"
+figur = { typ = "tallinje", fran = 0, till = 20, markera = [3, 7, 11, 15], etikett = 5 }
+steg = [
+  "Från 3 till 7 är det 4. Från 7 till 11 är det 4. Från 11 till 15 är det 4.",
+  "Regeln är: plus 4 varje gång.",
+  "Nästa tal: 15 + 4 = 19.",
+]
+
+[[exempel]]
+rubrik = "Ett mönster som växer: stickor"
+text = "Figur 1 är en triangel av 3 stickor. Varje ny triangel sitter fast i den förra och behöver bara 2 stickor till."
+steg = [
+  "Figur 1: 3 stickor. Figur 2: 5. Figur 3: 7.",
+  "Varje figur har 2 fler än den förra.",
+  "Figur 10: 3 + 2 + 2 + … = 1 + 2 · 10 = 21 stickor.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Vilket tal kommer sedan?"
+steg = ["{a} → {a+d}: plus {d}", "{a+d} → {a+2*d}: plus {d}", "{a+2*d} → ?"]
+svar = "{a+3*d}"
+var = { d = "2..6", a = "1..9" }
+ledtrad = "Plus {d} igen."
+losning = ["Regeln är plus {d}.", "{a+2*d} + {d} = {a+3*d}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket tal saknas? {a}, {a+d}, ?, {a+3*d}"
+svar = "{a+2*d}"
+var = { d = "2..9", a = "1..20" }
+ledtrad = "Hitta regeln med de två första talen."
+losning = ["Från {a} till {a+d} är det {d}.", "{a+d} + {d} = {a+2*d}.", "Kontroll: {a+2*d} + {d} = {a+3*d}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Brickorna går blå, gul, röd, blå, gul, röd … Vilken färg har bricka nummer {n}?"
+alternativ = ["blå", "gul", "röd"]
+svar = "{['röd','blå','gul'][n%3]}"
+var = { n = "7..20" }
+ledtrad = "Mönstret är tre brickor långt. Var tredje bricka är röd."
+losning = ["Mönstret är tre brickor långt: blå, gul, röd.", "Var tredje bricka är röd: 3, 6, 9 … {3*(n//3)}.", "{'Bricka ' + str(n) + ' är alltså röd.' if n%3 == 0 else 'Sedan ' + str(n%3) + ' till: ' + ['', 'blå', 'blå, gul'][n%3] + '.'}"]
+
+[[uppgift]]
+niva = 3
+fraga = "{s}, {2*s}, {4*s}, {8*s}, ? – vilket tal kommer sedan?"
+svar = "{16*s}"
+var = { s = "1..3" }
+ledtrad = "Det ökar inte med samma tal varje gång. Jämför varje tal med det förra."
+feltankar = { "{12*s}" = "Det ökar inte med {4*s} varje gång: +{s}, +{2*s}, +{4*s}. Varje tal är dubbelt så stort som det förra.", "{9*s}" = "Det ökar inte med ett. Varje tal är dubbelt så stort som det förra." }
+losning = ["{s} · 2 = {2*s}, {2*s} · 2 = {4*s}, {4*s} · 2 = {8*s}.", "Regeln är gånger två.", "{8*s} · 2 = {16*s}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Figur 1 har 3 stickor, figur 2 har 5, figur 3 har 7. Hur många stickor har figur {n}?"
+svar = "{2*n+1}"
+var = { n = "5..10" }
+ledtrad = "Hur många fler stickor får varje ny figur? Börja på figur 1 och lägg till."
+feltankar = { "{3*n}" = "Varje figur är inte tre stickor – de nya trianglarna delar en sticka. Varje figur har 2 fler än den förra." }
+losning = ["Varje figur har 2 fler än den förra.", "Figur 1 = 1 + 2 · 1. Figur 2 = 1 + 2 · 2.", "Figur {n} = 1 + 2 · {n} = {2*n+1}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Fortsätt mönstret: röd, röd, blå, röd, röd, blå … Måla alla rutor."
+figur = { typ = "malrutor", kolumner = 9, ruta = 54, objekt = "||||||||", farger = ["röd", "blå"] }
+svar = "röd|röd|blå|röd|röd|blå|röd|röd|blå"
+ledtrad = "Mönstret är tre färger långt: röd, röd, blå. Sedan börjar det om."
+feltankar = { "röd|blå|röd|blå|röd|blå|röd|blå|röd" = "Det är två röda innan varje blå. Säg det högt: röd, röd, blå." }
+losning = ["Mönstret upprepas efter tre rutor: röd, röd, blå.", "Tre gånger om blir det nio rutor."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Talföljden är {a}, {a+d}, {a+2*d}, {a+3*d} … Vilka tal kommer också med i talföljden? Kryssa i alla."
+alternativ = ["{a+5*d}", "{a+7*d}", "{a+5*d+1}", "{a+4*d-1}", "{a+10*d}"]
+svar = ["{a+5*d}", "{a+7*d}", "{a+10*d}"]
+var = { a = "1..9", d = "3..7" }
+ledtrad = "Talet ökar med {d} varje gång. Börja på {a} och hoppa {d} i taget."
+losning = ["Talföljden ökar med {d}.", "Talen är {a} + {d}, {a} + 2 · {d}, … – alltså {a} plus en hel gånger {d}.", "{a+5*d}, {a+7*d} och {a+10*d} stämmer."]

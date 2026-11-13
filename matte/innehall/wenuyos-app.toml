@@ -1,0 +1,12 @@
+# Matte – beskrivning för WenuyOS installation (se claude/WenuyOS-program.md, avsnitt 4)
+name = "Matte"
+name_sv = "Matte"
+version = "0.4.1"
+description = "Learn mathematics step by step – from preschool to upper secondary"
+description_sv = "Lär dig matematik steg för steg – från förskola till gymnasium"
+license = "GPL-3.0-or-later"
+author = "Daniel Woxnerud"
+requires = ["espeak-ng"]        # uppläsningen i lekläget (programmet fungerar utan, men tyst)
+python = ["gi", "cairo"]        # allt annat är standardbiblioteket
+min_ram_mb = 2048
+needs_network = false

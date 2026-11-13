@@ -1,0 +1,163 @@
+id = "sannolikhet"
+titel = "Sannolikhet"
+omrade = "sannolikhet"
+ikon = "tarning"
+bild = "brickpase.jpg"
+bildtext = "I påsen ligger 7 blå och 2 gula brickor. Chansen att dra en gul är 2 av 9 – nämnaren är alla brickor."
+sager = "Sannolikhet = gynnsamma utfall / möjliga utfall. Chansen att slå en sexa är 1/6: ett gynnsamt av sex möjliga."
+galler = "När alla utfall är lika troliga (en ärlig tärning, en blandad påse)."
+galler_inte = "”Fem krona i rad – nu måste det bli klave” stämmer inte. Myntet minns ingenting: sannolikheten är 1/2 vid varje kast, hur det än gått förut."
+forkunskap = ["brak-procent-decimal"]
+kalla = "Sannolikhet som andel – kopplas till bråk/procent. Vanlig feltanke: gynnsamma/ogynnsamma i stället för gynnsamma/alla."
+
+[[rad]]
+sager = "en sexa"
+figur = { typ = "ikoner", namn = "tarning", antal = 1, d = 56 }
+skriver = ["P = 1/6 ≈ 17 %"]
+
+[[rad]]
+sager = "ett jämnt tal"
+figur = { typ = "stapel", delar = 6, fyllda = 3, farg = "himmel" }
+skriver = ["P = 3/6 = 1/2 = 50 %"]
+
+[[rad]]
+sager = "en röd kula ur en påse med 2 röda och 3 blå"
+figur = { typ = "stapel", delar = 5, fyllda = 2, farg = "rod" }
+skriver = ["P = 2/5 = 40 %"]
+kommentar = "Två av fem – inte två av tre."
+
+[[uppgift]]
+niva = 1
+fraga = "Du kastar en tärning. Hur stor är sannolikheten att få {n} eller lägre? Svara som bråk."
+figur = { typ = "stapel", delar = 6, fyllda = "{n}", farg = "himmel" }
+svar = "{n}/6"
+form = "brak"
+var = { n = "1..5" }
+ledtrad = "{n} gynnsamma av 6 möjliga."
+losning = ["Möjliga utfall: 6.", "Gynnsamma: 1 till {n} – {n} stycken.", "P = {n}/6."]
+
+[[uppgift]]
+niva = 2
+fraga = "En påse har {r} röda och {b} blå kulor. Vad är sannolikheten att dra en röd? Svara som bråk."
+svar = "{r}/{r+b}"
+form = "brak"
+var = { r = "1..5", b = "1..5" }
+ledtrad = "Röda / alla kulor. Hur många kulor är det totalt?"
+feltankar = { "{r}/{b}" = "Nämnaren ska vara ALLA kulor ({r} + {b} = {r+b}), inte bara de blå. P = {r}/{r+b}." }
+losning = ["Alla kulor: {r} + {b} = {r+b}.", "Röda: {r}.", "P = {r}/{r+b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Sannolikheten för regn är {p} %. Hur stor är sannolikheten att det INTE regnar?"
+svar = "{100-p} %"
+form = "procent"
+var = { p = "[10, 20, 30, 40, 60, 70, 80]" }
+ledtrad = "Regn eller inte regn är alla möjligheter – tillsammans 100 %."
+feltankar = { "{p} %" = "Det är sannolikheten för regn. Motsatsen är 100 % − {p} %." }
+losning = ["Regn och inte regn är tillsammans 100 %.", "100 % − {p} % = {100-p} %."]
+
+[[uppgift]]
+niva = 1
+fraga = "I påsen på bilden ligger 7 blå och 2 gula brickor. Hur stor är sannolikheten att dra en gul? Svara som bråk."
+figur = { typ = "staende", delar = 9, fyllda = 2, farg = "citron" }
+svar = "2/9"
+form = "brak"
+ledtrad = "Gula / alla brickor. Hur många brickor finns det totalt?"
+feltankar = { "2/7" = "Nämnaren ska vara ALLA brickor: 7 + 2 = 9. Inte bara de blå.", "7/9" = "Det är sannolikheten för blå. Frågan gäller gul: 2 av 9." }
+losning = ["Alla brickor: 7 + 2 = 9.", "Gula: 2.", "P = 2/9."]
+
+[[uppgift]]
+niva = 2
+fraga = "Påsen på bilden har 7 blå och 2 gula brickor. Hur stor är chansen att dra en blå? Svara i procent, avrundat till heltal."
+figur = { typ = "scen", bild = "brickpase.jpg", bredd = 560 }
+svar = "78 %"
+form = "procent"
+ledtrad = "7 av 9. 7 / 9 ≈ 0,78."
+feltankar = { "22 %" = "Det är chansen för gul (2 av 9). Blå är 7 av 9." }
+losning = ["Blå: 7 av 9.", "7 / 9 ≈ 0,78.", "≈ 78 %."]
+
+[[exempel]]
+rubrik = "Tärningen: ett jämnt tal"
+figur = { typ = "stapel", delar = 6, fyllda = 3, farg = "himmel" }
+steg = [
+  "Möjliga utfall: 1, 2, 3, 4, 5, 6 – sex stycken, alla lika troliga.",
+  "Gynnsamma (jämna): 2, 4, 6 – tre stycken.",
+  "P(jämnt) = 3/6 = 1/2 = 50 %.",
+]
+
+[[exempel]]
+rubrik = "Påsen: gula och blå brickor"
+figur = { typ = "scen", bild = "brickpase.jpg", bredd = 420 }
+steg = [
+  "Nämnaren är ALLA brickor: 7 + 2 = 9.",
+  "P(gul) = 2/9. P(blå) = 7/9.",
+  "Tillsammans 9/9 = 1 – en av dem kommer säkert.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Hur stor är sannolikheten att slå ett jämnt tal med en tärning? Svara som bråk."
+steg = ["Möjliga utfall: 1, 2, 3, 4, 5, 6 – sex stycken.", "Gynnsamma: 2, 4, 6 – tre stycken.", "P = gynnsamma / möjliga = ?"]
+svar = "3/6"
+form = "brak"
+ledtrad = "3 av 6."
+losning = ["P = 3/6 = 1/2."]
+
+[[uppgift]]
+niva = 2
+fraga = "En påse har {r} röda, {b} blå och {g} gröna kulor. Hur stor är sannolikheten att INTE dra en blå? Svara som bråk."
+svar = "{r+g}/{r+b+g}"
+form = "brak"
+var = { r = "1..5", b = "1..5", g = "1..5" }
+ledtrad = "Inte blå = röd eller grön."
+feltankar = { "{b}/{r+b+g}" = "Det är sannolikheten FÖR blå. Inte blå är resten." }
+losning = ["Alla: {r} + {b} + {g} = {r+b+g}.", "Inte blå: {r} + {g} = {r+g}.", "P = {r+g}/{r+b+g}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Ett mynt har visat krona {n} gånger i rad. Hur stor är sannolikheten för krona nästa gång?"
+alternativ = ["mindre än 1/2", "1/2", "mer än 1/2"]
+svar = "1/2"
+form = "text"
+var = { n = "4..9" }
+ledtrad = "Vet myntet vad det visade förra gången?"
+feltankar = { "mindre än 1/2" = "Myntet minns inget. Varje kast är nytt: 1/2.", "mer än 1/2" = "Myntet minns inget. Varje kast är nytt: 1/2." }
+losning = ["Varje kast är oberoende av de förra.", "Möjliga utfall: krona eller klave.", "P(krona) = 1/2 – varje gång."]
+
+[[uppgift]]
+niva = 3
+fraga = "Du kastar en tärning {6*n} gånger. Hur många sexor kan du vänta dig – ungefär?"
+svar = "{n}"
+var = { n = "[5, 10, 20, 50, 100]" }
+ledtrad = "En sexa i genomsnitt var sjätte kast."
+losning = ["P(sexa) = 1/6.", "1/6 av {6*n} = {n}.", "Det blir sällan exakt {n} – men ungefär."]
+
+[[uppgift]]
+niva = 3
+fraga = "Ett häftstift landade med spetsen uppåt {a} gånger av {n} kast. Uppskatta sannolikheten för spetsen uppåt i procent."
+svar = "{a*100//n} %"
+form = "procent"
+var = { n = "[20, 25, 50, 100]", a = "[5, 10, 15]" }
+ledtrad = "Relativ frekvens: {a} av {n}."
+losning = ["Relativ frekvens = {a}/{n}.", "= {a*100//n}/100 = {a*100//n} %.", "Fler kast ger en säkrare uppskattning."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "kryssa"
+fraga = "Du kastar en vanlig tärning. Vilka utfall ger ett jämnt tal? Kryssa i alla."
+alternativ = ["prickar:1", "prickar:2", "prickar:3", "prickar:4", "prickar:5", "prickar:6"]
+svar = ["prickar:2", "prickar:4", "prickar:6"]
+ledtrad = "Jämna tal går att dela i två lika stora högar: 2, 4, 6 …"
+losning = ["De jämna talen på en tärning är 2, 4 och 6.", "Det är 3 av 6 utfall – sannolikheten är 3/6 = 1/2."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "kryssa"
+fraga = "Du kastar en tärning. Vilka utfall är större än {k}? Kryssa i alla. Hur stor är sannolikheten?"
+alternativ = ["prickar:1", "prickar:2", "prickar:3", "prickar:4", "prickar:5", "prickar:6"]
+svar = "{'|'.join('prickar:' + str(i) for i in range(k + 1, 7))}"
+var = { k = "2..4" }
+ledtrad = "Större än {k} betyder inte {k} – börja på {k+1}."
+feltankar = { "prickar:{k}" = "{k} är inte större än {k} – det är lika med. Större än {k} börjar på {k+1}." }
+losning = ["Utfallen större än {k} är {', '.join(str(i) for i in range(k + 1, 7))}.", "Det är {6-k} av 6 utfall – sannolikheten är {6-k}/6."]

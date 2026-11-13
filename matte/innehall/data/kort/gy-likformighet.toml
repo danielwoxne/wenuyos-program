@@ -1,0 +1,119 @@
+id = "gy-likformighet"
+titel = "Likformighet – längd, area och volym"
+omrade = "geometri"
+ikon = "rektangel"
+bild = "karta.jpg"
+bildtext = "Kartan är en förminskning av verkligheten. Längder förminskas med skalan – areor med skalan i kvadrat."
+sager = "Förstoras alla längder k gånger blir arean k² gånger och volymen k³ gånger större."
+galler = "För likformiga figurer och kroppar – samma form, olika storlek."
+galler_inte = "'Dubbelt så stor' betyder inte dubbelt så mycket färg eller vatten: dubbla sidor ger fyra gånger arean och åtta gånger volymen."
+forkunskap = ["skala", "omkrets-area"]
+kalla = "Rutnätet: en kvadrat med dubbel sida rymmer fyra av den gamla. Vanlig feltanke: areaskala = längdskala."
+
+[[rad]]
+sager = "sidan dubbelt så lång"
+figur = { typ = "rektangel", bredd = 4, hojd = 4, farg = "gron", matt = true }
+skriver = ["längd · 2", "area · 4", "volym · 8"]
+kommentar = "Kvadraten 2 × 2 ryms fyra gånger i 4 × 4."
+
+[[uppgift]]
+niva = 1
+fraga = "En kvadrat får {k} gånger så långa sidor. Hur många gånger större blir arean?"
+svar = "{k*k}"
+var = { k = "2..5" }
+ledtrad = "Både bredden och höjden blir {k} gånger längre: {k} · {k}."
+feltankar = { "{k}" = "Arean växer i två riktningar – bredd OCH höjd: {k} · {k}." }
+losning = ["Bredden blir {k} gånger längre, och höjden också.", "{k} · {k} = {k*k}."]
+
+[[uppgift]]
+niva = 2
+fraga = "En kub får {k} gånger så långa kanter. Hur många gånger större blir volymen?"
+svar = "{k**3}"
+var = { k = "2..4" }
+ledtrad = "Tre riktningar: {k} · {k} · {k}."
+feltankar = { "{k*k}" = "Det är areaskalan. Volym har tre dimensioner: {k}³." }
+losning = ["Tre riktningar: längd, bredd, höjd.", "{k} · {k} · {k} = {k**3}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En karta har skalan 1:{ts(s)}. En sjö är {a} cm² på kartan. Hur många km² är den? (1 km² = 10¹⁰ cm²)"
+svar = "{a}*{s}^2/10^10"
+var = { s = "[10000, 20000, 50000]", a = "2..9" }
+ledtrad = "Areaskalan är 1:{s}². {a} · {s}² cm², sedan delat med 10¹⁰."
+feltankar = { "{a}*{s}/10^10" = "Areor skalas med längdskalan i kvadrat: {s}²." }
+losning = ["Areaskalan: 1:{ts(s)}² – varje cm² på kartan är {ts(s*s)} cm².", "{a} · {ts(s*s)} = {ts(a*s*s)} cm².", "Dela med 10¹⁰: {a*s*s/10**10} km²."]
+
+[[rad]]
+sager = "skalan för längd, area och volym"
+figur = { typ = "tabell", rubriker = ["längd", "area", "volym"], rader = [["· 2", "· 4", "· 8"], ["· 3", "· 9", "· 27"], ["· k", "· k²", "· k³"]], kolbredd = 90 }
+skriver = ["area: k², volym: k³"]
+
+[[rad]]
+sager = "likformiga trianglar"
+skriver = ["samma vinklar ⇒ samma proportion"]
+kommentar = "Är två vinklar lika är den tredje det också – då räcker det att jämföra två vinklar."
+
+[[exempel]]
+rubrik = "Dubbelt så stor kvadrat"
+figur = { typ = "rektangel", bredd = 4, hojd = 4, farg = "gron", matt = true }
+steg = [
+  "En kvadrat 2 × 2 har arean 4. En kvadrat 4 × 4 har arean 16.",
+  "Sidorna blev 2 gånger längre – arean blev 4 gånger större.",
+  "Den lilla kvadraten ryms fyra gånger i den stora: 2² = 4.",
+]
+
+[[exempel]]
+rubrik = "Höjden på ett träd med skuggor"
+figur = { typ = "tabell", rubriker = ["", "höjd", "skugga"], rader = [["pinne", "1 m", "2 m"], ["träd", "?", "14 m"]], kolbredd = 90 }
+steg = [
+  "Solen ger samma vinkel – trianglarna är likformiga.",
+  "Trädets skugga är 14 / 2 = 7 gånger längre.",
+  "Trädet är 7 · 1 = 7 m högt.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. En rektangel 2 cm × 3 cm förstoras så att alla sidor blir {k} gånger längre. Vad blir arean?"
+steg = ["Nya sidor: {2*k} cm och {3*k} cm.", "Ny area: {2*k} · {3*k} = ?"]
+svar = "{6*k*k}"
+var = { k = "2..5" }
+ledtrad = "Multiplicera de nya sidorna."
+feltankar = { "{6*k}" = "Arean blir {k}² = {k*k} gånger större, inte {k} gånger: 6 · {k*k}." }
+losning = ["{2*k} · {3*k} = {6*k*k} cm².", "Jämför: 6 · {k*k} = {6*k*k} – arean blev {k}² gånger större."]
+
+[[uppgift]]
+niva = 2
+fraga = "En triangel har sidorna 3, 4 och 5 cm. En likformig triangel har den kortaste sidan {3*k} cm. Hur lång är den längsta sidan?"
+svar = "{5*k}"
+var = { k = "2..6" }
+ledtrad = "Skalan: {3*k} / 3 = {k}."
+feltankar = { "{5+3*k-3}" = "Likformighet är multiplikation, inte tillägg: alla sidor blir {k} gånger längre." }
+losning = ["{3*k} / 3 = {k} – skalan.", "5 · {k} = {5*k} cm."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "En pizza med diametern 40 cm jämförs med en på 20 cm. Hur mycket mer pizza är den stora?"
+alternativ = ["dubbelt så mycket", "tre gånger så mycket", "fyra gånger så mycket"]
+svar = "fyra gånger så mycket"
+form = "text"
+ledtrad = "Diametern är en längd. Pizzan är en area."
+feltankar = { "dubbelt så mycket" = "Diametern är dubbelt så lång – men arean växer med skalan i kvadrat: 2² = 4." }
+losning = ["Längdskalan: 40 / 20 = 2.", "Areaskalan: 2² = 4.", "Fyra gånger så mycket pizza."]
+
+[[uppgift]]
+niva = 3
+fraga = "En kub med kanten 2 cm väger {m} g. Hur mycket väger en kub av samma material med kanten {2*k} cm?"
+svar = "{m*k**3}"
+var = { m = "[5, 8, 10, 20]", k = "2..4" }
+ledtrad = "Vikten följer volymen: skalan i kubik."
+feltankar = { "{m*k}" = "Vikten följer volymen, inte längden: {k}³ = {k**3}.", "{m*k*k}" = "Det är areaskalan. Volym (och vikt) skalas med {k}³." }
+losning = ["Längdskalan: {2*k} / 2 = {k}.", "Volymskalan: {k}³ = {k**3}.", "{m} · {k**3} = {m*k**3} g."]
+
+[[uppgift]]
+niva = 3
+fraga = "En {p} m hög pinne kastar en {s} m lång skugga. Samtidigt kastar ett träd en {s*k} m lång skugga. Hur högt är trädet?"
+svar = "{p*k}"
+var = { p = "1..2", s = "[2, 3, 4]", k = "3..8" }
+ledtrad = "Likformiga trianglar: skuggan är {k} gånger längre."
+losning = ["Trädets skugga: {s*k} / {s} = {k} gånger längre.", "Trädet: {p} · {k} = {p*k} m."]

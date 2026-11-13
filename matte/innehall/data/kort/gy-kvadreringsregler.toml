@@ -1,0 +1,135 @@
+id = "gy-kvadreringsregler"
+titel = "Kvadreringsreglerna och konjugatregeln"
+omrade = "algebra"
+ikon = "kvadrat"
+sager = "(a + b)² = a² + 2ab + b². (a − b)² = a² − 2ab + b². (a + b)(a − b) = a² − b²."
+galler = "Alltid – de är bara multiplikation av parenteser, skrivna kort."
+galler_inte = "(a + b)² är INTE a² + b². Mittentermen 2ab glöms ofta."
+forkunskap = ["forenkla-uttryck"]
+kalla = "Kvadraten delad i fyra rektanglar (a², ab, ab, b²) – areamodellen gör mittentermen synlig."
+
+[[rad]]
+sager = "x plus tre i kvadrat"
+figur = { typ = "tabell", rubriker = ["·", "x", "3"], rader = [["x", "x²", "3x"], ["3", "3x", "9"]], kolbredd = 70 }
+skriver = ["(x + 3)² = x² + 6x + 9"]
+kommentar = "Fyra rutor: x², två stycken 3x och 9."
+
+[[uppgift]]
+niva = 1
+fraga = "Utveckla (x + {a})²"
+svarstyp = "uttryck"
+svar = "x^2 + {2*a}x + {a*a}"
+var = { a = "1..9" }
+ledtrad = "x² + 2 · {a} · x + {a}²"
+feltankar = { "x^2 + {a*a}" = "Mittentermen saknas: (x + {a})(x + {a}) ger också två stycken {a}x – alltså + {2*a}x." }
+losning = ["(x + {a})² = (x + {a})(x + {a}).", "= x² + {a}x + {a}x + {a*a}.", "= x² + {2*a}x + {a*a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Utveckla (x − {a})²"
+svarstyp = "uttryck"
+svar = "x^2 - {2*a}x + {a*a}"
+var = { a = "1..9" }
+ledtrad = "x² − 2 · {a} · x + {a}²"
+feltankar = { "x^2 - {a*a}" = "Det är konjugatregeln, men här är parentesen i kvadrat: (x − {a})(x − {a}) = x² − {2*a}x + {a*a}.", "x^2 - {2*a}x - {a*a}" = "(−{a}) · (−{a}) = +{a*a}. Sista termen är positiv." }
+losning = ["(x − {a})² = (x − {a})(x − {a}).", "= x² − {a}x − {a}x + {a*a}.", "= x² − {2*a}x + {a*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Utveckla ({b}x + {a})({b}x − {a})"
+svarstyp = "uttryck"
+svar = "{b*b}x^2 - {a*a}"
+var = { a = "1..9", b = "2..5" }
+ledtrad = "Konjugatregeln: ({b}x)² − {a}²."
+feltankar = { "{b}x^2 - {a*a}" = "({b}x)² = {b*b}x² – kvadrera både {b} och x." }
+losning = ["Konjugatregeln: (A + B)(A − B) = A² − B².", "A = {b}x, B = {a}.", "({b}x)² − {a}² = {b*b}x² − {a*a}."]
+
+[[rad]]
+sager = "x minus tre i kvadrat"
+figur = { typ = "tabell", rubriker = ["·", "x", "−3"], rader = [["x", "x²", "−3x"], ["−3", "−3x", "+9"]], kolbredd = 70 }
+skriver = ["(x − 3)² = x² − 6x + 9"]
+kommentar = "(−3) · (−3) = +9 – sista termen är alltid positiv."
+
+[[rad]]
+sager = "konjugatregeln"
+figur = { typ = "tabell", rubriker = ["·", "x", "−3"], rader = [["x", "x²", "−3x"], ["3", "3x", "−9"]], kolbredd = 70 }
+skriver = ["(x + 3)(x − 3) = x² − 9"]
+kommentar = "Mittentermerna −3x och +3x tar ut varandra."
+
+[[rad]]
+sager = "baklänges: faktorisera"
+skriver = ["x² + 6x + 9 = (x + 3)²", "x² − 25 = (x + 5)(x − 5)"]
+
+[[exempel]]
+rubrik = "Areamodellen: (x + 3)²"
+figur = { typ = "tabell", rubriker = ["·", "x", "3"], rader = [["x", "x²", "3x"], ["3", "3x", "9"]], kolbredd = 70 }
+steg = [
+  "En kvadrat med sidan x + 3 delas i fyra delar.",
+  "x², två rektanglar 3x och en liten kvadrat 9.",
+  "(x + 3)² = x² + 6x + 9. Mittentermen är de två rektanglarna.",
+]
+
+[[exempel]]
+rubrik = "31² i huvudet"
+steg = [
+  "31 = 30 + 1. (30 + 1)² = 30² + 2 · 30 · 1 + 1².",
+  "= 900 + 60 + 1.",
+  "= 961.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "uttryck"
+fraga = "Följ stegen och utveckla (x + {a})²."
+steg = ["(x + {a})(x + {a})", "= x² + {a}x + {a}x + {a*a}", "= ?"]
+svar = "x^2 + {2*a}x + {a*a}"
+var = { a = "1..9" }
+ledtrad = "Slå ihop de två x-termerna."
+losning = ["{a}x + {a}x = {2*a}x.", "x² + {2*a}x + {a*a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "uttryck"
+fraga = "Utveckla (x + {a})(x − {a})"
+svar = "x^2 - {a*a}"
+var = { a = "1..9" }
+ledtrad = "Konjugatregeln: mittentermerna tar ut varandra."
+feltankar = { "x^2 + {a*a}" = "{a} · (−{a}) = −{a*a}. Sista termen är negativ.", "x^2 - {2*a}x - {a*a}" = "Mittentermerna är −{a}x och +{a}x – de tar ut varandra." }
+losning = ["x · x = x². x · (−{a}) + {a} · x = 0.", "{a} · (−{a}) = −{a*a}.", "x² − {a*a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Räkna ut {10*n+1}² med kvadreringsregeln."
+svar = "{(10*n+1)**2}"
+var = { n = "2..9" }
+ledtrad = "({10*n} + 1)² = {10*n}² + 2 · {10*n} · 1 + 1²."
+feltankar = { "{100*n*n+1}" = "Mittentermen saknas: 2 · {10*n} · 1 = {20*n}." }
+losning = ["{10*n}² = {100*n*n}.", "2 · {10*n} · 1 = {20*n}.", "{100*n*n} + {20*n} + 1 = {(10*n+1)**2}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Utveckla (2x + {a})²"
+svar = "4x^2 + {4*a}x + {a*a}"
+var = { a = "1..9" }
+ledtrad = "(2x)² + 2 · 2x · {a} + {a}²."
+feltankar = { "2x^2 + {4*a}x + {a*a}" = "(2x)² = 4x² – både tvåan och x kvadreras.", "4x^2 + {a*a}" = "Mittentermen saknas: 2 · 2x · {a} = {4*a}x." }
+losning = ["(2x)² = 4x².", "2 · 2x · {a} = {4*a}x.", "4x² + {4*a}x + {a*a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Faktorisera: x² − {a*a} = (x + ?)(x − ?). Vilket tal ska stå på båda platserna?"
+svar = "{a}"
+var = { a = "2..12" }
+ledtrad = "Konjugatregeln baklänges: vilket tal i kvadrat är {a*a}?"
+losning = ["x² − {a*a} = x² − {a}².", "= (x + {a})(x − {a})."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "uttryck"
+fraga = "Förenkla (x + {a})² − (x − {a})²"
+svar = "{4*a}x"
+var = { a = "1..6" }
+ledtrad = "Utveckla båda och subtrahera. Var noga med minustecknet framför den andra parentesen."
+feltankar = { "0" = "(x − {a})² har mittentermen −{2*a}x. När den dras ifrån blir den +{2*a}x." }
+losning = ["(x + {a})² = x² + {2*a}x + {a*a}.", "(x − {a})² = x² − {2*a}x + {a*a}.", "Skillnaden: {2*a}x − (−{2*a}x) = {4*a}x."]

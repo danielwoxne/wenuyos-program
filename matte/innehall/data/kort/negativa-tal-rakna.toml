@@ -1,0 +1,137 @@
+id = "negativa-tal-rakna"
+titel = "Räkna med negativa tal"
+omrade = "tal"
+ikon = "minus"
+sager = "Att dra ifrån ett negativt tal är samma som att lägga till: 5 − (−3) = 5 + 3 = 8. Minus minus blir plus."
+galler = "Alltid. Tänk skuld: att ta bort en skuld på 3 kr är som att få 3 kr."
+galler_inte = "”Minus och minus blir alltid plus” stämmer inte. −2 − 4 = −6: det är två steg åt vänster, inget som vänds. Regeln gäller två minustecken direkt efter varandra, −(−3), och när man multiplicerar eller dividerar två negativa tal."
+forkunskap = ["negativa-tal"]
+kalla = "Tallinjen: minus vänder riktningen; två vändningar = framåt. Skuldmodellen för mening."
+
+[[rad]]
+sager = "fem minus minus tre"
+figur = { typ = "tallinje", fran = -2, till = 10, markera = [5, 8] }
+skriver = ["5 − (−3) = 5 + 3 = 8"]
+
+[[rad]]
+sager = "minus två minus fyra"
+figur = { typ = "tallinje", fran = -8, till = 2, markera = [-2, -6] }
+skriver = ["−2 − 4 = −6"]
+kommentar = "Från −2, fyra steg åt vänster."
+
+[[rad]]
+sager = "minus gånger minus"
+figur = { typ = "tabell", rubriker = ["", "·", "="], rader = [["(−3)", "·  4", "−12"], ["(−3)", "· (−4)", "12"]], kolbredd = 90 }
+skriver = ["(−3) · (−4) = 12"]
+
+[[uppgift]]
+niva = 1
+fraga = "{a} − (−{b}) = ? (minus minus blir plus)"
+svar = "{a+b}"
+var = { a = "1..9", b = "1..9" }
+ledtrad = "{a} + {b}."
+losning = ["Minus minus blir plus.", "{a} − (−{b}) = {a} + {b} = {a+b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "{a} − (−{b}) = ?"
+svar = "{a+b}"
+var = { a = "-9..9", b = "1..9" }
+ledtrad = "Att dra ifrån −{b} är att lägga till {b}."
+feltankar = { "{a-b}" = "Du drog ifrån {b}. Men det står minus MINUS {b}: två minus blir plus, så {a} + {b}." }
+losning = ["− (−{b}) = + {b}.", "{a} + {b} = {a+b}."]
+
+[[uppgift]]
+niva = 3
+fraga = "(−{a}) · (−{b}) = ?"
+svar = "{a*b}"
+var = { a = "2..9", b = "2..9" }
+ledtrad = "Minus gånger minus blir plus."
+feltankar = { "{-a*b}" = "Två negativa tal gånger varandra ger ett positivt tal. Bara när ETT av talen är negativt blir produkten negativ." }
+losning = ["Två negativa tal gånger varandra ger ett positivt tal.", "{a} · {b} = {a*b}."]
+
+[[exempel]]
+rubrik = "5 − (−3) som skuld"
+figur = { typ = "tallinje", fran = -2, till = 10, markera = [5, 8] }
+steg = [
+  "−3 kan vara en skuld på 3 kr.",
+  "Att ta bort (dra ifrån) en skuld gör dig 3 kr rikare.",
+  "5 − (−3) = 5 + 3 = 8.",
+]
+
+[[exempel]]
+rubrik = "−2 − 4 – här vänds ingenting"
+figur = { typ = "tallinje", fran = -8, till = 2, markera = [-2, -6] }
+steg = [
+  "Börja på −2.",
+  "Minus 4: fyra steg åt vänster.",
+  "−2 − 4 = −6. Det är inte ”minus minus” – fyran är positiv.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. −{a} − {b} = ?"
+steg = ["Börja på −{a}.", "Minus {b}: {b} steg till åt vänster."]
+figur = { typ = "tallinje", fran = -20, till = 2, markera = ["-{a}"], etikett = 2 }
+svar = "{-a-b}"
+var = { a = "1..9", b = "1..9" }
+ledtrad = "Längre åt vänster – mer negativt."
+feltankar = { "{a+b}" = "Det är inte minus minus – {b} är positivt. Du går {b} steg åt vänster från −{a}.", "{b-a}" = "Minus {b} är åt vänster, inte åt höger." }
+losning = ["−{a} − {b} = −({a} + {b}).", "= {-a-b}."]
+
+[[uppgift]]
+niva = 2
+fraga = "−{a} + {b} = ?"
+svar = "{b-a}"
+var = { a = "2..12", b = "1..12" }
+ledtrad = "Börja på −{a} och gå {b} steg åt höger."
+feltankar = { "{-a-b}" = "Plus {b} är åt höger – mot noll och förbi." }
+losning = ["Börja på −{a}.", "{b} steg åt höger.", "Du hamnar på {b-a}."]
+
+[[uppgift]]
+niva = 2
+fraga = "(−{a}) · {b} = ?"
+svar = "{-a*b}"
+var = { a = "2..9", b = "2..9" }
+ledtrad = "Ett negativt tal gånger ett positivt tal blir negativt."
+feltankar = { "{a*b}" = "Bara ett av talen är negativt – då blir produkten negativ." }
+losning = ["(−{a}) · {b} = −({a} · {b}).", "= {-a*b}. {b} skulder på {a} kr är en skuld på {a*b} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "−{a*b} / {b} = ?"
+svar = "{-a}"
+var = { a = "2..9", b = "2..9" }
+ledtrad = "Negativt delat med positivt blir negativt."
+feltankar = { "{a}" = "Tecknen är olika – kvoten blir negativ." }
+losning = ["{a*b} / {b} = {a}.", "Olika tecken ger minus: {-a}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Blir svaret positivt eller negativt? (−{a}) · (−{b}) · (−{c})"
+alternativ = ["positivt", "negativt"]
+svar = "negativt"
+form = "text"
+var = { a = "2..5", b = "2..5", c = "2..5" }
+ledtrad = "Räkna minustecknen. Två tar ut varandra."
+feltankar = { "positivt" = "Två minus blir plus – men det finns ett tredje. Plus gånger minus blir minus." }
+losning = ["(−{a}) · (−{b}) = {a*b} – positivt.", "{a*b} · (−{c}) = {-a*b*c} – negativt.", "Udda antal minustecken ger negativt svar."]
+
+[[uppgift]]
+niva = 3
+fraga = "Saldot på kontot är −{a} kr. Du sätter in {b} kr. Vad är saldot nu?"
+svar = "{b-a}"
+var = { a = "50..400", b = "100..500" }
+ledtrad = "−{a} + {b}."
+feltankar = { "{-a-b}" = "Att sätta in pengar ökar saldot – åt höger på tallinjen." }
+losning = ["−{a} + {b}.", "= {b-a} kr."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} − {b} − (−{c}) = ?"
+svar = "{a-b+c}"
+var = { a = "1..9", b = "5..15", c = "1..9" }
+ledtrad = "Ta ett steg i taget. − (−{c}) blir + {c}."
+feltankar = { "{a-b-c}" = "− (−{c}) är två minustecken efter varandra – det blir + {c}." }
+losning = ["{a} − {b} = {a-b}.", "{a-b} − (−{c}) = {a-b} + {c}.", "= {a-b+c}."]

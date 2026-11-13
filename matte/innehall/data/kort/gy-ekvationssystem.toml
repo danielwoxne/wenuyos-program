@@ -1,0 +1,137 @@
+id = "gy-ekvationssystem"
+titel = "Linjära ekvationssystem"
+omrade = "algebra"
+ikon = "koordinatsystem"
+sager = "Två ekvationer med två obekanta. Lösningen är punkten där linjerna skär varandra – grafiskt, eller med insättning/addition."
+galler = "När linjerna inte är parallella. Parallella linjer (samma k) har ingen lösning."
+galler_inte = "Ett ekvationssystem har inte alltid exakt en lösning. Parallella linjer (samma k, olika m) möts aldrig – ingen lösning. Två ekvationer som beskriver samma linje har oändligt många."
+forkunskap = ["gy-rata-linjen", "ekvationer-tva-steg"]
+kalla = "Grafisk lösning först (skärningen syns), sedan algebraisk."
+
+[[rad]]
+sager = "y = x + 1 och y = −x + 5"
+figur = { typ = "koordinatsystem", xmax = 6, ymax = 6, linjer = [[1, 1], [-1, 5]], punkter = [[2, 3]] }
+skriver = ["x + 1 = −x + 5", "x = 2, y = 3"]
+
+[[uppgift]]
+niva = 1
+svarstyp = "punkt"
+fraga = "Klicka på punkten där linjerna skär varandra."
+figur = { typ = "koordinatsystem", xmin = -1, xmax = 7, ymin = -1, ymax = 8, ruta = 28, linjer = [["{k1}", "{y0-k1*x0}"], ["{k2}", "{y0-k2*x0}"]] }
+svar = "{x0};{y0}"
+var = { x0 = "1..5", y0 = "1..6", k1 = "[1, 2]", k2 = "[-1, -2]" }
+ledtrad = "Där båda linjerna går genom samma punkt."
+losning = ["Hitta punkten där båda linjerna går igenom.", "Den ligger i ({x0}, {y0})."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Lös systemet: y = {k1}x {t(y0-k1*x0)} och y = {k2}x {t(y0-k2*x0)}."
+falt = ["x", "y"]
+svar = ["{x0}", "{y0}"]
+var = { x0 = "-3..5", y0 = "-4..6", k1 = "[1, 2, 3]", k2 = "[-1, -2, -3]" }
+ledtrad = "Sätt högerleden lika: {k1}x {t(y0-k1*x0)} = {k2}x {t(y0-k2*x0)}. Lös ut x, sätt in för y."
+feltankar = { "{y0};{x0}" = "x och y har bytt plats. x är det du löser ut först." }
+losning = ["{k1}x {t(y0-k1*x0)} = {k2}x {t(y0-k2*x0)}.", "{k1-k2}x = {(k1-k2)*x0}, x = {x0}.", "y = {k1} · {x0} {t(y0-k1*x0)} = {y0}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Lös systemet: x + y = {x0+y0} och x − y = {x0-y0}."
+falt = ["x", "y"]
+svar = ["{x0}", "{y0}"]
+var = { x0 = "1..9", y0 = "1..9" }
+ledtrad = "Addera ekvationerna: 2x = {2*x0}."
+losning = ["Addera: (x + y) + (x − y) = {x0+y0} + {x0-y0}.", "2x = {2*x0}, x = {x0}.", "y = {x0+y0} − {x0} = {y0}."]
+
+[[rad]]
+sager = "insättningsmetoden"
+figur = { typ = "tabell", rubriker = ["steg", ""], rader = [["y = 2x", "x + y = 9"], ["x + 2x = 9", "sätt in y"], ["x = 3, y = 6", ""]], kolbredd = 120 }
+skriver = ["byt y mot 2x"]
+
+[[rad]]
+sager = "additionsmetoden"
+figur = { typ = "tabell", rubriker = ["", ""], rader = [["x + y = 10", "x − y = 4"], ["2x = 14", "addera"], ["x = 7, y = 3", ""]], kolbredd = 120 }
+skriver = ["få en obekant att försvinna"]
+
+[[rad]]
+sager = "ingen lösning"
+figur = { typ = "koordinatsystem", xmax = 5, ymax = 6, linjer = [[1, 0], [1, 2]] }
+skriver = ["y = x och y = x + 2"]
+
+[[exempel]]
+rubrik = "Två taxibolag"
+text = "A: 40 kr + 10 kr/km. B: 60 kr + 8 kr/km. När kostar de lika?"
+steg = [
+  "Skriv priset som funktioner: y = 10x + 40 och y = 8x + 60.",
+  "Lika pris: 10x + 40 = 8x + 60, alltså 2x = 20 och x = 10.",
+  "Efter 10 km kostar båda 140 kr. Kortare resor: A billigast. Längre: B billigast.",
+]
+
+[[exempel]]
+rubrik = "Additionsmetoden"
+text = "2x + y = 11 och x − y = 1"
+steg = [
+  "Addera ekvationerna: y försvinner – 3x = 12.",
+  "x = 4.",
+  "Sätt in i x − y = 1: 4 − y = 1, y = 3. Kontroll: 2 · 4 + 3 = 11.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "tabell"
+fraga = "Följ stegen. Lös systemet y = {k1}x {t(y0-k1*x0)} och y = {k2}x {t(y0-k2*x0)}."
+steg = ["Sätt högerleden lika: {k1}x {t(y0-k1*x0)} = {k2}x {t(y0-k2*x0)}", "Samla x: {k1-k2}x = {(k1-k2)*x0}", "x = ?, sätt sedan in x för att få y."]
+falt = ["x", "y"]
+svar = ["{x0}", "{y0}"]
+var = { x0 = "-3..5", y0 = "-4..6", k1 = "[1, 2, 3]", k2 = "[-1, -2]" }
+ledtrad = "x = {(k1-k2)*x0} / {k1-k2}."
+losning = ["x = {x0}.", "y = {k1} · {x0} {t(y0-k1*x0)} = {y0}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "tabell"
+fraga = "Lös systemet y = {k}x och x + y = {(1+k)*x0}."
+falt = ["x", "y"]
+svar = ["{x0}", "{k*x0}"]
+var = { k = "2..5", x0 = "1..8" }
+ledtrad = "Sätt in y = {k}x i den andra: x + {k}x = {(1+k)*x0}."
+losning = ["x + {k}x = {(1+k)*x0}.", "{1+k}x = {(1+k)*x0}, x = {x0}.", "y = {k} · {x0} = {k*x0}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Taxi A tar {a1} kr + {k1} kr/km. Taxi B tar {a1+(k1-k2)*x0} kr + {k2} kr/km. Efter hur många km kostar de lika?"
+svar = "{x0}"
+var = { x0 = "[5, 10, 15, 20]", k2 = "6..9", k1 = "k2+1..k2+2", a1 = "[20, 30, 40, 50]" }
+ledtrad = "{k1}x + {a1} = {k2}x + {a1+(k1-k2)*x0}."
+losning = ["{k1}x + {a1} = {k2}x + {a1+(k1-k2)*x0}.", "{k1-k2}x = {(k1-k2)*x0}.", "x = {x0} km."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Hur många lösningar har systemet y = {k}x {t(m)} och y = {k}x {t(m+d)}?"
+alternativ = ["ingen", "en", "oändligt många"]
+svar = "ingen"
+form = "text"
+var = { k = "-3..3 != 0", m = "-3..3", d = "1..4" }
+ledtrad = "Jämför lutningarna och skärningarna med y-axeln."
+feltankar = { "en" = "Linjerna har samma k – de är parallella och skär aldrig varandra.", "oändligt många" = "Samma k men olika m: parallella, inte samma linje." }
+losning = ["Båda har k = {k} – samma lutning.", "Men olika m: {m} och {m+d}.", "Parallella linjer – ingen skärning, ingen lösning."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Lös systemet 2x + y = {2*x0+y0} och x − y = {x0-y0}."
+falt = ["x", "y"]
+svar = ["{x0}", "{y0}"]
+var = { x0 = "1..8", y0 = "1..8" }
+ledtrad = "Addera ekvationerna – då försvinner y."
+losning = ["Addera: 3x = {3*x0}, x = {x0}.", "x − y = {x0-y0}: {x0} − y = {x0-y0}.", "y = {y0}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Vuxenbiljetter kostar {v} kr och barnbiljetter {b} kr. {a+c} biljetter kostade {v*a+b*c} kr. Hur många vuxenbiljetter var det?"
+svar = "{a}"
+var = { v = "[120, 140, 150]", b = "[60, 70, 80]", a = "1..6", c = "1..6" }
+ledtrad = "x + y = {a+c} och {v}x + {b}y = {v*a+b*c}."
+losning = ["x + y = {a+c}, så y = {a+c} − x.", "{v}x + {b}({a+c} − x) = {v*a+b*c} ger {v-b}x = {(v-b)*a}.", "x = {a} vuxenbiljetter."]

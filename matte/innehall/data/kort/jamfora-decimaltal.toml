@@ -1,0 +1,138 @@
+id = "jamfora-decimaltal"
+titel = "Jämföra decimaltal"
+omrade = "tal"
+ikon = "storre-an"
+bild = "flaskor-0-5.jpg"
+bildtext = "0,5 l och 0,50 l – lika mycket must i båda flaskorna. Nollan sist ändrar ingenting: fem tiondelar är femtio hundradelar."
+sager = "Jämför siffra för siffra från vänster: först heltalen, sedan tiondelarna, sedan hundradelarna. Fler siffror betyder inte större tal."
+galler = "Alltid för decimaltal. 0,8 är större än 0,75 fast 0,75 har fler siffror."
+galler_inte = "'Längre tal är större' gäller bara heltal (123 > 99). För decimaltal gäller det inte."
+forkunskap = ["decimaltal-tallinjen"]
+kalla = "Den vanligaste feltanken om decimaltal: 'longer is larger' (Resnick m.fl.). Variation: samma tiondel, olika antal siffror."
+
+[[rad]]
+sager = "åtta tiondelar mot sjuttiofem hundradelar"
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,05", markera = ["0,75", "0,8"], etikett = 2 }
+skriver = ["0,8 > 0,75"]
+kommentar = "0,8 = 0,80 = 80 hundradelar. 0,75 = 75 hundradelar."
+
+[[rad]]
+sager = "lika många decimaler gör det lätt att se"
+figur = { typ = "tabell", rubriker = ["tal", "som hundradelar"], rader = [["0,8", "0,80"], ["0,75", "0,75"], ["0,9", "0,90"]], kolbredd = 130 }
+skriver = ["0,75 < 0,80 < 0,90"]
+
+[[uppgift]]
+niva = 1
+fraga = "Vilket är störst?"
+svar = "0,{a}"
+form = "auto"
+var = { b = "1..7", a = "b+1..9" }
+alternativ = ["0,{a}", "0,{b}"]
+ledtrad = "Jämför tiondelarna: {a} eller {b}?"
+losning = ["Heltalen är lika: 0.", "Jämför tiondelarna: {a} och {b}.", "0,{a} är störst."]
+
+[[uppgift]]
+niva = 2
+fraga = "Vilket är störst?"
+svar = "0,{a}"
+form = "auto"
+var = { b = "1..7", a = "b+1..9" }
+alternativ = ["0,{a}", "0,{b}5"]
+ledtrad = "Skriv båda med två decimaler: 0,{a}0 och 0,{b}5."
+feltankar = { "0,{b}5" = "0,{b}5 har fler siffror, men det är inte större. 0,{a} = 0,{a}0 = {a}0 hundradelar och 0,{b}5 = {b}5 hundradelar. Jämför tiondelarna först: {a} > {b}." }
+losning = ["Skriv med två decimaler: 0,{a}0 och 0,{b}5.", "{a}0 hundradelar mot {b}5 hundradelar.", "0,{a} är störst."]
+
+[[uppgift]]
+niva = 3
+fraga = "Skriv ett tal som ligger mellan 0,{a} och 0,{a+1}."
+svar = "0,{a}5"
+form = "auto"
+var = { a = "1..8" }
+alternativ = ["0,{a}5", "0,{a+1}5", "{a},5"]
+ledtrad = "Mellan {a} och {a+1} tiondelar finns hundradelar: 0,{a}1, 0,{a}2 … 0,{a}9."
+feltankar = { "{a},5" = "{a},5 är ett tal mellan {a} och {a+1} – inte mellan 0,{a} och 0,{a+1}. Kommat flyttar allt tio gånger." }
+losning = ["0,{a} = 0,{a}0 och 0,{a+1} = 0,{a+1}0.", "Mellan dem: 0,{a}1, 0,{a}2 … 0,{a}9.", "Till exempel 0,{a}5."]
+
+[[uppgift]]
+niva = 1
+fraga = "Den ena flaskan är märkt 0,5 l och den andra 0,50 l. Vilken innehåller mest?"
+figur = { typ = "scen", bild = "flaskor-0-5.jpg", bredd = 560 }
+svar = "lika mycket"
+alternativ = ["0,5 l", "0,50 l", "lika mycket"]
+ledtrad = "Titta på hur högt musten står i flaskorna."
+feltankar = { "0,50 l" = "0,50 har fler siffror – men nollan sist ändrar inget. 0,5 = 5 tiondelar = 50 hundradelar = 0,50. Musten står lika högt.", "0,5 l" = "Båda är lika mycket: 0,5 = 0,50. Musten står lika högt i flaskorna." }
+losning = ["0,5 = fem tiondelar = femtio hundradelar = 0,50.", "Lika mycket."]
+
+[[exempel]]
+rubrik = "0,8 eller 0,75?"
+figur = { typ = "tallinje", fran = 0, till = 1, steg = "0,05", markera = ["0,75", "0,8"], etikett = 2 }
+steg = [
+  "Jämför från vänster. Heltalen: 0 och 0 – lika.",
+  "Tiondelarna: 8 och 7. Åtta är mer.",
+  "0,8 > 0,75. Att 0,75 har fler siffror spelar ingen roll.",
+]
+
+[[exempel]]
+rubrik = "Fyll på med nollor"
+figur = { typ = "tabell", rubriker = ["tal", "med två decimaler"], rader = [["0,6", "0,60"], ["0,59", "0,59"], ["0,605", "0,605"]], kolbredd = 150 }
+steg = [
+  "Ge talen lika många decimaler genom att lägga till nollor sist.",
+  "0,60 och 0,59: nu syns det att 60 hundradelar är mer än 59.",
+  "En nolla sist ändrar aldrig talets värde: 0,6 = 0,60 = 0,600.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "val"
+fraga = "Följ stegen. Vilket är störst?"
+steg = ["Skriv båda med två decimaler.", "0,{a} = 0,{a}0", "Jämför {a}0 hundradelar och {b}5 hundradelar."]
+alternativ = ["0,{a}", "0,{b}5"]
+svar = "0,{a}"
+var = { b = "1..7", a = "b+1..9" }
+ledtrad = "{a}0 eller {b}5?"
+losning = ["{a}0 > {b}5.", "0,{a} är störst."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket är minst?"
+alternativ = ["0,{a}", "0,{a}{c}", "0,0{d}"]
+svar = "0,0{d}"
+var = { a = "1..9", c = "1..9", d = "1..9" }
+ledtrad = "Jämför tiondelssiffran först."
+feltankar = { "0,{a}" = "0,{a} har färst siffror – men 0,0{d} har en nolla på tiondelsplatsen. Den är minst." }
+losning = ["Tiondelarna: {a}, {a} och 0.", "0,0{d} har 0 tiondelar – minst.", "0,0{d} < 0,{a} < 0,{a}{c}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket tecken ska stå i rutan? 0,{a}0 ▢ 0,{a}"
+alternativ = [">", "<", "="]
+svar = "="
+form = "text"
+var = { a = "1..9" }
+ledtrad = "Ändrar en nolla sist talets värde?"
+feltankar = { ">" = "0,{a}0 har fler siffror men samma värde: {a} tiondelar = {a}0 hundradelar." }
+losning = ["0,{a} = {a} tiondelar.", "0,{a}0 = {a}0 hundradelar = {a} tiondelar.", "De är lika: 0,{a}0 = 0,{a}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "tabell"
+fraga = "Skriv talen 0,{a}{c} · 0,0{d} · 0,{a} i storleksordning, minst först."
+falt = ["minst", "mitten", "störst"]
+svar = ["0,0{d}", "0,{a}", "0,{a}{c}"]
+var = { a = "1..8", c = "1..9", d = "1..9" }
+ledtrad = "Skriv alla med två decimaler: 0,{a}{c} · 0,0{d} · 0,{a}0."
+losning = ["Med två decimaler: 0,{a}{c} · 0,0{d} · 0,{a}0.", "Som hundradelar: {10*a+c}, {d} och {10*a}.", "0,0{d} < 0,{a} < 0,{a}{c}."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Lisa sprang 60 meter på 9,{x} sekunder och Ali på 9,{y}{z} sekunder. Vem var snabbast?"
+alternativ = ["Lisa", "Ali"]
+svar = "Ali"
+form = "text"
+var = { y = "1..8", x = "y+1..9", z = "1..9" }
+ledtrad = "Snabbast = kortast tid. Vilken tid är minst?"
+feltankar = { "Lisa" = "9,{x} har färre siffror – men det är större: 9,{x}0 > 9,{y}{z}. Ali tog kortare tid." }
+losning = ["Snabbast = minst tid.", "9,{x} = 9,{x}0. Jämför med 9,{y}{z}.", "9,{y}{z} < 9,{x}0 – Ali var snabbast."]

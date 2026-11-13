@@ -1,0 +1,164 @@
+id = "forskola-siffror"
+titel = "Siffrorna"
+omrade = "tal"
+ikon = "siffra-3"
+sager = "Varje siffra har ett namn och betyder ett antal: 3 är tre saker."
+galler = "Alltid. Siffran ser likadan ut vilken färg eller storlek den har."
+galler_inte = "Vänder du på en siffra kan den bli en annan: 6 upp och ned är 9. Titta var ringen sitter – nere på sexan, uppe på nian."
+kalla = "Talbegrepp: koppla symbol, ord och antal (Fuson). Lerikonerna gör siffran till ett föremål. Talraden framåt och bakåt (Gelman & Gallistel)."
+
+[[rad]]
+sager = "noll"
+figur = { typ = "ikonval", ikoner = ["siffra-0"], d = 56 }
+skriver = ["0"]
+kommentar = "Noll betyder ingenting – inga äpplen alls."
+
+[[rad]]
+sager = "ett"
+figur = { typ = "ikonval", ikoner = ["siffra-1"], d = 56 }
+skriver = ["1"]
+
+[[rad]]
+sager = "två"
+figur = { typ = "ikonval", ikoner = ["siffra-2"], d = 56 }
+skriver = ["2"]
+
+[[rad]]
+sager = "tre"
+figur = { typ = "ikonval", ikoner = ["siffra-3"], d = 56 }
+skriver = ["3"]
+
+[[rad]]
+sager = "fyra"
+figur = { typ = "ikonval", ikoner = ["siffra-4"], d = 56 }
+skriver = ["4"]
+
+[[rad]]
+sager = "fem"
+figur = { typ = "ikonval", ikoner = ["siffra-5"], d = 56 }
+skriver = ["5"]
+
+[[exempel]]
+rubrik = "Antalet, ordet och siffran"
+figur = { typ = "ikonval", fore_namn = "apple", fore_antal = 3, ikoner = ["siffra-3"], d = 56 }
+steg = [
+  "Räkna äpplena: ett, två, tre.",
+  "Vi säger: tre.",
+  "Vi skriver: 3. Siffran är ett tecken för antalet.",
+]
+
+[[exempel]]
+rubrik = "Sexan och nian"
+figur = { typ = "ikonval", ikoner = ["siffra-6", "siffra-9"], d = 64 }
+steg = [
+  "Sexan har ringen nere – som en mage.",
+  "Nian har ringen uppe – som ett huvud.",
+  "De ser nästan likadana ut, så titta alltid var ringen sitter.",
+]
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Klicka på siffran {['noll','ett','två','tre','fyra','fem'][n]}."
+figur = { typ = "ikonval", ikoner = ["siffra-1", "siffra-2", "siffra-3", "siffra-4", "siffra-5"], d = 64 }
+svar = "siffra-{n}"
+var = { n = "1..5" }
+ledtrad = "Räkna på fingrarna till {['noll','ett','två','tre','fyra','fem'][n]}. Siffran ser ut så här: {n}."
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Räkna äpplena. Klicka på siffran som visar hur många."
+figur = { typ = "ikonval", fore_namn = "apple", fore_antal = "{n}", ikoner = ["siffra-1", "siffra-2", "siffra-3", "siffra-4", "siffra-5"] }
+svar = "siffra-{n}"
+var = { n = "1..5" }
+ledtrad = "Peka på varje äpple och räkna. Det sista talet du säger är svaret."
+feltankar = { "siffra-{n+1}" = "En för mycket. Peka på varje äpple en gång.", "siffra-{n-1}" = "En för lite. Missade du något äpple?" }
+
+[[uppgift]]
+niva = 1
+svarstyp = "valj"
+fraga = "Vilken siffra saknas?"
+steg = ["{n-1}   ?   {n+1}"]
+figur = { typ = "ikonval", ikoner = ["siffra-{n+2}", "siffra-{n}", "siffra-{n-1}"], d = 64 }
+svar = "siffra-{n}"
+var = { n = "1..7" }
+ledtrad = "Räkna högt: {n-1}, … , {n+1}. Vad säger du i mitten?"
+feltankar = { "siffra-{n-1}" = "{n-1} står redan först. Vad kommer efter {n-1}?", "siffra-{n+2}" = "{n+2} kommer efter {n+1}. Vi letar efter talet mellan {n-1} och {n+1}." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på siffran som kommer efter {n}."
+figur = { typ = "ikonval", ikoner = ["siffra-{n-1}", "siffra-{n+1}", "siffra-{n+2}"], d = 64 }
+svar = "siffra-{n+1}"
+var = { n = "1..7" }
+ledtrad = "Räkna: … {n}, och sedan?"
+feltankar = { "siffra-{n-1}" = "Den kommer FÖRE {n}. Vilken kommer efter?", "siffra-{n+2}" = "Du hoppade över en. Efter {n} kommer {n+1}." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på siffran som kommer före {n}."
+figur = { typ = "ikonval", ikoner = ["siffra-{n+1}", "siffra-{n-1}", "siffra-{n-2}"], d = 64 }
+svar = "siffra-{n-1}"
+var = { n = "2..8" }
+ledtrad = "Räkna baklänges: {n}, och sedan?"
+feltankar = { "siffra-{n+1}" = "Den kommer EFTER {n}. Räkna baklänges: {n}, {n-1} …" }
+losning = ["Räkna baklänges från {n}.", "{n}, {n-1}.", "Före {n} kommer {n-1}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på siffran {['sex','sju','åtta','nio'][n-6]}."
+figur = { typ = "ikonval", ikoner = ["siffra-5", "siffra-6", "siffra-7", "siffra-8", "siffra-9"], d = 64 }
+svar = "siffra-{n}"
+var = { n = "6..9" }
+ledtrad = "Räkna från fem: sex, sju, åtta, nio."
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Hur många brickor ligger i tioramen?"
+figur = { typ = "tioram", fyllda = "{n}" }
+alternativ = ["{n-1}", "{n}", "{n+1}"]
+svar = "{n}"
+var = { n = "3..9" }
+ledtrad = "En full rad är fem. Räkna vidare på nästa rad."
+losning = ["Den första raden: {min(n,5)}.", "{'Nästa rad: ' + str(n-5) + ' till.' if n > 5 else 'Inga på nästa rad.'}", "Tillsammans {n}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på sexan."
+figur = { typ = "ikonval", ikoner = ["siffra-9", "siffra-6", "siffra-8"], d = 64 }
+svar = "siffra-6"
+ledtrad = "Sexan har ringen nere."
+feltankar = { "siffra-9" = "Det är nian – den har ringen uppe. Sexan har ringen nere, som en mage.", "siffra-8" = "Åttan har två ringar. Sexan har en ring, nere." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "valj"
+fraga = "Klicka på siffran som betyder ingenting alls."
+figur = { typ = "ikonval", ikoner = ["siffra-1", "siffra-6", "siffra-0"], d = 64 }
+svar = "siffra-0"
+ledtrad = "Noll äpplen är inga äpplen. Noll ser ut som en ring."
+feltankar = { "siffra-1" = "Ett är en sak. Vi letar efter ingenting – noll." }
+
+[[uppgift]]
+niva = 3
+svarstyp = "markera"
+fraga = "Klicka på alla treor."
+figur = { typ = "ikonval", ikoner = ["siffra-3", "siffra-8", "siffra-3", "siffra-5", "siffra-3"], d = 56 }
+svar = "siffra-3,siffra-3,siffra-3"
+ledtrad = "Trean är öppen till vänster. Åttan är stängd runt om."
+feltankar = { "siffra-3,siffra-3,siffra-3,siffra-8" = "Åttan är ingen trea – den är stängd på båda sidor." }
+
+[[uppgift]]
+niva = 2
+svarstyp = "para"
+fraga = "Dra en linje från prickarna till rätt siffra."
+par = [["prickar:{a}", "{a}"], ["prickar:{b}", "{b}"], ["prickar:{c}", "{c}"]]
+var = { a = "1..2", b = "3..4", c = "5..6" }
+ledtrad = "Räkna prickarna, och leta sedan upp siffran för det talet."
+losning = ["Räkna prickarna i första rutan.", "Leta upp siffran som säger samma antal och dra en linje dit.", "Gör likadant med de andra."]

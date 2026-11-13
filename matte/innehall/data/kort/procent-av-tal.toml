@@ -1,0 +1,163 @@
+id = "procent-av-tal"
+titel = "Procent av ett tal"
+omrade = "samband"
+ikon = "procent"
+bild = "prislapp.jpg"
+bildtext = "25 % rabatt betyder att en fjärdedel av priset dras av. Kostar boken 80 kr är rabatten 20 kr."
+sager = "Procent betyder hundradelar. 25 % av 80 är en fjärdedel av 80 = 20. 10 % är en tiondel – hitta den först, så kan du bygga alla andra procent."
+galler = "Alltid. 50 % = hälften, 25 % = en fjärdedel, 10 % = en tiondel, 1 % = en hundradel."
+galler_inte = "”Procent av” är inte minus. 20 % av 80 är 16 – inte 60 och inte 80 − 20. Och 20 % rabatt på 80 kr betyder 80 − 16 = 64 kr."
+forkunskap = ["brak-procent-decimal"]
+kalla = "Procent via benchmark-värden (10 %, 50 %) i stället för formel. Vanlig feltanke: 'procent av' som subtraktion."
+
+[[rad]]
+sager = "tio procent av 80"
+figur = { typ = "tiostaplar", fyllda = 1, farg = "himmel" }
+skriver = ["10 % av 80 = 80 / 10 = 8"]
+
+[[rad]]
+sager = "trettio procent av 80"
+figur = { typ = "tiostaplar", fyllda = 3, farg = "himmel" }
+skriver = ["30 % av 80 = 3 · 8 = 24"]
+
+[[rad]]
+sager = "tjugofem procent av 80"
+figur = { typ = "staende", delar = 4, fyllda = 1, farg = "rod" }
+skriver = ["25 % av 80 = 80 / 4 = 20"]
+
+[[uppgift]]
+niva = 1
+fraga = "Hur mycket är 10 % av {n}?"
+svar = "{n}/10"
+var = { n = "[30, 50, 80, 120, 200, 250]" }
+ledtrad = "En tiondel: dela med 10."
+losning = ["10 % = en tiondel.", "{n} / 10 = {n//10}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur mycket är {p} % av {n}?"
+svar = "{p}*{n}/100"
+var = { p = "[10, 20, 25, 30, 50, 75]", n = "[40, 80, 120, 200, 400]" }
+ledtrad = "Börja med 10 % av {n}, som är {n//10}. Bygg sedan {p} %."
+feltankar = { "{n-p}" = "'{p} % av {n}' är inte {n} minus {p}. Procent är en andel av talet: {p} hundradelar av {n}.", "{p}" = "{p} % är inte {p} kr – det är en andel. Räkna {p} hundradelar av {n}." }
+losning = ["10 % av {n} = {n//10}.", "{p} % = {p/10} · 10 %.", "{p/10} · {n//10} = {p*n/100}."]
+
+[[uppgift]]
+niva = 3
+fraga = "En tröja kostar {n} kr och säljs med {p} % rabatt. Vad kostar den nu?"
+svar = "{n} - {p}*{n}/100"
+var = { p = "[10, 20, 25, 50]", n = "[80, 120, 200, 300, 400]" }
+ledtrad = "Räkna först rabatten ({p} % av {n}), dra sedan av den."
+feltankar = { "{p}*{n}/100" = "Det är rabatten. Frågan är vad tröjan kostar EFTER rabatten: {n} minus rabatten.", "{n-p}" = "{p} % är inte {p} kr. Räkna {p} % av {n} först." }
+losning = ["Rabatten: {p} % av {n} = {p*n/100} kr.", "Nytt pris: {n} − {p*n/100} = {n - p*n/100} kr."]
+
+[[uppgift]]
+niva = 2
+fraga = "Boken på bilden kostar 80 kr och har 25 % rabatt. Vad kostar den nu?"
+figur = { typ = "scen", bild = "prislapp.jpg", bredd = 560 }
+svar = "60"
+ledtrad = "25 % är en fjärdedel. En fjärdedel av 80 är 20. Dra av den."
+feltankar = { "20" = "20 kr är rabatten. Boken kostar nu 80 − 20.", "55" = "25 % är inte 25 kr – det är en fjärdedel av priset: 20 kr." }
+losning = ["25 % = en fjärdedel.", "80 / 4 = 20 kr rabatt.", "80 − 20 = 60 kr."]
+
+[[exempel]]
+rubrik = "Bygg från 10 %: 30 % av 80"
+figur = { typ = "tiostaplar", fyllda = 3, farg = "magenta" }
+steg = [
+  "10 % är en tiondel: 80 / 10 = 8.",
+  "30 % är tre tiondelar: 3 · 8 = 24.",
+  "30 % av 80 = 24.",
+]
+
+[[exempel]]
+rubrik = "Rabatt: 25 % på 80 kr"
+figur = { typ = "scen", bild = "prislapp.jpg", bredd = 420 }
+steg = [
+  "25 % = en fjärdedel. En fjärdedel av 80 = 20 kr – det är rabatten.",
+  "Nytt pris: 80 − 20 = 60 kr.",
+  "Genväg: du betalar 75 % – tre fjärdedelar av 80 = 60 kr.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Hur mycket är {p} % av {n}?"
+steg = ["10 % av {n} = {n//10}", "{p} % = {p//10} · 10 %", "{p//10} · {n//10} = ?"]
+svar = "{p*n//100}"
+var = { p = "[20, 30, 40, 60, 70, 80]", n = "[50, 80, 120, 200, 300]" }
+ledtrad = "Multiplicera."
+losning = ["{p//10} · {n//10} = {p*n//100}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur mycket är 1 % av {n}?"
+svar = "{n/100}"
+var = { n = "[200, 300, 450, 800, 1200, 2500]" }
+ledtrad = "1 % = en hundradel. Dela med 100."
+losning = ["1 % = 1/100.", "{n} / 100 = {n/100}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Hur mycket är 25 % av {4*a}?"
+svar = "{a}"
+var = { a = "[5, 10, 15, 20, 25, 30, 50]" }
+ledtrad = "25 % = en fjärdedel."
+feltankar = { "{4*a-25}" = "25 % är inte 25 – det är en fjärdedel av talet." }
+losning = ["25 % = 1/4.", "{4*a} / 4 = {a}."]
+
+[[uppgift]]
+niva = 3
+fraga = "{a} av {b} elever cyklar till skolan. Hur många procent är det?"
+svar = "{a*100//b} %"
+form = "procent"
+var = { b = "[20, 25, 50]", a = "1..b-1" }
+ledtrad = "Skriv som bråk: {a}/{b}. Förläng så att nämnaren blir 100."
+feltankar = { "{a} %" = "{a} av {b} är inte {a} %. Procent är av 100 – förläng {a}/{b} med {100//b}." }
+losning = ["{a}/{b}.", "Förläng med {100//b}: {a*100//b}/100.", "= {a*100//b} %."]
+
+[[uppgift]]
+niva = 3
+fraga = "En cykel kostar {n} kr. Priset höjs med {p} %. Vad kostar den nu?"
+svar = "{n + p*n//100}"
+var = { n = "[1000, 2000, 2500, 4000]", p = "[5, 10, 20, 25]" }
+ledtrad = "Räkna ut höjningen ({p} % av {n}) och lägg till."
+feltankar = { "{p*n//100}" = "Det är bara höjningen. Det nya priset är det gamla plus höjningen." }
+losning = ["Höjningen: {p} % av {n} = {p*n//100} kr.", "Nytt pris: {n} + {p*n//100} = {n + p*n//100} kr."]
+
+[[uppgift]]
+niva = 3
+svarstyp = "val"
+fraga = "Vilket är mest: {a} % av {b} eller {b} % av {a}?"
+alternativ = ["{a} % av {b}", "{b} % av {a}", "lika mycket"]
+svar = "lika mycket"
+form = "text"
+var = { a = "[10, 20, 25, 50]", b = "[4, 8, 30, 40, 60]" }
+ledtrad = "Räkna ut båda."
+losning = ["{a} % av {b} = {a} · {b} / 100 = {a*b/100}.", "{b} % av {a} = {b} · {a} / 100 = {a*b/100}.", "Lika mycket – ordningen spelar ingen roll i multiplikation."]
+
+[[uppgift]]
+niva = 1
+svarstyp = "para"
+fraga = "Dra en linje mellan procenten och bråket som är lika stort."
+par = [["50 %", "hälften"], ["25 %", "en fjärdedel"], ["10 %", "en tiondel"], ["100 %", "allt"]]
+ledtrad = "Procent betyder hundradelar: 50 % = 50 av 100."
+feltankar = { "25 % → en tiondel" = "25 % är 25 av 100 – en fjärdedel, som en kvart.", "10 % → en fjärdedel" = "10 % är 10 av 100 – en tiondel." }
+losning = ["50 % = 50/100 = hälften.", "25 % = 25/100 = en fjärdedel.", "10 % = 10/100 = en tiondel. 100 % = allt."]
+
+[[uppgift]]
+niva = 2
+fraga = "{p} % av klassens {n} elever cyklar till skolan. Hur många elever är det?"
+svar = "{p*n//100}"
+var = { p = "[10, 20, 25, 50]", n = "[20, 24, 28, 30]" }
+ledtrad = "Räkna först 10 % (dela med 10) eller 1 % (dela med 100)."
+feltankar = { "{p}" = "{p} % är inte {p} elever – det beror på hur många som går i klassen." }
+losning = ["1 % av {n} är {n}/100.", "{p} % är {p} gånger så mycket: {p} · {n} / 100 = {p*n//100}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "mala"
+fraga = "Måla {p} % av hundrarutan."
+figur = { typ = "hundraruta", fyllda = 0 }
+svar = "gul:{p}"
+var = { p = "[10, 20, 30, 40, 50]" }
+ledtrad = "Hundrarutan har 100 rutor. {p} % är {p} av dem – {p//10} hela rader."
+losning = ["Procent betyder hundradelar.", "{p} % av 100 rutor är {p} rutor – {p//10} rader med 10."]

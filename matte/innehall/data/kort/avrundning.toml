@@ -1,0 +1,136 @@
+id = "avrundning"
+titel = "Avrundning"
+omrade = "tal"
+ikon = "tallinje"
+bild = "tallinje-40-50.jpg"
+bildtext = "Pjäsen står förbi 45 – mittpunkten. Då ligger den närmare 50 än 40, och avrundas till 50."
+sager = "Titta på siffran efter den plats du avrundar till. Är den 5 eller mer – avrunda uppåt. Är den 4 eller mindre – avrunda nedåt."
+galler = "Alltid. Avrunda till tiotal: titta på entalen. Till heltal: titta på tiondelarna."
+galler_inte = "Avrunda inte i flera steg. 1 450 avrundat till tusental är 1 000: titta bara på siffran direkt efter tusentalen (4). Att det står en femma längre bort spelar ingen roll – avrundar man först till 1 500 och sedan till 2 000 blir det fel."
+kalla = "Rimlighetsbedömning (Lgr22 åk 4–6). Tallinjen visar vilket tal som ligger närmast."
+
+[[rad]]
+sager = "47 till närmaste tiotal"
+figur = { typ = "tallinje", fran = 40, till = 50, markera = [47] }
+skriver = ["47 ≈ 50"]
+kommentar = "47 ligger närmare 50 än 40."
+
+[[rad]]
+sager = "43 till närmaste tiotal"
+figur = { typ = "tallinje", fran = 40, till = 50, markera = [43] }
+skriver = ["43 ≈ 40"]
+
+[[rad]]
+sager = "3,6 till närmaste heltal"
+figur = { typ = "tallinje", fran = 3, till = 4, steg = "0,1", markera = ["3,6"] }
+skriver = ["3,6 ≈ 4"]
+
+[[uppgift]]
+niva = 1
+fraga = "Avrunda {t}{e} till närmaste tiotal. Tallinjen visar var talet ligger."
+figur = { typ = "tallinje", fran = "{t*10}", till = "{t*10+10}", markera = ["{t*10+e}"] }
+svar = "{(t+1)*10 if e >= 5 else t*10}"
+var = { t = "1..8", e = "1..9" }
+ledtrad = "Vilket tiotal ligger närmast?"
+losning = ["Talet ligger mellan {t*10} och {t*10+10}. Mitten är {t*10+5}.", "{t}{e} ligger {'på eller efter' if e >= 5 else 'före'} mitten.", "Närmaste tiotal: {(t+1)*10 if e >= 5 else t*10}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Avrunda {t}{e} till närmaste tiotal."
+svar = "{(t+1)*10 if e >= 5 else t*10}"
+var = { t = "1..8", e = "1..9" }
+ledtrad = "Titta på entalssiffran {e}. Är den 5 eller mer?"
+feltankar = { "{t*10 if e >= 5 else (t+1)*10}" = "Åt fel håll. Entalet är {e} – {'5 eller mer, avrunda uppåt' if e >= 5 else '4 eller mindre, avrunda nedåt'}." }
+losning = ["Entalssiffran är {e}.", "{'5 eller mer – avrunda uppåt.' if e >= 5 else '4 eller mindre – avrunda nedåt.'}", "{t}{e} ≈ {(t+1)*10 if e >= 5 else t*10}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Avrunda {h},{d} till närmaste heltal."
+svar = "{h+1 if d >= 5 else h}"
+var = { h = "1..9", d = "1..9" }
+ledtrad = "Titta på tiondelssiffran {d}."
+feltankar = { "{h}{d}" = "Att avrunda betyder inte att ta bort kommat. {h},{d} ligger mellan {h} och {h+1} – vilket är närmast?" }
+losning = ["Tiondelssiffran är {d}.", "{'5 eller mer – uppåt.' if d >= 5 else '4 eller mindre – nedåt.'}", "{h},{d} ≈ {h+1 if d >= 5 else h}."]
+
+[[uppgift]]
+niva = 1
+fraga = "Pjäsen står på 47. Vilket tiotal ligger närmast – 40 eller 50?"
+figur = { typ = "scen", bild = "tallinje-40-50.jpg", bredd = 560 }
+svar = "50"
+alternativ = ["40", "50"]
+ledtrad = "Mittpunkten är 45. Står pjäsen före eller efter den?"
+feltankar = { "40" = "47 är förbi 45, mittpunkten – då är det närmare till 50 (3 steg) än till 40 (7 steg)." }
+losning = ["Mitten mellan 40 och 50 är 45.", "47 ligger efter mitten.", "Närmast är 50."]
+
+[[exempel]]
+rubrik = "Avrunda 47 till tiotal"
+figur = { typ = "tallinje", fran = 40, till = 50, markera = [47] }
+steg = [
+  "47 ligger mellan tiotalen 40 och 50.",
+  "Titta på entalssiffran: 7. Den är 5 eller mer.",
+  "Avrunda uppåt: 47 ≈ 50. På tallinjen syns att 50 är närmast.",
+]
+
+[[exempel]]
+rubrik = "Avrunda 3,64 till en decimal"
+figur = { typ = "tallinje", fran = "3,6", till = "3,7", steg = "0,01", markera = ["3,64"], etikett = 5 }
+steg = [
+  "En decimal = tiondelar. 3,64 ligger mellan 3,6 och 3,7.",
+  "Titta på siffran efter tiondelarna – hundradelarna: 4.",
+  "4 är mindre än 5: avrunda nedåt. 3,64 ≈ 3,6.",
+]
+
+[[uppgift]]
+niva = 1
+fraga = "Följ stegen. Avrunda {t}{e} till närmaste tiotal."
+steg = ["Tiotalen runt talet: {t*10} och {t*10+10}.", "Mitten: {t*10+5}.", "{t}{e} ligger {'på eller efter' if e >= 5 else 'före'} mitten."]
+svar = "{(t+1)*10 if e >= 5 else t*10}"
+var = { t = "1..8", e = "1..9" }
+ledtrad = "Efter mitten – uppåt. Före mitten – nedåt."
+losning = ["{t}{e} ≈ {(t+1)*10 if e >= 5 else t*10}."]
+
+[[uppgift]]
+niva = 2
+svarstyp = "val"
+fraga = "Vilket av talen blir 50 när du avrundar till närmaste tiotal?"
+alternativ = ["{x}", "{y}", "{z}"]
+svar = "{y}"
+var = { x = "40..44", y = "45..54", z = "55..59" }
+ledtrad = "Talen från 45 till 54 avrundas till 50."
+losning = ["{x} ≈ 40 (entalet {x%10} är mindre än 5).", "{y} ≈ 50.", "{z} ≈ 60."]
+
+[[uppgift]]
+niva = 2
+fraga = "Avrunda {n} till närmaste hundratal."
+svar = "{(n+50)//100*100}"
+var = { n = "101..989" }
+ledtrad = "Titta på tiotalssiffran: {n//10%10}."
+feltankar = { "{n//100*100+100 if n%100 < 50 else n//100*100}" = "Åt fel håll. Tiotalssiffran är {n//10%10} – {'5 eller mer, uppåt' if n%100 >= 50 else '4 eller mindre, nedåt'}." }
+losning = ["Hundratalen runt {n}: {n//100*100} och {n//100*100+100}.", "Tiotalssiffran är {n//10%10}.", "{n} ≈ {(n+50)//100*100}."]
+
+[[uppgift]]
+niva = 2
+fraga = "Avrunda {h},{d}{c} till en decimal."
+svar = "{(10*h+d+(1 if c >= 5 else 0))/10}"
+var = { h = "1..9", d = "0..9", c = "1..9" }
+ledtrad = "En decimal = tiondelar. Titta på hundradelssiffran: {c}."
+feltankar = { "{h},{d}" = "{'Hundradelssiffran är ' + str(c) + ' – 5 eller mer, avrunda uppåt.' if c >= 5 else 'Rätt riktning – kontrollera siffrorna.'}" }
+losning = ["Hundradelssiffran är {c}.", "{'5 eller mer – tiondelssiffran ökar med ett.' if c >= 5 else '4 eller mindre – tiondelarna står kvar.'}", "{h},{d}{c} ≈ {(10*h+d+(1 if c >= 5 else 0))/10}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Avrunda {ts(1000*t+400+10*x+y)} till närmaste tusental."
+svar = "{1000*t}"
+var = { t = "1..9", x = "5..9", y = "0..9" }
+ledtrad = "Titta bara på hundratalssiffran – den direkt efter tusentalen."
+feltankar = { "{1000*t+1000}" = "Avrunda inte i flera steg. Hundratalssiffran är 4 – avrunda nedåt. Femman längre bort spelar ingen roll." }
+losning = ["Siffran direkt efter tusentalen är hundratalssiffran: 4.", "4 är mindre än 5 – avrunda nedåt.", "{ts(1000*t+400+10*x+y)} ≈ {ts(1000*t)}."]
+
+[[uppgift]]
+niva = 3
+fraga = "Uppskatta {a} + {b} genom att avrunda båda talen till tiotal först."
+svar = "{(a+5)//10*10 + (b+5)//10*10}"
+var = { a = "21..89", b = "21..89" }
+ledtrad = "{a} ≈ {(a+5)//10*10} och {b} ≈ {(b+5)//10*10}."
+feltankar = { "{a+b}" = "Det är det exakta svaret. Uppgiften var att uppskatta: avrunda först, räkna sedan." }
+losning = ["{a} ≈ {(a+5)//10*10}.", "{b} ≈ {(b+5)//10*10}.", "{(a+5)//10*10} + {(b+5)//10*10} = {(a+5)//10*10 + (b+5)//10*10}. Det exakta svaret {a+b} ligger nära – rimligt."]
