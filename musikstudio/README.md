@@ -38,6 +38,18 @@ Kommandoradsvarianten (när byggd): `wenuy-studio-gfx LÅT.wstudio NOTER.ppm --l
 
 3D-funktionen är **frivillig och isolerad i en egen process**. Vanlig GTK4-redigering, inspelning och uppspelning kräver varken WenuyGFX eller GPU. Om hjälpprogrammet inte byggts visas inte menyvalet. Se [WenuyGFX-PR #24](https://github.com/danielwoxne/wenuyos-program/pull/24) och `docs/WENUYGFX_0.9.md`.
 
+## Virtuellt keyboard och live-MIDI (utkast PR #27)
+
+I fliken **Pianorulle** finns två oktaver (C4–B5). Klicka och håll en tangent, eller fokusera keyboardet med mus/Tab och spela på datorns tangentbord:
+
+- **Undre oktaven C4–B4:** Z/X/C/V/B/N/M (vita tangenter) och S/D/G/H/J (svarta).
+- **Övre oktaven C5–B5:** Q/W/E/R/T/Y/U (vita) och 2/3/5/6/7 (svarta).
+- En tangent ger en kort, **monofon förhandslyssning** med instrumentet på valt spår. Den använder befintlig PortAudio och påverkar inte uppspelningsmarkören. Saknas ljudenhet kan MIDI ändå spelas in.
+- Klicka **Spela in MIDI**, spela tangenterna och välj **Stoppa MIDI-inspelning** eller transportens **Stoppa**. Noternas längder mäts från anslag till släpp med monoton klocka; flera samtidiga toner registreras och resultatet sätts in med 1/16-delskvantisering av starttiden.
+- Inspelningen läggs på det spår som var valt vid start. **Ångra** kan återställa hela tagningen. Programmet hindrar projektbyte/stängning och sparning medan MIDI-inspelningen pågår; stoppa tagningen först.
+
+**Begränsningar:** Högst 4 096 registrerade noter per tagning och 50 000 per spår i befintliga modellen. Ljudförhandsvisningen öppnar än så länge ett kortlivat PortAudio-flöde per ton och behöver speltestas för låg latens. Externt USB-/ALSA-MIDI-keyboard och licensgranskade inspelade instrument ingår **inte** i detta första utkast. Se `docs/KEYBOARD_MIDI_0.9.md`, `docs/FRIA_SAMPLINGAR.md` och [ärende #26](https://github.com/danielwoxne/wenuyos-program/issues/26). Inget av detta finns ännu i den publicerade versionen 0.8.1.
+
 ## Pianorullen (utvecklingsversion 0.9.0)
 
 1. Välj ett spår genom att klicka på dess rad i **Arrangemang**. Gå till fliken **Pianorulle**.
