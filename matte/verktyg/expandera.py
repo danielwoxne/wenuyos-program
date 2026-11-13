@@ -6,7 +6,7 @@ Innehållet skrivs fortfarande som regelkort i innehall/data/kort/*.toml – med
 räknas varje mall fram till ett antal färdiga *varianter* (fråga, steg, lösning, figur,
 facit, feltankar). Programmet väljer sedan en variant i stället för att slumpa tal.
 
-    python3 verktyg/expandera.py innehall ut/share/se.wenuyos.app.matte
+    python3 verktyg/expandera.py innehall ut/share/se.wenuyos.app.matte [reservikoner-i-byggmapp]
 
 Skriver:
     kort.json              alla kort (rader, exempel, gäller …) och läroplanen
@@ -147,10 +147,33 @@ def kortdata(k) -> dict:
     }
 
 
+
+def kopiera_ikoner(innehall: Path, ut: Path, reserv: Path | None = None) -> None:
+    """Kopiera verkliga ikoner först, därefter bara de reservikoner som saknas.
+
+    All utdata ligger under ut (byggmappen); källornas data/ikoner lämnas orörd.
+    """
+    mal = ut / "ikoner"
+    if mal.exists():
+        shutil.rmtree(mal)
+    original = innehall / "data" / "ikoner"
+    if original.is_dir():
+        shutil.copytree(original, mal)
+    else:
+        mal.mkdir(parents=True, exist_ok=True)
+    if reserv is not None:
+        if not reserv.is_dir():
+            raise FileNotFoundError(f"Reservikonmappen saknas: {reserv}")
+        for fil in sorted(reserv.glob("*.png")):
+            if fil.is_file() and not (mal / fil.name).exists():
+                shutil.copy2(fil, mal / fil.name)
+
+
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         sys.exit(__doc__)
     innehall, ut = Path(sys.argv[1]).resolve(), Path(sys.argv[2])
+    reserv = Path(sys.argv[3]).resolve() if len(sys.argv) == 4 else None
     sys.path.insert(0, str(innehall))
     from matte.kontroll import kontrollera
     from matte.kort import OMRADEN, STADIER, alla_kort, las_laroplan
@@ -174,10 +197,11 @@ def main():
         m = mallar(k)
         totalt += sum(len(x["varianter"]) for x in m)
         (ut / "uppgifter" / f"{k.id}.json").write_text(json.dumps(m, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    for mapp in ("bilder", "ikoner"):
-        if (ut / mapp).exists():
-            shutil.rmtree(ut / mapp)
-        shutil.copytree(innehall / "data" / mapp, ut / mapp)
+    bildmapp = ut / "bilder"
+    if bildmapp.exists():
+        shutil.rmtree(bildmapp)
+    shutil.copytree(innehall / "data" / "bilder", bildmapp)
+    kopiera_ikoner(innehall, ut, reserv)
     print(f"{len(korten)} kort, {sum(len(k.mallar) for k in korten.values())} mallar, {totalt} färdiga uppgifter, "
           f"{len(ordlista)} ord i ordlistan → {ut}")
 
