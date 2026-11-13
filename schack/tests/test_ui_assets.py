@@ -16,7 +16,7 @@ manifest = (root / "wenuyos-app.toml").read_text(encoding="utf-8")
 integration = (root / "src/SystemIntegration.cpp").read_text(encoding="utf-8")
 assert 'wenuy::i18nInit("se.wenuyos.app.schack")' in integration
 assert 'explanation(chess::explainMove(app.game.board(),r->result.move))' in gui
-assert 'app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18);' in gui
+assert 'app.analyzeBtn=button(tools,tr("Review last move","Analysera senaste draget"),18,false,"system-search-symbolic");' in gui
 assert 'parsed.mistakes[i]=std::min(value,999u);' in lessons
 assert 'parsed.successes[i]=std::min(value,999u);' in lessons
 assert 'app.lessonSuccesses[app.lessonIndex]<999' in gui
@@ -100,10 +100,10 @@ for marker in (
     "A stepped mane and nostril improve the knight silhouette",
     "A neck ring makes the bishop readable on small squares",
     "Shoulder folds add dimension without bitmap shading",
-    'Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"));',
-    'Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"));',
-    'Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"));',
-    'Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"));',
+    'Ptr gameSection=section(side,tr("YOUR GAME","DITT PARTI"),"applications-games-symbolic");',
+    'Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"),"preferences-system-symbolic");',
+    'Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"),"view-list-symbolic");',
+    'Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"),"network-workgroup-symbolic");',
     'g.gtk_widget_add_css_class(tools,"wenuy-toolbar");',
     'g.gtk_widget_add_css_class(app.lessonBox,"wenuy-section");',
     '.wenuy-section-title {font-weight: 700;',
@@ -113,6 +113,37 @@ for marker in (
 ):
     assert marker in gui, f"Theme UI or vector drawing missing: {marker}"
 assert "border-radius: 16px" not in gui and "border-radius: 9px" not in gui
+
+# Match the approved visual target without raster assets or hard-coded widget colours.
+# The school card must remain visible in normal play, showing genuine saved progress.
+for marker in (
+    "M(Ptr,gtk_image_new_from_icon_name,(const char*))",
+    "M(Ptr,gtk_icon_theme_get_for_display,(Ptr))",
+    "M(int,gtk_icon_theme_has_icon,(Ptr,const char*))",
+    "M(Ptr,gtk_progress_bar_new,())",
+    "M(void,gtk_progress_bar_set_fraction,(Ptr,double))",
+    "M(void,gtk_progress_bar_set_show_text,(Ptr,int))",
+    "M(void,gtk_progress_bar_set_text,(Ptr,const char*))",
+    'g.gtk_widget_add_css_class(card,"card");',
+    'g.gtk_widget_add_css_class(app.lessonBox,"card");',
+    "Ptr themeIcon(const char* iconName)",
+    "g.gtk_icon_theme_has_icon(theme,iconName)",
+    "g.gtk_button_set_child(btn,content);",
+    'button(header,tr("New game","Nytt parti"),0,true,"document-new-symbolic");',
+    'sectionHeading(app.lessonBox,tr("CHESS SCHOOL","SCHACKSKOLAN"),"applications-education-symbolic");',
+    "app.lessonBar=g.gtk_progress_bar_new();",
+    "g.gtk_progress_bar_set_fraction(app.lessonBar,",
+    'app.lessonToggleBtn=button(app.lessonBox,tr("Exit chess school","Avsluta schackskolan"),6);',
+    'tr("Start chess school","Starta schackskolan")',
+    'g.gtk_widget_set_visible(app.lessonButtons,app.training?1:0);',
+    'g.gtk_widget_set_visible(app.lessonRecommendBtn,app.training?1:0);',
+    'tr("Learn step by step","Lär dig steg för steg")',
+):
+    assert marker in gui, f"Chess concept-image UI element missing: {marker}"
+assert 'g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);' not in gui, (
+    "The chess school preview should be visible during ordinary games"
+)
+assert "GtkProgressBar" not in manifest, "No new runtime dependency should be added"
 
 # 0.5.2: a changing status message must never wrap and resize the board.
 # These are structure checks; actual pixel stability still requires a GTK test.
@@ -204,9 +235,9 @@ for marker in (
 # Claude review (12 Nov): the chess-school panel must come before the LAN section, so its task and buttons are
 # visible without scrolling, and the first window must fit the screen (1024x600, 1280x720 with the panel).
 lesson_at = gui.index("app.lessonBox=g.gtk_box_new(1,9);g.gtk_box_append(side,app.lessonBox);")
-settings_at = gui.index('Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"));')
-moves_at = gui.index('Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"));')
-lan_at = gui.index('Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"));')
+settings_at = gui.index('Ptr settingsSection=section(side,tr("PLAY SETTINGS","SPELINSTÄLLNINGAR"),"preferences-system-symbolic");')
+moves_at = gui.index('Ptr movesSection=section(side,tr("MOVE HISTORY","DRAGLISTA"),"view-list-symbolic");')
+lan_at = gui.index('Ptr lanSection=section(side,tr("LAN GAME","NÄTVERKSPARTI"),"network-workgroup-symbolic");')
 status_at = gui.index('app.material=label(gameSection,"",false,"wenuy-dim");')
 assert status_at < lesson_at < settings_at < moves_at < lan_at, "Keep the game and lessons ahead of settings and optional LAN"
 assert "g.gtk_window_set_default_size(app.window,960,700)" not in gui, "Fixed 960x700 window overflows small screens"
