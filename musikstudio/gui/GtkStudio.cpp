@@ -28,7 +28,7 @@ namespace ws=wenuystudio;
 namespace {
 bool sv(){const char* s=std::getenv("LANGUAGE");if(!s||!*s)s=std::getenv("LANG");return s&&std::strncmp(s,"sv",2)==0;}
 const char* tr(const char* en,const char* se){return sv()?se:en;}
-enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,Record};
+enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,ExportGfx,Record};
 struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
  ws::Project project{};
@@ -46,6 +46,11 @@ struct Studio{
  ~Studio(){if(timer)g_source_remove(timer);playback.stop();recording.stop();}
 };
 struct Request{Studio* s;Pick pick;};
+struct MapRequest{
+ GWeakRef overlay{};
+ explicit MapRequest(GtkWidget* widget){g_weak_ref_init(&overlay,G_OBJECT(widget));}
+ ~MapRequest(){g_weak_ref_clear(&overlay);}
+};
 struct Indexed{Studio* s;std::size_t index;};
 void refresh(Studio*);
 void requestProtected(Studio*,ws::ProjectAction);
@@ -112,6 +117,55 @@ void quantize(Studio* s){
 }
 void undo(Studio* s){if(s->history.undo(s->project)){s->selectedNote.reset();change(s);}}
 void redo(Studio* s){if(s->history.redo(s->project)){s->selectedNote.reset();change(s);}}
+void exportNoteMap(Studio* s,const std::string& output){
+ if(s->file.empty()||s->dirty){
+  notice(s,tr("Save the project first, then export the 3D note map.",
+              "Spara projektet först och exportera sedan 3D-notkartan."));
+  return;
+ }
+ if(fs::exists(fs::u8path(output))){
+  notice(s,tr("Choose a new image filename; the existing file will not be overwritten.",
+              "Välj ett nytt bildnamn. Den befintliga filen skrivs inte över."));
+  return;
+ }
+ std::error_code ec;
+ const auto exe=fs::read_symlink("/proc/self/exe",ec);
+ const auto helper=exe.parent_path()/"wenuy-studio-gfx";
+ if(ec||!fs::exists(helper)){
+  notice(s,tr("WenuyGFX note-map tool is not installed.",
+              "Verktyget för WenuyGFX-notkartan är inte installerat."));
+  return;
+ }
+ const std::string executable=helper.u8string();
+ std::vector<const char*> args{executable.c_str(),s->file.c_str(),output.c_str()};
+ const char* perf=std::getenv("WENUYOS_PERF");
+ if(perf&&std::strcmp(perf,"low")==0)args.push_back("--low");
+ args.push_back(nullptr);
+ GError* error=nullptr;
+ GSubprocess* process=g_subprocess_newv(args.data(),G_SUBPROCESS_FLAGS_NONE,&error);
+ if(!process){
+  if(error){g_warning("WenuyGFX launch: %s",error->message);g_error_free(error);}
+  notice(s,tr("Could not start the 3D note-map tool.",
+              "Kunde inte starta verktyget för 3D-notkartan."));
+  return;
+ }
+ auto* request=new MapRequest(s->toast);
+ g_subprocess_wait_async(process,nullptr,+[](GObject* process,GAsyncResult* result,gpointer data){
+  std::unique_ptr<MapRequest> request(static_cast<MapRequest*>(data));
+  GError* error=nullptr;
+  const gboolean ok=g_subprocess_wait_check_finish(G_SUBPROCESS(process),result,&error);
+  if(error){g_warning("WenuyGFX note-map export: %s",error->message);g_error_free(error);}
+  GObject* obj=g_weak_ref_get(&request->overlay);
+  if(obj){
+   adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(obj),adw_toast_new(
+    ok?tr("3D note map exported","3D-notkartan exporterad"):
+       tr("Could not export the 3D note map","Kunde inte exportera 3D-notkartan")));
+   g_object_unref(obj);
+  }
+ },request);
+ g_object_unref(process);
+ notice(s,tr("Rendering 3D note map…","Ritar 3D-notkarta…"));
+}
 void fileAction(Studio* s,Pick pick,const std::string& path){
  try{
   switch(pick){
@@ -150,6 +204,8 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
    case Pick::ExportMidi:
     if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
     ws::exportMidi(s->project,path);notice(s,tr("MIDI exported","MIDI exporterad"));break;
+   case Pick::ExportGfx:
+    exportNoteMap(s,path);break;
    case Pick::Record:
     if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
     s->playback.stop();s->recordAt=s->playhead;s->recordFile=path;s->recording.start(path,s->project.sampleRate);
@@ -174,18 +230,21 @@ void choose(Studio* s,Pick pick){
   return;
  }
  s->chooserOpen=true;
- const bool save=pick==Pick::Save||pick==Pick::ExportWav||pick==Pick::ExportMidi||pick==Pick::Record;
+ const bool save=pick==Pick::Save||pick==Pick::ExportWav||pick==Pick::ExportMidi||
+                 pick==Pick::ExportGfx||pick==Pick::Record;
  const char* title=pick==Pick::Open?tr("Open project","Öppna projekt"):
  pick==Pick::Save?tr("Save project","Spara projekt"):
  pick==Pick::ImportWav?tr("Import audio","Importera ljud"):
  pick==Pick::ExportWav?tr("Export WAV","Exportera WAV"):
  pick==Pick::ImportMidi?tr("Import MIDI","Importera MIDI"):
- pick==Pick::ExportMidi?tr("Export MIDI","Exportera MIDI"):tr("Record WAV","Spela in WAV");
+ pick==Pick::ExportMidi?tr("Export MIDI","Exportera MIDI"):
+ pick==Pick::ExportGfx?tr("Export 3D note map","Exportera 3D-notkarta"):tr("Record WAV","Spela in WAV");
  GtkFileChooserNative* dialog=gtk_file_chooser_native_new(title,GTK_WINDOW(s->window),
  save?GTK_FILE_CHOOSER_ACTION_SAVE:GTK_FILE_CHOOSER_ACTION_OPEN,
  save?tr("Save","Spara"):tr("Open","Öppna"),tr("Cancel","Avbryt"));
  if(save){gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog),
- pick==Pick::Save?"song.wstudio":pick==Pick::ExportMidi?"song.mid":pick==Pick::Record?"recording.wav":"mix.wav");}
+ pick==Pick::Save?"song.wstudio":pick==Pick::ExportMidi?"song.mid":
+ pick==Pick::ExportGfx?"notes-3d.ppm":pick==Pick::Record?"recording.wav":"mix.wav");}
  auto* req=new Request{s,pick};
  g_signal_connect(dialog,"response",G_CALLBACK(+[](GtkNativeDialog* dlg,int response,gpointer data){
   std::unique_ptr<Request> req(static_cast<Request*>(data));
@@ -553,6 +612,7 @@ void activate(GApplication* application,gpointer){
    else if(g_strcmp0(action,"import-midi")==0)choose(st,Pick::ImportMidi);
    else if(g_strcmp0(action,"export-wav")==0)choose(st,Pick::ExportWav);
    else if(g_strcmp0(action,"export-midi")==0)choose(st,Pick::ExportMidi);
+   else if(g_strcmp0(action,"export-gfx")==0)choose(st,Pick::ExportGfx);
    else if(g_strcmp0(action,"undo")==0)undo(st);
    else if(g_strcmp0(action,"redo")==0)redo(st);
   }),s);
@@ -566,6 +626,11 @@ void activate(GApplication* application,gpointer){
  addAction(files,"import-midi",tr("Import MIDI…","Importera MIDI…"));
  addAction(files,"export-wav",tr("Export WAV…","Exportera WAV…"));
  addAction(files,"export-midi",tr("Export MIDI…","Exportera MIDI…"));
+ // Only advertise the optional helper when it is installed alongside the app.
+ std::error_code gfxError;
+ const auto runningExe=fs::read_symlink("/proc/self/exe",gfxError);
+ if(!gfxError&&fs::exists(runningExe.parent_path()/"wenuy-studio-gfx"))
+  addAction(files,"export-gfx",tr("Export 3D note map…","Exportera 3D-notkarta…"));
  addAction(edits,"undo",tr("Undo","Ångra"));
  addAction(edits,"redo",tr("Redo","Gör om"));
  g_menu_append_section(model,nullptr,G_MENU_MODEL(files));
