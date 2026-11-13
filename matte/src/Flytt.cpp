@@ -4,11 +4,14 @@
 #include "Json.h"
 #include "Lara.h"
 #include "Logg.h"
+#include "PapperLagring.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>
 
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace matte {
 
@@ -29,6 +32,15 @@ bool skrivAllt(const std::string& fil, const std::string& data) {
 }
 
 // En teckning får bara heta något.png – inga mappar, inga ".."
+bool felmed(std::string* fel, const std::string& text) {
+    if (fel) *fel = text;
+    return false;
+}
+// En separat mapp för räknepapper, endast UUID.json.
+bool sakertPappernamn(const std::string& f) {
+    return f.size() == 41 && f.substr(36) == ".json" && giltigtPapperId(f.substr(0, 36));
+}
+
 bool sakertNamn(const std::string& f) {
     return !f.empty() && f.size() < 200 && f.find('/') == std::string::npos && f.find('\\') == std::string::npos &&
            f.find("..") == std::string::npos && f[0] != '.' && f.size() > 4 && f.compare(f.size() - 4, 4, ".png") == 0;
@@ -58,6 +70,33 @@ bool exporteraElev(const std::string& namn, const std::string& fil, std::string*
         g_dir_close(d);
     }
     ut.satt("ritningar", rit);
+    // Samtliga papper i samma portabla elevfil. Ingen gammal elevexport bryts:
+    // det här fältet är valfritt och importerade 1.2-filer saknar det.
+    Json papper = Json::objekt();
+    size_t antal = 0, totalt = 0;
+    if (GDir* d = g_dir_open(papperMapp(namn).c_str(), 0, nullptr)) {
+        while (const char* fn = g_dir_read_name(d)) {
+            const std::string filnamn = fn;
+            if (filnamn.size() != 41 || filnamn.substr(36) != ".json") continue;
+            const std::string id = filnamn.substr(0, 36);
+            if (!giltigtPapperId(id)) continue;
+            PapperData data;
+            std::string orsak, innehall;
+            if (!papperLadda(namn, id, data, &orsak) ||
+                !papperTillJson(data, innehall, &orsak)) {
+                g_dir_close(d);
+                return felmed(fel, "kunde inte exportera räknepapper: " + orsak);
+            }
+            totalt += innehall.size();
+            if (++antal > 500 || totalt > 90U * 1024U * 1024U) {
+                g_dir_close(d);
+                return felmed(fel, "för många räknepapper för en enda elevfil");
+            }
+            papper.satt(filnamn, std::move(innehall));
+        }
+        g_dir_close(d);
+    }
+    ut.satt("raknepapper", papper);
     if (!skrivAllt(fil, ut.skriv())) { if (fel) *fel = "kunde inte skriva " + fil; return false; }
     return true;
 }
@@ -80,6 +119,24 @@ std::string importeraElev(const std::string& fil, bool ersatt, std::string* fel,
     if (visningsnamn) *visningsnamn = in["elev"]["visningsnamn"].str(namn);
     std::string elevfil = datamapp() + "/" + namn + ".json";
     if (g_file_test(elevfil.c_str(), G_FILE_TEST_EXISTS) && !ersatt) { if (fanns) *fanns = true; return namn; }
+    // Validera hela det nya filformatet innan en enda elevprofil skrivs.
+    // Inget godtyckligt filnamn eller för stora papper får nå disk.
+    std::vector<std::pair<std::string, PapperData>> papper;
+    size_t rakneByte = 0;
+    if (in["raknepapper"].arObjekt()) {
+        for (const auto& [filnamn, data] : in["raknepapper"].falt()) {
+            if (!sakertPappernamn(filnamn) || !data.arText())
+                return felmed(fel, "ogiltigt räknepappersnamn eller innehåll") ? "" : "";
+            PapperData item;
+            std::string orsak, text = data.str();
+            rakneByte += text.size();
+            if (papper.size() >= 500 || rakneByte > 90U * 1024U * 1024U ||
+                !papperFranJson(text, item, &orsak) ||
+                item.id + ".json" != filnamn)
+                return felmed(fel, "osäkert räknepapper: " + orsak) ? "" : "";
+            papper.emplace_back(filnamn, std::move(item));
+        }
+    }
     g_mkdir_with_parents(datamapp().c_str(), 0700);
     Json elev = in["elev"];
     elev.satt("namn", namn);
@@ -97,6 +154,13 @@ std::string importeraElev(const std::string& fil, bool ersatt, std::string* fel,
             if (n > 8 && data[0] == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G')   // bara riktiga PNG
                 skrivAllt(ritmapp(namn) + "/" + f, std::string((const char*)data, n));
             g_free(data);
+        }
+    }
+    for (const auto& [filnamn, p] : papper) {
+        std::string orsak;
+        if (!papperSpara(namn, p, &orsak)) {
+            if (fel) *fel = "kunde inte skriva räknepapper: " + orsak;
+            return "";
         }
     }
     return namn;
