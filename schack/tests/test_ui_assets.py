@@ -108,6 +108,8 @@ for marker in (
     'g.gtk_widget_add_css_class(app.lessonBox,"wenuy-section");',
     '.wenuy-section-title {font-weight: 700;',
     'alpha(currentColor, 0.13)',
+    'g.gtk_window_set_title(app.window,tr("Wenuy Chess","Wenuy Schack"));',
+    'app.brand=g.gtk_label_new(tr("♞  WENUY CHESS","♞  WENUY SCHACK"));',
 ):
     assert marker in gui, f"Theme UI or vector drawing missing: {marker}"
 assert "border-radius: 16px" not in gui and "border-radius: 9px" not in gui
