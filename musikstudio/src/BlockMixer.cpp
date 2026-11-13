@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "wenuystudio/BlockMixer.hpp"
+#include "wenuystudio/InstrumentBank.hpp"
 
 #include <algorithm>
 
@@ -208,25 +209,10 @@ std::size_t BlockMixer::process(uint64_t first,Stereo* out,std::size_t count,Blo
 
     const double dur=double(n.length)/p_->rate;
 
-    const float envelope=float(std::clamp(std::min(sec/.006,(dur-sec)/.09),0.,1.));
-
     const double phase=n.rad*sec;
 
-    double wave=std::sin(phase);
-
-    switch(track.instrument){
-
-     case 1:wave=(2./pi)*std::asin(std::clamp(wave,-1.,1.));break;
-
-     case 2:wave=.7*wave+.25*std::sin(phase*2.)+.15*std::sin(phase*3.);break;
-
-     case 3:wave=.65*wave+.20*std::sin(phase*1.005)+.12*std::sin(phase*2.);break;
-
-     default:break;
-
-    }
-
-    const float sample=float(wave)*.2f*n.velocity*envelope;
+    const float sample=instrumentSample(track.instrument,phase,n.rad/(2*pi),
+                                        sec,dur,p_->rate)*.2f*n.velocity;
 
     scratch[f-first].l+=sample*track.left;scratch[f-first].r+=sample*track.right;
 
