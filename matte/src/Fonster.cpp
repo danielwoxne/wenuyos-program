@@ -2617,6 +2617,18 @@ void Matte::visaRegel() {
     gtk_box_append(GTK_BOX(box), t);
     gtk_box_append(GTK_BOX(box), marg(lbl(std::string(tr("The rule · ", "Regeln · ")) + data.omradeNamn(k.omrade), "matte-svag"), 16, 4));
 
+    // På små skärmar kan en bild och en hel regel fylla flera skärmhöjder.
+    // Lägg genvägen till uppgiften OVANFÖR bilden så att eleven slipper leta
+    // efter den befintliga nedre knappen och alltid kan börja öva direkt.
+    if (smal && hel && uppgift.v) {
+        GtkWidget* till = knapp(tr("Go to the task", "Till uppgiften"), true,
+                                [] { M->tillUppgiften(); }, "go-down-symbolic");
+        gtk_widget_set_halign(till, GTK_ALIGN_START);
+        gtk_widget_set_margin_start(till, 16);
+        gtk_widget_set_margin_bottom(till, 6);
+        gtk_box_append(GTK_BOX(box), till);
+    }
+
     if (hel && !k.bild.empty()) {   // målningen först – verkligheten före staplarna och symbolerna
         Json scen = Json::objekt();
         scen.satt("typ", "scen"); scen.satt("bild", k.bild); scen.satt("bredd", smal ? 640 : 560);
