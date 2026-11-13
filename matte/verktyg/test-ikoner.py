@@ -5,6 +5,7 @@ Kan köras med bara Python 3: python3 verktyg/test-ikoner.py /sökväg/till/matt
 Arbetar enbart i en tillfällig katalog, utan användardata eller nätverk.
 """
 from pathlib import Path
+import os
 import runpy
 import subprocess
 import sys
@@ -55,6 +56,19 @@ def main() -> None:
               "bokstavsreserv ersatte den verkliga äppelikonen")
         kolla((ut / "ikoner" / "test_fallback.png").read_bytes() == reserv.read_bytes(),
               "saknad ikon fylldes inte av reserven")
+        # Även läroplanskontrollen måste se samma katalog, trots att källan är orörd.
+        tidigare = os.environ.get("MATTE_IKONER_DIR")
+        try:
+            os.environ["MATTE_IKONER_DIR"] = str((ut / "ikoner").resolve())
+            mod = runpy.run_path(str(repo / "innehall" / "matte" / "ikoner.py"))
+            kolla("test_fallback" in mod["alla"](), "ikonvalideringen hittar inte byggikonen")
+            kolla(mod["sokvag"]("apple").read_bytes() == original,
+                  "ikonvalideringen hittar inte originalikonen")
+        finally:
+            if tidigare is None:
+                os.environ.pop("MATTE_IKONER_DIR", None)
+            else:
+                os.environ["MATTE_IKONER_DIR"] = tidigare
         # Om originalkatalogen helt saknas måste byggningen ändå kunna slutföras.
         tom = t / "utan-original" / "innehall"
         kopiera_ikoner(tom, t / "bygg" / "tom-original", byggmapp)
