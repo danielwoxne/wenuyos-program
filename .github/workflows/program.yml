@@ -32,7 +32,10 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y -qq --no-install-recommends git ca-certificates curl gpg gpg-agent gpgv python3 cmake g++ make \
-            pkgconf binutils labwc grim fonts-dejavu-core adwaita-icon-theme >/dev/null
+            pkgconf binutils labwc grim fonts-dejavu-core adwaita-icon-theme libsdl2-dev >/dev/null
+          # Aetheria and other SDL2 games use these development headers in Debian 13.
+          # No SDL runtime is downloaded by the game itself. Stop CI if absent.
+          pkg-config --modversion sdl2
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
