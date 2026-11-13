@@ -490,10 +490,10 @@ GtkWidget* raknepapper_verktyg(GtkWidget* w) {
         if (p->c.empty() && p->drag.empty() && p->streck.empty()) return;
         GtkWidget* parent = GTK_WIDGET(gtk_widget_get_root(p->w));
         if (!parent) return;
-        AdwAlertDialog* dialog = adw_alert_dialog_new(
+        AdwAlertDialog* dialog = ADW_ALERT_DIALOG(adw_alert_dialog_new(
             tr("Clear working paper?", "Rensa räknepappret?"),
             tr("The handwritten calculations on this page will be erased.",
-               "De handskrivna uträkningarna på den här sidan tas bort."));
+               "De handskrivna uträkningarna på den här sidan tas bort.")));
         adw_alert_dialog_add_responses(dialog,
             "cancel", tr("Cancel", "Avbryt"),
             "clear", tr("Clear", "Rensa"), nullptr);
