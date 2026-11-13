@@ -3,6 +3,7 @@
 #include "wenuystudio/Playback.hpp"
 
 #include "wenuystudio/BlockMixer.hpp"
+#include "wenuystudio/LiveSynth.hpp"
 
 #include <algorithm>
 
@@ -80,12 +81,75 @@ struct SoundStream{
 
  PortAudio& pa;Stream* stream=nullptr;bool started=false;
 
- SoundStream(PortAudio& api,uint32_t rate):pa(api){pa.check(pa.open(&stream,0,2,1,double(rate),512,nullptr,nullptr),"Open sound output");pa.check(pa.start(stream),"Start sound output");started=true;}
+ SoundStream(PortAudio& api,uint32_t rate,unsigned long frames=512):pa(api){pa.check(pa.open(&stream,0,2,1,double(rate),frames,nullptr,nullptr),"Open sound output");pa.check(pa.start(stream),"Start sound output");started=true;}
 
  ~SoundStream(){if(stream){if(started)pa.stop(stream);pa.close(stream);}}
 
 };
 
+}
+
+
+bool LivePreview::send(Event e)noexcept{
+ if(!running_)return false;
+ const unsigned w=written_.load(std::memory_order_relaxed);
+ if(w-read_.load(std::memory_order_acquire)>=capacity){
+  // Safe fallback: an overflowing NoteOff must never leave a stuck voice.
+  panic_.store(true,std::memory_order_release);
+  return false;
+ }
+ events_[w%capacity]=e;written_.store(w+1,std::memory_order_release);return true;
+}
+bool LivePreview::noteOn(int key,int instrument,float velocity)noexcept{
+ if(key<0||key>127||!std::isfinite(velocity)||velocity<=0||velocity>1||
+    instrument<0||instrument>15)return false;
+ return send({Kind::On,key,instrument,velocity});
+}
+bool LivePreview::noteOff(int key)noexcept{
+ return key>=0&&key<=127&&send({Kind::Off,key,0,0});
+}
+bool LivePreview::allNotesOff()noexcept{return send({Kind::AllOff,0,0,0});}
+void LivePreview::start(std::uint32_t rate){
+ if(rate<8000||rate>192000)throw std::invalid_argument("Invalid preview sample rate");
+ if(running_)return;
+ if(worker_.joinable())worker_.join();
+ {std::lock_guard<std::mutex> lock(mutex_);error_.clear();}
+ written_=0;read_=0;panic_=false;rate_=rate;running_=true;
+ try{worker_=std::thread(&LivePreview::run,this);}
+ catch(...){running_=false;throw;}
+}
+void LivePreview::stop()noexcept{
+ running_=false;if(worker_.joinable())worker_.join();
+ written_=0;read_=0;panic_=false;
+}
+std::string LivePreview::error()const{
+ std::lock_guard<std::mutex> lock(mutex_);return error_;
+}
+void LivePreview::run()noexcept{
+ try{
+  PortAudio pa;SoundStream output(pa,rate_,256);
+  LiveSynth synth;
+  std::array<float,512> pcm{};
+  while(running_){
+   if(panic_.exchange(false,std::memory_order_acq_rel))synth.allNotesOff();
+   for(unsigned i=0;i<128;++i){
+    const unsigned r=read_.load(std::memory_order_relaxed);
+    if(r==written_.load(std::memory_order_acquire))break;
+    const auto ev=events_[r%capacity];
+    read_.store(r+1,std::memory_order_release);
+    switch(ev.kind){
+     case Kind::On:synth.noteOn(ev.key,ev.instrument,ev.velocity);break;
+     case Kind::Off:synth.noteOff(ev.key);break;
+     case Kind::AllOff:synth.allNotesOff();break;
+    }
+   }
+   synth.render(pcm.data(),256,rate_);
+   pa.check(pa.write(output.stream,pcm.data(),256),"Write audition stream");
+  }
+ }catch(const std::exception& e){
+  std::lock_guard<std::mutex> lock(mutex_);error_=e.what();
+ }
+ running_=false;
 }
 
 void Recording::start(const std::string& filename,std::uint32_t rate){

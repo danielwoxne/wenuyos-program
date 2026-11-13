@@ -41,7 +41,7 @@ struct Studio{
  GtkStringList* midiDeviceNames=nullptr;
  ws::Project project{};
  ws::Playback playback{};
- ws::Playback audition{};
+ ws::LivePreview audition{};
  ws::Recording recording{};
  ws::MidiTake midi{};
  ws::MidiInput midiInput{};
@@ -156,15 +156,9 @@ void pressKeyboard(Studio* s,int key,float velocity=.8f,bool external=false){
  if(s->selected>=s->project.tracks.size()||s->recording.active()||
     s->playback.active()||s->previewUnavailable)return;
  try{
-  // Monophonic preview. Recording still captures polyphonic MIDI notes.
-  s->audition.stop();
-  ws::Project preview;
-  preview.sampleRate=s->project.sampleRate;
-  preview.durationSeconds=.60;
-  ws::Track track;track.instrument=s->project.tracks[s->selected].instrument;
-  track.notes.push_back({key,.005,.52,velocity});
-  preview.tracks.push_back(std::move(track));
-  s->audition.start(preview,0);
+  // One PortAudio stream mixes the keyboard/ALSA voices on its worker.
+  if(!s->audition.active())s->audition.start(s->project.sampleRate);
+  s->audition.noteOn(key,s->project.tracks[s->selected].instrument,velocity);
  }catch(const std::exception& e){
   g_warning("Keyboard preview failed: %s",e.what());s->previewUnavailable=true;
   notice(s,tr("No audio output – MIDI recording still works",
@@ -195,7 +189,7 @@ void releaseKeyboard(Studio* s,int key,bool external){
  }
  if(s->keyboard&&key>=ws::keyboardLowest&&key<=ws::keyboardHighest)
   gtk_widget_queue_draw(s->keyboard);
- s->audition.stop();
+ s->audition.noteOff(key);
  if(!s->audition.error().empty()&&!s->previewUnavailable){
   s->previewUnavailable=true;
   notice(s,tr("No audio output – MIDI recording still works",
@@ -233,7 +227,7 @@ gboolean tick(gpointer data){
 void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
 void play(Studio* s){
  if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
- try{if(!s->recordFile.empty())finishRecord(s);s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
+ try{if(!s->recordFile.empty())finishRecord(s);s->audition.stop();s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
  startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
 }
 void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
