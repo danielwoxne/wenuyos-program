@@ -64,8 +64,13 @@ target_link_libraries(wenuystudio-audioimport-tests PRIVATE wenuystudio_core)
 target_compile_options(wenuystudio-audioimport-tests PRIVATE -Wall -Wextra -Wpedantic -Werror -UNDEBUG)
 add_test(NAME datatype_audio_import_090 COMMAND wenuystudio-audioimport-tests)
 # An optional tool, not a runtime dependency of the GTK music window.
-# Link only the short-lived note-map CLI to the system's ABI-versioned engine.
-find_package(WenuyGFX 0.9 CONFIG QUIET)
+# WenuyGFXConfig.cmake requires json-c + PNG even for the CPU-only target.
+# Declare them here so wenuyos verify can install their Debian build packages.
+pkg_check_modules(STUDIO_GFX_JSON QUIET IMPORTED_TARGET json-c)
+find_package(PNG QUIET)
+if(STUDIO_GFX_JSON_FOUND AND PNG_FOUND)
+ find_package(WenuyGFX 0.9 CONFIG QUIET)
+endif()
 if(WenuyGFX_FOUND)
  add_executable(wenuy-studio-gfx tools/GfxNoteMap.cpp)
  target_link_libraries(wenuy-studio-gfx PRIVATE wenuystudio_core WenuyGFX::wenuygfx)
