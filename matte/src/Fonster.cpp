@@ -3122,8 +3122,10 @@ void Matte::byggOvavy() {
     gtk_widget_set_hexpand(ovaNiva, TRUE);
     gtk_widget_set_halign(ovaNiva, GTK_ALIGN_END);
     gtk_box_append(GTK_BOX(knappar), ovaNiva);
-    // Uppifrån och ned i den ordning man gör det: fråga → steg → bild → räkna → svara → svaret → vidare
-    for (GtkWidget* w : {delning, huvud, ovaPassbar, ovaFira, fragaRad, ovaFokus, ovaSteg, ovaFigur, ovaArbetsyta, ovaRakna, ovaSvarRubrik, ovaSvar, svarRad, ovaLosning, ovaTillbaka, knappar})
+    // Huvuduppgiften först: särskilt i geometri får en stor frivillig hjälppanel
+    // aldrig trycka ned grafen under skärmkanten. Extra modeller/hjälp ligger
+    // efter den verkliga svarsytan, men är kvar och kan användas när som helst.
+    for (GtkWidget* w : {delning, huvud, ovaPassbar, ovaFira, fragaRad, ovaFokus, ovaSteg, ovaFigur, ovaRakna, ovaSvarRubrik, ovaSvar, ovaArbetsyta, svarRad, ovaLosning, ovaTillbaka, knappar})
         gtk_box_append(GTK_BOX(box), w);
     gtk_widget_set_margin_bottom(box, 8);
     gtk_widget_add_css_class(box, "matte13-exercise");
