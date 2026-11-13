@@ -2,7 +2,10 @@
 
 Ett schackspel för WenuyOS, byggt i C++17. Offlinespel är standard; nätverksspel aktiveras bara genom användarens uttryckliga val. Spela mot datorn på fem nivåer eller mot en vän, använd 31 interaktiva övningar i utvecklingsversion 0.5.0 och få dragförslag.
 
-0.5.0 under utveckling omfattar även flerstegsövningar med två alternativa försvar, stegspecifika svenska/engelska ledtrådar och en längre femhalvdragsövning. Motståndarens övningsdrag är förutbestämda, inte AI-genererade. 0.5.0 introducerar fokusläge (Ctrl+L), rullbar sidopanel och ett högkontrasttema. Spelregler och sparfiler är oförändrade.
+0.5.0 omfattar även flerstegsövningar med två alternativa försvar, stegspecifika svenska/engelska ledtrådar och en längre femhalvdragsövning. Motståndarens övningsdrag är förutbestämda, inte AI-genererade. 0.5.0 introducerar fokusläge (Ctrl+L), rullbar sidopanel och ett högkontrasttema. Spelregler och sparfiler är oförändrade.
+
+## 0.5.1 – pågående kvalitetsuppdatering
+De två kvarvarande GUI-observationerna från 0.5.0 adresseras: sidopanelens vågräta rullist och en tangentbordshjälp som kapades på små skärmar. Ingen ändring av spelregler, sparfiler eller frivilligt nätverksspel. Se [provplan 0.5.1](docs/PROV-051.md) och utkast-PR.
 
 ## Spela mot en annan WenuyOS-dator (0.5.0-test)
 I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator och *Anslut* på en annan. Ange värdens privata IPv4-adress och använd TCP-port 47777. Endast på **betrodda lokala nätverk**: trafiken är inte krypterad eller autentiserad, och ingen anslutning startar utan knapptryck. Läs [LAN-instruktionerna](docs/LAN-050.md). Två fysiska WenuyOS-datorer behöver fortfarande provas innan funktionen kan bedömas färdig.
@@ -34,4 +37,4 @@ wenuyos install github.com/danielwoxne/wenuyos-program#schack
 Spelet har `se.wenuyos.app.schack.desktop` med `Categories=Game;BoardGame;`, svensk/engelsk metadata och en SVG-programikon.
 
 ## Status
-**0.5.0 förbereds för oberoende granskning i PR #8.** Den tidigare publicerade versionen fortsätter att gälla tills den nya versionen granskats, godkänts, sammanfogats och signerats som ett GitHub-släpp. Kontrollera `Program`-CI och `wenuyos verify` för varje revision och prova därefter på verklig WenuyOS-hårdvara med mjukvarurendering. Inga byggda `.wapp`-filer hör hemma i Git.
+**0.5.0 är publicerad. Version 0.5.1 granskas i PR #12** och får inte ersätta den publicerade utgåvan förrän Daniel godkänt sammanslagning och en ny signerad release. Kontrollera `Program`-CI och `wenuyos verify` för varje revision och prova därefter på verklig WenuyOS-hårdvara med mjukvarurendering. Inga byggda `.wapp`-filer hör hemma i Git.
