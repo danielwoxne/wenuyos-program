@@ -9,8 +9,10 @@ De två kvarvarande GUI-observationerna från 0.5.0 åtgärdades: sidopanelens v
 
 **Förbättring av gränssnittet:** Partistatus och Schackskolan är lättare att hitta; övriga spelinställningar och draglistan kommer före nätverksinställningarna. Verktygsrad och sidopanel får enhetliga avstånd och diskreta avskiljare från WenuyOS-temat. Springare, löpare och kung har förfinats med skarpa Cairo-streck. Allt ingår i utkast-PR #29 och är ännu inte släppt.
 
-## 0.5.2 – föreslagen rättelse för skakande bräde
+## 0.5.2 – föreslagen rättelse för skakande bräde och nytt utseende
 Rapporterat fel: hela schackbrädet kan flytta sig när statusraden ändras efter ett drag eller när en pjäs markeras. En enradsstatus med ellips föreslås så brädets höjd inte varierar. Hela texten finns fortfarande tillgänglig. Rättelsen behöver provas visuellt före släpp.
+**Närmare designmålbilden:** Verktygsknappar och sidopanelrubriker visar symboler ur GTK/WenuyOS-temat när de finns. Sektionerna använder kort från det aktiva temat. Schackskolan är synlig även under vanliga partier och visar en procentandel av faktiskt sparade avklarade övningar, med knapp för att börja öva. När övningen är aktiv visas uppgiftsknappar och detaljer. Detta är ännu inte en publicerad version. Visuell målbild och provplan: [UTSEENDE-052.md](docs/UTSEENDE-052.md).
+
 
 ## Spela mot en annan WenuyOS-dator (0.5.0-test)
 I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator och *Anslut* på en annan. Ange värdens privata IPv4-adress och använd TCP-port 47777. Endast på **betrodda lokala nätverk**: trafiken är inte krypterad eller autentiserad, och ingen anslutning startar utan knapptryck. Läs [LAN-instruktionerna](docs/LAN-050.md). Två fysiska WenuyOS-datorer behöver fortfarande provas innan funktionen kan bedömas färdig.
