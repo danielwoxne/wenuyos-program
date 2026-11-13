@@ -7,6 +7,6 @@ description_sv = "GTK4-musikstudio med MIDI, mixer, effekter och ljudinspelning 
 license = "GPL-3.0-or-later"
 exec = "bin/wenuy-studio"
 requires = ["libportaudio2"]
-build_requires = ["libgtk-4-dev", "libadwaita-1-dev", "libjson-c-dev", "libpng-dev"]
+build_requires = ["libgtk-4-dev", "libadwaita-1-dev", "libasound2-dev", "libjson-c-dev", "libpng-dev"]
 min_ram_mb = 2048
 needs_network = false
