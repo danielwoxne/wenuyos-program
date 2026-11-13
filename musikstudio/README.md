@@ -1,7 +1,7 @@
 # Wenuy Studio – Musikstudio
 
 **Senaste godkända släpp:** [0.8.1](https://github.com/danielwoxne/wenuyos-program/releases/tag/musikstudio-v0.8.1) (signerad `musikstudio.wapp`, 12 november 2026).
-**Nästa version under utveckling:** 0.9.0. Pianorullen från [PR #18](https://github.com/danielwoxne/wenuyos-program/pull/18) är sammanslagen med `main`; skydd för osparat arbete utvecklas i [PR #19](https://github.com/danielwoxne/wenuyos-program/pull/19). **0.9 har ännu inte publicerats som `.wapp`.** All källkod finns i `musikstudio/` i `danielwoxne/wenuyos-program`.
+**Nästa version under utveckling:** 0.9.0. Pianorullen från [PR #18](https://github.com/danielwoxne/wenuyos-program/pull/18) är sammanslagen med `main`; skydd för osparat arbete från [PR #19](https://github.com/danielwoxne/wenuyos-program/pull/19) är också sammanslaget. Instrumentbiblioteket utvecklas i [PR #21](https://github.com/danielwoxne/wenuyos-program/pull/21). **0.9 har ännu inte publicerats som `.wapp`.** All källkod finns i `musikstudio/` i `danielwoxne/wenuyos-program`.
 
 C++17, GTK4/libadwaita (native Wayland), PortAudio, licens GPL-3.0-or-later. Programmet använder inga nätverkstjänster eller nedladdningar. Kräver inte XWayland. Målet är WenuyOS på Debian 13, även på 2 GB utan grafikdrivrutin.
 
@@ -9,10 +9,18 @@ C++17, GTK4/libadwaita (native Wayland), PortAudio, licens GPL-3.0-or-later. Pro
 
 - Arrangemang med ljudklipp och MIDI-noter på högst 128 spår.
 - Pianorulle med klick för toninmatning, och i utvecklingsversion 0.9 även val, borttagning och flytt direkt i rutnätet.
-- Fyra inbyggda syntklanger (sinus, triangel, orgel och varm synt).
+- **16 inbyggda syntetiska instrument** utan ljudfiler: sinus, triangel, orgel, varm lead, piano (syntes), elpiano, speldosa, plockad gitarr, elbas, stråkensemble, cello, flöjt, klarinett, bleckblås, körmatta och marimba. Instrumenten är C++-klanger – **inte inspelningar av verkliga instrument**. De fyra gamla ID-numren 0–3 är bevarade.
 - Mixer med volym, mute, solo, EQ/kompressor och tillhörande kärnfunktioner för panorering.
 - Import/export av standard-MIDI (SMF 0/1; toner och tempo) och PCM-WAV, WAV-mixdown och mikrofoninspelning med PortAudio.
 - Projektfiler `.wstudio` version 5. Äldre v2–v4 kan läsas. Gamla versioner kan inte läsa v5 – **spara en kopia innan migrering**. Vid sparande skapas en `.bak`-kopia av befintlig projektfil.
+
+## Instrumentbibliotek (utvecklingsversion 0.9)
+
+Välj ett spår i Arrangemang och öppna fliken **Instrumentbibliotek**. Välj ett ljud under Tangentinstrument, Syntar, Stränginstrument, Blåsinstrument, Slagverk eller Röster. Du kan också välja direkt i varje spårs instrumentmeny. Valet sparas per spår i projektet och används både i uppspelning och WAV-rendering.
+
+**Kompatibilitet:** `.wstudio` behåller formatversion 5 och de ursprungliga ID-numren 0–3. Äldre Musikstudio kan inte öppna projekt som använder något nytt instrument (ID 4–15), så spara en kopia innan du använder de nya klangerna. Instrumentens namn är översatta till svenska och engelska.
+
+Detta är ett resurssnålt, helt lokalt syntesbibliotek utan SF2/SFZ, samplingar eller ljudbanker att ladda ner. En framtida separat etapp i [ärende #20](https://github.com/danielwoxne/wenuyos-program/issues/20) hanterar mer realistiska instrumentpaket samt stöd för systemets Datatyper.
 
 ## Pianorullen (utvecklingsversion 0.9.0)
 
