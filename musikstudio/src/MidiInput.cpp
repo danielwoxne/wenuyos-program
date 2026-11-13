@@ -51,7 +51,7 @@ struct MidiInput::Impl {
   for(int count=0;count<128;++count) {
    snd_seq_event_t* event=nullptr;
    const int rc=snd_seq_event_input(self->seq,&event);
-   if(rc==-EAGAIN||rc==0)break;
+   if(rc==-EAGAIN)break;
    if(rc<0){self->lost();return G_SOURCE_REMOVE;}
    if(!event)break;
    const bool fromSource=event->source.client==self->source.client&&
@@ -73,6 +73,9 @@ struct MidiInput::Impl {
    }
    // Current ALSA releases own the input-event storage. Do not free event.
    if(!self->active())return G_SOURCE_REMOVE;
+   // ALSA returns *remaining bytes*, which can be zero on a successful
+   // event fetch. Always process the event before checking the count.
+   if(rc==0)break;
   }
   return G_SOURCE_CONTINUE;
  }
