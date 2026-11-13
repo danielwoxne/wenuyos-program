@@ -3958,6 +3958,16 @@ void skarmbild() {
             else if (del.rfind("namn:", 0) == 0) { M->elev.visningsnamn = del.substr(5); }
         }
     }
+    // CI: andra programstarten måste återställa samma pappers-id och rutdata.
+    if (g_getenv("MATTE_TEST_PAPPER_RESTORE")) {
+        const PapperData pap = raknepapper_hamta(M->papper);
+        if (!giltigtPapperId(M->elev.papperId) ||
+            pap.id != M->elev.papperId || raknepapper_rader(M->papper) < 2) {
+            g_warning("Matte: previously saved working paper was not restored");
+            g_application_quit(g_application_get_default());
+            return;
+        }
+    }
     // CI-krok: högre kurser ska visa frågan utan en lång introduktion först.
     if (g_getenv("MATTE_TEST_KORT_REGEL") && M->regelHel) {
         g_warning("Matte: expected a compact initial rule for the current stage");
