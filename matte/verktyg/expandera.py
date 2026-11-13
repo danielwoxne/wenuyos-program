@@ -21,6 +21,7 @@ flera fält med ";" emellan. kryssa/para/mala: k:/q:/m:/c: (se ny_nyckel i inneh
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sys
@@ -174,6 +175,11 @@ def main():
         sys.exit(__doc__)
     innehall, ut = Path(sys.argv[1]).resolve(), Path(sys.argv[2])
     reserv = Path(sys.argv[3]).resolve() if len(sys.argv) == 4 else None
+    if reserv is not None:
+        # Innehållskontrollen slår upp ikoner. Gör byggkopian först och peka
+        # kontrollen dit, annars hittar den inte reserven och avbryter bygget.
+        kopiera_ikoner(innehall, ut, reserv)
+        os.environ["MATTE_IKONER_DIR"] = str((ut / "ikoner").resolve())
     sys.path.insert(0, str(innehall))
     from matte.kontroll import kontrollera
     from matte.kort import OMRADEN, STADIER, alla_kort, las_laroplan
@@ -201,7 +207,8 @@ def main():
     if bildmapp.exists():
         shutil.rmtree(bildmapp)
     shutil.copytree(innehall / "data" / "bilder", bildmapp)
-    kopiera_ikoner(innehall, ut, reserv)
+    if reserv is None:
+        kopiera_ikoner(innehall, ut)
     print(f"{len(korten)} kort, {sum(len(k.mallar) for k in korten.values())} mallar, {totalt} färdiga uppgifter, "
           f"{len(ordlista)} ord i ordlistan → {ut}")
 
