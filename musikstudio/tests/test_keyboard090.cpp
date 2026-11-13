@@ -13,6 +13,7 @@
 int main() {
  using namespace wenuystudio;
  assert(keyboardWhiteCount==14&&keyboardLowest==60&&keyboardHighest==83);
+ assert(keyboardBlackAfter(-1)==-1&&keyboardBlackAfter(14)==-1);
  for(int i=0;i<14;++i){
   const int key=keyboardWhiteKey(i);
   assert(key>=60&&key<=83&&!keyboardBlack(key));
