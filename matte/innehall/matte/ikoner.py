@@ -4,8 +4,13 @@ som räknebilder (figuren `ikoner`) och för rätt/fel."""
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
-MAPP = Path(__file__).resolve().parent.parent / "data" / "ikoner"
+# Under CMake-bygget kontrolleras de sammanfogade ikonerna i build/, utan att
+# någon reservbild behöver skrivas till den ursprungliga data/ikoner-mappen.
+MAPP = Path(os.environ["MATTE_IKONER_DIR"]) if os.environ.get("MATTE_IKONER_DIR") else (
+    Path(__file__).resolve().parent.parent / "data" / "ikoner"
+)
 
 # Områdena i Lgr22 och stadierna
 OMRADE_IKON = {
