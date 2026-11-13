@@ -1,4 +1,5 @@
 #include "Framsteg.h"
+#include "VisuellNiva.h"
 
 #include "Json.h"
 #include "Lara.h"
@@ -117,6 +118,7 @@ Elev Elev::ladda(const std::string& namn) {
     e.leklage = d["lekläge"].sant();
     e.visningsnamn = d["visningsnamn"].str(namn);
     e.lattlast = d["lättläst"].sant();
+    e.visuellStil = normaliseraVisuellStil(d["visuell_stil"].str());
     e.dagensKlar = d["dagens"]["klar"].str();
     e.dagensSvit = d["dagens"]["svit"].heltal();
     e.sifferknappar = d["sifferknappar"].sant();
@@ -143,6 +145,7 @@ bool Elev::spara() const {
     Json d = Json::objekt();
     d.satt("namn", namn); d.satt("kort", k); d.satt("regelbok", rb); d.satt("placerad", placerad);
     d.satt("lekläge", leklage); d.satt("lättläst", lattlast);
+    d.satt("visuell_stil", normaliseraVisuellStil(visuellStil));
     { Json dg = Json::objekt(); dg.satt("klar", dagensKlar); dg.satt("svit", dagensSvit); d.satt("dagens", dg); } d.satt("sifferknappar", sifferknappar); if (zoom != 1.0) d.satt("zoom", zoom); d.satt("visningsnamn", visningsnamn.empty() ? namn : visningsnamn);
     Json rl = Json::lista();
     size_t fran = ritningar.size() > 200 ? ritningar.size() - 200 : 0;
