@@ -34,6 +34,16 @@ GitHub Actions-artefakter eller i ett av Daniel godkänt släpp.
 signerad eller osignerad release göras.** En grön CI bekräftar inte
 automatiskt rättigheterna till bilder.
 
+## Teknisk rättelse av källkodshygien (13 nov)
+
+- `generera-saknade-ikoner.py` skriver enbart till byggmappen och `expandera.py` väljer verkliga originalikoner före reserven.
+- `MATTE_IKONER_DIR` pekar Python-kontrollen på de färdiga byggikonerna; inga genererade PNG-filer läggs i `innehall/data/ikoner/`.
+- `matte-icon-assets` är ett eget regressionsprov för originalprioritet, fallback, ombyggning och skrivskydd för källmappen.
+- `verktyg/bygg-wapp.sh` använder nu `ctest` och allt källdata genereras via CMake under `build/`.
+- Bildpaketet med de riktiga lerikonerna **saknas alltjämt**; bokstavsreserv är inte tillräcklig för barn som behöver bildstöd. Vänta med släpp.
+- Dropbox innehåller `matte-cpp-1.4.0-kallkod.zip`, men zip-innehållet är ännu inte bitvis jämfört med det öppna GitHub-PR:et. Ändra inte versionsnummer eller påstå 1.4-paritet utan kontroll.
+- Kontrollera ny grön Program-kontroll och skärmbildsprov på **senaste commit**, inte en äldre commit. Testresultat fylls i PR.
+
 ## Öppna kontroller
 
 - Visuell granskning av alla fyra PNG-skärmbilder.
