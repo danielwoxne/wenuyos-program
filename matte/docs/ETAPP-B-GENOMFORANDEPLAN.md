@@ -4,7 +4,7 @@
 
 ## Målbild och regler
 
-Matte ska kännas som en pedagogisk digital arbetsbok: frågan syns tydligt, visuellt exempel går att förstora, och eleven kan skriva med Wacom/mus/tangentbord på ett räknepapper som sparas lokalt per försök. Programmet ska vara tillgängligt för barn och ungdomar från förskola till gymnasium. Illustrerade lerobjekt används som läromedel, medan knappar, bakgrunder, fokus och statusfärger hämtas från GTK/libwenuy-temat.
+Matte ska kännas som en pedagogisk digital arbetsbok: frågan syns tydligt, visuellt exempel går att förstora, och eleven kan skriva med Wacom/mus/tangentbord på ett räknepapper som sparas lokalt per försök. Programmet ska vara tillgängligt för barn och ungdomar från förskola till gymnasium. **Det visuella uttrycket mognar med kursnivån**: mer lekfullt för yngre, lugnare på mellanstadiet och professionellt på högstadiet och gymnasiet. Lerbilder används som begripliga läromedel när de hjälper förståelsen, inte som obligatorisk dekoration. Knappar, bakgrunder, fokus och statusfärger hämtas från GTK/libwenuy-temat.
 
 - Plattform: Debian 13, C++17/GTK4/libadwaita, libwenuy; **`WENUYOS_PERF=low`, `WENUYOS_GFX=soft` och 2 GB RAM** är krav. Ingen obligatorisk GPU, ingen nätverkstjänst eller automatisk AI-/molnöverföring.
 - All användarsynlig text på svenska **och** engelska via befintligt `wenuy::tr(en, sv)`. Elevdata ligger under `datamapp()` (XDG-data), aldrig i programmappen.
@@ -97,6 +97,23 @@ Lagra i `datamapp()/raknepapper/<sanerat-elev-id>/<forsok-id>.json`. Ett litet, 
 
 ## B3 – ett lugnare och mer användbart gränssnitt
 
+### Visuell mognad efter kursnivå – inte ett fast åldersantagande
+
+| Kursnivå | Grunduttryck | Bilder/ikoner | Motivation och återkoppling |
+| --- | --- | --- | --- |
+| Förskola–åk 3 | Lekfullt, stora mål och generöst avstånd | Färgglada lerföremål, tiobasmaterial, stora bildstöd, valfri maskot | Korta positiva meddelanden och stjärnor om eleven vill |
+| Åk 4–6 | Lugnare lärobokskänsla, färre utsmyckningar | Små semantiska lerikoner och tydliga tallinjer, bråk, tabeller | Saklig framstegsöversikt, diskreta belöningar |
+| Åk 7–9 | Modernt och avskalat akademiskt gränssnitt | Prioritera grafer, ekvationer och korrekta matematiska figurer; inga maskotar | Neutral återkoppling med fokus på metod och förståelse |
+| Gymnasiet / Gy25 | Professionellt matematiskt arbetsverktyg, hög informationstäthet med god läsbarhet | Funktioner, koordinatsystem, algebra, geometri och eventuellt valbar 3D; inga barnsliga dekorationer | Sakliga lösningssteg, resonemang och kunskapsmål, inte poängspel |
+
+- **Standard** väljs utifrån elevens valda **kursstadium** (förskola, Lgr22 1–3, 4–6, 7–9, Gy25), aldrig genom att programmet gissar ålder eller registrerar födelsedatum.
+- Inställningar ska också ha en **självständig visuell stil**: `Automatisk`, `Illustrerad`, `Avskalad` (svenska/engelska). Detta är en preferens **per elev** och oberoende av uppgiftens svårighet.
+- `Lättläst`, textstorlek, uppläsning, taktil-/penninmatning och förklarande konkreta bilder ska fungera i **alla** stadier, även om eleven väljer `Avskalad`. Dölj aldrig pedagogiskt nödvändig grafik. Värdet `Lekläge` (befintligt) är en separat funktion för enklare övningspass, inte samma sak som visuell stil.
+- Temat hämtas från WenuyOS oavsett stil. Tillåtna skillnader gäller täthet, marginaler, hur framträdande illustrationer är, val av förklarande grafer kontra dekoration och hur många verktyg som syns.
+- Ikonbibliotekets lerbilder förblir tillgängliga i alla kurser när de behövs för *innehållet*, men används sparsamt i huvudnavigationen för åk 7–gymnasiet. Ingen stor tecknad karaktär i högstadie- och gymnasiegränssnittet.
+- En elev ska kunna byta stil utan att förlora inmatning, pennstreck, sparade försök, kursläge eller framsteg. Äldre elevprofiler utan stilinställning får standard `Automatisk` vid läsning.
+- Testa både `Automatisk` och manuell stil i 1024×600, 1280×720 och 1600×900; kontrollera att matematiken inte försvinner och att stilbytet inte påverkar svarskontrollen.
+
 ### Layout och beteende
 
 - **1024×600:** smal navigering kan döljas; övningen öppnar med fråga och svar synliga utan lång bläddring. Förklaringsbild visas som mindre förhandsbild och kan förstoras/fällas ihop. Räknepapper öppnas i en tydlig växling `Uppgift / Räknepapper`, inte som en alltför smal sidokolumn.
@@ -110,7 +127,8 @@ Lagra i `datamapp()/raknepapper/<sanerat-elev-id>/<forsok-id>.json`. Ett litet, 
 
 | Fil | Åtgärd |
 | --- | --- |
-| `src/Fonster.cpp` | Responsiv layout, toppfält, knappar, bildstorlek, vyn `Uppgift/Räknepapper`, sparindikator |
+| `src/Fonster.cpp` | Responsiv layout, toppfält, knappar, bildstorlek, vyn `Uppgift/Räknepapper`, sparindikator samt kursstyrd och valbar visuell stil |
+| `src/Framsteg.cpp/.h` | Spara visuell stil som en separat, bakåtkompatibel preferens per elev |
 | `src/LektionsytaGtk.cpp` | Integrera övningshjälp utan att gömma svarsrutan |
 | `src/Papper.cpp` | Anpassa verktygsrad, sparstatus och storlekar |
 | `src/VisuellStil.h` och befintlig GTK/libwenuy-stil | Använd tema-tokens, inte hårdkodad UI-palett |
@@ -140,4 +158,4 @@ Lagra i `datamapp()/raknepapper/<sanerat-elev-id>/<forsok-id>.json`. Ett litet, 
 
 ## Designmål – koncept, inte skärmbild från fungerande version
 
-Ljust nordiskt WenuyOS-tema, mörkgrå text och stora väl avgränsade ytor. Till vänster en smal navigering med färgglada lerikoner och text; i mitten aktuell övning med visuella tiotal/ental och ledtråd; till höger ett kvadrerat räknepapper med naturtrogen handskrift och penna/sudd/ångra. Överst elevens kurs och framsteg, nederst tydligt svarsfält och Nästa uppgift. På 1024×600 ersätts högerspalten av växlingen `Uppgift / Räknepapper`. Ingen obegärd nättrafik eller handskriftsigenkänning.
+Ljust nordiskt WenuyOS-tema, mörkgrå text och väl avgränsade ytor. För **yngre elever** är navigeringen tydlig och ikonbaserad med färgglada lerföremål; för **mellanstadiet** används färre dekorativa element; för **högstadiet och gymnasiet** blir gränssnittet en avskalad, professionell matematikarbetsyta utan maskot. I mitten ligger aktuell övning med ålders- och ämnespassande visualisering; vid sidan ett kvadrerat räknepapper med handskrift och penna/sudd/ångra. Överst elevens kurs och framsteg, nederst tydligt svarsfält och Nästa uppgift. På 1024×600 ersätts högerspalten av växlingen `Uppgift / Räknepapper`. Stilen går att välja själv utan att påverka pedagogisk hjälp eller data. Ingen obegärd nättrafik eller handskriftsigenkänning.
