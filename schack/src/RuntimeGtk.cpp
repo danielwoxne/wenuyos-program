@@ -37,6 +37,7 @@ unsigned int gtk_get_major_version(void);
 // GLib and GIO ABI: these signatures are stable on Debian 13 / WenuyOS.
 unsigned long g_signal_connect_data(void*, const char*, void (*)(), void*, void (*)(void*,void*), unsigned int);
 int g_application_run(void*, int, char**);
+void g_application_quit(void*);
 void g_object_unref(void*);
 unsigned int g_idle_add(int (*)(void*),void*);
 unsigned int g_timeout_add(unsigned int,int (*)(void*),void*);
@@ -73,6 +74,8 @@ const char* tr(const char* en,const char* sv){
  M(Ptr,gtk_box_new,(int,int)) \
  M(void,gtk_orientable_set_orientation,(Ptr,int)) \
  M(int,gtk_widget_get_width,(Ptr)) \
+ M(int,gtk_widget_get_height,(Ptr)) \
+ M(int,gtk_widget_compute_bounds,(Ptr,Ptr,void*)) \
  M(void,gtk_box_append,(Ptr,Ptr)) \
  M(Ptr,gtk_label_new,(const char*)) \
  M(Ptr,gtk_entry_new,()) \
@@ -326,6 +329,8 @@ struct App {
  std::size_t lessonIndex=0,lessonPly=0,lessonVariation=0; unsigned epoch=0; std::string transient;
 };
 App app;
+bool uiProbeRequested=false;
+int uiProbeResult=0;
 
 std::string userDir(){
  const char* x=std::getenv("XDG_DATA_HOME");if(x&&*x)return std::string(x)+"/wenuy-schack";
@@ -1259,6 +1264,58 @@ Ptr section(Ptr parent,const char* title,const char* iconName=nullptr){
  if(title)sectionHeading(card,title,iconName);
  return card;
 }
+// Integration probe runs only on explicit --ui-probe, in an isolated home.
+// The graphene_rect_t layout is four floats; GTK computes board bounds in
+// window coordinates, so both changes in size and position are detected.
+struct UiProbeRect{float x=0,y=0,width=0,height=0;};
+UiProbeRect probeBaseline{};
+int probePhase=0,probeWait=0;
+Ptr probeApplication=nullptr;
+bool probeBounds(UiProbeRect& r){
+ return app.board&&app.window&&g.gtk_widget_compute_bounds(app.board,app.window,&r)!=0
+        &&r.width>=260 &&r.height>=260;
+}
+bool probeStable(){
+ UiProbeRect current{};
+ if(!probeBounds(current))return false;
+ const auto near=[](float a,float b){return std::abs(a-b)<.6f;};
+ return near(current.x,probeBaseline.x)&&near(current.y,probeBaseline.y)
+     &&near(current.width,probeBaseline.width)&&near(current.height,probeBaseline.height);
+}
+int guiProbeTick(void*){
+ UiProbeRect r{};
+ if(app.closed){uiProbeResult=2;g_application_quit(probeApplication);return 0;}
+ if(!probeBounds(r)){
+  if(++probeWait<20)return 1;
+  std::fputs("ui-probe: board not allocated\n",stderr);
+  uiProbeResult=3;g_application_quit(probeApplication);return 0;
+ }
+ probeWait=0;
+ if(probePhase==0){
+  app.mode=1;app.flipped=false;app.training=false;
+  app.game.reset();app.selected=-1;stopPieceMotion();refresh();
+  probePhase=1;return 1;
+ }
+ if(probePhase==1){probeBaseline=r;chosen(12);probePhase=2;return 1;} // e2
+ if(!probeStable()){
+  std::fprintf(stderr,"ui-probe: board jumped in phase %d: (%.1f,%.1f %.1fx%.1f) -> (%.1f,%.1f %.1fx%.1f)\n",
+       probePhase,probeBaseline.x,probeBaseline.y,probeBaseline.width,probeBaseline.height,
+       r.x,r.y,r.width,r.height);
+  uiProbeResult=4;g_application_quit(probeApplication);return 0;
+ }
+ if(probePhase==2){chosen(28);probePhase=3;return 1;} // e2-e4
+ if(probePhase==3){
+  if(app.game.sans.size()!=1){uiProbeResult=5;g_application_quit(probeApplication);return 0;}
+  perform(6);probePhase=4;return 1;
+ }
+ if(probePhase==4){
+  if(!app.training){uiProbeResult=6;g_application_quit(probeApplication);return 0;}
+  perform(6);probePhase=5;return 1;
+ }
+ if(probePhase==5&&app.training){uiProbeResult=7;g_application_quit(probeApplication);return 0;}
+ std::puts("ui-probe: board bounds stable across e2/e4 and school toggle");
+ g_application_quit(probeApplication);return 0;
+}
 int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
  if(app.lanCancel)app.lanCancel->store(true);
  if(app.lanPeer)app.lanPeer->close();
@@ -1390,12 +1447,15 @@ void activate(Ptr application,void*){
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
  connect(app.window,"notify::width",onWindowWidth,nullptr);
  theme();schack_system::applyStyle();refresh();g.gtk_window_present(app.window);responsive();
+ if(uiProbeRequested){probeApplication=application;g_timeout_add(90,guiProbeTick,nullptr);}
  g_timeout_add(120,pollLan,nullptr);startAI();
 }
 } // namespace
 
 int main(int argc,char** argv){
  // This is needed for gettext to honour LANG/LC_MESSAGES/LANGUAGE at process start.
+ // --ui-probe is a local test-only option, never forwarded to GTK.
+ if(argc==2&&std::strcmp(argv[1],"--ui-probe")==0){uiProbeRequested=true;argc=1;}
  schack_system::initI18n();
  if(gtk_get_major_version()<4){std::fputs("GTK4 required\n",stderr);return 5;}
  if(!g.load()){
@@ -1412,5 +1472,5 @@ int main(int argc,char** argv){
  connect(application,"activate",activate,nullptr);
  const int code=g_application_run(application,argc,argv);
  app.closed=true;g_object_unref(application);
- return code;
+ return uiProbeRequested&&uiProbeResult!=0?uiProbeResult:code;
 }
