@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Aetheria
+Name[sv]=Aetheria
+Comment=Original elemental adventure game
+Comment[sv]=Eget äventyrsspel med elementkrafter
+Exec=aetheria
+Icon=se.wenuyos.app.aetheria
+Terminal=false
+Categories=Game;RolePlaying;
+Keywords=adventure;fantasy;exploration;game;
+Keywords[sv]=äventyr;fantasy;utforskning;spel;
+StartupWMClass=se.wenuyos.app.aetheria

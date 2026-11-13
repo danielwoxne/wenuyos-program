@@ -1,0 +1,11 @@
+name = "Aetheria"
+name_sv = "Aetheria"
+version = "0.5.0"
+description = "Original fantasy action RPG with animated 3D, quests, inventory, crafting and NPC dialogue"
+description_sv = "Eget resurssnålt fantasyspel med animerad 3D, väska, utrustning, dialoger och uppdrag"
+license = "MIT"
+exec = "bin/aetheria"
+requires = ["libsdl2-2.0-0"]
+build_requires = ["libsdl2-dev"]
+min_ram_mb = 2048
+needs_network = false
