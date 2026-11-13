@@ -489,11 +489,12 @@ void updateBoardAccessibility(){
  if(b.inCheck(b.white))label+=tr(". Check."," . Schack.");
  g.gtk_accessible_update_property(app.board,4,label.c_str(),-1); // GtkAccessibleProperty LABEL
 }
+void updateButtonLabel(Ptr button,const char* text);
 void refresh(){
  if(app.closed||!app.window)return;
  if(app.sidePanel)g.gtk_widget_set_visible(app.sidePanel,app.focusBoard?0:1);
- if(app.focusBtn)g.gtk_button_set_label(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
- if(app.undoBtn)g.gtk_button_set_label(app.undoBtn,app.training?tr("Restart exercise","Starta om övningen"):tr("Undo","Ångra"));
+ if(app.focusBtn)updateButtonLabel(app.focusBtn,app.focusBoard?tr("Show side panel","Visa sidopanel"):tr("Focus on board","Fokus på brädet"));
+ if(app.undoBtn)updateButtonLabel(app.undoBtn,app.training?tr("Restart exercise","Starta om övningen"):tr("Undo","Ångra"));
  if(app.lanStatus)g.gtk_label_set_label(app.lanStatus,app.lanMessage.c_str());
  if(app.lanHostBtn)g.gtk_widget_set_sensitive(app.lanHostBtn,!app.lanConnecting&&!app.lanPeer);
  if(app.lanJoinBtn)g.gtk_widget_set_sensitive(app.lanJoinBtn,!app.lanConnecting&&!app.lanPeer);
@@ -545,17 +546,17 @@ void refresh(){
  if(history.empty())history=tr("No moves yet","Inga drag ännu");
  if(history.size()>1800)history=history.substr(history.size()-1800);
  g.gtk_label_set_label(app.history,history.c_str());
- g.gtk_button_set_label(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
+ updateButtonLabel(app.modeBtn,app.mode?tr("Mode: two players","Läge: två spelare"):tr("Mode: vs computer","Läge: mot datorn"));
  const char* skills[]={"",tr("Beginner","Nybörjare"),tr("Easy","Lätt"),tr("Medium","Medel"),tr("Hard","Svår"),tr("Challenge","Utmaning")};
- g.gtk_button_set_label(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
+ updateButtonLabel(app.levelBtn,(std::string(tr("Computer: ","Dator: "))+std::to_string(app.skill)+" / 5 – "+skills[app.skill]).c_str());
  const char* paletteNames[]={tr("Nordic blue","Nordiskt blått"),tr("Light","Ljust läge"),tr("Classic wood","Klassiskt trä"),tr("High contrast","Hög kontrast")};
- g.gtk_button_set_label(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
+ updateButtonLabel(app.themeBtn,(std::string(tr("Board: ","Bräde: "))+paletteNames[app.palette]).c_str());
  g.gtk_widget_set_sensitive(app.hintBtn,(!app.training&&!app.busy&&!app.thinkingHint&&app.game.result()=="ongoing" && (app.mode==1||app.game.board().white==(app.human==0)))?1:0);
  if(app.analyzeBtn)g.gtk_widget_set_sensitive(app.analyzeBtn,!app.training&&!app.analysisBusy&&!app.game.moves.empty()&&app.mode!=2);
 
- g.gtk_button_set_label(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
+ updateButtonLabel(app.sideBtn,app.human?tr("You play: Black","Du spelar: svart"):tr("You play: White","Du spelar: vit"));
  const char* promoname=(app.promotion=='q'?tr("Queen","Dam"):app.promotion=='r'?tr("Rook","Torn"):app.promotion=='b'?tr("Bishop","Löpare"):tr("Knight","Springare"));
- g.gtk_button_set_label(app.promoteBtn,(std::string(tr("Promotion: ","Bondeförvandling: "))+promoname).c_str());
+ updateButtonLabel(app.promoteBtn,(std::string(tr("Promotion: ","Bondeförvandling: "))+promoname).c_str());
  int materialBalance=0;
  for(char pc:app.game.board().squares){
   int val=0;switch(std::tolower(static_cast<unsigned char>(pc))){case 'p':val=1;break;case 'n':case 'b':val=3;break;case 'r':val=5;break;case 'q':val=9;break;default:break;}
@@ -573,7 +574,7 @@ void refresh(){
   const std::string percent=std::to_string(lessonTotal?(100*completed)/lessonTotal:0)+" %";
   g.gtk_progress_bar_set_text(app.lessonBar,percent.c_str());
  }
- if(app.lessonToggleBtn)g.gtk_button_set_label(app.lessonToggleBtn,
+ if(app.lessonToggleBtn)updateButtonLabel(app.lessonToggleBtn,
   app.training?tr("Exit chess school","Avsluta schackskolan"):
                tr("Start chess school","Starta schackskolan"));
  if(app.lessonTask)g.gtk_widget_set_visible(app.lessonTask,app.training?1:0);
@@ -1178,7 +1179,23 @@ void perform(int id){
  default:break;
  }
 }
-struct ButtonData{int id;};
+// Keep the text widget owned by a themed icon button. Updating GtkButton's
+// label directly would replace its custom image+label child on each move.
+struct ButtonData{int id;Ptr button=nullptr,caption=nullptr;};
+std::vector<std::unique_ptr<ButtonData>> buttonDatas;
+void updateButtonLabel(Ptr button,const char* text){
+ if(!button)return;
+ for(const auto& entry:buttonDatas)if(entry->button==button){
+  if(entry->caption){
+   g.gtk_label_set_label(entry->caption,text);
+   g.gtk_accessible_update_property(button,4,text,-1);
+  }else g.gtk_button_set_label(button,text);
+  return;
+ }
+ g.gtk_button_set_label(button,text);
+}
+
+// Existing widget pointers are owned by GTK, not this vector.
 std::vector<std::unique_ptr<ButtonData>> buttonDatas;
 void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
 // Use theme-provided icons only when that icon is actually installed.
@@ -1196,12 +1213,17 @@ Ptr button(Ptr container,const char* label,int id,bool primary=false,const char*
  if(id==3||id==4||id==5||id==11||id==13)g.gtk_widget_add_css_class(btn,"wenuy-option");
  if(Ptr icon=themeIcon(iconName)){
   Ptr content=g.gtk_box_new(0,6);
+  Ptr caption=g.gtk_label_new(label);
   g.gtk_box_append(content,icon);
-  g.gtk_box_append(content,g.gtk_label_new(label));
+  g.gtk_box_append(content,caption);
   g.gtk_button_set_child(btn,content);
   g.gtk_accessible_update_property(btn,4,label,-1); // Accessible label
+  // This caption is updated in place; never discard the themed icon.
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption}));
+ }else{
+  buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,nullptr}));
  }
- buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id}));
+
  connect(btn,"clicked",onButton,buttonDatas.back().get());
  g.gtk_box_append(container,btn);return btn;
 }
