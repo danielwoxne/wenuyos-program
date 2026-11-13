@@ -56,16 +56,29 @@ float instrumentSample(int id,double phase,double hz,double t,double duration,
   case 2: wave=.70f*fundamental+.25f*second()+.15f*third();break;
   case 3: wave=.65f*fundamental+
       .20f*partial(phase,hz,1.005,limit)+.12f*second();break;
-  case 4: wave=.77f*fundamental+.18f*second()+.08f*third();
-          attack=.003;release=.20;decay=1.1;break;
-  case 5: wave=.75f*partial(phase+.55*std::sin(phase*2),hz,1,limit)+.12f*second();
-          attack=.003;release=.16;decay=1.6;break;
+  case 4: { // Piano: bright attack, harmonics damp faster than fundamental.
+           const float bright=static_cast<float>(1./(1.+9.*t));
+           wave=.77f*fundamental+bright*(.18f*second()+.08f*third());
+           attack=.003;release=.20;decay=1.1;break;
+          }
+  case 5: { // Electric piano: metallic transient that quickly softens.
+           const float bright=static_cast<float>(1./(1.+14.*t));
+           wave=.75f*partial(phase+.55*std::sin(phase*2),hz,1,limit)
+                 +.12f*second()*bright;
+           attack=.003;release=.16;decay=1.6;break;
+          }
   case 6: wave=.70f*fundamental+.20f*partial(phase,hz,2.76,limit);
           attack=.002;release=.25;decay=.7;break;
-  case 7: wave=.62f*fundamental+.23f*second()+.13f*third();
-          attack=.002;release=.14;decay=.55;break;
-  case 8: wave=.85f*fundamental+.13f*second();
-          attack=.002;release=.08;decay=1.3;break;
+  case 7: { // A picked string loses brightness as it rings.
+           const float bright=static_cast<float>(1./(1.+12.*t));
+           wave=.72f*fundamental+bright*(.23f*second()+.13f*third());
+           attack=.002;release=.14;decay=.55;break;
+          }
+  case 8: { // Bass fundamental survives beyond the short attack transient.
+           const float bright=static_cast<float>(1./(1.+10.*t));
+           wave=.87f*fundamental+.13f*second()*bright;
+           attack=.002;release=.08;decay=1.3;break;
+          }
   case 9: wave=.63f*fundamental+.22f*second()+.12f*third();
           attack=.14;release=.22;break;
   case 10: wave=.73f*fundamental+.19f*second()-.08f*third();
@@ -81,8 +94,11 @@ float instrumentSample(int id,double phase,double hz,double t,double duration,
   case 14: wave=.67f*fundamental+.17f*second()+
             .14f*partial(phase,hz,1.003,limit);
            attack=.20;release=.28;break;
-  case 15: wave=.70f*fundamental+.19f*partial(phase,hz,3.95,limit);
-           attack=.002;release=.16;decay=.52;break;
+  case 15: { // Marimba's inharmonic strike fades ahead of its body tone.
+            const float bright=static_cast<float>(1./(1.+16.*t));
+            wave=.73f*fundamental+.19f*bright*partial(phase,hz,3.95,limit);
+            attack=.002;release=.16;decay=.52;break;
+           }
  }
  // Fast attack/smooth release per preset; short notes stay bounded.
  const double gate=std::clamp(std::min(t/attack,(duration-t)/release),0.0,1.0);
