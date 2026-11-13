@@ -26,10 +26,21 @@ cmake --build build -j2
 ctest --test-dir build --output-on-failure
 ```
 
-CMake förbereder saknade reservikoner och uppgiftsdata automatiskt. Skapade PNG/JSON
-är byggresultat och ska inte läggas i Git. Testerna innehåller bland annat bråk/procent,
-tolerans för stavfel, omkastade siffror, facit, figurer och utskrifter.
-Prov på riktig WenuyOS-hårdvara återstår.
+CMake förbereder uppgiftsdata och **reservikoner enbart under `build/`**.
+Källans `innehall/data/ikoner/` skrivs aldrig över. Finns en riktig lerikon
+med samma namn kopieras alltid den, annars används en tillfällig reservbild.
+Regressionstestet `matte-icon-assets` kontrollerar att byggdata inte förorenar
+källmappen och att original har företräde. Testerna täcker också bråk/procent,
+stavfel, omkastade siffror, facit, figurer och utskrifter.
+
+**Viktigt före släpp:** originalpaketet med lerikoner saknas i nuvarande
+GitHub-källa, så reservbilderna är inte en godkänd visuell ersättning.
+Vi behöver hitta originalen och prova gränssnittet med dem. De 22 JPG-bilderna
+och lerikonerna är skapade av Daniel Woxnerud med ChatGPT enligt uppgifter
+i PR #10; bildlicenser och publiceringsvillkor granskas separat.
+`common/` innehåller en äldre kopia av delar av libwenuy, vars publicering
+och uppdateringsmodell behöver granskas innan sammanslagning.
+Praktiskt prov på WenuyOS-hårdvara, särskilt Wacom Intuos, återstår.
 
 ## Hur det hänger ihop
 
