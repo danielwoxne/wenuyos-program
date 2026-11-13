@@ -1,4 +1,5 @@
 #include "Framsteg.h"
+#include "PapperLagring.h"
 #include "VisuellNiva.h"
 
 #include "Json.h"
@@ -123,6 +124,14 @@ Elev Elev::ladda(const std::string& namn) {
     e.dagensSvit = d["dagens"]["svit"].heltal();
     e.sifferknappar = d["sifferknappar"].sant();
     e.zoom = std::clamp(d["zoom"].tal(1.0), 0.8, 1.6);
+    if (const Json& p = d["papper_aktivt"]; p.arObjekt() &&
+        giltigtPapperId(p["id"].str())) {
+        e.papperId = p["id"].str();
+        e.papperKort = p["kort"].str();
+        e.papperFraga = p["fraga"].str();
+        e.papperMall = p["mall"].heltal(-1);
+        e.papperVariant = p["variant"].heltal(-1);
+    }
     for (auto& r : d["ritningar"].element())
         e.ritningar.push_back({r["kort"].str(), r["fil"].str(), r["fraga"].str(), r["tid"].str()});
     return e;
@@ -155,6 +164,13 @@ bool Elev::spara() const {
         rl.lagg(r);
     }
     d.satt("ritningar", rl);
+    if (giltigtPapperId(papperId)) {
+        Json p = Json::objekt();
+        p.satt("id", papperId); p.satt("kort", papperKort);
+        p.satt("fraga", papperFraga);
+        p.satt("mall", papperMall); p.satt("variant", papperVariant);
+        d.satt("papper_aktivt", p);
+    }
     std::string m = datamapp();
     g_mkdir_with_parents(m.c_str(), 0700);
     // säkert: g_file_set_contents skriver till en temporär fil och byter namn
