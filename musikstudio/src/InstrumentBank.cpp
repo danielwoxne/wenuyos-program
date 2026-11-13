@@ -42,41 +42,43 @@ float instrumentSample(int id,double phase,double hz,double t,double duration,
     !std::isfinite(t)||!std::isfinite(duration)||hz<=0||rate<8000||
     t<0||duration<=0||t>=duration)return 0.f;
  const double limit=.48*rate;
+ // Compute only harmonics used by this preset. Pure sine and triangle notes
+ // must not pay for two extra sin() calls on every sample on 2 GB CPUs.
  const float fundamental=partial(phase,hz,1,limit);
- const float second=partial(phase,hz,2,limit);
- const float third=partial(phase,hz,3,limit);
+ const auto second=[&]() noexcept {return partial(phase,hz,2,limit);};
+ const auto third=[&]() noexcept {return partial(phase,hz,3,limit);};
  float wave=0;
  double attack=.006,release=.09,decay=0;
  switch(id) {
   case 0: wave=fundamental;break;
   case 1: wave=static_cast<float>((2/pi)*std::asin(std::clamp(
                   static_cast<double>(fundamental),-1.0,1.0)));break;
-  case 2: wave=.70f*fundamental+.25f*second+.15f*third;break;
+  case 2: wave=.70f*fundamental+.25f*second()+.15f*third();break;
   case 3: wave=.65f*fundamental+
-      .20f*partial(phase,hz,1.005,limit)+.12f*second;break;
-  case 4: wave=.77f*fundamental+.18f*second+.08f*third;
+      .20f*partial(phase,hz,1.005,limit)+.12f*second();break;
+  case 4: wave=.77f*fundamental+.18f*second()+.08f*third();
           attack=.003;release=.20;decay=1.1;break;
-  case 5: wave=.75f*partial(phase+.55*std::sin(phase*2),hz,1,limit)+.12f*second;
+  case 5: wave=.75f*partial(phase+.55*std::sin(phase*2),hz,1,limit)+.12f*second();
           attack=.003;release=.16;decay=1.6;break;
   case 6: wave=.70f*fundamental+.20f*partial(phase,hz,2.76,limit);
           attack=.002;release=.25;decay=.7;break;
-  case 7: wave=.62f*fundamental+.23f*second+.13f*third;
+  case 7: wave=.62f*fundamental+.23f*second()+.13f*third();
           attack=.002;release=.14;decay=.55;break;
-  case 8: wave=.85f*fundamental+.13f*second;
+  case 8: wave=.85f*fundamental+.13f*second();
           attack=.002;release=.08;decay=1.3;break;
-  case 9: wave=.63f*fundamental+.22f*second+.12f*third;
+  case 9: wave=.63f*fundamental+.22f*second()+.12f*third();
           attack=.14;release=.22;break;
-  case 10: wave=.73f*fundamental+.19f*second-.08f*third;
+  case 10: wave=.73f*fundamental+.19f*second()-.08f*third();
            attack=.09;release=.25;break;
-  case 11: wave=.94f*fundamental+.05f*second;
+  case 11: wave=.94f*fundamental+.05f*second();
            attack=.035;release=.12;break;
-  case 12: wave=.68f*fundamental+.24f*third+
+  case 12: wave=.68f*fundamental+.24f*third()+
             .06f*partial(phase,hz,5,limit);
            attack=.03;release=.11;break;
-  case 13: wave=.50f*fundamental+.27f*second+.16f*third+
+  case 13: wave=.50f*fundamental+.27f*second()+.16f*third()+
             .05f*partial(phase,hz,4,limit);
            attack=.018;release=.15;break;
-  case 14: wave=.67f*fundamental+.17f*second+
+  case 14: wave=.67f*fundamental+.17f*second()+
             .14f*partial(phase,hz,1.003,limit);
            attack=.20;release=.28;break;
   case 15: wave=.70f*fundamental+.19f*partial(phase,hz,3.95,limit);
