@@ -80,6 +80,21 @@ ET.parse(svg)
 assert 'version = "0.5.2"' in manifest
 assert 'needs_network = true' in manifest
 
+# 0.5.2: richer-looking board without any raster asset, texture, blur or GPU.
+# The last-move indicator and legal move overlay must reuse the active palette.
+for marker in (
+    "An inexpensive contact shadow anchors the vector piece",
+    "cairo_translate(c,x+s*.50,y+s*.845);",
+    "cairo_scale(c,s*.30,s*.055);",
+    "Fine inner rim adds depth to the frame",
+    "Theme-aware last-move tint plus corner brackets",
+    "rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.18);",
+    "rgba(c,pal.accent[0],pal.accent[1],pal.accent[2],.54);",
+):
+    assert marker in gui, f"Missing lightweight graphics polish: {marker}"
+assert "rgba(c,1,.75,.22,.3)" not in gui, "Last move highlight must follow theme"
+assert "rgba(c,.12,.27,.42,.47)" not in gui, "Legal move hint must follow theme"
+
 # 0.5.2: a changing status message must never wrap and resize the board.
 # These are structure checks; actual pixel stability still requires a GTK test.
 for marker in (
