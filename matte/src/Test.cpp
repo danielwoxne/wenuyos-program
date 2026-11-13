@@ -187,6 +187,16 @@ static void testaFlytt() {
     e.visningsnamn = "Test Elev";
     e.svarade("brak-delar", true, "", 0);
     e.ritningar.push_back({"brak-delar", "1.png", "Rita", "2026-11-10 10:00"});
+    PapperData papper;
+    papper.id = nyttPapperId();
+    papper.kort = "brak-delar"; papper.fraga = "1/2 + 1/4";
+    papper.mallIndex = 0; papper.variantIndex = 3;
+    papper.c[{3, 2}] = {"7", ""};
+    papper.drag.push_back({{1.25, 2.5, .8, true}});
+    e.papperId = papper.id; e.papperKort = papper.kort;
+    e.papperFraga = papper.fraga;
+    e.papperMall = papper.mallIndex; e.papperVariant = papper.variantIndex;
+    KOLLA(papperSpara("test-elev", papper), "testpapperet sparas före export");
     e.spara();
     logga("test-elev", "svar", Json::objekt().satt("kort", "brak-delar"));
     g_mkdir_with_parents(ritmapp("test-elev").c_str(), 0700);
@@ -199,7 +209,15 @@ static void testaFlytt() {
     std::string visn, namn = importeraElev(fil, false, &f, &fanns, &visn);
     KOLLA(namn == "test-elev" && !fanns && visn == "Test Elev", "import: %s (%s)", namn.c_str(), f.c_str());
     Elev igen = Elev::ladda("test-elev");
-    KOLLA(igen.status("brak-delar").antalRatt == 1 && igen.ritningar.size() == 1, "framstegen följer med");
+    KOLLA(igen.status("brak-delar").antalRatt == 1 &&
+          igen.ritningar.size() == 1 && igen.papperId == papper.id &&
+          igen.papperVariant == 3, "framstegen och aktiva uppgiften följer med");
+    PapperData papperIgen;
+    KOLLA(papperLadda("test-elev", papper.id, papperIgen) &&
+          papperIgen.c[{3, 2}].t == "7" &&
+          papperIgen.drag.size() == 1 &&
+          papperIgen.drag[0][0].tryck > .79,
+          "handskrift och tryck följer med elevexport/import");
     KOLLA(lasLogg("test-elev").size() == 1, "loggen följer med");
     KOLLA(g_file_test((ritmapp("test-elev") + "/1.png").c_str(), G_FILE_TEST_EXISTS), "teckningen följer med");
     importeraElev(fil, false, &f, &fanns);
@@ -211,6 +229,13 @@ static void testaFlytt() {
     namn = importeraElev(elak, true, &f);
     KOLLA(namn.find('/') == std::string::npos && !g_file_test((b + "/ut.png").c_str(), G_FILE_TEST_EXISTS) &&
           !g_file_test((std::string(tmp) + "/ut.png").c_str(), G_FILE_TEST_EXISTS), "farliga sökvägar i en importfil stoppas");
+    std::string elaktPapper = std::string(tmp) + "/elakt-papper.json";
+    const std::string attack = R"JSON({"format":"se.wenuyos.lara.elev","program":"se.wenuyos.app.matte","namn":"test-elev","elev":{"namn":"test-elev"},"raknepapper":{"../../stulen.json":"{}"}})JSON";
+    g_file_set_contents(elaktPapper.c_str(), attack.c_str(), -1, nullptr);
+    std::string felPapper;
+    KOLLA(importeraElev(elaktPapper, true, &felPapper).empty() &&
+          !g_file_test((b + "/stulen.json").c_str(), G_FILE_TEST_EXISTS),
+          "path traversal i räknepapper blockeras före profilsparning");
     g_unsetenv("XDG_DATA_HOME");
     std::string rm = std::string("rm -rf '") + tmp + "'";
     if (system(rm.c_str()) != 0) fprintf(stderr, "kunde inte städa %s\n", tmp);
