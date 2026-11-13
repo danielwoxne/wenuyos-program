@@ -6,6 +6,9 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#ifdef AETHERIA_WITH_WENUYGFX
+#include <wenuygfx/Graphics.hpp>
+#endif
 
 namespace aetheria {
 namespace {
@@ -66,9 +69,30 @@ struct Camera {
 };
 class Painter {
  public:
-  explicit Painter(const Camera& c,int width,int height,float daylight)
-       :cam(c),sw(width),sh(height),day(daylight){}
+  explicit Painter(const Camera& c,int width,int height,float daylight
+#ifdef AETHERIA_WITH_WENUYGFX
+                   ,wenuygfx::Scene* collect=nullptr
+#endif
+                   )
+       :cam(c),sw(width),sh(height),day(daylight)
+#ifdef AETHERIA_WITH_WENUYGFX
+       ,gfxScene(collect)
+#endif
+       {}
   void triangle(V3 a,V3 b,V3 c,Color col, float lighting=1.f) {
+#ifdef AETHERIA_WITH_WENUYGFX
+    if(gfxScene) {
+      // Bounded scene size on the 2 GB profile; never submit NaN to the engine.
+      if(gfxScene->triangles.size()>=26000u ||
+         !std::isfinite(a.x)||!std::isfinite(a.y)||!std::isfinite(a.z)||
+         !std::isfinite(b.x)||!std::isfinite(b.y)||!std::isfinite(b.z)||
+         !std::isfinite(c.x)||!std::isfinite(c.y)||!std::isfinite(c.z))return;
+      (void)lighting; // WenuyGFX supplies the physically depth-tested lighting.
+      gfxScene->triangles.push_back({{a.x,a.y,a.z},{b.x,b.y,b.z},{c.x,c.y,c.z},
+                                    {col.r,col.g,col.b,col.a},wenuygfx::Material::Flat});
+      return;
+    }
+#endif
     SDL_FPoint p[3];float depth[3];
     if(!cam.project(a,p[0],depth[0])||!cam.project(b,p[1],depth[1])||!cam.project(c,p[2],depth[2]))return;
     if((p[0].x<0&&p[1].x<0&&p[2].x<0) ||
@@ -138,6 +162,9 @@ class Painter {
   }
  private:
   const Camera& cam;int sw,sh;float day;std::vector<Triangle> triangles;
+#ifdef AETHERIA_WITH_WENUYGFX
+  wenuygfx::Scene* gfxScene=nullptr;
+#endif
 };
 void sky(SDL_Renderer* r,int sw,int sh,float yaw,float daylight,float time) {
   const Color zenith=mix({11,21,57},{74,140,205},daylight);
@@ -415,4 +442,32 @@ SceneStats Scene3D::render(SDL_Renderer* renderer,const legends::World& world,fl
  stats.triangles=painter.flush(renderer);
  return stats;
 }
+#ifdef AETHERIA_WITH_WENUYGFX
+SceneStats Scene3D::collectWenuyGfx(const legends::World& world,float yaw,
+                        bool lowDetail,int width,int height,
+                        wenuygfx::Scene& scene,wenuygfx::Camera& outputCamera,float zoom) {
+ if(width<16||height<16||width>4096||height>4096)return {};
+ Camera cam(world,yaw,width,height,zoom);
+ // Original simulation is read-only. The same source builds either renderer.
+ scene.triangles.clear();
+ scene.triangles.reserve(lowDetail?7000u:18000u);
+ const float daylight=world.daylight();
+ scene.fogColor={static_cast<uint8_t>(33.f+122.f*daylight),
+                 static_cast<uint8_t>(50.f+134.f*daylight),
+                 static_cast<uint8_t>(93.f+104.f*daylight),255};
+ scene.fogStart=13.f;scene.fogEnd=53.f;
+ Painter painter(cam,width,height,daylight,&scene);
+ SceneStats stats;
+ terrain(world,painter,lowDetail,stats);
+ objects(world,painter,yaw,lowDetail);
+ stats.triangles=static_cast<int>(scene.triangles.size());
+ outputCamera.eye={cam.pos.x,cam.pos.y,cam.pos.z};
+ outputCamera.target={cam.pos.x+cam.forward.x*5.f,
+                      cam.pos.y+cam.forward.y*5.f,
+                      cam.pos.z+cam.forward.z*5.f};
+ outputCamera.fovYDegrees=2.f*std::atan(.5f/1.06f)*180.f/kPi;
+ outputCamera.nearPlane=.32f;outputCamera.farPlane=80.f;
+ return stats;
+}
+#endif
 } // namespace aetheria

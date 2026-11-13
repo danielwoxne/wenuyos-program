@@ -172,6 +172,12 @@ karaktärssystem och en riktig GPU-baserad renderingsmotor behöver fortsatt
 utveckling. Versionsnumret avser spelet och garanterar inte stöd på fysisk
 WenuyOS-hårdvara förrän det har provats där.
 
+## WenuyOS-integration på utvecklingsgrenen (inte släppt)
+
+- **F3** växlar mellan spelets klassiska SDL-rendering och WenuyGFX 0.9:s **CPU-rendering med djupbuffert** när SDK:t finns. `--wenuygfx` väljer samma för provkörning. Fungerar med `WENUYOS_GFX=soft` och 2 GB-profilen; inga uppmätta FPS-siffror på riktig hårdvara än.
+- **Datatyper:** när `wenuy-datatypes` finns i WenuyOS kan `--screenshot sökväg.png` och `--screenshot sökväg.iff` spara genom det gemensamma filformatsystemet; `.ppm` fortsätter fungera utan det.
+- Spelkod och sparformat ändras inte av dessa alternativ. Aetherias publicerade 0.6.0-huvudkod ska fortfarande återföras till GitHub innan en ny version kan godkännas. Se `docs/WENUYOS-INTEGRATION.md`.
+
 ## Återskapade 0.6-funktioner i GitHub-PR #13 (utkast, inte släppt)
 
 Det ursprungliga 0.6.0-arkivet saknas, men beteendet har rekonstruerats från den tidigare utvecklingsspecifikationen ovanpå den existerande 0.5.0-spelmodellen. **Versionsnumret behålls på 0.5.0 i utkastet tills full verifiering och beslut om släpp.**
