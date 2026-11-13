@@ -23,6 +23,7 @@
 #include "HundrarutaGtk.h"
 #include "LektionsytaGtk.h"
 #include "Mattekarta.h"
+#include "VisuellNiva.h"
 #include "MattekartaGtk.h" /* MATTE13-UI-STEG7 */ /* MATTE13-UI-STEG6 */ /* MATTE13-UI-STEG5 */ /* MATTE13-UI-STEG4 */ /* MATTE13-UI-STEG3 */ /* MATTE13-UI-STEG2 */
 
 #include <Wenuy.h>
@@ -437,6 +438,45 @@ button.matte13-vagkort:focus-visible { outline: 3px solid @accent_bg_color; }
 .lattlast .matte13-lektionsyta-val { min-height: 56px; }
 .lattlast .matte-ruta-rubrik { font-size: 20px; }
 
+/* Kursanpassat uttryck: endast presentation, aldrig pedagogiskt innehåll.
+   Färger är alltid systemets tema – inga nya hårdkodade UI-färger. */
+.matte13-window.matte-visuell-lekfull .matte13-hero {
+    border-radius: 20px; padding: 22px; background: alpha(@accent_bg_color, 0.12);
+}
+.matte13-window.matte-visuell-lugn .matte13-hero {
+    border-radius: 12px; padding: 16px; background: alpha(@accent_bg_color, 0.05);
+}
+.matte13-window.matte-visuell-lugn .matte13-dashboard .matte-ruta {
+    border-radius: 10px; padding: 14px 16px;
+}
+.matte13-window.matte-visuell-akademisk .matte13-hero {
+    border-radius: 7px; padding: 12px 16px; background: transparent;
+    border: 1px solid alpha(currentColor, 0.12);
+}
+.matte13-window.matte-visuell-akademisk .matte13-dashboard .matte-ruta {
+    border-radius: 8px; padding: 12px 16px;
+}
+.matte13-window.matte-visuell-akademisk .matte13-exercise .matte-fragarad {
+    border-radius: 7px; background: transparent;
+}
+.matte13-window.matte-visuell-akademisk .matte-fira {
+    border-radius: 6px; background: alpha(@success_color, 0.06);
+}
+.matte13-window.matte-visuell-professionell .matte13-hero {
+    border: 0; border-radius: 0; padding: 8px 16px; background: transparent;
+}
+.matte13-window.matte-visuell-professionell .matte13-dashboard .matte-ruta {
+    border-radius: 5px; padding: 10px 14px;
+}
+.matte13-window.matte-visuell-professionell .matte13-map .matte-kartruta {
+    border-radius: 5px; min-height: 84px; padding: 10px;
+}
+.matte13-window.matte-visuell-professionell .matte13-exercise .matte-fragarad {
+    border-radius: 4px; background: transparent; padding: 10px 16px;
+}
+.matte13-window.matte-visuell-professionell .matte-fira {
+    border-radius: 4px; background: transparent;
+}
 )CSS";
 
 // Stilen med textstorlekarna i övningen gånger z. Menyn, verktygsraden och passpanelen behåller sin storlek.
@@ -691,6 +731,7 @@ struct Matte {
     void bygg(GtkApplication* app);
     void tillampaLeklage();
     void fyllLista();
+    void tillampaVisuellStil(const std::string& stadium = "");
     void uppdateraStatus();
     void visaHem();
     void bytElev(const std::string& namn);
@@ -876,6 +917,20 @@ void Matte::bygg(GtkApplication* app) {
     uppdateraStatus();
     visaHem();
     gtk_window_present(GTK_WINDOW(win));
+}
+
+void Matte::tillampaVisuellStil(const std::string& valdKurs) {
+    if (!win) return;
+    std::string stadium = valdKurs;
+    if (stadium.empty()) stadium = !valtStadium.empty() ? valtStadium :
+                                     aktuellt ? stadiumFor(aktuellt->id) :
+                                     !stadieIds.empty() ? stadieIds.front() : "lgr22.4-6";
+    static const char* klasser[] = {
+        "matte-visuell-lekfull", "matte-visuell-lugn",
+        "matte-visuell-akademisk", "matte-visuell-professionell"
+    };
+    for (const char* klass : klasser) gtk_widget_remove_css_class(win, klass);
+    gtk_widget_add_css_class(win, visuellNivaKlass(visuellNiva(stadium, elev.visuellStil)));
 }
 
 void Matte::tillampaLeklage() {
@@ -1823,6 +1878,7 @@ void Matte::fyllLista() {
         if (it != stadieIds.end()) gtk_drop_down_set_selected(GTK_DROP_DOWN(stadieVal), (guint)(it - stadieIds.begin()));
         gtk_widget_set_visible(stadieVal, stadieIds.size() > 1);
     }
+    tillampaVisuellStil(visas);  // nivå följer vald kurs, oavsett elevens ålder
     std::vector<const Mal*> mal;
     for (auto& m : data.laroplan()) if (m.stadium == visas) mal.push_back(&m);
     for (auto& omr : data.omradeOrdning()) {
@@ -2274,6 +2330,42 @@ void Matte::visaInstallningar() {
             tr("For preschool and years 1–3: big buttons, pictures, the questions are read aloud, shorter sessions",
                "För förskola och åk 1–3: stora knappar, bilder, frågorna läses upp, kortare pass"), 1);
     adw_preferences_page_add(ADW_PREFERENCES_PAGE(sidan), ADW_PREFERENCES_GROUP(g2));
+
+    // Visuell nivå följer kursen, inte elevens ålder eller stödbehov.
+    GtkWidget* utseende = adw_preferences_group_new();
+    adw_preferences_group_set_title(ADW_PREFERENCES_GROUP(utseende),
+                                    tr("Appearance", "Utseende"));
+    GtkWidget* stilRad = adw_combo_row_new();
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(stilRad),
+                                  tr("Visual style", "Visuell stil"));
+    adw_action_row_set_subtitle(ADW_ACTION_ROW(stilRad),
+        tr("Automatic follows the course. Easy reading, pictures and handwriting always remain available.",
+           "Automatisk följer kursen. Lättläst, bilder och handskrift finns alltid kvar."));
+    const char* val[] = {
+        tr("Automatic – follows course", "Automatisk – följer kursen"),
+        tr("Illustrated", "Illustrerad"),
+        tr("Minimal", "Avskalad"), nullptr
+    };
+    GtkStringList* stilLista = gtk_string_list_new(val);
+    adw_combo_row_set_model(ADW_COMBO_ROW(stilRad), G_LIST_MODEL(stilLista));
+    g_object_unref(stilLista);
+    adw_combo_row_set_selected(ADW_COMBO_ROW(stilRad), visuellStilIndex(elev.visuellStil));
+    g_signal_connect(stilRad, "notify::selected", CB(+[](AdwComboRow* row, GParamSpec*, gpointer) {
+        std::string nytt = visuellStilVarde(adw_combo_row_get_selected(row));
+        if (nytt == M->elev.visuellStil) return;
+        const std::string gammal = M->elev.visuellStil;
+        M->elev.visuellStil = nytt;
+        if (!M->elev.spara()) {
+            M->elev.visuellStil = gammal;
+            adw_combo_row_set_selected(row, visuellStilIndex(gammal));
+            M->toast(tr("Could not save visual style.", "Kunde inte spara visuell stil."));
+            return;
+        }
+        M->tillampaVisuellStil();
+    }), nullptr);
+    adw_preferences_group_add(ADW_PREFERENCES_GROUP(utseende), stilRad);
+    adw_preferences_page_add(ADW_PREFERENCES_PAGE(sidan), ADW_PREFERENCES_GROUP(utseende));
+
     // Text och uppläsning
     GtkWidget* g3 = adw_preferences_group_new();
     adw_preferences_group_set_title(ADW_PREFERENCES_GROUP(g3), tr("Text and voice", "Text och röst"));
@@ -2554,6 +2646,7 @@ void Matte::visaKort(const Kort& k, bool nyttPass) {
     elev.settKort(k.id);
     elev.spara();
     valtStadium.clear();   // kursen i menyn följer kortet
+    tillampaVisuellStil(stadiumFor(k.id));
     markeraNav("");
     if (samma) {
         visa("kort");
