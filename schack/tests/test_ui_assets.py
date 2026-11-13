@@ -22,7 +22,7 @@ assert 'parsed.successes[i]=std::min(value,999u);' in lessons
 assert 'app.lessonSuccesses[app.lessonIndex]<999' in gui
 assert 'app.lessonProfile=label(app.lessonBox,"",true,"wenuy-dim");' in gui
 assert 'app.undoBtn=button(header,tr("Undo","Ångra"),1);' in gui
-assert 'if(app.undoBtn)g.gtk_button_set_label(app.undoBtn,app.training?' in gui
+assert 'if(app.undoBtn)updateButtonLabel(app.undoBtn,app.training?' in gui
 assert 'tr("Restart exercise","Starta om övningen")' in gui
 assert 'app.transient=tr("Exercise restarted. Follow the plan from the beginning."' in gui
 
@@ -144,6 +144,27 @@ assert 'g.gtk_widget_set_visible(app.lessonBox,app.training?1:0);' not in gui, (
     "The chess school preview should be visible during ordinary games"
 )
 assert "GtkProgressBar" not in manifest, "No new runtime dependency should be added"
+
+# Dynamic labels must not discard the custom GTK icon+text child.
+for marker in (
+    "struct ButtonData{int id;Ptr button=nullptr,caption=nullptr;};",
+    "void updateButtonLabel(Ptr button,const char* text){",
+    "g.gtk_label_set_label(entry->caption,text);",
+    "buttonDatas.push_back(std::make_unique<ButtonData>(ButtonData{id,btn,caption}));",
+    "updateButtonLabel(app.levelBtn,",
+    "updateButtonLabel(app.modeBtn,",
+    "updateButtonLabel(app.themeBtn,",
+    "uiProbeRequested=true;uiProbeSmall=",
+    "int guiProbeTick(void*)",
+    "gtk_widget_compute_bounds(app.board,app.window,&r)",
+    "chosen(12);probePhase=2;",
+    "chosen(28);probePhase=3;",
+):
+    assert marker in gui, f"Missing real GTK regression or icon persistence: {marker}"
+assert gui.count("std::vector<std::unique_ptr<ButtonData>> buttonDatas;")==1
+assert 'g.gtk_button_set_label(app.modeBtn,' not in gui
+assert 'g.gtk_button_set_label(app.levelBtn,' not in gui
+assert 'g.gtk_button_set_label(app.lessonToggleBtn,' not in gui
 
 # 0.5.2: a changing status message must never wrap and resize the board.
 # These are structure checks; actual pixel stability still requires a GTK test.
