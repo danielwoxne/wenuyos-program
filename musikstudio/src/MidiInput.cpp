@@ -54,6 +54,17 @@ struct MidiInput::Impl {
    if(rc==-EAGAIN)break;
    if(rc<0){self->lost();return G_SOURCE_REMOVE;}
    if(!event)break;
+   // ALSA may keep its sequencer fd open when an individual USB device
+   // disappears. Subscription and port-exit notifications must release
+   // held notes even without G_IO_HUP.
+   const bool unplugged=
+    (event->type==SND_SEQ_EVENT_PORT_UNSUBSCRIBED&&
+     event->data.connect.sender.client==self->source.client&&
+     event->data.connect.sender.port==self->source.port)||
+    (event->type==SND_SEQ_EVENT_PORT_EXIT&&
+     event->data.addr.client==self->source.client&&
+     event->data.addr.port==self->source.port);
+   if(unplugged){self->lost();return G_SOURCE_REMOVE;}
    const bool fromSource=event->source.client==self->source.client&&
                          event->source.port==self->source.port;
    if(fromSource) {
