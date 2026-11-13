@@ -7,6 +7,8 @@ Ett schackspel för WenuyOS, byggt i C++17. Offlinespel är standard; nätverkss
 ## 0.5.1 – publicerad
 De två kvarvarande GUI-observationerna från 0.5.0 åtgärdades: sidopanelens vågräta rullist och en tangentbordshjälp som kapades på små skärmar. Se [provplan 0.5.1](docs/PROV-051.md).
 
+**Förbättring av gränssnittet:** Partistatus och Schackskolan är lättare att hitta; övriga spelinställningar och draglistan kommer före nätverksinställningarna. Verktygsrad och sidopanel får enhetliga avstånd och diskreta avskiljare från WenuyOS-temat. Springare, löpare och kung har förfinats med skarpa Cairo-streck. Allt ingår i utkast-PR #29 och är ännu inte släppt.
+
 ## 0.5.2 – föreslagen rättelse för skakande bräde
 Rapporterat fel: hela schackbrädet kan flytta sig när statusraden ändras efter ett drag eller när en pjäs markeras. En enradsstatus med ellips föreslås så brädets höjd inte varierar. Hela texten finns fortfarande tillgänglig. Rättelsen behöver provas visuellt före släpp.
 
