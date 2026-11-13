@@ -13,6 +13,7 @@
 #include "wenuystudio/InstrumentBank.hpp"
 #include "wenuystudio/KeyboardInput.hpp"
 #include "wenuystudio/MidiTake.hpp"
+#include "wenuystudio/MidiInput.hpp"
 #include "wenuystudio/AudioImport.hpp"
 #include <algorithm>
 #include <array>
@@ -35,12 +36,16 @@ enum class Pick {Open,Save,ImportWav,ExportWav,ImportMidi,ExportMidi,ExportGfx,R
 struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
  GtkWidget *keyboard=nullptr,*midiButton=nullptr,*keyboardStatus=nullptr;
+ GtkWidget *midiDevicePicker=nullptr,*midiDeviceButton=nullptr,*midiDeviceStatus=nullptr;
+ GtkStringList* midiDeviceNames=nullptr;
  ws::Project project{};
  ws::Playback playback{};
  ws::Playback audition{};
  ws::Recording recording{};
  ws::MidiTake midi{};
- std::array<bool,128> activeKeys{};
+ ws::MidiInput midiInput{};
+ std::vector<ws::MidiInputSource> midiSources{};
+ std::array<bool,128> activeKeys{},externalKeys{};
  int pointerKey=-1;
  unsigned midiTrack=0;
  bool previewUnavailable=false;
@@ -53,7 +58,11 @@ struct Studio{
  bool dirty=false;
  bool closeAllowed=false,chooserOpen=false;
  guint timer=0;
- ~Studio(){if(timer)g_source_remove(timer);playback.stop();recording.stop();}
+ ~Studio(){
+  midiInput.disconnect();
+  if(timer)g_source_remove(timer);
+  audition.stop();playback.stop();recording.stop();
+ }
 };
 struct Request{Studio* s;Pick pick;};
 struct MapRequest{
@@ -67,6 +76,7 @@ void requestProtected(Studio*,ws::ProjectAction);
 void performProtected(Studio*,const ws::ProjectAction&);
 void save(Studio*);
 void finishMidi(Studio*);
+void releaseKeyboard(Studio*,int,bool external=false);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
@@ -128,22 +138,30 @@ void toggleMidi(Studio* s){
  notice(s,tr("MIDI recording – play the keyboard, then Stop MIDI",
              "MIDI-inspelning – spela på tangenterna och tryck sedan Stoppa MIDI"));
 }
-void pressKeyboard(Studio* s,int key){
- if(key<ws::keyboardLowest||key>ws::keyboardHighest||s->activeKeys[static_cast<std::size_t>(key)])return;
- s->activeKeys[static_cast<std::size_t>(key)]=true;
- if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time());
- if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
- if(s->keyboardStatus)gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
- if(s->selected>=s->project.tracks.size()||s->recording.active()||s->playback.active()||s->previewUnavailable)return;
+void pressKeyboard(Studio* s,int key,float velocity=.8f,bool external=false){
+ if(key<0||key>127)return;
+ auto& held=external?s->externalKeys:s->activeKeys;
+ auto& other=external?s->activeKeys:s->externalKeys;
+ const auto i=static_cast<std::size_t>(key);
+ if(held[i])return;
+ held[i]=true;
+ if(other[i])return; // one note-on for a key held by both sources
+ if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time(),velocity);
+ if(s->keyboard&&key>=ws::keyboardLowest&&key<=ws::keyboardHighest)
+  gtk_widget_queue_draw(s->keyboard);
+ if(s->keyboardStatus)
+  gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
+ if(s->selected>=s->project.tracks.size()||s->recording.active()||
+    s->playback.active()||s->previewUnavailable)return;
  try{
-  // Short-lived voice, no soundfiles and no new audio backend. The preview
-  // has its own player, so it never changes the arrangement playhead.
+  // Monophonic preview. Recording still captures polyphonic MIDI notes.
   s->audition.stop();
   ws::Project preview;
   preview.sampleRate=s->project.sampleRate;
   preview.durationSeconds=.60;
   ws::Track track;track.instrument=s->project.tracks[s->selected].instrument;
-  track.notes.push_back({key,.005,.52,.8f});preview.tracks.push_back(std::move(track));
+  track.notes.push_back({key,.005,.52,velocity});
+  preview.tracks.push_back(std::move(track));
   s->audition.start(preview,0);
  }catch(const std::exception& e){
   g_warning("Keyboard preview failed: %s",e.what());s->previewUnavailable=true;
@@ -151,10 +169,14 @@ void pressKeyboard(Studio* s,int key){
               "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
  }
 }
-void releaseKeyboard(Studio* s,int key){
- if(key<ws::keyboardLowest||key>ws::keyboardHighest||
-    !s->activeKeys[static_cast<std::size_t>(key)])return;
- s->activeKeys[static_cast<std::size_t>(key)]=false;
+void releaseKeyboard(Studio* s,int key,bool external){
+ if(key<0||key>127)return;
+ auto& held=external?s->externalKeys:s->activeKeys;
+ auto& other=external?s->activeKeys:s->externalKeys;
+ const auto i=static_cast<std::size_t>(key);
+ if(!held[i])return;
+ held[i]=false;
+ if(other[i])return; // the other input source is still holding this note
  if(s->midi.recording()){
   try{
    if(!s->midi.noteOff(key,g_get_monotonic_time())&&
@@ -169,283 +191,14 @@ void releaseKeyboard(Studio* s,int key){
                "Minnesgränsen för MIDI-inspelning har nåtts"));
   }
  }
- if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
+ if(s->keyboard&&key>=ws::keyboardLowest&&key<=ws::keyboardHighest)
+  gtk_widget_queue_draw(s->keyboard);
  s->audition.stop();
- // PortAudio initialization fails asynchronously when audio is unavailable.
  if(!s->audition.error().empty()&&!s->previewUnavailable){
   s->previewUnavailable=true;
   notice(s,tr("No audio output – MIDI recording still works",
               "Ingen ljudutgång – MIDI-inspelning fungerar ändå"));
  }
-}
-void finishRecord(Studio* s){
- if(s->recordFile.empty())return;
- s->recording.stop();
- try{
-  if(!s->recording.completed())throw std::runtime_error(s->recording.error());
-  ws::WaveReader r(s->recordFile);
-  if(s->project.tracks.size()>=128)throw std::runtime_error("Too many tracks");
-  ws::Track t;t.name=tr("Microphone","Mikrofon");
-  const double d=double(r.frames())/r.rate();
-  t.clips.push_back({fs::absolute(s->recordFile).string(),s->recordAt,0,d,1});
-  checkpoint(s);s->project.tracks.push_back(std::move(t));
-  s->project.durationSeconds=std::min(20000.,std::max(s->project.durationSeconds,s->recordAt+d));
-  s->selected=static_cast<unsigned>(s->project.tracks.size()-1);
-  change(s);notice(s,tr("Recording saved","Inspelningen sparad"));
- }catch(const std::exception& e){notice(s,std::string(tr("Recording failed: ","Inspelningen misslyckades: "))+e.what());}
- s->recordFile.clear();
-}
-gboolean tick(gpointer data){
- auto* s=static_cast<Studio*>(data);
- if(s->playback.active()){s->playhead=std::min(s->project.durationSeconds,s->playback.position());
-  gtk_widget_queue_draw(s->timeline);gtk_widget_queue_draw(s->piano);}
- if(!s->recordFile.empty()&&!s->recording.active())finishRecord(s);
- if(!s->playback.active()&&!s->recording.active()){
-  if(!s->playback.error().empty())notice(s,std::string(tr("Audio error: ","Ljudfel: "))+s->playback.error());
-  s->timer=0;return G_SOURCE_REMOVE;
- }
- return G_SOURCE_CONTINUE;
-}
-void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
-void play(Studio* s){
- if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
- try{if(!s->recordFile.empty())finishRecord(s);s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
- startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
-}
-void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
-void newProject(Studio* s){
- stop(s);s->project=ws::Project{};ws::Track t;t.name=tr("Track 1","Spår 1");s->project.tracks.push_back(std::move(t));
- s->file.clear();s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
-}
-void addTrack(Studio* s){
- if(s->project.tracks.size()>=128){notice(s,tr("Maximum 128 tracks","Högst 128 spår"));return;}
- checkpoint(s);ws::Track t;t.name=std::string(tr("Track ","Spår "))+std::to_string(s->project.tracks.size()+1);
- s->project.tracks.push_back(std::move(t));s->selected=static_cast<unsigned>(s->project.tracks.size()-1);s->selectedNote.reset();change(s);
-}
-void addNote(Studio* s){
- if(s->selected>=s->project.tracks.size())return;
- try{checkpoint(s);ws::insertNote(s->project,s->selected,{60,s->playhead,.5,.8f},{4,0});change(s);}
- catch(const std::exception& e){notice(s,e.what());}
-}
-void quantize(Studio* s){
- if(s->selected>=s->project.tracks.size())return;
- try{checkpoint(s);if(ws::quantizeTrack(s->project,s->selected,{4,0}))change(s);}
- catch(const std::exception& e){notice(s,e.what());}
-}
-void undo(Studio* s){if(s->history.undo(s->project)){s->selectedNote.reset();change(s);}}
-void redo(Studio* s){if(s->history.redo(s->project)){s->selectedNote.reset();change(s);}}
-void exportNoteMap(Studio* s,const std::string& output){
- if(s->file.empty()||s->dirty){
-  notice(s,tr("Save the project first, then export the 3D note map.",
-              "Spara projektet först och exportera sedan 3D-notkartan."));
-  return;
- }
- if(fs::exists(fs::u8path(output))){
-  notice(s,tr("Choose a new image filename; the existing file will not be overwritten.",
-              "Välj ett nytt bildnamn. Den befintliga filen skrivs inte över."));
-  return;
- }
- std::error_code ec;
- const auto exe=fs::read_symlink("/proc/self/exe",ec);
- const auto helper=exe.parent_path()/"wenuy-studio-gfx";
- if(ec||!fs::exists(helper)){
-  notice(s,tr("WenuyGFX note-map tool is not installed.",
-              "Verktyget för WenuyGFX-notkartan är inte installerat."));
-  return;
- }
- const std::string executable=helper.u8string();
- std::vector<const char*> args{executable.c_str(),s->file.c_str(),output.c_str()};
- const char* perf=std::getenv("WENUYOS_PERF");
- if(perf&&std::strcmp(perf,"low")==0)args.push_back("--low");
- args.push_back(nullptr);
- GError* error=nullptr;
- GSubprocess* process=g_subprocess_newv(args.data(),G_SUBPROCESS_FLAGS_NONE,&error);
- if(!process){
-  if(error){g_warning("WenuyGFX launch: %s",error->message);g_error_free(error);}
-  notice(s,tr("Could not start the 3D note-map tool.",
-              "Kunde inte starta verktyget för 3D-notkartan."));
-  return;
- }
- auto* request=new MapRequest(s->toast);
- g_subprocess_wait_async(process,nullptr,+[](GObject* process,GAsyncResult* result,gpointer data){
-  std::unique_ptr<MapRequest> request(static_cast<MapRequest*>(data));
-  GError* error=nullptr;
-  const gboolean ok=g_subprocess_wait_check_finish(G_SUBPROCESS(process),result,&error);
-  if(error){g_warning("WenuyGFX note-map export: %s",error->message);g_error_free(error);}
-  GObject* obj=static_cast<GObject*>(g_weak_ref_get(&request->overlay));
-  if(obj){
-   adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(obj),adw_toast_new(
-    ok?tr("3D note map exported","3D-notkartan exporterad"):
-       tr("Could not export the 3D note map","Kunde inte exportera 3D-notkartan")));
-   g_object_unref(obj);
-  }
- },request);
- g_object_unref(process);
- notice(s,tr("Rendering 3D note map…","Ritar 3D-notkarta…"));
-}
-void fileAction(Studio* s,Pick pick,const std::string& path){
- try{
-  switch(pick){
-   case Pick::Open:
-    requestProtected(s,{ws::ProjectActionKind::Open,path});break;
-   case Pick::Save:
-    ws::saveProject(s->project,path);
-    s->file=path;s->dirty=false;refresh(s);notice(s,tr("Project saved","Projekt sparat"));
-    if(auto next=s->guard.finishedSave(true))performProtected(s,*next);
-    break;
-   case Pick::ImportWav:{
-    if(s->project.tracks.size()>=128)throw std::runtime_error(tr("Maximum 128 tracks","Högst 128 spår"));
-    const auto importDir=fs::u8path(g_get_user_data_dir())/"se.wenuyos.app.musikstudio"/"imports";
-    const auto imported=ws::importAudioFile(path,importDir.u8string());
-    const double len=double(imported.frames)/imported.rate;
-    ws::Track t;t.name=fs::path(path).stem().string();
-    t.clips.push_back({imported.filename,s->playhead,0,len,1});
-    checkpoint(s);s->project.tracks.push_back(std::move(t));
-    s->project.durationSeconds=std::min(20000.,std::max(s->project.durationSeconds,s->playhead+len));
-    s->selected=static_cast<unsigned>(s->project.tracks.size()-1);
-    s->selectedNote.reset();change(s);
-    notice(s,imported.converted?tr("Audio imported with Datatypes","Ljud importerat med Datatyper"):
-                    tr("WAV imported","WAV importerad"));break;}
-   case Pick::ImportMidi:{
-    auto project=ws::importMidi(path);
-    if(s->project.tracks.size()+project.tracks.size()>128)throw std::runtime_error("Maximum 128 tracks");
-    checkpoint(s);s->project.durationSeconds=std::min(20000.,std::max(s->project.durationSeconds,project.durationSeconds));
-    for(auto& t:project.tracks){
-     s->project.tracks.push_back(std::move(t));
-    }
-    change(s);
-    notice(s,tr("MIDI imported","MIDI importerad"));break;}
-   case Pick::ExportWav:
-    if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
-    ws::render(s->project,path);notice(s,tr("WAV exported","WAV exporterad"));break;
-   case Pick::ExportMidi:
-    if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
-    ws::exportMidi(s->project,path);notice(s,tr("MIDI exported","MIDI exporterad"));break;
-   case Pick::ExportGfx:
-    exportNoteMap(s,path);break;
-   case Pick::Record:
-    if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
-    s->playback.stop();s->recordAt=s->playhead;s->recordFile=path;s->recording.start(path,s->project.sampleRate);
-    startTick(s);notice(s,tr("Recording – press Stop to finish","Spelar in – tryck Stoppa för att avsluta"));break;
-  }
- }catch(const std::exception& e){
-  if(pick==Pick::Save){
-   (void)s->guard.finishedSave(false);
-   g_warning("Project save failed: %s",e.what());
-   notice(s,tr("Could not save the project. Check disk space and permissions.",
-               "Kunde inte spara projektet. Kontrollera ledigt utrymme och behörigheter."));
-  }else if(pick==Pick::ImportWav){
-   g_warning("Audio import failed: %s",e.what());
-   notice(s,tr("Could not import audio. Check the format or enable WenuyOS Datatypes.",
-               "Kunde inte importera ljud. Kontrollera formatet eller aktivera WenuyOS Datatyper."));
-  }else notice(s,std::string(tr("Error: ","Fel: "))+e.what());
- }
-}
-void choose(Studio* s,Pick pick){
- if(s->chooserOpen){
-  notice(s,tr("Finish the current file dialog first","Avsluta den pågående fildialogen först"));
-  return;
- }
- s->chooserOpen=true;
- const bool save=pick==Pick::Save||pick==Pick::ExportWav||pick==Pick::ExportMidi||
-                 pick==Pick::ExportGfx||pick==Pick::Record;
- const char* title=pick==Pick::Open?tr("Open project","Öppna projekt"):
- pick==Pick::Save?tr("Save project","Spara projekt"):
- pick==Pick::ImportWav?tr("Import audio","Importera ljud"):
- pick==Pick::ExportWav?tr("Export WAV","Exportera WAV"):
- pick==Pick::ImportMidi?tr("Import MIDI","Importera MIDI"):
- pick==Pick::ExportMidi?tr("Export MIDI","Exportera MIDI"):
- pick==Pick::ExportGfx?tr("Export 3D note map","Exportera 3D-notkarta"):tr("Record WAV","Spela in WAV");
- GtkFileChooserNative* dialog=gtk_file_chooser_native_new(title,GTK_WINDOW(s->window),
- save?GTK_FILE_CHOOSER_ACTION_SAVE:GTK_FILE_CHOOSER_ACTION_OPEN,
- save?tr("Save","Spara"):tr("Open","Öppna"),tr("Cancel","Avbryt"));
- if(save){gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog),
- pick==Pick::Save?"song.wstudio":pick==Pick::ExportMidi?"song.mid":
- pick==Pick::ExportGfx?"notes-3d.ppm":pick==Pick::Record?"recording.wav":"mix.wav");}
- auto* req=new Request{s,pick};
- g_signal_connect(dialog,"response",G_CALLBACK(+[](GtkNativeDialog* dlg,int response,gpointer data){
-  std::unique_ptr<Request> req(static_cast<Request*>(data));
-  Studio* st=req->s;
-  st->chooserOpen=false;
-  bool acted=false;
-  if(response==GTK_RESPONSE_ACCEPT){
-   GFile* file=gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dlg));
-   if(file){
-    char* path=g_file_get_path(file);
-    if(path){acted=true;fileAction(st,req->pick,path);g_free(path);}
-    else notice(st,tr("Only local files are supported","Endast lokala filer stöds"));
-    g_object_unref(file);
-   }
-  }
-  // Cancelled Save As (or an inaccessible URI) never releases a pending New/Open/Close.
-  if(!acted&&req->pick==Pick::Save)(void)st->guard.finishedSave(false);
-  g_object_unref(dlg);
- }),req);
- gtk_native_dialog_show(GTK_NATIVE_DIALOG(dialog));
-}
-void save(Studio* s){
- if(s->midi.recording()){
-  notice(s,tr("Stop MIDI recording before saving the project",
-              "Stoppa MIDI-inspelningen innan du sparar projektet"));
-  return;
- }
- if(s->file.empty())choose(s,Pick::Save);else fileAction(s,Pick::Save,s->file);
-}
-
-// Executes only AFTER the dirty guard allows the action, and only commits a
-// loaded file after its full parse/validation succeeded.
-void performProtected(Studio* s,const ws::ProjectAction& action){
- try{
-  switch(action.kind){
-   case ws::ProjectActionKind::New:newProject(s);break;
-   case ws::ProjectActionKind::Open:{
-    ws::Project loaded=ws::loadProject(action.path);
-    stop(s);
-    s->project=std::move(loaded);
-    s->file=action.path;s->history.clear();s->selected=0;s->selectedNote.reset();
-    s->playhead=0;s->dirty=false;refresh(s);
-    notice(s,tr("Project opened","Projekt öppnat"));break;
-   }
-   case ws::ProjectActionKind::Close:
-    s->closeAllowed=true;gtk_window_close(GTK_WINDOW(s->window));break;
-  }
- }catch(const std::exception& e){
-  g_warning("Project open failed: %s",e.what());
-  notice(s,tr("Could not open the project. Check the file format and permissions.",
-              "Kunde inte öppna projektet. Kontrollera filformat och behörigheter."));
- }
-}
-void requestProtected(Studio* s,ws::ProjectAction action){
- const bool blocked=s->recording.active()||!s->recordFile.empty()||s->chooserOpen||s->midi.recording();
- const auto result=s->guard.request(action,s->dirty,blocked);
- if(result==ws::GuardDecision::Busy){
-  notice(s,blocked&&(s->recording.active()||!s->recordFile.empty()||s->midi.recording())?
-   tr("Stop recording before switching projects or closing",
-      "Avsluta inspelningen innan du byter projekt eller stänger"):
-   tr("Finish the current dialog first","Avsluta den pågående dialogen först"));
-  return;
- }
- if(result==ws::GuardDecision::Proceed){performProtected(s,action);return;}
- auto* dialog=ADW_MESSAGE_DIALOG(adw_message_dialog_new(GTK_WINDOW(s->window),
-  tr("Save changes?","Spara ändringarna?"),
-  tr("Your music contains unsaved changes. What would you like to do?",
-     "Musiken innehåller osparade ändringar. Vad vill du göra?")));
- adw_message_dialog_add_responses(dialog,
-  "cancel",tr("Cancel","Avbryt"),
-  "discard",tr("Discard changes","Kasta ändringar"),
-  "save",tr("Save","Spara"),nullptr);
- adw_message_dialog_set_response_appearance(dialog,"discard",ADW_RESPONSE_DESTRUCTIVE);
- adw_message_dialog_set_default_response(dialog,"cancel");
- adw_message_dialog_set_close_response(dialog,"cancel");
- g_signal_connect(dialog,"response",G_CALLBACK(+[](AdwMessageDialog*,const char* response,gpointer user){
-  auto* st=static_cast<Studio*>(user);
-  if(g_strcmp0(response,"discard")==0){
-   if(auto next=st->guard.discard())performProtected(st,*next);
-  }else if(g_strcmp0(response,"save")==0){
-   if(st->guard.beginSave())save(st);
-  }else st->guard.cancel();
- }),s);
- gtk_window_present(GTK_WINDOW(dialog));
 }
 void record(Studio* s){
  if(s->midi.recording()){
@@ -583,7 +336,8 @@ void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer
  for(int i=0;i<ws::keyboardWhiteCount;++i){
   const int key=ws::keyboardWhiteKey(i);
   const double x=i*white;
-  color(s->activeKeys[static_cast<std::size_t>(key)]?.27:.055);
+  color((s->activeKeys[static_cast<std::size_t>(key)]||
+         s->externalKeys[static_cast<std::size_t>(key)])?.27:.055);
   cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_fill(cr);
   color(.55);cairo_set_line_width(cr,1);
   cairo_rectangle(cr,x+.7,.7,white-1.4,height-1.4);cairo_stroke(cr);
@@ -595,7 +349,8 @@ void drawKeyboard(GtkDrawingArea* area,cairo_t* cr,int width,int height,gpointer
   const int key=ws::keyboardBlackAfter(i);
   if(key<0)continue;
   const double x=(i+1-ws::keyboardBlackWidth*.5)*white;
-  color(s->activeKeys[static_cast<std::size_t>(key)]?.98:.75);
+  color((s->activeKeys[static_cast<std::size_t>(key)]||
+         s->externalKeys[static_cast<std::size_t>(key)])?.98:.75);
   cairo_rectangle(cr,x,0,white*ws::keyboardBlackWidth,
                   height*ws::keyboardBlackHeight);cairo_fill(cr);
  }
