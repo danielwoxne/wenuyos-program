@@ -1,6 +1,7 @@
 # Versionshistorik
 
 ## 0.5.2 (utkast – ej publicerad)
+- Grafisk finputsning utan större minnesfotavtryck: diskret kontaktskugga under vektorpjäserna, smal inre ram runt brädet, diskret markering av senaste draget med palettens accentfärg och hörnlinjer, samt palettanpassade punkter för tillåtna drag. Allt ritas direkt i befintlig Cairo-yta, utan bitmap, oskärpa, GPU eller nya beroenden.
 - Vid markering eller flytt av pjäs kunde den dynamiska brädstatusraden brytas på nytt, så brädets GTK-ritningsyta ändrade höjd och centrerades om. Den synliga statusen hålls nu på en enda rad med ellips vid behov. Hela texten finns kvar i etiketten och som muspekartips.
 - UI-regression provar förekomsten av höjdstabil etikett. Visuell bekräftelse i Debian 13, 1024×600 och på faktisk 2 GB-maskin återstår.
 - Spelregler, lokala sparfiler och LAN-funktioner är oförändrade.
