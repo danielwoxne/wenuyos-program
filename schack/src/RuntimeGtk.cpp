@@ -239,7 +239,14 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   // Ear and bridle are simple Cairo strokes, not filtered assets.
   cairo_move_to(c,35,22);cairo_line_to(c,40,30);
   cairo_move_to(c,29,52);cairo_curve_to(c,37,56,42,57,47,58);
-  cairo_stroke(c);break;
+  cairo_stroke(c);
+  // A stepped mane and nostril improve the knight silhouette at small sizes.
+  rgba(c,w?.20:.90,w?.28:.93,w?.37:.96,.86);
+  cairo_set_line_width(c,2.0);
+  cairo_move_to(c,57,34);cairo_line_to(c,53,41);
+  cairo_move_to(c,63,41);cairo_line_to(c,59,48);
+  cairo_stroke(c);
+  cairo_new_path(c);cairo_arc(c,22,49,2.1,0,6.28318530718);cairo_fill(c);break;
  case 'b':
   cairo_new_path(c);cairo_move_to(c,50,15);cairo_curve_to(c,67,31,69,43,61,54);
   cairo_curve_to(c,75,63,69,70,67,76);cairo_line_to(c,33,76);
@@ -248,7 +255,12 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   cairo_new_path(c);cairo_move_to(c,58,27);cairo_line_to(c,44,54);
   rgba(c,w?.23:.8,w?.29:.86,w?.39:.92);cairo_set_line_width(c,4);cairo_stroke(c);
   cairo_set_line_width(c,2.0);cairo_move_to(c,37,65);cairo_line_to(c,63,65);
-  cairo_stroke(c);break;
+  cairo_stroke(c);
+  // A neck ring makes the bishop readable on small squares.
+  rgba(c,w?.58:.72,w?.64:.78,w?.72:.86,.86);
+  cairo_set_line_width(c,2.2);
+  cairo_move_to(c,37,58);cairo_curve_to(c,46,61,54,61,63,58);cairo_stroke(c);
+  cairo_new_path(c);cairo_arc(c,50,25,4.1,0,6.28318530718);cairo_fill(c);break;
  case 'q':
   cairo_new_path(c);cairo_move_to(c,20,27);cairo_line_to(c,34,43);cairo_line_to(c,39,20);
   cairo_line_to(c,50,42);cairo_line_to(c,61,20);cairo_line_to(c,66,43);
@@ -271,7 +283,12 @@ void piece(cairo_t* c,char p,double x,double y,double s){
   rgba(c,w?.58:.73,w?.65:.79,w?.72:.87,.9);cairo_set_line_width(c,2.5);
   cairo_move_to(c,39,63);cairo_line_to(c,61,63);cairo_stroke(c);
   cairo_set_line_width(c,1.8);cairo_move_to(c,44,51);
-  cairo_curve_to(c,48,47,52,47,56,51);cairo_stroke(c);break;
+  cairo_curve_to(c,48,47,52,47,56,51);cairo_stroke(c);
+  // Shoulder folds add dimension without bitmap shading.
+  cairo_set_line_width(c,2.0);
+  cairo_move_to(c,39,47);cairo_curve_to(c,36,51,36,57,40,61);
+  cairo_move_to(c,61,47);cairo_curve_to(c,64,51,64,57,60,61);
+  cairo_stroke(c);break;
  }
  base(c,w);cairo_restore(c);
 }
