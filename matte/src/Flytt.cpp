@@ -126,14 +126,14 @@ std::string importeraElev(const std::string& fil, bool ersatt, std::string* fel,
     if (in["raknepapper"].arObjekt()) {
         for (const auto& [filnamn, data] : in["raknepapper"].falt()) {
             if (!sakertPappernamn(filnamn) || !data.arText())
-                return felmed(fel, "ogiltigt räknepappersnamn eller innehåll") ? "" : "";
+                { felmed(fel, "ogiltigt räknepappersnamn eller innehåll"); return ""; }
             PapperData item;
             std::string orsak, text = data.str();
             rakneByte += text.size();
             if (papper.size() >= 500 || rakneByte > 90U * 1024U * 1024U ||
                 !papperFranJson(text, item, &orsak) ||
                 item.id + ".json" != filnamn)
-                return felmed(fel, "osäkert räknepapper: " + orsak) ? "" : "";
+                { felmed(fel, "osäkert räknepapper: " + orsak); return ""; }
             papper.emplace_back(filnamn, std::move(item));
         }
     }
