@@ -134,7 +134,7 @@ void pressKeyboard(Studio* s,int key){
  if(s->midi.recording())s->midi.noteOn(key,g_get_monotonic_time());
  if(s->keyboard)gtk_widget_queue_draw(s->keyboard);
  if(s->keyboardStatus)gtk_label_set_text(GTK_LABEL(s->keyboardStatus),ws::pitchName(key).c_str());
- if(s->selected>=s->project.tracks.size()||s->recording.active()||s->previewUnavailable)return;
+ if(s->selected>=s->project.tracks.size()||s->recording.active()||s->playback.active()||s->previewUnavailable)return;
  try{
   // Short-lived voice, no soundfiles and no new audio backend. The preview
   // has its own player, so it never changes the arrangement playhead.
@@ -441,7 +441,14 @@ void requestProtected(Studio* s,ws::ProjectAction action){
  }),s);
  gtk_window_present(GTK_WINDOW(dialog));
 }
-void record(Studio* s){if(s->recording.active())finishRecord(s);else choose(s,Pick::Record);}
+void record(Studio* s){
+ if(s->midi.recording()){
+  notice(s,tr("Stop MIDI recording before microphone recording",
+              "Stoppa MIDI-inspelningen innan du spelar in mikrofonljud"));
+  return;
+ }
+ if(s->recording.active())finishRecord(s);else choose(s,Pick::Record);
+}
 GtkWidget* button(GtkWidget* box,Studio* s,const char* label,void(*callback)(Studio*)){
  GtkWidget* b=gtk_button_new_with_label(label);gtk_box_append(GTK_BOX(box),b);
  g_signal_connect_swapped(b,"clicked",G_CALLBACK(callback),s);return b;
