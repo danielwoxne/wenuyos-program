@@ -14,3 +14,9 @@
 ## Ej del av första PR
 - Realistiska inspelade pianon, gitarrer, SF2/SFZ, licensberoende ljudbanker.
 - Tillägg av effekter i ljudtråd, nya projektfält, 3D-fönster, publicering.
+
+## Tonformning, etapp 3 – mer levande klanger utan samplingar
+- Piano (ID 4), elpiano (5), plockad gitarr (7), elbas (8) och marimba (15) använder snabbare övertonsdämpning under tonsvansen. Det ger skarpare anslag och mjukare efterklang utan externt ljudmaterial.
+- Tidigare ljud-ID 0–3 och samtliga 16 ID-nummer bevaras. `.wstudio` är fortfarande version 5; äldre projekt behöver inte konverteras.
+- Ingen extra minnesallokering eller bakgrundstråd. Enkel aritmetik styr dämpningen, i stället för fler `sin`/`exp` per sampel.
+- Enhetstester täcker syntetiserade transienta klanger och gamla ID. Lyssning och belastning på fysisk 2 GB-dator återstår.
