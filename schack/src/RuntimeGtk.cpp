@@ -1195,8 +1195,6 @@ void updateButtonLabel(Ptr button,const char* text){
  g.gtk_button_set_label(button,text);
 }
 
-// Existing widget pointers are owned by GTK, not this vector.
-std::vector<std::unique_ptr<ButtonData>> buttonDatas;
 void onButton(Ptr,void* data){perform(static_cast<ButtonData*>(data)->id);}
 // Use theme-provided icons only when that icon is actually installed.
 Ptr themeIcon(const char* iconName){
