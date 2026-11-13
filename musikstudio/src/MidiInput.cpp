@@ -169,6 +169,16 @@ bool MidiInput::connect(const MidiInputSource& source,Sink sink,std::string& err
  // The receiver is not exported to unrelated apps. Only the user-selected
  // source is subscribed; there is no auto-connect or MIDI-over-network.
  snd_seq_set_client_name(seq,"Wenuy Studio");
+ // Filter in the ALSA sequencer before events enter our client buffer.
+ // Large SysEx/samples and unrelated events must not consume 2 GB RAM.
+ for(const int type: {SND_SEQ_EVENT_NOTEON,SND_SEQ_EVENT_NOTEOFF,
+                      SND_SEQ_EVENT_CONTROLLER,SND_SEQ_EVENT_PORT_UNSUBSCRIBED,
+                      SND_SEQ_EVENT_PORT_EXIT}){
+  if(snd_seq_set_client_event_filter(seq,type)<0){
+   error="Could not limit accepted MIDI events";
+   snd_seq_close(seq);return false;
+  }
+ }
  const int port=snd_seq_create_simple_port(seq,"Music keyboard input",
                         SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_NO_EXPORT,
                         SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
