@@ -29,7 +29,13 @@ lättläst, uppläsning, tillgång till förklarande bilder eller penninmatning.
 Kurslogiken har GTK-fria C++-prov i `matte-test` och skärmbildskontrollen
 provar dessutom gymnasiet och högstadiet med `WENUYOS_PERF=low` och
 `WENUYOS_GFX=soft`. Se `docs/ETAPP-B-GENOMFORANDEPLAN.md`. Verkliga
-lerikoner och permanent sparning av räknepappret är ännu inte införda.
+lerikoner är ännu inte införda. **Sparning av räknepapper finns däremot i PR #10:**
+penndrag och siffror sparas lokalt per uppgiftsförsök och samma pågående
+uppgift kan återställas efter omstart. Tidigare papper lagras och kan
+exporteras med eleven; en särskild översikt över avslutade papper återstår.
+Sparningen bygger på `src/PapperLagring.cpp` (GTK-fri JSON-modell, max 2 MiB
+per fil), `src/Papper.cpp`, `src/Framsteg.cpp` och `src/Flytt.cpp`.
+Se `docs/RITPLATTA.md` för begränsningar, integritet och provning.
 
 ## Ren källkod och prov
 
@@ -80,7 +86,8 @@ src/
   Svar           svarsytorna: skriva, välja, klicka, pricka in, dra linjer i koordinatsystem, dra brickor
   SvarNy         kryssa i rutor, para ihop (dra linjer), måla ytor, fri rityta
   Utskrift       arbetsblad och regelbok som PDF (cairo) – utan GTK
-  Papper         räknepappret (rutat papper, ställ upp, penna, sudd)
+  Papper         räknepappret (rutat papper, ställ upp, penna, sudd, autospar)
+  PapperLagring  privat versionsmärkt JSON, återställning och elevexport
   Fonster        fönstret och kommandoraden
   Test           enhetstester: alla 13 159 uppgifter rättas mot sitt facit, PDF, ordlistan
 ```
