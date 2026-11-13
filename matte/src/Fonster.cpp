@@ -3846,6 +3846,14 @@ void skarmbild() {
             else if (del.rfind("namn:", 0) == 0) { M->elev.visningsnamn = del.substr(5); }
         }
     }
+    // CI-krok: verifiera att kursen verkligen aktiverat rätt GTK-stilklass.
+    if (const char* forvantad = g_getenv("MATTE_TEST_VISUELL")) {
+        if (*forvantad && !gtk_widget_has_css_class(M->win, forvantad)) {
+            g_warning("Matte: expected visual CSS class '%s' was not set", forvantad);
+            g_application_quit(g_application_get_default());
+            return;  // ingen PNG => skärmbildsprovet misslyckas
+        }
+    }
     g_timeout_add_once(1500, +[](gpointer f) {
         GtkWidget* w = M->win;
         GdkPaintable* p = gtk_widget_paintable_new(w);
