@@ -4,6 +4,7 @@
 #include "wenuystudio/Playback.hpp"
 #include "wenuystudio/ProjectIO.hpp"
 #include "wenuystudio/Sequencer.hpp"
+#include "wenuystudio/DrumGrid.hpp"
 #include "wenuystudio/EditModel.hpp"
 #include "wenuystudio/Arrangement.hpp"
 #include "wenuystudio/Wave.hpp"
@@ -40,6 +41,7 @@ struct Studio{
  GtkWidget *midiDevicePicker=nullptr,*midiDeviceButton=nullptr,*midiDeviceStatus=nullptr;
  GtkStringList* midiDeviceNames=nullptr;
  ws::Project project{};
+ ws::DrumPattern drumPattern{};
  ws::Playback playback{};
  ws::LivePreview audition{};
  ws::Recording recording{};
@@ -869,6 +871,113 @@ GtkWidget* area(Studio* s,bool piano){
 Indexed* index(GtkWidget* w,Studio* s,std::size_t i){
  auto* c=new Indexed{s,i};g_object_set_data_full(G_OBJECT(w),"index",c,[](gpointer data){delete static_cast<Indexed*>(data);});return c;
 }
+void appendDrums(Studio* s){
+ if(s->midi.recording()||s->recording.active()||
+    !s->recordFile.empty()||s->playback.active()){
+  notice(s,tr("Stop playback or recording before adding drums",
+              "Stoppa uppspelning eller inspelning innan du lägger till trummor"));
+  return;
+ }
+ try{
+  ws::Project next=s->project;
+  const auto result=ws::appendDrumTrack(
+   next,s->drumPattern,s->playhead,tr("Drum pattern","Trumrytm"));
+  checkpoint(s);
+  s->audition.stop();
+  s->project=std::move(next);
+  s->selected=static_cast<unsigned>(result.trackIndex);
+  s->selectedNote.reset();
+  change(s);
+  notice(s,tr("Drums added as editable MIDI notes – Undo is available",
+              "Trummor tillagda som redigerbara MIDI-toner – Ångra fungerar"));
+ }catch(const std::exception& e){
+  g_warning("Cannot add drum pattern: %s",e.what());
+  notice(s,tr("Could not add drums – check length, tracks and pattern",
+              "Kunde inte lägga till trummor – kontrollera längd, spår och rytm"));
+ }
+}
+struct DrumCell{Studio* studio;unsigned lane,step;};
+GtkWidget* createDrumMachine(Studio* s){
+ auto* root=gtk_box_new(GTK_ORIENTATION_VERTICAL,10);
+ gtk_widget_set_margin_start(root,12);gtk_widget_set_margin_end(root,12);
+ gtk_widget_set_margin_top(root,12);gtk_widget_set_margin_bottom(root,12);
+ auto* hint=gtk_label_new(tr(
+  "Click the 16 steps to create a rhythm. Add it as a separate editable MIDI drum track.",
+  "Klicka på de 16 stegen för att skapa en rytm. Lägg till den som ett eget redigerbart MIDI-trumspår."));
+ gtk_label_set_wrap(GTK_LABEL(hint),TRUE);
+ gtk_label_set_xalign(GTK_LABEL(hint),0);
+ gtk_box_append(GTK_BOX(root),hint);
+ auto* options=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,12);
+ gtk_box_append(GTK_BOX(options),gtk_label_new(tr("Bars","Takter")));
+ auto* bars=gtk_spin_button_new_with_range(1,8,1);
+ gtk_spin_button_set_value(GTK_SPIN_BUTTON(bars),s->drumPattern.bars);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(bars),
+  GTK_ACCESSIBLE_PROPERTY_LABEL,tr("Number of drum bars","Antal trumtakter"),-1);
+ g_signal_connect(bars,"value-changed",G_CALLBACK(+[](GtkSpinButton* w,gpointer user){
+  auto* st=static_cast<Studio*>(user);
+  st->drumPattern.bars=static_cast<unsigned>(gtk_spin_button_get_value_as_int(w));
+ }),s);
+ gtk_box_append(GTK_BOX(options),bars);
+ gtk_box_append(GTK_BOX(options),gtk_label_new(tr("Swing","Swing")));
+ auto* swing=gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,0,.45,.05);
+ gtk_widget_set_hexpand(swing,TRUE);
+ gtk_range_set_value(GTK_RANGE(swing),s->drumPattern.swing);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(swing),
+  GTK_ACCESSIBLE_PROPERTY_LABEL,tr("Drum swing","Trummornas swing"),-1);
+ g_signal_connect(swing,"value-changed",G_CALLBACK(+[](GtkRange* w,gpointer user){
+  auto* st=static_cast<Studio*>(user);
+  st->drumPattern.swing=static_cast<float>(gtk_range_get_value(w));
+ }),s);
+ gtk_box_append(GTK_BOX(options),swing);
+ gtk_box_append(GTK_BOX(root),options);
+ auto* scroller=gtk_scrolled_window_new();
+ gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+                                GTK_POLICY_AUTOMATIC,GTK_POLICY_NEVER);
+ auto* grid=gtk_grid_new();
+ gtk_grid_set_row_spacing(GTK_GRID(grid),6);
+ gtk_grid_set_column_spacing(GTK_GRID(grid),5);
+ const char* laneEn[]={"Kick","Snare","Hi-hat"};
+ const char* laneSv[]={"Bastrumma","Virvel","Hi-hat"};
+ const std::uint16_t lanes[]={s->drumPattern.kick,s->drumPattern.snare,
+                              s->drumPattern.hihat};
+ for(unsigned step=0;step<16;++step){
+  auto* label=gtk_label_new(std::to_string(step+1).c_str());
+  gtk_grid_attach(GTK_GRID(grid),label,static_cast<int>(step+1),0,1,1);
+ }
+ for(unsigned lane=0;lane<3;++lane){
+  auto* label=gtk_label_new(sv()?laneSv[lane]:laneEn[lane]);
+  gtk_widget_set_halign(label,GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid),label,0,static_cast<int>(lane+1),1,1);
+  for(unsigned step=0;step<16;++step){
+   auto* toggle=gtk_toggle_button_new();
+   gtk_widget_set_size_request(toggle,36,38);
+   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle),
+     (lanes[lane]&(std::uint16_t(1)<<step))!=0);
+   const std::string text=std::string(sv()?laneSv[lane]:laneEn[lane])+" "+
+     tr("step ","steg ")+std::to_string(step+1);
+   gtk_accessible_update_property(GTK_ACCESSIBLE(toggle),
+     GTK_ACCESSIBLE_PROPERTY_LABEL,text.c_str(),-1);
+   auto* cell=new DrumCell{s,lane,step};
+   g_object_set_data_full(G_OBJECT(toggle),"drum-cell",cell,
+      [](gpointer p){delete static_cast<DrumCell*>(p);});
+   g_signal_connect(toggle,"toggled",G_CALLBACK(+[](GtkToggleButton* w,gpointer user){
+    auto* cell=static_cast<DrumCell*>(user);
+    auto* st=cell->studio;
+    auto* bits=cell->lane==0?&st->drumPattern.kick:
+               cell->lane==1?&st->drumPattern.snare:&st->drumPattern.hihat;
+    const std::uint16_t mask=std::uint16_t(1)<<cell->step;
+    if(gtk_toggle_button_get_active(w))*bits|=mask;
+    else *bits=static_cast<std::uint16_t>(*bits&~mask);
+   }),cell);
+   gtk_grid_attach(GTK_GRID(grid),toggle,static_cast<int>(step+1),
+                   static_cast<int>(lane+1),1,1);
+  }
+ }
+ gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroller),grid);
+ gtk_box_append(GTK_BOX(root),scroller);
+ button(root,s,tr("Add drum track","Lägg till trumspår"),appendDrums);
+ return root;
+}
 void refresh(Studio* s){
  if(!s->window)return;
  while(auto* child=gtk_widget_get_first_child(s->tracks))gtk_box_remove(GTK_BOX(s->tracks),child);
@@ -1127,6 +1236,8 @@ void activate(GApplication* application,gpointer){
  auto* pianoArea=area(s,true);gtk_widget_set_vexpand(pianoArea,TRUE);
  gtk_box_append(GTK_BOX(pianoPage),pianoArea);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),pianoPage,gtk_label_new(tr("Piano roll","Pianorulle")));
+ gtk_notebook_append_page(GTK_NOTEBOOK(notebook),createDrumMachine(s),
+                          gtk_label_new(tr("Drum machine","Trummaskin")));
  auto* mixerScroll=gtk_scrolled_window_new();s->mixer=gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(mixerScroll),s->mixer);
  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),mixerScroll,gtk_label_new(tr("Mixer","Mixer")));
