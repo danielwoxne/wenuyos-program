@@ -13,3 +13,10 @@ Provkrav: 2 GB/soft i Debian 13, minnes- och eventgränser, exporterbar/uppspelb
 - Ljudet består av syntetisk fallande bastrumma, kort virvelbrus och hi-hat; inga samplebanker eller nätverkskällor.
 - Note/spår-tak, tempo, taktlängd, swing och tomt mönster kontrolleras före projektändring. Ingen skrivning till disk sker när rytmen ritas.
 - Nya prov för swing, de tre ljuden, projektfil/Ångra, nekad felinmatning och CPU-mix. Full fysisk hörbarhet/latens är ännu inte provad.
+
+## Direktförhandslyssning (steg 2)
+- En ny Play pattern / Spela rytm-knapp ska loopa 16-stegsmönstret i projektets BPM, swing och antal takter, utan att ändra projektet.
+- Trumsteg ska höras när de aktiveras även utan ett tillagt spår, via befintliga 16-rösters LivePreview och samma PortAudio-ström.
+- Ny `DrumPreviewClock` planerar beat via monotona absoluta tider i stället för ackumulerade väntetider och hoppar över gamla steg om GTK-kön fördröjs. Inga nya trådar eller nättjänster.
+- CTest provar timing, swing, två takters loop, liveändringar av steg, gränsvärden samt utebliven ljudkaskad efter fördröjt UI.
+- Begränsningar: GLib-timer är inte sample-exakt; hörbar latens, jitter, 1024×600, Orca och 30 minuter på en fysisk 2 GB-dator behöver fortfarande provas.
