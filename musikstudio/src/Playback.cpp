@@ -102,7 +102,7 @@ bool LivePreview::send(Event e)noexcept{
 }
 bool LivePreview::noteOn(int key,int instrument,float velocity)noexcept{
  if(key<0||key>127||!std::isfinite(velocity)||velocity<=0||velocity>1||
-    instrument<0||instrument>15)return false;
+    instrument<0||!instrumentById(instrument))return false;
  return send({Kind::On,key,instrument,velocity});
 }
 bool LivePreview::noteOff(int key)noexcept{

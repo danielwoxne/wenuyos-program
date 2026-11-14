@@ -7,7 +7,7 @@
 namespace wenuystudio {
 namespace {
 constexpr double pi=3.14159265358979323846;
-constexpr std::array<InstrumentPreset,16> presets{{
+constexpr std::array<InstrumentPreset,17> presets{{
  {0,"Sine","Sinus","Synthesizers","Syntar"},
  {1,"Triangle","Triangel","Synthesizers","Syntar"},
  {2,"Organ","Orgel","Keyboards","Tangentinstrument"},
@@ -23,7 +23,8 @@ constexpr std::array<InstrumentPreset,16> presets{{
  {12,"Clarinet","Klarinett","Winds","Blåsinstrument"},
  {13,"Brass","Bleckblås","Winds","Blåsinstrument"},
  {14,"Choir pad","Körmatta","Voices","Röster"},
- {15,"Marimba","Marimba","Percussion","Slagverk"}
+ {15,"Marimba","Marimba","Percussion","Slagverk"},
+ {16,"Drum kit","Trumset","Percussion","Slagverk"}
 }};
 float partial(double phase,double hz,double multiplier,double nyquist) noexcept {
  return hz*multiplier<nyquist?static_cast<float>(std::sin(phase*multiplier)):0.f;
@@ -41,6 +42,25 @@ float instrumentSample(int id,double phase,double hz,double t,double duration,
  if(!instrumentById(id)||!std::isfinite(phase)||!std::isfinite(hz)||
     !std::isfinite(t)||!std::isfinite(duration)||hz<=0||rate<8000||
     t<0||duration<=0||t>=duration)return 0.f;
+ if(id==16){
+  // Drum kit: deterministic, sample-free noise and decaying oscillation.
+  // Key 36 = kick, 38 = snare, 42 = closed hi-hat. Unknown keys are
+  // treated as hi-hat so the normal instrument audition still works.
+  std::uint32_t seed=static_cast<std::uint32_t>(t*rate)+0x9e3779b9u;
+  seed^=seed<<13;seed^=seed>>17;seed^=seed<<5;
+  const float noise=(float(int(seed&0xffffu)-32768))/32768.f;
+  const float attack=static_cast<float>(std::min(1.,t/.002));
+  const float tail=static_cast<float>(std::min(1.,(duration-t)/.012));
+  double wave=0;
+  if(hz<70.){ // MIDI 36: falling-pitch kick
+   wave=.91*std::exp(-22*t)*std::sin(phase+5.*std::exp(-34*t));
+  }else if(hz<80.){ // MIDI 38: noisy snare with short resonant body
+   wave=.55*noise*std::exp(-29*t)+.22*std::sin(phase*2.5)*std::exp(-42*t);
+  }else{ // MIDI 42 (or arbitrary preview key): metallic short hi-hat
+   wave=.68*noise*std::exp(-78*t);
+  }
+  return static_cast<float>(std::clamp(wave*attack*tail,-1.,1.));
+ }
  const double limit=.48*rate;
  // Compute only harmonics used by this preset. Pure sine and triangle notes
  // must not pay for two extra sin() calls on every sample on 2 GB CPUs.

@@ -27,7 +27,7 @@ int main(){
  for(int i=0;i<26;++i)synth.render(pcm.data(),256,48000);
  assert(synth.voiceCount()==0);
  assert(!synth.noteOn(-1,0,.8f)&&!synth.noteOn(128,0,.8f));
- assert(!synth.noteOn(60,16,.8f)&&!synth.noteOn(60,0,-1.f));
+ assert(!synth.noteOn(60,17,.8f)&&!synth.noteOn(60,0,-1.f));
  for(int n=40;n<70;++n)assert(synth.noteOn(n,n%16,.75f));
  assert(synth.voiceCount()==LiveSynth::maxVoices);
  synth.allNotesOff();

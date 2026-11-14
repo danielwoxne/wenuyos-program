@@ -12,8 +12,8 @@
 #include <stdexcept>
 using namespace wenuystudio;
 int main() {
- assert(instrumentCount()==16);
- assert(!instrumentById(-1)&&!instrumentById(16));
+ assert(instrumentCount()==17);
+ assert(!instrumentById(-1)&&!instrumentById(17));
  assert(instrumentById(0)&&std::string(instrumentById(0)->english)=="Sine");
  assert(instrumentById(1)&&std::string(instrumentById(1)->english)=="Triangle");
  assert(instrumentById(2)&&std::string(instrumentById(2)->english)=="Organ");
@@ -47,7 +47,7 @@ int main() {
    if(firstEnergy<0)firstEnergy=energy;
   }
   assert(different>=8);
-  Project invalid;invalid.tracks.emplace_back();invalid.tracks[0].instrument=16;
+  Project invalid;invalid.tracks.emplace_back();invalid.tracks[0].instrument=17;
   bool rejected=false;try{saveProject(invalid,(dir/"bad.wstudio").string());}catch(const std::exception&){rejected=true;}
   assert(rejected);
   invalid.tracks[0].instrument=-1;
@@ -120,6 +120,6 @@ int main() {
   std::cout<<"Eight-track offline mix 48 kHz, 32 notes: "<<elapsed
            <<" ms, peak="<<peak<<"\n";
   std::filesystem::remove_all(dir);
-  std::cout<<"PASS: 16 presets, damped attacks, project v5, old IDs, invalid IDs\n";
+  std::cout<<"PASS: 17 presets incl drums, damped attacks and project v5\n";
  }catch(...){std::filesystem::remove_all(dir);throw;}
 }
