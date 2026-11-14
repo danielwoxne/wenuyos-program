@@ -86,4 +86,7 @@ assert '#include "wenuystudio/DrumGrid.hpp"' in code
 assert 'createDrumMachine(s)' in code
 assert 'tr("Drum machine","Trummaskin")' in code
 assert 'tr("Add drum track","Lägg till trumspår")' in code
+assert 'tr("Play pattern","Spela rytm")' in code
+assert 'tr("Stop preview","Stoppa förhandslyssning")' in code
+assert 'DrumPreviewClock' in code
 print("Desktop, MIME, project guard, drum machine and compact layout PASS")

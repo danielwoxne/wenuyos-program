@@ -5,6 +5,7 @@
 #include "wenuystudio/ProjectIO.hpp"
 #include "wenuystudio/Sequencer.hpp"
 #include "wenuystudio/DrumGrid.hpp"
+#include "wenuystudio/DrumPreviewClock.hpp"
 #include "wenuystudio/EditModel.hpp"
 #include "wenuystudio/Arrangement.hpp"
 #include "wenuystudio/Wave.hpp"
@@ -39,6 +40,9 @@ struct Studio{
  GtkWidget *window=nullptr,*toast=nullptr,*status=nullptr,*tracks=nullptr,*timeline=nullptr,*piano=nullptr,*mixer=nullptr;
  GtkWidget *keyboard=nullptr,*midiButton=nullptr,*keyboardStatus=nullptr;
  GtkWidget *midiDevicePicker=nullptr,*midiDeviceButton=nullptr,*midiDeviceStatus=nullptr;
+ GtkWidget *drumPlayButton=nullptr,*drumPlayStatus=nullptr;
+ ws::DrumPreviewClock drumClock{};
+ guint drumSource=0;
  GtkStringList* midiDeviceNames=nullptr;
  ws::Project project{};
  ws::DrumPattern drumPattern{};
@@ -65,6 +69,7 @@ struct Studio{
  ~Studio(){
   midiInput.disconnect();
   if(timer)g_source_remove(timer);
+  if(drumSource)g_source_remove(drumSource);
   audition.stop();playback.stop();recording.stop();
  }
 };
@@ -81,6 +86,7 @@ void performProtected(Studio*,const ws::ProjectAction&);
 void save(Studio*);
 void finishMidi(Studio*);
 void releaseKeyboard(Studio*,int,bool external=false);
+void stopDrumPreview(Studio*);
 void notice(Studio* s,const std::string& text){
  if(s->status)gtk_label_set_text(GTK_LABEL(s->status),text.c_str());
  if(s->toast)adw_toast_overlay_add_toast(ADW_TOAST_OVERLAY(s->toast),adw_toast_new(text.c_str()));
@@ -133,6 +139,7 @@ void toggleMidi(Studio* s){
   return;
  }
  if(s->selected>=s->project.tracks.size())return;
+ stopDrumPreview(s);
  if(!s->midi.begin(s->playhead,g_get_monotonic_time())){
   notice(s,tr("MIDI recording could not start","Kunde inte starta MIDI-inspelning"));return;
  }
@@ -228,11 +235,12 @@ gboolean tick(gpointer data){
 }
 void startTick(Studio* s){if(!s->timer)s->timer=g_timeout_add(150,tick,s);}
 void play(Studio* s){
+ stopDrumPreview(s);
  if(s->midi.recording()){notice(s,tr("Stop MIDI recording first","Stoppa MIDI-inspelningen först"));return;}
  try{if(!s->recordFile.empty())finishRecord(s);s->audition.stop();s->playback.start(s->project,std::min(s->playhead,std::max(0.,s->project.durationSeconds-.01)));
  startTick(s);notice(s,tr("Playing","Spelar"));}catch(const std::exception& e){notice(s,e.what());}
 }
-void stop(Studio* s){finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
+void stop(Studio* s){stopDrumPreview(s);finishMidi(s);s->audition.stop();s->playback.stop();if(!s->recordFile.empty())finishRecord(s);notice(s,tr("Stopped","Stoppad"));}
 void newProject(Studio* s){
  stop(s);s->project=ws::Project{};ws::Track t;t.name=tr("Track 1","Spår 1");s->project.tracks.push_back(std::move(t));
  s->file.clear();s->history.clear();s->selected=0;s->selectedNote.reset();s->playhead=0;s->dirty=false;refresh(s);
@@ -468,6 +476,7 @@ void requestProtected(Studio* s,ws::ProjectAction action){
  gtk_window_present(GTK_WINDOW(dialog));
 }
 void record(Studio* s){
+ stopDrumPreview(s);
  if(s->midi.recording()){
   notice(s,tr("Stop MIDI recording before microphone recording",
               "Stoppa MIDI-inspelningen innan du spelar in mikrofonljud"));
@@ -883,6 +892,7 @@ void appendDrums(Studio* s){
   const auto result=ws::appendDrumTrack(
    next,s->drumPattern,s->playhead,tr("Drum pattern","Trumrytm"));
   checkpoint(s);
+  stopDrumPreview(s);
   s->audition.stop();
   s->project=std::move(next);
   s->selected=static_cast<unsigned>(result.trackIndex);
@@ -895,6 +905,96 @@ void appendDrums(Studio* s){
   notice(s,tr("Could not add drums – check length, tracks and pattern",
               "Kunde inte lägga till trummor – kontrollera längd, spår och rytm"));
  }
+}
+// The drum machine shares the existing keyboard's single PortAudio stream.
+bool drumSoundReady(Studio* s){
+ if(s->playback.active()||s->recording.active()||s->midi.recording()||
+    !s->recordFile.empty()){
+  notice(s,tr("Stop playback or recording to preview drums",
+              "Stoppa uppspelning eller inspelning för att provlyssna på trummor"));
+  return false;
+ }
+ if(s->previewUnavailable||(!s->audition.active()&&!s->audition.error().empty())){
+  s->previewUnavailable=true;
+  notice(s,tr("Audio unavailable – drum editing still works",
+              "Ljud saknas – du kan fortfarande redigera trumrytmen"));
+  return false;
+ }
+ try{
+  if(!s->audition.active())s->audition.start(s->project.sampleRate);
+  return true;
+ }catch(const std::exception& e){
+  g_warning("Drum preview: %s",e.what());s->previewUnavailable=true;
+  notice(s,tr("Could not start drum audio","Kunde inte starta trumljud"));
+  return false;
+ }
+}
+void auditionDrum(Studio* s,int key)noexcept{
+ s->audition.noteOn(key,ws::drumInstrumentId,.8f);
+ s->audition.noteOff(key); // triggers existing 125ms voice release
+}
+void stopDrumPreview(Studio* s){
+ if(s->drumSource){g_source_remove(s->drumSource);s->drumSource=0;}
+ s->drumClock.stop();
+ if(s->drumPlayButton)gtk_button_set_label(GTK_BUTTON(s->drumPlayButton),
+                                           tr("Play pattern","Spela rytm"));
+ if(s->drumPlayStatus)gtk_label_set_text(GTK_LABEL(s->drumPlayStatus),
+                                         tr("Stopped","Stoppad"));
+ s->audition.allNotesOff();
+}
+gboolean drumTick(gpointer user){
+ auto* s=static_cast<Studio*>(user);
+ s->drumSource=0; // this one-shot timer is about to return
+ if(!s->drumClock.active())return G_SOURCE_REMOVE;
+ if(!s->audition.active()||s->playback.active()||s->recording.active()||
+    s->midi.recording()||!s->recordFile.empty()){
+  const bool failed=!s->audition.active()&&!s->audition.error().empty();
+  stopDrumPreview(s);
+  if(failed){
+   s->previewUnavailable=true;
+   notice(s,tr("Audio unavailable – the pattern remains editable",
+               "Ljud saknas – rytmen går fortfarande att redigera"));
+  }
+  return G_SOURCE_REMOVE;
+ }
+ const auto now=static_cast<std::int64_t>(g_get_monotonic_time());
+ ws::DrumPreviewClock::Event e{};
+ for(unsigned n=0;n<3&&s->drumClock.popDue(now,s->drumPattern,e);++n){
+  if(!e.late){
+   if(e.mask&1u)auditionDrum(s,ws::drumKickKey);
+   if(e.mask&2u)auditionDrum(s,ws::drumSnareKey);
+   if(e.mask&4u)auditionDrum(s,ws::drumHiHatKey);
+  }
+  if(s->drumPlayStatus){
+   const auto label=std::string(tr("Bar ","Takt "))+std::to_string(e.bar+1)+
+    "/"+std::to_string(s->drumPattern.bars)+
+    tr(" · Step "," · Steg ")+std::to_string(e.step+1)+"/16";
+   gtk_label_set_text(GTK_LABEL(s->drumPlayStatus),label.c_str());
+  }
+ }
+ const auto delay=s->drumClock.delayMillis(
+    static_cast<std::int64_t>(g_get_monotonic_time()));
+ s->drumSource=g_timeout_add(delay,drumTick,s);
+ return G_SOURCE_REMOVE;
+}
+void startDrumPreview(Studio* s){
+ if(!drumSoundReady(s))return;
+ if(!s->drumClock.start(s->drumPattern,s->project.bpm,
+                        static_cast<std::int64_t>(g_get_monotonic_time()))){
+  notice(s,tr("Invalid tempo or drum pattern","Ogiltigt tempo eller trummönster"));
+  return;
+ }
+ if(s->drumSource){g_source_remove(s->drumSource);s->drumSource=0;}
+ if(s->drumPlayButton)gtk_button_set_label(GTK_BUTTON(s->drumPlayButton),
+                                           tr("Stop preview","Stoppa förhandslyssning"));
+ drumTick(s);
+}
+void toggleDrumPreview(Studio* s){
+ if(s->drumClock.active())stopDrumPreview(s);
+ else startDrumPreview(s);
+}
+void restartDrumPreview(Studio* s){
+ if(s->drumClock.active())startDrumPreview(s);
 }
 struct DrumCell{Studio* studio;unsigned lane,step;};
 GtkWidget* createDrumMachine(Studio* s){
@@ -916,6 +1016,7 @@ GtkWidget* createDrumMachine(Studio* s){
  g_signal_connect(bars,"value-changed",G_CALLBACK(+[](GtkSpinButton* w,gpointer user){
   auto* st=static_cast<Studio*>(user);
   st->drumPattern.bars=static_cast<unsigned>(gtk_spin_button_get_value_as_int(w));
+  restartDrumPreview(st);
  }),s);
  gtk_box_append(GTK_BOX(options),bars);
  gtk_box_append(GTK_BOX(options),gtk_label_new(tr("Swing","Swing")));
@@ -927,6 +1028,7 @@ GtkWidget* createDrumMachine(Studio* s){
  g_signal_connect(swing,"value-changed",G_CALLBACK(+[](GtkRange* w,gpointer user){
   auto* st=static_cast<Studio*>(user);
   st->drumPattern.swing=static_cast<float>(gtk_range_get_value(w));
+  restartDrumPreview(st);
  }),s);
  gtk_box_append(GTK_BOX(options),swing);
  gtk_box_append(GTK_BOX(root),options);
@@ -966,8 +1068,12 @@ GtkWidget* createDrumMachine(Studio* s){
     auto* bits=cell->lane==0?&st->drumPattern.kick:
                cell->lane==1?&st->drumPattern.snare:&st->drumPattern.hihat;
     const std::uint16_t mask=std::uint16_t(1)<<cell->step;
-    if(gtk_toggle_button_get_active(w))*bits|=mask;
-    else *bits=static_cast<std::uint16_t>(*bits&~mask);
+    if(gtk_toggle_button_get_active(w)){
+     *bits|=mask;
+     if(!st->drumClock.active()&&drumSoundReady(st))
+      auditionDrum(st,cell->lane==0?ws::drumKickKey:
+                      cell->lane==1?ws::drumSnareKey:ws::drumHiHatKey);
+    }else *bits=static_cast<std::uint16_t>(*bits&~mask);
    }),cell);
    gtk_grid_attach(GTK_GRID(grid),toggle,static_cast<int>(step+1),
                    static_cast<int>(lane+1),1,1);
@@ -975,6 +1081,15 @@ GtkWidget* createDrumMachine(Studio* s){
  }
  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroller),grid);
  gtk_box_append(GTK_BOX(root),scroller);
+ auto* controls=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,9);
+ s->drumPlayButton=button(controls,s,tr("Play pattern","Spela rytm"),
+                          toggleDrumPreview);
+ s->drumPlayStatus=gtk_label_new(tr("Stopped","Stoppad"));
+ gtk_accessible_update_property(GTK_ACCESSIBLE(s->drumPlayStatus),
+  GTK_ACCESSIBLE_PROPERTY_LABEL,
+  tr("Drum preview position","Trummornas uppspelningsposition"),-1);
+ gtk_box_append(GTK_BOX(controls),s->drumPlayStatus);
+ gtk_box_append(GTK_BOX(root),controls);
  button(root,s,tr("Add drum track","Lägg till trumspår"),appendDrums);
  return root;
 }
