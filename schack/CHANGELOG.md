@@ -1,6 +1,19 @@
 # Versionshistorik
 
-## 0.5.1 (under utveckling)
+## 0.5.2 (utkast – ej publicerad)
+- Rättat (granskning av Claude): sidopanelens bredd följer fönstret, inte texten – brädet flyttade sig några bildpunkter när Schackskolan öppnades. Den kompakta layouten under 780 px valdes aldrig efter start (GTK 4 har ingen egenskap "width"); nu följer den fönstrets storlek. GUI-provet kontrollerar brädet när Schackskolan öppnas och stängs.
+- PGN-export skyddar nu tidigare filer: om flera partier exporteras samma sekund används unika namn med löpnummer i stället för att ett äldre PGN skrivs över. GTK-integrationsprovet utför två exporter direkt efter varandra och kontrollerar deras dragdata i isolerade testkataloger.
+- Det automatiska Wayland-/pixman-provet testar nu en längre laglig dragföljd (e4, ...e5, Sf3), Ångra, byte av brädtema samt Schackskolan, och kräver oförändrad brädgeometri och bevarade temaikoner efter varje steg.
+- Visuell målbild, etapp 2: tydliga temastyrda kort, valfria symboliska ikoner för statiska knappar och rubriker (visar text om ikonen saknas), och alltid synlig Schackskola med riktig framstegsprocent från sparade övningar. Vid träning visas uppgiftsknapparna; annars visas en kompakt introduktion och startknapp. Nya källbaserade UI-regressioner och manuell acceptansplan i `docs/UTSEENDE-052.md`.
+- Ny sammanhållen sidopanel: partistatus och övningar överst, därefter spelinställningar och draglista, med frivilligt LAN längst ned. Stilhjälpare använder temats förgrundsfärg för tunna avskiljare; GTK-temat styr knapparnas hörn och färger. Ny diskret verktygsrad.
+- Vektorformerna för springare, löpare och kung har fått finare detaljer som framträder på små rutor, fortsatt utan externa filer eller bildfilter.
+- Grafisk finputsning utan större minnesfotavtryck: diskret kontaktskugga under vektorpjäserna, smal inre ram runt brädet, diskret markering av senaste draget med palettens accentfärg och hörnlinjer, samt palettanpassade punkter för tillåtna drag. Allt ritas direkt i befintlig Cairo-yta, utan bitmap, oskärpa, GPU eller nya beroenden.
+- Vid markering eller flytt av pjäs kunde den dynamiska brädstatusraden brytas på nytt, så brädets GTK-ritningsyta ändrade höjd och centrerades om. Den synliga statusen hålls nu på en enda rad med ellips vid behov. Hela texten finns kvar i etiketten och som muspekartips.
+- Källregression och ett verkligt headless GTK4-/Wayland-prov kontrollerar brädets geometri i två kompakta fönsterlägen. Manuell visuell granskning med musdrag, Orca och faktisk 2 GB-maskin återstår.
+- Spelregler, lokala sparfiler och LAN-funktioner är oförändrade.
+
+
+## 0.5.1 (2026-11-13)
 - Sidopanelen visar bara vertikal rullning. Långa ledtrådar och draglistan får radbrytning och begränsad naturlig bredd; draglistans fasta minsta bredd är borttagen så panelen inte trycks ut i smala fönster.
 - Hjälpraden för tangentbordsgenvägar är kortare på svenska/engelska och radbryts. Ctrl+L, Ctrl+H, Ctrl+N och Ctrl+Z behålls oförändrade.
 - Regressionstester verifierar policyn för rullning, radbrytning och hjälprad. Fönsterstart i CI:s 2 GB-profil, visuell granskning på 1024×600 samt Orca och fysisk 30-minuters prestandamätning dokumenteras separat.

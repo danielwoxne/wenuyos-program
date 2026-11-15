@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(schack VERSION 0.5.1 LANGUAGES CXX)
+project(schack VERSION 0.5.2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -37,5 +37,14 @@ add_test(NAME system_i18n COMMAND schack_i18n_tests)
 add_executable(schack src/RuntimeGtk.cpp src/SystemIntegration.cpp)
 target_link_libraries(schack PRIVATE schack_lan PkgConfig::GTK4 PkgConfig::WENUY PkgConfig::WENUY_LUA PkgConfig::WENUY_SODIUM Threads::Threads ${CMAKE_DL_LIBS})
 target_compile_options(schack PRIVATE -Wall -Wextra -Wpedantic)
+# The headless visual geometry regression runs in Debian 13 with labwc.
+# No real network or graphics driver is used; build hosts lacking labwc
+# keep the existing four tests and may run it later on WenuyOS hardware.
+find_program(LABWC_EXECUTABLE labwc)
+if(LABWC_EXECUTABLE)
+  add_test(NAME gui_board_stability COMMAND python3
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gui_probe.py $<TARGET_FILE:schack>)
+  set_tests_properties(gui_board_stability PROPERTIES TIMEOUT 65)
+endif()
 install(TARGETS schack RUNTIME DESTINATION bin)
 install(DIRECTORY data/ DESTINATION data)
