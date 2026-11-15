@@ -1322,17 +1322,50 @@ int guiProbeTick(void*){
        r.x,r.y,r.width,r.height);
   uiProbeResult=4;g_application_quit(probeApplication);return 0;
  }
- if(probePhase==2){chosen(28);probePhase=3;return 1;} // e2-e4
+ if(probePhase==2){chosen(28);probePhase=3;return 1;}  // e2-e4
  if(probePhase==3){
   if(app.game.sans.size()!=1){uiProbeResult=5;g_application_quit(probeApplication);return 0;}
-  perform(6);probePhase=4;return 1;
+  chosen(52);probePhase=4;return 1; // e7
  }
- if(probePhase==4){
+ if(probePhase==4){chosen(36);probePhase=5;return 1;} // e7-e5
+ if(probePhase==5){
+  if(app.game.sans.size()!=2){uiProbeResult=5;g_application_quit(probeApplication);return 0;}
+  chosen(6);probePhase=6;return 1; // g1
+ }
+ if(probePhase==6){chosen(21);probePhase=7;return 1;} // g1-f3
+ if(probePhase==7){
+  if(app.game.sans.size()!=3){uiProbeResult=5;g_application_quit(probeApplication);return 0;}
+  perform(1);probePhase=8;return 1; // Undo the last move
+ }
+ if(probePhase==8){
+  if(app.game.sans.size()!=2){uiProbeResult=9;g_application_quit(probeApplication);return 0;}
+  perform(13);probePhase=9;return 1; // Switch board palette
+ }
+ if(probePhase==9){
+  perform(10);perform(10);probePhase=10;return 1; // Export twice immediately
+ }
+ if(probePhase==10){
+  unsigned validExports=0;
+  for(const auto& entry:std::filesystem::directory_iterator(userDir())){
+   if(entry.path().extension()!=".pgn")continue;
+   std::ifstream input(entry.path());
+   std::ostringstream pgn;pgn<<input.rdbuf();
+   if(pgn.str().find("1. e4 e5 ")!=std::string::npos)++validExports;
+  }
+  if(validExports!=2){
+   std::fprintf(stderr,"ui-probe: expected two distinct valid PGN exports, found %u\n",validExports);
+   uiProbeResult=10;g_application_quit(probeApplication);return 0;
+  }
+  perform(6);probePhase=11;return 1;
+ }
+ if(probePhase==11){
   if(!app.training){uiProbeResult=6;g_application_quit(probeApplication);return 0;}
-  perform(6);probePhase=5;return 1;
+  perform(6);probePhase=12;return 1;
  }
- if(probePhase==5&&app.training){uiProbeResult=7;g_application_quit(probeApplication);return 0;}
- std::puts("ui-probe: board bounds stable across e2/e4 and school toggle");
+ if(probePhase==12 && (app.training||app.game.sans.size()!=2)){
+  uiProbeResult=7;g_application_quit(probeApplication);return 0;
+ }
+ std::puts("ui-probe: board bounds stable across multiple moves, undo, palette, school; two PGN exports verified");
  g_application_quit(probeApplication);return 0;
 }
 int onClose(Ptr,void*){stopPieceMotion();app.closed=true;app.epoch++;app.cssProvider=nullptr;
