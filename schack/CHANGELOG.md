@@ -8,7 +8,7 @@
 - Vektorformerna för springare, löpare och kung har fått finare detaljer som framträder på små rutor, fortsatt utan externa filer eller bildfilter.
 - Grafisk finputsning utan större minnesfotavtryck: diskret kontaktskugga under vektorpjäserna, smal inre ram runt brädet, diskret markering av senaste draget med palettens accentfärg och hörnlinjer, samt palettanpassade punkter för tillåtna drag. Allt ritas direkt i befintlig Cairo-yta, utan bitmap, oskärpa, GPU eller nya beroenden.
 - Vid markering eller flytt av pjäs kunde den dynamiska brädstatusraden brytas på nytt, så brädets GTK-ritningsyta ändrade höjd och centrerades om. Den synliga statusen hålls nu på en enda rad med ellips vid behov. Hela texten finns kvar i etiketten och som muspekartips.
-- UI-regression provar förekomsten av höjdstabil etikett. Visuell bekräftelse i Debian 13, 1024×600 och på faktisk 2 GB-maskin återstår.
+- Källregression och ett verkligt headless GTK4-/Wayland-prov kontrollerar brädets geometri i två kompakta fönsterlägen. Manuell visuell granskning med musdrag, Orca och faktisk 2 GB-maskin återstår.
 - Spelregler, lokala sparfiler och LAN-funktioner är oförändrade.
 
 
