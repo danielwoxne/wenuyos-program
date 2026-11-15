@@ -79,6 +79,25 @@ for entry in (
 ET.parse(svg)
 assert 'version = "0.5.2"' in manifest
 assert 'needs_network = true' in manifest
+# 0.5.2: repeated game exports must never silently overwrite a PGN.
+# The real GTK integration probe exercises two exports with identical timestamps.
+for marker in (
+    'std::filesystem::exists(filepath)',
+    'if(suffix>9999)throw std::runtime_error',
+    '"parti-"+std::string(stamp)+"-"+std::to_string(suffix)+".pgn"',
+    'app.transient=std::string(tr("PGN saved: ","PGN sparad: "))+filepath.string();',
+    'chosen(52);probePhase=4;',  # e7
+    'chosen(36);probePhase=5;',  # e5
+    'chosen(6);probePhase=6;',   # g1
+    'chosen(21);probePhase=7;',  # f3
+    'perform(1);probePhase=8;',  # undo
+    'perform(13);probePhase=9;', # theme
+    'perform(10);perform(10);probePhase=10;',
+    'if(validExports!=2)',
+    'perform(6);probePhase=11;',
+):
+    assert marker in gui, f"Missing full GTK game/export regression: {marker}"
+
 
 # 0.5.2: richer-looking board without any raster asset, texture, blur or GPU.
 # The last-move indicator and legal move overlay must reuse the active palette.
