@@ -14,6 +14,8 @@ Rapporterat fel: hela schackbrädet kan flytta sig när statusraden ändras efte
 **Närmare designmålbilden:** Verktygsknappar och sidopanelrubriker visar symboler ur GTK/WenuyOS-temat när de finns. Sektionerna använder kort från det aktiva temat. Schackskolan är synlig även under vanliga partier och visar en procentandel av faktiskt sparade avklarade övningar, med knapp för att börja öva. När övningen är aktiv visas uppgiftsknappar och detaljer. Detta är ännu inte en publicerad version. Visuell målbild och provplan: [UTSEENDE-052.md](docs/UTSEENDE-052.md).
 
 
+**Säkrare export i 0.5.2:** Varje klick på *Exportera parti (PGN)* skapar en separat fil i programmets lokala datamapp, även om två exporter sker under samma sekund. Befintliga filer skrivs inte över. Den utökade GUI-regressionen testar flera drag, ångring och byte av brädtema i lågminnesprofil med mjukvarurendering.
+
 ## Spela mot en annan WenuyOS-dator (0.5.0-test)
 I **Nätverksparti / LAN Game** väljer du uttryckligen *Bjud in* på en dator och *Anslut* på en annan. Ange värdens privata IPv4-adress och använd TCP-port 47777. Endast på **betrodda lokala nätverk**: trafiken är inte krypterad eller autentiserad, och ingen anslutning startar utan knapptryck. Läs [LAN-instruktionerna](docs/LAN-050.md). Två fysiska WenuyOS-datorer behöver fortfarande provas innan funktionen kan bedömas färdig.
 
