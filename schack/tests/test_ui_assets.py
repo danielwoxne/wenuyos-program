@@ -227,9 +227,9 @@ for marker in (
     'schack_system::playMoveSound(app.game.result()!="ongoing");',
     'tr("High contrast","Hög kontrast")',
     "app.palette=(app.palette+1)%4",
-    'connect(app.window,"notify::width",onWindowWidth,nullptr);',
+    'connect(app.board,"resize",onBoardResize,nullptr);',
     'g.gtk_orientable_set_orientation(app.mainBox,compact?1:0);',
-    'g.gtk_widget_set_size_request(app.sidePanel,compact?-1:252,compact?168:-1);',
+    'g.gtk_widget_set_size_request(app.sidePanel,sideWidth,compact?168:-1);',
     'g.gtk_orientable_set_orientation(app.toolBar,tiny?1:0);',
     'g.gtk_box_append(boardBox,app.boardSummary);',
     'if(app.boardSummary)',
@@ -298,4 +298,10 @@ def fit_py(sw, sh):
     return w, h
 assert fit_py(0, 0) == (960, 700) and fit_py(1920, 1080) == (960, 700)
 assert fit_py(1024, 600) == (960, 488) and fit_py(1280, 720) == (960, 608) and fit_py(800, 480) == (768, 400)
+# GTK 4 has no "width" property: notify::width never fired (review of #29)
+assert '"notify::width"' not in gui
+assert "g_idle_add(responsiveIdle,nullptr)" in gui
+# side panel width follows the window, not its text; only the board expands
+assert "std::clamp(width*42/100,252,460)" in gui and "g.gtk_widget_set_hexpand(app.sidePanel,compact?1:0);" in gui
+assert "board moved when the chess school opened" in gui and "board moved when the chess school closed" in gui
 print("OK: bilingual launcher, accessible GTK4, responsive board, motion policy and Cairo details")

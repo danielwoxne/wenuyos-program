@@ -317,6 +317,7 @@ struct App {
  int dragOrigin=-1; double dragX=0,dragY=0; char promotion='q';
  bool flipped=false,training=false,lessonSolved=false,busy=false,closed=false,thinkingHint=false;
  bool focusBoard=false,keyboardCursor=false,compactLayout=false,narrowToolbar=false;
+ int sideWidth=-2;   // side panel width last set by responsive()
  bool lanConnecting=false,analysisBusy=false;
  // 160 ms linear piece travel; no extra surfaces, textures or worker thread.
  bool movingPiece=false;
@@ -427,11 +428,18 @@ void responsive(){
  const int width=g.gtk_widget_get_width(app.window);
  if(width<=0)return;
  const bool compact=width<780;
- if(compact!=app.compactLayout){
+ // The side panel's width follows the WINDOW only, never its text: a longer
+ // lesson title ("Övning 1 / 31 · …") used to widen the panel by a few pixels
+ // and the expanding board shrank/moved (Claude, review of #29).
+ const int sideWidth=compact?-1:std::clamp(width*42/100,252,460);
+ if(compact!=app.compactLayout||sideWidth!=app.sideWidth){
   app.compactLayout=compact;
+  app.sideWidth=sideWidth;
   g.gtk_orientable_set_orientation(app.mainBox,compact?1:0);
-  g.gtk_widget_set_size_request(app.sidePanel,compact?-1:252,compact?168:-1);
+  g.gtk_widget_set_size_request(app.sidePanel,sideWidth,compact?168:-1);
   g.gtk_widget_set_vexpand(app.sidePanel,compact?0:1);
+  // Only the board takes the extra space (in compact mode the panel spans the width).
+  g.gtk_widget_set_hexpand(app.sidePanel,compact?1:0);
  }
  const bool tiny=width<520;
  if(tiny!=app.narrowToolbar){
@@ -441,6 +449,16 @@ void responsive(){
  }
 }
 void onWindowWidth(Ptr,Ptr,void*){responsive();}
+// GtkWidget has no width property in GTK 4, so notify::width never fired and
+// the compact layout (< 780 px) was never chosen after start (Claude, review of
+// #29). The board's "resize" follows every change of the window's allocation;
+// the layout change itself runs from idle, never inside size allocation.
+bool responsiveQueued=false;
+int responsiveIdle(void*){responsiveQueued=false;responsive();return 0;}
+void onBoardResize(Ptr,int,int,void*){
+ if(responsiveQueued)return;
+ responsiveQueued=true;g_idle_add(responsiveIdle,nullptr);
+}
 const char* lanErrorText(const std::string& error);
 void clearHint(){app.hintFrom=app.hintTo=-1;app.hintText.clear();app.thinkingHint=false;}
 void repaint(){if(app.board&&!app.closed)g.gtk_widget_queue_draw(app.board);}
@@ -1360,10 +1378,17 @@ int guiProbeTick(void*){
  }
  if(probePhase==11){
   if(!app.training){uiProbeResult=6;g_application_quit(probeApplication);return 0;}
+  // The lesson title is longer than "Learn step by step": the board must not
+  // move or shrink when the chess school opens (Claude, review of #29).
+  if(!probeStable()){std::fputs("ui-probe: board moved when the chess school opened\n",stderr);uiProbeResult=11;g_application_quit(probeApplication);return 0;}
   perform(6);probePhase=12;return 1;
  }
  if(probePhase==12 && (app.training||app.game.sans.size()!=2)){
   uiProbeResult=7;g_application_quit(probeApplication);return 0;
+ }
+ if(probePhase==12 && !probeStable()){
+  std::fputs("ui-probe: board moved when the chess school closed\n",stderr);
+  uiProbeResult=12;g_application_quit(probeApplication);return 0;
  }
  std::puts("ui-probe: board bounds stable across multiple moves, undo, palette, school; two PGN exports verified");
  g_application_quit(probeApplication);return 0;
@@ -1499,7 +1524,9 @@ void activate(Ptr application,void*){
  app.lanStatus=label(lanSection,tr("LAN is off. No network activity.","LAN är avstängt. Ingen nätverkstrafik."),true,"wenuy-dim");
  label(side,tr("Move: drag or click. Shortcuts: Ctrl+N new, Ctrl+Z undo. Ctrl+H hint, Ctrl+L focus.","Flytta: dra eller klicka. Genvägar: Ctrl+N nytt, Ctrl+Z ångra. Ctrl+H tips, Ctrl+L fokus."),true,"wenuy-dim");
  label(side,"Offline • C++17 • WenuyOS",false,"dim-label");
- connect(app.window,"notify::width",onWindowWidth,nullptr);
+ connect(app.window,"notify::default-width",onWindowWidth,nullptr);
+ connect(app.window,"notify::maximized",onWindowWidth,nullptr);
+ connect(app.board,"resize",onBoardResize,nullptr);
  theme();schack_system::applyStyle();refresh();g.gtk_window_present(app.window);responsive();
  if(uiProbeRequested){probeApplication=application;g_timeout_add(90,guiProbeTick,nullptr);}
  g_timeout_add(120,pollLan,nullptr);startAI();

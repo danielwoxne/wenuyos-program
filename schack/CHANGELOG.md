@@ -1,6 +1,7 @@
 # Versionshistorik
 
 ## 0.5.2 (utkast – ej publicerad)
+- Rättat (granskning av Claude): sidopanelens bredd följer fönstret, inte texten – brädet flyttade sig några bildpunkter när Schackskolan öppnades. Den kompakta layouten under 780 px valdes aldrig efter start (GTK 4 har ingen egenskap "width"); nu följer den fönstrets storlek. GUI-provet kontrollerar brädet när Schackskolan öppnas och stängs.
 - PGN-export skyddar nu tidigare filer: om flera partier exporteras samma sekund används unika namn med löpnummer i stället för att ett äldre PGN skrivs över. GTK-integrationsprovet utför två exporter direkt efter varandra och kontrollerar deras dragdata i isolerade testkataloger.
 - Det automatiska Wayland-/pixman-provet testar nu en längre laglig dragföljd (e4, ...e5, Sf3), Ångra, byte av brädtema samt Schackskolan, och kräver oförändrad brädgeometri och bevarade temaikoner efter varje steg.
 - Visuell målbild, etapp 2: tydliga temastyrda kort, valfria symboliska ikoner för statiska knappar och rubriker (visar text om ikonen saknas), och alltid synlig Schackskola med riktig framstegsprocent från sparade övningar. Vid träning visas uppgiftsknapparna; annars visas en kompakt introduktion och startknapp. Nya källbaserade UI-regressioner och manuell acceptansplan i `docs/UTSEENDE-052.md`.
