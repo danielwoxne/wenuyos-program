@@ -70,6 +70,8 @@ def main():
             env["WAYLAND_DISPLAY"] = socket.name
             # Probe both a 1024x600-style window and an even smaller layout.
             for size in ("normal", "small"):
+                # Keep exports isolated per layout so counts do not depend on prior runs.
+                env["XDG_DATA_HOME"] = str(root / "data" / size)
                 cmd = [app, "--ui-probe-small" if size == "small" else "--ui-probe"]
                 try:
                     result = subprocess.run(
@@ -78,13 +80,14 @@ def main():
                     )
                 except subprocess.TimeoutExpired as exc:
                     raise RuntimeError(f"{size}: Schack GUI probe timed out") from exc
-                if result.returncode != 0 or "board bounds stable" not in result.stdout:
+                if (result.returncode != 0 or "board bounds stable" not in result.stdout
+                        or "two PGN exports verified" not in result.stdout):
                     raise RuntimeError(
                         f"{size}: GUI probe failed with {result.returncode}\n"
                         f"stdout: {result.stdout[-1200:]}\n"
                         f"stderr: {result.stderr[-2000:]}"
                     )
-                print(f"GUI {size}: board stable across selection, e2-e4, school toggle")
+                print(f"GUI {size}: multiple moves, undo, palette and lessons stable; 2 PGN exports")
         finally:
             try:
                 os.killpg(compositor.pid, signal.SIGTERM)
