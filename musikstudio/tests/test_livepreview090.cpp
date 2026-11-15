@@ -6,6 +6,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <chrono>
 #include <iostream>
 using namespace wenuystudio;
 int main(){
@@ -33,5 +34,15 @@ int main(){
  synth.allNotesOff();
  for(int i=0;i<26;++i)synth.render(pcm.data(),256,48000);
  assert(synth.voiceCount()==0);
+ for(int n=48;n<64;++n)assert(synth.noteOn(n,4,1.f));
+ const auto start=std::chrono::steady_clock::now();
+ constexpr int blocks=1000;
+ for(int i=0;i<blocks;++i)synth.render(pcm.data(),256,48000);
+ const double ms=std::chrono::duration<double,std::milli>(
+  std::chrono::steady_clock::now()-start).count();
+ assert(synth.voiceCount()==16);
+ for(float sample:pcm)assert(std::isfinite(sample)&&std::abs(sample)<=.98f);
+ std::cout<<"16 voices at 48 kHz: "<<ms/blocks<<" ms per 256 frames; "
+          <<sizeof(synth)+sizeof(pcm)<<" bytes for synth and PCM buffer\n";
  std::cout<<"PASS: chord, independent release, bounded voices and panic\n";
 }

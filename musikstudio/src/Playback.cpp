@@ -81,7 +81,12 @@ struct SoundStream{
 
  PortAudio& pa;Stream* stream=nullptr;bool started=false;
 
- SoundStream(PortAudio& api,uint32_t rate,unsigned long frames=512):pa(api){pa.check(pa.open(&stream,0,2,1,double(rate),frames,nullptr,nullptr),"Open sound output");pa.check(pa.start(stream),"Start sound output");started=true;}
+ SoundStream(PortAudio& api,uint32_t rate,unsigned long frames=512):pa(api){
+  pa.check(pa.open(&stream,0,2,1,double(rate),frames,nullptr,nullptr),"Open sound output");
+  const auto result=pa.start(stream);
+  if(result<0){pa.close(stream);pa.check(result,"Start sound output");}
+  started=true;
+ }
 
  ~SoundStream(){if(stream){if(started)pa.stop(stream);pa.close(stream);}}
 
@@ -149,7 +154,10 @@ void LivePreview::run()noexcept{
     }
    }
    synth.render(pcm.data(),256,rate_);
-   pa.check(pa.write(output.stream,pcm.data(),256),"Write audition stream");
+   const auto result=pa.write(output.stream,pcm.data(),256);
+   // PortAudio's paOutputUnderflowed means the write recovered from a gap.
+   constexpr PaError outputUnderflowed=-9980;
+   if(result!=outputUnderflowed)pa.check(result,"Write audition stream");
   }
  }catch(const std::exception& e){
   std::lock_guard<std::mutex> lock(mutex_);error_=e.what();

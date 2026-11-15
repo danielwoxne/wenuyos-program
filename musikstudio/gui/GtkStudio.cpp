@@ -343,7 +343,7 @@ void fileAction(Studio* s,Pick pick,const std::string& path){
     exportNoteMap(s,path);break;
    case Pick::Record:
     if(fs::exists(path))throw std::runtime_error(tr("File already exists","Filen finns redan"));
-    s->playback.stop();s->recordAt=s->playhead;s->recordFile=path;s->recording.start(path,s->project.sampleRate);
+    s->audition.stop();s->playback.stop();s->recordAt=s->playhead;s->recordFile=path;s->recording.start(path,s->project.sampleRate);
     startTick(s);notice(s,tr("Recording – press Stop to finish","Spelar in – tryck Stoppa för att avsluta"));break;
   }
  }catch(const std::exception& e){
