@@ -1164,10 +1164,16 @@ void perform(int id){
    localtime_r(&now,&local);
    #endif
    char stamp[32];std::strftime(stamp,sizeof(stamp),"%Y%m%d-%H%M%S",&local);
-   const std::string filepath=userDir()+"/parti-"+stamp+".pgn";
+   // Never overwrite an earlier game if the player exports twice in one second.
+   const std::filesystem::path dir(userDir());
+   std::filesystem::path filepath=dir/("parti-"+std::string(stamp)+".pgn");
+   for(unsigned suffix=2;std::filesystem::exists(filepath);++suffix){
+    if(suffix>9999)throw std::runtime_error("too many PGN exports for this timestamp");
+    filepath=dir/("parti-"+std::string(stamp)+"-"+std::to_string(suffix)+".pgn");
+   }
    std::ofstream o(filepath);o<<app.game.pgn();o.close();
    if(!o)throw std::runtime_error("write failed");
-   app.transient=std::string(tr("PGN saved: ","PGN sparad: "))+filepath;
+   app.transient=std::string(tr("PGN saved: ","PGN sparad: "))+filepath.string();
   }catch(...){app.transient=tr("Could not save PGN.","Kunde inte spara PGN.");}
   refresh();break;
  }
