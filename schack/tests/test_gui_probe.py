@@ -2,8 +2,8 @@
 """Real GTK4/Wayland geometry regression for Wenuy Schack.
 
 Starts an isolated labwc headless session with software rendering, then asks
-Schack to select/move e2-e4 and toggle the chess school while checking actual
-GtkWidget bounds. Never joins a network, changes host configuration or writes
+Schack to play e2-e4, e7-e5, Ng1-f3, undo, switch the board palette,
+export two PGNs and toggle the chess school while checking actual GtkWidget bounds. Never joins a network, changes host configuration or writes
 outside a disposable home. Uses only Python standard library.
 """
 import os
