@@ -873,6 +873,23 @@ void refresh(Studio* s){
  if(!s->window)return;
  while(auto* child=gtk_widget_get_first_child(s->tracks))gtk_box_remove(GTK_BOX(s->tracks),child);
  while(auto* child=gtk_widget_get_first_child(s->mixer))gtk_box_remove(GTK_BOX(s->mixer),child);
+ // Master gain is part of the existing project format.
+ auto* master=gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
+ gtk_widget_set_margin_start(master,12);gtk_widget_set_margin_top(master,10);
+ gtk_widget_set_margin_end(master,12);gtk_widget_set_margin_bottom(master,10);
+ auto* masterLabel=gtk_label_new(tr("Master volume","Huvudvolym"));
+ gtk_label_set_xalign(GTK_LABEL(masterLabel),0);
+ gtk_box_append(GTK_BOX(master),masterLabel);
+ auto* masterScale=gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,0,2,.05);
+ gtk_range_set_value(GTK_RANGE(masterScale),s->project.masterGain);
+ gtk_accessible_update_property(GTK_ACCESSIBLE(masterScale),
+  GTK_ACCESSIBLE_PROPERTY_LABEL,tr("Master volume","Huvudvolym"),-1);
+ g_signal_connect(masterScale,"value-changed",G_CALLBACK(+[](GtkRange* w,gpointer user){
+  auto* st=static_cast<Studio*>(user);
+  st->project.masterGain=static_cast<float>(gtk_range_get_value(w));st->dirty=true;
+ }),s);
+ gtk_box_append(GTK_BOX(master),masterScale);
+ gtk_box_append(GTK_BOX(s->mixer),master);
  for(std::size_t i=0;i<s->project.tracks.size();++i){
   const auto& t=s->project.tracks[i];
   auto* panel=gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
@@ -925,6 +942,22 @@ void refresh(Studio* s){
   gtk_widget_set_margin_start(mix,12);gtk_widget_set_margin_top(mix,10);
   gtk_widget_set_margin_end(mix,12);gtk_widget_set_margin_bottom(mix,10);
   gtk_box_append(GTK_BOX(mix),gtk_label_new(t.name.c_str()));
+  // Track.pan already affects BlockMixer and persists to .wstudio.
+  auto* panRow=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,7);
+  gtk_box_append(GTK_BOX(panRow),gtk_label_new(tr("Pan","Panorama")));
+  auto* panScale=gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,-1,1,.05);
+  gtk_widget_set_hexpand(panScale,TRUE);
+  gtk_range_set_value(GTK_RANGE(panScale),t.pan);
+  gtk_scale_add_mark(GTK_SCALE(panScale),0,GTK_POS_BOTTOM,tr("Center","Mitten"));
+  gtk_accessible_update_property(GTK_ACCESSIBLE(panScale),
+   GTK_ACCESSIBLE_PROPERTY_LABEL,tr("Stereo pan for this track","Spårets stereopanorama"),-1);
+  c=index(panScale,s,i);
+  g_signal_connect(panScale,"value-changed",G_CALLBACK(+[](GtkRange* w,gpointer data){
+   auto* c=static_cast<Indexed*>(data);
+   c->s->project.tracks[c->index].pan=static_cast<float>(gtk_range_get_value(w));
+   c->s->dirty=true;
+  }),c);
+  gtk_box_append(GTK_BOX(panRow),panScale);gtk_box_append(GTK_BOX(mix),panRow);
   auto* fx=gtk_check_button_new_with_label(tr("Enable EQ/compressor","Aktivera EQ/kompressor"));
   gtk_check_button_set_active(GTK_CHECK_BUTTON(fx),t.effects.enabled);
   c=index(fx,s,i);
@@ -943,6 +976,29 @@ void refresh(Studio* s){
     auto* c=static_cast<Indexed*>(data);auto& fx=c->s->project.tracks[c->index].effects;
     float v=static_cast<float>(gtk_range_get_value(w));
     switch(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w),"band"))){case 0:fx.lowDb=v;break;case 1:fx.midDb=v;break;default:fx.highDb=v;}
+    c->s->dirty=true;
+   }),c);
+   gtk_box_append(GTK_BOX(row),scale);gtk_box_append(GTK_BOX(mix),row);
+  }
+  // Existing compressor threshold/ratio now have visible controls.
+  for(int k=0;k<2;++k){
+   auto* row=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,7);
+   const char* name=k==0?tr("Threshold (dB)","Tröskel (dB)"):tr("Ratio","Förhållande");
+   gtk_box_append(GTK_BOX(row),gtk_label_new(name));
+   auto* scale=k==0?gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,-48,0,1):
+     gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,1,12,.5);
+   gtk_widget_set_hexpand(scale,TRUE);
+   gtk_range_set_value(GTK_RANGE(scale),k==0?t.effects.thresholdDb:t.effects.ratio);
+   gtk_accessible_update_property(GTK_ACCESSIBLE(scale),
+    GTK_ACCESSIBLE_PROPERTY_LABEL,name,-1);
+   c=index(scale,s,i);
+   g_object_set_data(G_OBJECT(scale),"compressor-kind",GINT_TO_POINTER(k));
+   g_signal_connect(scale,"value-changed",G_CALLBACK(+[](GtkRange* w,gpointer data){
+    auto* c=static_cast<Indexed*>(data);
+    auto& fx=c->s->project.tracks[c->index].effects;
+    if(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w),"compressor-kind"))==0)
+     fx.thresholdDb=static_cast<float>(gtk_range_get_value(w));
+    else fx.ratio=static_cast<float>(gtk_range_get_value(w));
     c->s->dirty=true;
    }),c);
    gtk_box_append(GTK_BOX(row),scale);gtk_box_append(GTK_BOX(mix),row);
