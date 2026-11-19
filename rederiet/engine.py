@@ -8,9 +8,10 @@ from math import ceil
 import json
 from pathlib import Path
 from world import PORTS as WORLD_PORTS, travel_days, ship_position
+from simulation import Rival, RIVAL_NAMES, RIVAL_HOME, weather_at, port_activity, market_index
 
 PORTS = tuple(WORLD_PORTS)
-SAVE_VERSION = 3
+SAVE_VERSION = 4
 MAX_FLEET = 8
 
 
@@ -61,6 +62,7 @@ class Ship:
     voyage: dict | None = None
     cargo: list[Contract] = field(default_factory=list)
     voyages: int = 0
+    weather_incidents: int = 0
 
     @property
     def specs(self):
@@ -99,6 +101,10 @@ class Game:
         self.log = []
         # Retain these for readers of old game versions.
         self.next_id = 1
+        self.rivals = [Rival(i + 1, RIVAL_NAMES[i], RIVAL_HOME[i])
+                       for i in range(len(RIVAL_NAMES))]
+        self.weather_delays = 0
+        self.port_fees = 0
 
     @property
     def ship(self):
@@ -189,6 +195,16 @@ class Game:
     def sale_quote(ship):
         return ship.specs.price * ship.condition * 55 // 10000
 
+    def weather(self, ship=None):
+        ship = ship or self.ship
+        return weather_at(self.day, *ship.position())
+
+    def port_activity(self, port=None):
+        return port_activity(port or self.port, self.day)
+
+    def market_index(self, port=None):
+        return market_index(port or self.port, self.day, self.rivals)
+
     def generate_offers(self):
         """Legacy API: offers are now computed per port/day without side effects."""
         return self.offers
@@ -211,7 +227,7 @@ class Game:
                 size = 1 if variant == 0 else 2
                 base = (2900 + length * 1350) * size
                 market = 90 + ((self.day * 3 + PORTS.index(here) * 5 + index * 7) % 26)
-                pay = base * market // 100
+                pay = base * market * self.market_index(here) // 10000
                 identifier = self.day * 1000 + PORTS.index(here) * 20 + index * 2 + variant
                 if identifier in self.accepted_offer_ids:
                     continue
@@ -250,7 +266,7 @@ class Game:
             raise ValueError('needs_repair')
         ship.fuel -= fuel_cost
         ship.voyage = {'origin': ship.port, 'destination': destination,
-                       'days_left': days, 'total': days}
+                       'days_left': days, 'total': days, 'storm_delays': 0}
         self.note(f'{ship.name}: sailed for {destination}')
 
     def advance(self):
@@ -258,18 +274,37 @@ class Game:
         daily_cost = sum(ship.specs.crew for ship in self.ships)
         self.money -= daily_cost
         self.expenses += daily_cost
-        # Advance every ship, even while another vessel is selected.
         for ship in self.ships:
             if not ship.voyage:
                 continue
+            weather = self.weather(ship)
+            # Ships move every day, with the occasional storm adding one day.
+            # Maximum three storm delays per voyage prevents endless stranding.
+            penalty = ship.specs.wear + (2 if weather.severity == 2 else
+                                         5 if weather.severity == 3 else 0)
+            ship.condition = max(0, ship.condition - penalty)
+            if weather.severity >= 2:
+                ship.weather_incidents += 1
+                if weather.severity == 3 and ship.voyage.get('storm_delays', 0) < 3:
+                    if ship.voyage['total'] < 95:
+                        ship.voyage['storm_delays'] = ship.voyage.get('storm_delays', 0) + 1
+                        ship.voyage['total'] += 1
+                        ship.voyage['days_left'] += 1
+                        self.weather_delays += 1
+                        self.note(f'{ship.name}: storm delayed voyage +1 day')
             ship.voyage['days_left'] -= 1
-            ship.condition = max(0, ship.condition - ship.specs.wear)
             if ship.voyage['days_left'] > 0:
                 continue
             ship.port = ship.voyage['destination']
             ship.voyage = None
             ship.voyages += 1
             self.note(f'{ship.name}: arrived in {ship.port}')
+            # Port operations are a game cost. Port activity varies daily.
+            dues = 50 + self.port_activity(ship.port) * 30
+            self.money -= dues
+            self.expenses += dues
+            self.port_fees += dues
+            self.note(f'{ship.name}: harbour dues -{dues} kr')
             for cargo in ship.cargo:
                 if cargo.destination != ship.port:
                     continue
@@ -286,6 +321,10 @@ class Game:
                 self.note(f'{ship.name}: cargo delivered +{earned} kr' +
                           (' (late)' if not on_time else ''))
             ship.cargo = [cargo for cargo in ship.cargo if cargo.destination != ship.port]
+        for rival in self.rivals:
+            event = rival.advance(self.day)
+            if event == 'arrived':
+                self.note(f'{rival.name}: rival delivered cargo in {rival.port}')
         # Contracts are daily port-specific offers and expire automatically.
         self.accepted_offer_ids.clear()
         if self.money < -15000:
@@ -362,6 +401,9 @@ class Game:
             'reputation': self.reputation,
             'accepted_offer_ids': sorted(self.accepted_offer_ids),
             'log': self.log[:35],
+            'weather_delays': self.weather_delays,
+            'port_fees': self.port_fees,
+            'rivals': [asdict(r) for r in self.rivals],
         }
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -386,8 +428,11 @@ class Game:
             if 'ships' not in data:
                 # Version 0.1/0.2 had one global vessel and one cargo slot.
                 legacy_cargo = [Contract(**data['cargo'])] if data.get('cargo') else []
+                old_voyage = data.get('voyage')
+                if old_voyage is not None and 'storm_delays' not in old_voyage:
+                    old_voyage = {**old_voyage, 'storm_delays': 3}
                 g.ships = [Ship(1, 'Nordstjärnan', 'coaster', data['port'],
-                                data['fuel'], data['condition'], data.get('voyage'),
+                                data['fuel'], data['condition'], old_voyage,
                                 legacy_cargo)]
                 # In the old save `capacity` was an unused static field.
             else:
@@ -395,6 +440,8 @@ class Game:
                 for raw in data['ships']:
                     raw = dict(raw)
                     raw['cargo'] = [Contract(**c) for c in raw.get('cargo', [])]
+                    if raw.get('voyage') is not None and 'storm_delays' not in raw['voyage']:
+                        raw['voyage']['storm_delays'] = 3  # preserve pre-0.4 ETA
                     g.ships.append(Ship(**raw))
                 g.selected_ship_id = data['selected_ship_id']
                 g.next_ship_id = data['next_ship_id']
@@ -403,6 +450,11 @@ class Game:
                 g.expenses = data.get('expenses', 0)
                 g.reputation = data.get('reputation', 50)
                 g.accepted_offer_ids = set(data.get('accepted_offer_ids', []))
+            # Preserve old 0.1-0.3 saved companies; rivals enter afresh.
+            g.weather_delays = data.get('weather_delays', 0)
+            g.port_fees = data.get('port_fees', 0)
+            if 'rivals' in data:
+                g.rivals = [Rival(**r) for r in data['rivals']]
             g.validate()
         except (KeyError, TypeError, AttributeError, OverflowError) as exc:
             raise ValueError('Invalid save') from exc
@@ -419,6 +471,8 @@ class Game:
                 integer(self.income, 0, 1_000_000_000) and
                 integer(self.expenses, 0, 1_000_000_000) and
                 integer(self.reputation, 0, 100) and
+                integer(self.weather_delays, 0, 1_000_000) and
+                integer(self.port_fees, 0, 1_000_000_000) and
                 isinstance(self.log, list) and len(self.log) <= 35 and
                 all(isinstance(x, str) and len(x) <= 300 for x in self.log) and
                 1 <= len(self.ships) <= MAX_FLEET):
@@ -431,6 +485,7 @@ class Game:
                 not integer(s.fuel, 0, s.specs.tank) or
                 not integer(s.condition, 0, 100) or
                 not integer(s.voyages, 0, 1_000_000) or
+                not integer(s.weather_incidents, 0, 1_000_000) or
                 not isinstance(s.cargo, list) or len(s.cargo) > s.capacity):
                 raise ValueError('Invalid save')
             ids.add(s.id)
@@ -449,6 +504,7 @@ class Game:
                 if not (isinstance(v, dict) and v.get('origin', s.port) in PORTS
                         and v.get('destination') in PORTS and
                         integer(v.get('total'), 1, 100) and
+                        integer(v.get('storm_delays', 0), 0, 3) and
                         integer(v.get('days_left'), 1, v['total']) and
                         (not s.cargo or s.cargo[0].destination == v['destination'])):
                     raise ValueError('Invalid save')
@@ -458,3 +514,23 @@ class Game:
                 len(self.accepted_offer_ids) > MAX_FLEET * 6 or
                 not all(integer(x, 0, 1_000_000_000) for x in self.accepted_offer_ids)):
             raise ValueError('Invalid save')
+
+        if (not isinstance(self.rivals, list) or len(self.rivals) != len(RIVAL_NAMES)):
+            raise ValueError('Invalid save')
+        rival_ids = set()
+        for r in self.rivals:
+            if (type(r.id) is not int or r.id not in range(1, len(RIVAL_NAMES) + 1)
+                    or r.id in rival_ids or r.name != RIVAL_NAMES[r.id - 1]
+                    or r.port not in PORTS
+                    or not integer(r.deliveries, 0, 1_000_000)
+                    or not integer(r.earnings, 0, 1_000_000_000)):
+                raise ValueError('Invalid save')
+            rival_ids.add(r.id)
+            if r.destination is None:
+                if (r.origin is not None or r.days_left != 0 or r.total != 0):
+                    raise ValueError('Invalid save')
+            elif (r.destination not in PORTS or r.origin not in PORTS
+                  or r.destination == r.origin
+                  or not integer(r.total, 1, 90)
+                  or not integer(r.days_left, 1, r.total)):
+                raise ValueError('Invalid save')
