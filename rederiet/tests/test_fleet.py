@@ -196,7 +196,7 @@ class FleetTests(unittest.TestCase):
                 lambda d: d['ships'][0].update(port='Atlantis'),
                 lambda d: d['ships'][0].update(id=-100),
                 lambda d: d.update(day=-42),
-                lambda d: d.update(accepted_offer_ids=list(range(40))),
+                lambda d: d.update(accepted_offer_ids=list(range(99))),
                 lambda d: d.update(log=['x'] * 300),
                 lambda d: d['ships'].append(d['ships'][0]),
             ]
