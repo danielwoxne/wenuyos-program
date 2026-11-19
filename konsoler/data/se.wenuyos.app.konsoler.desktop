@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Consoles and home computers
+Name[sv]=Konsoler och hemdatorer
+Comment=NES, SNES, Game Boy, Sega, PlayStation, N64, DS, GameCube, PSP, Atari ST, ZX Spectrum, MSX and Atari 800 in Retro games
+Comment[sv]=NES, SNES, Game Boy, Sega, PlayStation, N64, DS, GameCube, PSP, Atari ST, ZX Spectrum, MSX och Atari 800 i Retrospel
+Exec=main.py
+Icon=se.wenuyos.app.konsoler
+Terminal=false
+Categories=Game;Emulator;
+Keywords=nes;snes;gameboy;sega;megadrive;playstation;psx;n64;nintendo;ds;gamecube;wii;psp;atari;spectrum;msx;emulator;bios;retro;
+Keywords[sv]=nes;snes;gameboy;sega;megadrive;playstation;n64;nintendo;ds;gamecube;wii;psp;atari;spectrum;msx;emulator;bios;retro;konsol;spel;
+StartupNotify=true
