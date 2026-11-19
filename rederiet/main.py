@@ -79,7 +79,7 @@ def translated_log(line):
 class Window(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title=T('The Shipping Company', 'Rederiet'))
-        self.set_default_size(1030, 760)
+        self.set_default_size(1100, 780)
         self.path = Path(GLib.get_user_data_dir()) / APP_ID / 'save.json'
         self._syncing = False
         self._reset_armed = False
@@ -104,6 +104,16 @@ class Window(Gtk.ApplicationWindow):
         root.append(self.status)
         self.finances = Gtk.Label(xalign=0, wrap=True)
         root.append(self.finances)
+        quick_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        root.append(quick_row)
+        self.quick_day = Gtk.Button(label=T('Next day ⏭', 'Nästa dag ⏭'))
+        self.quick_day.connect('clicked', self.next_day)
+        quick_row.append(self.quick_day)
+        self.quick_hint = Gtk.Label(label=T(
+            'Choose a cargo contract, then sail. Each click advances all vessels.',
+            'Välj en frakt, segla och gå vidare en dag. Alla fartyg rör sig samtidigt.'),
+            xalign=0, wrap=True, hexpand=True)
+        quick_row.append(self.quick_hint)
 
         fleet_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         root.append(fleet_header)
@@ -350,6 +360,14 @@ class Window(Gtk.ApplicationWindow):
             f'Deliveries {g.delivered}  ·  Reputation {g.reputation}/100',
             f'Dag {g.day}  ·  Kassa {g.money:,} kr  ·  Rederivärde {g.company_value():,} kr  ·  '
             f'Leveranser {g.delivered}  ·  Rykte {g.reputation}/100'))
+        goal = (T('Milestone reached: 10 deliveries and 50,000 kr company value!',
+                  'Mål uppnått: 10 leveranser och 50 000 kr i rederivärde!')
+                if g.won else
+                T(f'First goal: {min(g.delivered, 10)}/10 deliveries and '
+                  f'{g.company_value():,}/50,000 kr company value',
+                  f'Första målet: {min(g.delivered, 10)}/10 leveranser och '
+                  f'{g.company_value():,}/50 000 kr rederivärde'))
+        self.quick_hint.set_text(goal)
         self.finances.set_text(T(
             f'Income {g.income:,} kr · Expenses {g.expenses:,} kr · '
             f'Late deliveries {g.late} · Vessels {len(g.ships)}/{MAX_FLEET}',
