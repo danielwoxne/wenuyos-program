@@ -259,7 +259,7 @@ def main():
                       "software-update-available-symbolic", lambda: terminal([CMD, "upgrade"]))
             self.link(gu, tr("Android from USB", "Android från USB"),
                       tr("Signed Android images on a USB stick – no download", "Signerade Android-avbildningar på ett USB-minne – ingen nedladdning"),
-                      "drive-removable-media-symbolic", lambda: terminal(["wenuyos", "update", "--from", "usb"]))
+                      "drive-removable-media-symbolic", lambda: terminal([CMD, "images"]))
             self.link(gu, tr("Turn Android off", "Stäng av Android helt"),
                       tr("Apps and data are kept – enable again here", "Appar och data behålls – slå på igen här"),
                       "system-shutdown-symbolic", lambda: terminal([CMD, "disable"]))

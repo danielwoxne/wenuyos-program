@@ -34,9 +34,10 @@ link = home / ".local/bin/wenuyos-android"
 check(r.returncode == 0, "setup lyckas utan Android och utan update-desktop-database")
 check(link.is_symlink() and link.resolve() == SCRIPT.resolve(), "kommandot ~/.local/bin/wenuyos-android pekar på programmet")
 made = sorted(p.name for p in apps.glob("wenuyos-android-*.desktop"))
-check(made == ["wenuyos-android-full.desktop", "wenuyos-android-open.desktop", "wenuyos-android-size.desktop",
-               "wenuyos-android-stop.desktop", "wenuyos-android-window.desktop"], "fem genvägar i Start: " + ", ".join(made))
+check(made == ["wenuyos-android-apk.desktop", "wenuyos-android-full.desktop", "wenuyos-android-open.desktop", "wenuyos-android-size.desktop",
+               "wenuyos-android-stop.desktop", "wenuyos-android-window.desktop"], "sex genvägar i Start: " + ", ".join(made))
 texts = {p.name: p.read_text(encoding="utf-8") for p in apps.glob("wenuyos-android-*.desktop")}
+check("Exec=" + str(link) + " apk %f" in texts["wenuyos-android-apk.desktop"], "dubbelklick på en .apk/.xapk installerar i Android")
 check(all("@" not in t for t in texts.values()), "inga platshållare kvar")
 check(all(f"TryExec={link}" in t and f"Exec={link} " in t for t in texts.values()),
       "TryExec och Exec = kommandot: tas programmet bort försvinner genvägarna ur Start")

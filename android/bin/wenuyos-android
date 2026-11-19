@@ -35,6 +35,7 @@
 #   wenuyos-android fullui add|remove <paket> | list   öppna appen i Android-fönstret i stället för i ett eget fönster
 #                                 (för spel som blir delvis genomskinliga i eget fönster; Among Us är förvalt)
 #   wenuyos-android graphics auto|hardware|software   grafikkort eller mjukvarurendering
+#   wenuyos-android images [mapp]  Android från USB (signerade avbildningar, mappen wenuyos-android-images)
 #   wenuyos-android upgrade       hämta Android-uppdateringar (LineageOS) – görs av wenuyos update
 #   wenuyos-android watch         bevakning i bakgrunden (startas med skrivbordet)
 #   wenuyos-android stop          stäng Android (frigör minnet)
@@ -527,10 +528,11 @@ case "${1:-status}" in
     setcfg microg yes
     note "microG" "$(T "Installed. Open microG Settings in Android to turn on what you need." "Installerat. Öppna microG-inställningarna i Android och slå på det du behöver.")";;
   images)
-    # Egna Android-avbildningar från USB (används av wenuyos update --from usb). Mappen ska innehålla
+    # Egna Android-avbildningar från USB (fönstret: Android från USB). Mappen ska innehålla
     # system.img och vendor.img, android-images.sha256 och en WenuyOS-signatur (android-images.sha256.sig).
-    # Användarens data i Android behålls.
-    dir="${2:?mapp}"
+    # Användarens data i Android behålls. Utan mapp: den första på ett USB-minne.
+    dir="${2:-$(usb_images)}"
+    [ -n "$dir" ] || { echo "$(T "No signed Android images (wenuyos-android-images) on a USB stick" "Inga signerade Android-avbildningar (wenuyos-android-images) på något USB-minne")"; exit 1; }
     verify_images "$dir" || exit 1
     command -v waydroid >/dev/null || { echo "$(T "Enable Android apps first (wenuyos install android)" "Slå på Android-appar först (wenuyos install android)")"; exit 1; }
     echo "STEP $(T "Installing Android images from USB…" "Installerar Android-avbildningar från USB…")"
