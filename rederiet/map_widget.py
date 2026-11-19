@@ -1,9 +1,11 @@
-"""Lightweight GTK4 world overview; draws its own vectors with Cairo.
+"""Offline GTK4/Cairo world map with a local illustrated background.
 
-No map downloads, textures, network connection, timers or OpenGL. All visible
-colours are derived from the active GTK theme's foreground/accent palette.
+The raster is generated project artwork packaged with the game, never downloaded.
+If the asset is missing or unreadable, the old theme-derived vector map is used.
+Markers and live routes remain separate interactive overlays.
 """
 import math
+from pathlib import Path
 import gi
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
@@ -25,10 +27,12 @@ class WorldMap(Gtk.DrawingArea):
         self.selected = 'Oslo'
         self.region = 'world'
         self.port_pulse = False
+        self._background = None
+        self._background_checked = False
         self.select_destination = select_destination
         self.select_ship = select_ship
         self.set_content_width(760)
-        self.set_content_height(280)
+        self.set_content_height(390)
         self.set_hexpand(True)
         self.set_vexpand(False)
         self.set_draw_func(self.draw)
@@ -55,6 +59,37 @@ class WorldMap(Gtk.DrawingArea):
             if result[0] and result[1] is not None:
                 return result[1]
         return context.get_color()
+
+    def background(self, cr, width, height):
+        """Draw only the visible latitude-longitude tile of the offline atlas.
+
+        Image loading happens once; no worker, network, redraw timer or GPU.
+        The crop and port projection use the same equirectangular bounds.
+        """
+        if not self._background_checked:
+            self._background_checked = True
+            asset = Path(__file__).resolve().parent / 'share' / 'world-map.png'
+            if asset.is_file():
+                try:
+                    import cairo
+                    self._background = cairo.ImageSurface.create_from_png(str(asset))
+                except (OSError, ValueError, ImportError):
+                    self._background = None
+        surface = self._background
+        if surface is None:
+            return False
+        west, east, south, north = VIEWS[self.region]
+        iw, ih = surface.get_width(), surface.get_height()
+        sx, sy = (west + 180) / 360 * iw, (90 - north) / 180 * ih
+        sw, sh = (east - west) / 360 * iw, (north - south) / 180 * ih
+        if min(sw, sh, width, height) <= 0:
+            return False
+        cr.save()
+        cr.scale(width / sw, height / sh)
+        cr.set_source_surface(surface, -sx, -sy)
+        cr.paint()
+        cr.restore()
+        return True
 
     def land(self, cr, width, height, fg):
         for polygon in CONTINENTS:
@@ -150,8 +185,9 @@ class WorldMap(Gtk.DrawingArea):
         fg = self.get_style_context().get_color()
         accent = self.accent()
         west, east, south, north = VIEWS[self.region]
-        # Transparent ocean inherits the active GTK view background.
-        self.color(cr, fg, .09)
+        # Image is optional; its absence never stops the game.
+        has_background = self.background(cr, width, height)
+        self.color(cr, fg, .13 if has_background else .09)
         cr.set_line_width(.5)
         for longitude in range(-180, 181, 30):
             if west < longitude < east:
@@ -164,7 +200,8 @@ class WorldMap(Gtk.DrawingArea):
                 cr.move_to(0, y)
                 cr.line_to(width, y)
         cr.stroke()
-        self.land(cr, width, height, fg)
+        if not has_background:
+            self.land(cr, width, height, fg)
         if self.game is not None:
             g = self.game
             # Draw all active voyages; selected vessel gets the brightest route.
@@ -220,6 +257,13 @@ class WorldMap(Gtk.DrawingArea):
             text_width = cr.text_extents(label).width
             tx = x + 7 if x + text_width + 12 < width else x - text_width - 8
             ty = max(12, min(height - 5, y - 7))
+            # Theme-derived backing keeps the labels readable on the bright atlas.
+            context = self.get_style_context()
+            ok, back = context.lookup_color('theme_bg_color')
+            if ok and back is not None:
+                cr.rectangle(tx - 3, ty - 11, text_width + 6, 15)
+                self.color(cr, back, .83)
+                cr.fill()
             self.color(cr, fg, 1)
             cr.move_to(tx, ty)
             cr.show_text(label)
