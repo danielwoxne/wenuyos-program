@@ -1,8 +1,16 @@
-# Rederiet 0.3.0 – bygg din egen fraktflotta
+# Rederiet 0.4.0 – väder, hamnar och konkurrens
 
 **Rederiet** är ett självständigt, turbaserat rederispel för WenuyOS (Debian 13, GTK 4), med känslan från klassiska sjöfarts- och handelsspel. Ingen originalkod, grafik, text eller musik från *Ports of Call* ingår.
 
-## Nytt i 0.3.0
+## Nytt i 0.4.0
+
+- **Fyra väderlägen:** lugnt, bris, grov sjö och storm. Vädret bestäms deterministiskt från dag och fartygsposition. Grov sjö och storm ökar slitaget, och storm kan försena resan högst tre dagar. Vädret är helt fiktivt och inte sjöväderinformation.
+- **Tre rivaliserande rederier:** deras fartyg reser självständigt mellan hamnar, levererar last och sätter press på fraktersättningen i närliggande hamnar. Konkurrenterna visas med diamantformade markörer på kartan.
+- **Hamnar som lever:** varierande aktivitet, hamnavgifter vid ankomst och en 160 ms visuell hamnpuls när nästa speldag väljs. Ingen permanent ritloop och inget nätverk.
+- **Ekonomi och översikt:** totalsumma för hamnavgifter, antal stormförseningar, rivalernas leveranser och lokal fraktmarknadsnivå.
+- **Sparfilformat v4:** 0.1–0.3-sparfiler läses som tidigare, gamla pågående resor får behålla sin avtalade ankomsttid.
+
+## Från 0.3.0
 
 - **Flotta med upp till åtta fartyg** som kan segla samtidigt och väljas i listan eller direkt på kartan. Alla fartyg har egen rutt, bränsle, skick, position och last.
 - **Fyra fartygstyper** med olika pris, hastighet, lastkapacitet, bränsletank och besättningskostnad: kustfraktare, lastfartyg, oceanfraktare och containerfartyg.
@@ -11,7 +19,7 @@
 - **Förbättrad ekonomi:** olika bränslepriser per hamn, besättningskostnad per fartyg, intäkter, utgifter, rederivärde och säljarvoden. Du kan nu tanka och reparera **delvis** om du inte har råd med fullt arbete.
 - **Världskartan** visar flera samtidiga rutter med särskilt tydlig markering för valt fartyg. Fartyg i samma hamn visas med små förskjutna markörer så de är möjliga att välja.
 - **Säker nystart:** två tryck krävs för att ersätta ett sparat rederi.
-- **Sparfilformat v3:** sparar alla fartyg och frakter, stöder automatiskt 0.1/0.2-sparfiler utan att kräva omstart, och avvisar ogiltiga/orimligt stora sparfiler.
+- **Sparfilformat v3 (tidigare):** sparar alla fartyg och frakter, stöder automatiskt 0.1/0.2-sparfiler utan att kräva omstart, och avvisar ogiltiga/orimligt stora sparfiler.
 
 ## Spela
 
@@ -47,3 +55,10 @@ python3 -m unittest discover -s tests -v
 - Återstår: `wenuyos verify`, UI-interaktion i GTK4/labwc, Debian 13-installation, faktisk minnesmätning på 2 GB-dator, signerad `.wapp`, oberoende granskning och godkännande före släpp.
 
 Utveckling sker i `danielwoxne/wenuyos-program`, mappen `rederiet/`, utkast-PR #33. Ingen ändring i WenuyOS main eller programsläpp utan godkänd process.
+
+## Provstatus för 0.4.0
+
+- 49 automatiska prov i Python 3.13, inklusive fyra Cairo-kartprov och två huvudlösa kartoperationstester.
+- Python-syntax och sparning från tidigare versioner kontrolleras.
+- **Återstår:** riktig GTK4/labwc, 2 GB-dator, WenuyOS `verify`, och installation i WenuyOS.
+- Programmet använder inte nätverk eller några fartygsbilder från andra spel.
