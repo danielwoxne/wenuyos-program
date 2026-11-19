@@ -1,0 +1,12 @@
+name = "Android apps"
+name_sv = "Android-appar"
+version = "1.0.0"
+id = "se.wenuyos.app.android"
+description = "Android apps in their own windows (Waydroid, LineageOS without Google services)"
+description_sv = "Android-appar i egna fönster (Waydroid, LineageOS utan Googles tjänster)"
+license = "GPL-3.0-or-later"
+author = "Daniel Woxnerud"
+requires = ["python3-gi", "gir1.2-adw-1"]
+python = ["gi"]
+min_ram_mb = 2048
+needs_network = true

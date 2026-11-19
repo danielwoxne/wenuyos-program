@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Android apps
+Name[sv]=Android-appar
+Comment=Android apps in their own windows – enable, window size, mouse, shared folders, app stores
+Comment[sv]=Android-appar i egna fönster – aktivera, fönsterstorlek, mus, delade mappar, appbutiker
+Exec=android-appar
+Icon=se.wenuyos.app.android
+Terminal=false
+Categories=System;X-WenuyOS-Android;
+Keywords=android;waydroid;apk;apps;lineageos;fdroid;aurora;microg;mouse;finger;
+Keywords[sv]=android;waydroid;apk;appar;lineageos;fdroid;aurora;microg;mus;finger;delade mappar;
+StartupNotify=true

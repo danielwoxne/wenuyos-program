@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Stop Android (free memory)
+Name[sv]=Stäng Android (frigör minne)
+Exec=@WENUYOS_ANDROID@ stop
+TryExec=@WENUYOS_ANDROID@
+Keywords=android;stop;memory;
+Keywords[sv]=android;stäng;minne;stop;
+Icon=se.wenuyos.app.android
+Terminal=false
+Categories=X-WenuyOS;System;X-WenuyOS-Command;

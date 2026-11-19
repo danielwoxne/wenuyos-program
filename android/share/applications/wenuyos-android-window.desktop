@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Android
+Name[sv]=Android
+Comment=The whole Android system in a window
+Comment[sv]=Hela Android-systemet i ett fönster
+Exec=@WENUYOS_ANDROID@ window
+TryExec=@WENUYOS_ANDROID@
+Keywords=android;window;apps;
+Keywords[sv]=android;fönster;appar;
+Icon=se.wenuyos.app.android
+Terminal=false
+Categories=X-WenuyOS;System;X-WenuyOS-Android;

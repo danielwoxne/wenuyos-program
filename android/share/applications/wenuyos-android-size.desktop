@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Android window size
+Name[sv]=Android-fönstrets storlek
+Comment=Choose phone, medium, large or full screen for the Android window
+Comment[sv]=Välj telefon, mellan, stort eller helskärm för Android-fönstret
+Exec=@WENUYOS_ANDROID@ size
+TryExec=@WENUYOS_ANDROID@
+Keywords=android;window;size;resize;phone;
+Keywords[sv]=android;fönster;storlek;ändra storlek;telefon;
+Icon=se.wenuyos.app.android
+Terminal=false
+Categories=X-WenuyOS;System;X-WenuyOS-Android;

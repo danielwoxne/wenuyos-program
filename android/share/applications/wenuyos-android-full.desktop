@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Android (full screen)
+Name[sv]=Android (helskärm)
+Comment=The whole Android system in full screen
+Comment[sv]=Hela Android-systemet i helskärm
+Exec=@WENUYOS_ANDROID@ full
+TryExec=@WENUYOS_ANDROID@
+Keywords=android;fullscreen;tablet;
+Keywords[sv]=android;helskärm;surfplatta;fullscreen;
+Icon=se.wenuyos.app.android
+Terminal=false
+Categories=X-WenuyOS;System;X-WenuyOS-Android;
