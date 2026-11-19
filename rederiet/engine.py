@@ -455,6 +455,6 @@ class Game:
         if (self.selected_ship_id not in ids or
                 not integer(self.next_ship_id, max(ids) + 1, 1_000_001) or
                 not isinstance(self.accepted_offer_ids, set) or
-                len(self.accepted_offer_ids) > 16 or
+                len(self.accepted_offer_ids) > MAX_FLEET * 6 or
                 not all(integer(x, 0, 1_000_000_000) for x in self.accepted_offer_ids)):
             raise ValueError('Invalid save')
