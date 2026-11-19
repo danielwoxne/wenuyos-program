@@ -6,7 +6,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import cairo
+try:
+    import cairo
+except ImportError:  # Headless CI may not have python3-cairo installed.
+    cairo = None
 from engine import Game
 
 
@@ -86,6 +89,7 @@ def load_widget():
     return module
 
 
+@unittest.skipUnless(cairo is not None, "python3-cairo unavailable")
 class MapDrawTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
