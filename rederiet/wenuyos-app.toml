@@ -1,8 +1,8 @@
 name = "Rederiet"
 name_sv = "Rederiet"
-version = "0.3.0"
-description = "Run a fleet of cargo ships across the world"
-description_sv = "Bygg en rederiflotta och frakta gods mellan 15 hamnar"
+version = "0.4.0"
+description = "Manage a shipping fleet, sea weather and rival companies"
+description_sv = "Driv ett rederi med väder, konkurrens och 15 hamnar"
 license = "GPL-3.0-or-later"
 author = "Daniel Woxnerud"
 requires = ["python3-gi", "gir1.2-gtk-4.0"]
