@@ -71,14 +71,15 @@ class WorldTests(unittest.TestCase):
             self.assertEqual(loaded.voyage['origin'], 'Göteborg')
 
     def test_old_save_without_origin(self):
-        g = Game()
-        g.sail('Rotterdam')
+        # Real 0.1.0 save layout: top-level ship fields and no route origin.
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'game.json'
-            g.save(path)
-            data = json.loads(path.read_text(encoding='utf-8'))
-            del data['voyage']['origin']  # field added in 0.2.0
-            path.write_text(json.dumps(data), encoding='utf-8')
+            path.write_text(json.dumps({
+                'day': 1, 'money': 22000, 'port': 'Göteborg',
+                'fuel': 94, 'condition': 100, 'capacity': 1,
+                'voyage': {'destination': 'Rotterdam', 'total': 2, 'days_left': 2},
+                'cargo': None, 'delivered': 0, 'next_id': 2, 'offers': [], 'log': []
+            }), encoding='utf-8')
             loaded = Game.load(path)
             self.assertEqual(loaded.position(), COORDS['Göteborg'])
             for _ in range(loaded.voyage['days_left']):
@@ -87,7 +88,7 @@ class WorldTests(unittest.TestCase):
 
     def test_contracts_cover_near_and_far(self):
         g = Game()
-        self.assertEqual(len(g.offers), 3)
+        self.assertEqual(len(g.offers), 6)
         choices = [distance(g.port, o.destination) for o in g.offers]
         self.assertGreater(max(choices), min(choices))
         self.assertTrue(all(c.origin == g.port and c.pay > 0 for c in g.offers))
@@ -109,7 +110,7 @@ class WorldTests(unittest.TestCase):
             path = Path(directory) / 'game.json'
             g.save(path)
             data = json.loads(path.read_text(encoding='utf-8'))
-            data['port'] = 'Atlantis'
+            data['ships'][0]['port'] = 'Atlantis'
             path.write_text(json.dumps(data), encoding='utf-8')
             with self.assertRaises(ValueError):
                 Game.load(path)
