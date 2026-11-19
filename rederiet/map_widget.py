@@ -24,6 +24,7 @@ class WorldMap(Gtk.DrawingArea):
         self.game = None
         self.selected = 'Oslo'
         self.region = 'world'
+        self.port_pulse = False
         self.select_destination = select_destination
         self.select_ship = select_ship
         self.set_content_width(760)
@@ -125,6 +126,23 @@ class WorldMap(Gtk.DrawingArea):
             out.append((ship, px + 9 * (offset % 3), py + 9 * (offset // 3)))
         return out
 
+    def draw_rivals(self, cr, width, height, fg):
+        if not self.game:
+            return
+        for rival in self.game.rivals:
+            lat, lon = rival.position()
+            x, y = self.xy(lat, lon, width, height)
+            if 0 <= x <= width and 0 <= y <= height:
+                cr.new_path()
+                cr.move_to(x, y - 5)
+                cr.line_to(x + 5, y)
+                cr.line_to(x, y + 5)
+                cr.line_to(x - 5, y)
+                cr.close_path()
+                self.color(cr, fg, .7)
+                cr.set_line_width(1.5)
+                cr.stroke()
+
     def draw(self, area, cr, width, height):
         cr.save()
         cr.rectangle(0, 0, width, height)
@@ -156,6 +174,12 @@ class WorldMap(Gtk.DrawingArea):
                                        ship.voyage['destination'])
                     self.route(cr, coords, width, height, accent,
                                .93 if ship.id == g.selected_ship_id else .29)
+            # Rival lanes are intentionally subdued so the player's routes
+            # remain legible even at 1024x600 and on software-only rendering.
+            for rival in g.rivals:
+                if rival.destination and rival.origin:
+                    self.route(cr, sea_route(rival.origin, rival.destination),
+                               width, height, fg, .19)
             if not g.voyage and self.selected != g.port:
                 self.route(cr, sea_route(g.port, self.selected),
                            width, height, accent, .9)
@@ -176,6 +200,13 @@ class WorldMap(Gtk.DrawingArea):
             cr.arc(x, y, 5.5 if selected else 3.0, 0, 2 * math.pi)
             self.color(cr, accent if (selected or current) else fg, 1 if selected else .75)
             cr.fill()
+            if self.game and self.port_pulse:
+                # Single-frame flash following Next day, using theme colours.
+                cr.new_path()
+                cr.arc(x, y, 6 + 2 * self.game.port_activity(port), 0, 2 * math.pi)
+                self.color(cr, accent, .38)
+                cr.set_line_width(1.4)
+                cr.stroke()
             # Pixel-aligned labels, no bitmap resource or font package needed.
             if any(abs(x - other_x) < 80 and abs(y - other_y) < 17
                    for other_x, other_y in occupied):
@@ -192,6 +223,7 @@ class WorldMap(Gtk.DrawingArea):
             self.color(cr, fg, 1)
             cr.move_to(tx, ty)
             cr.show_text(label)
+        self.draw_rivals(cr, width, height, fg)
         for ship, x, y in self.ship_pixels(width, height):
             if -15 < x < width + 15 and -15 < y < height + 15:
                 selected = ship.id == self.game.selected_ship_id
