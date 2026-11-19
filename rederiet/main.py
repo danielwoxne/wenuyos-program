@@ -26,6 +26,12 @@ SHIP_NAMES = {
     'container': ('Container ship', 'Containerfartyg'),
 }
 SHIP_KEYS = list(SHIP_TYPES)
+WEATHER_NAMES = {
+    'calm': ('Calm sea', 'Lugnt hav'),
+    'breeze': ('Breeze', 'Bris'),
+    'rough': ('Rough seas', 'Grov sjö'),
+    'storm': ('Storm', 'Storm'),
+}
 
 
 ERRORS = {
@@ -59,6 +65,9 @@ def translated_log(line):
         ('fuel purchased', 'bränsle köpt'), ('ship repaired', 'fartyg reparerat'),
         ('ship purchased', 'fartyg köpt'), ('ship sold', 'fartyg sålt'),
         ('Company bankrupt', 'Rederiet i konkurs'),
+        ('storm delayed voyage', 'storm försenade resan'),
+        ('harbour dues', 'hamnavgift'),
+        ('rival delivered cargo in', 'konkurrent levererade gods i'),
         ('(late)', '(för sent)'), ('TEU', 'lastenheter'),
         ('Cargo loaded', 'Lasten ombord'), ('Cargo delivered', 'Last levererad'),
         ('Sailed for', 'Avseglade mot'), ('Arrived in', 'Anlände till'),
@@ -123,6 +132,10 @@ class Window(Gtk.ApplicationWindow):
         root.append(self.world_map)
         self.map_description = Gtk.Label(xalign=0, wrap=True)
         root.append(self.map_description)
+        self.weather_status = Gtk.Label(xalign=0, wrap=True)
+        root.append(self.weather_status)
+        self.rivals_info = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        root.append(self.rivals_info)
         root.append(Gtk.Separator())
 
         self.cargo_label = Gtk.Label(xalign=0, wrap=True)
@@ -270,6 +283,15 @@ class Window(Gtk.ApplicationWindow):
 
     def next_day(self, *_):
         self.perform(self.game.advance)
+        # One 160 ms harbour pulse per turn; no permanent redraw loop.
+        self.world_map.port_pulse = True
+        self.world_map.queue_draw()
+        GLib.timeout_add(160, self.clear_port_pulse)
+
+    def clear_port_pulse(self):
+        self.world_map.port_pulse = False
+        self.world_map.queue_draw()
+        return False
 
     def refuel(self, *_):
         self.perform(self.game.refuel)
@@ -407,6 +429,22 @@ class Window(Gtk.ApplicationWindow):
         self.history.set_text('\n'.join(map(translated_log, g.log[:12])) or
                               T('Start your first voyage!', 'Börja din första resa!'))
         self.update_market()
+        w = g.weather()
+        self.weather_status.set_text(
+            T('Sea conditions: ', 'Väder till havs: ') + T(*WEATHER_NAMES[w.key]) +
+            T(' · Storm delays: ', ' · Stormförseningar: ') + str(g.weather_delays) +
+            T(' · Port activity: ', ' · Hamnaktivitet: ') +
+            str(g.port_activity()) + '/3' +
+            T(' · Harbour dues: ', ' · Hamnavgifter: ') + f'{g.port_fees:,} kr')
+        rivals = [T('Other shipping companies (● your ships, ◇ rivals):',
+                    'Andra rederier (● dina fartyg, ◇ konkurrenter):')]
+        for rival in g.rivals:
+            where = (T('sailing to ', 'seglar mot ') + rival.destination) if rival.destination else                     (T('in ', 'i ') + rival.port)
+            rivals.append(f'◇ {rival.name}: {where} · ' +
+                          T('deliveries ', 'leveranser ') + str(rival.deliveries))
+        rivals.append(T('Freight market at your port: ', 'Fraktmarknad i din hamn: ') +
+                      str(g.market_index()) + '%')
+        self.rivals_info.set_text('\n'.join(rivals))
         self.world_map.game = g
         self.world_map.queue_draw()
         self.update_map_info()
