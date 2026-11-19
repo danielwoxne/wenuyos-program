@@ -1,6 +1,15 @@
-# Rederiet 0.4.0 – väder, hamnar och konkurrens
+# Rederiet 0.5.0-rc1 – första spelbara testkandidat
 
 **Rederiet** är ett självständigt, turbaserat rederispel för WenuyOS (Debian 13, GTK 4), med känslan från klassiska sjöfarts- och handelsspel. Ingen originalkod, grafik, text eller musik från *Ports of Call* ingår.
+
+## Nytt i 0.5.0-rc1
+
+- Färgrik offlineatlas i `share/world-map.png` i det lokala RC-paketet. Kartan visar de fyra utsnitten och ritar klickbara hamnar, fartyg och rutter ovanpå bilden. Ingen kartnedladdning eller GPU.
+- Om atlasfilen saknas ritas fortfarande den gamla vektorkartan, så spelet kan öppnas även utan extra resurs.
+- Tydlig knapp Nästa dag längst upp. Första målet: leverera tio frakter och bygg ett rederi värt 50 000 kr; fortsatt fritt spel därefter.
+- Samma sparfilformat v4; tidigare rederier finns kvar.
+
+**OBS för PR-granskaren:** Den binära atlasfilen finns i RC-källkods-ZIP och osignerad .wapp till Daniel, men har ännu inte överförts till GitHub-grenen. Lägg `rederiet/share/world-map.png` från ZIP till PR före verklig RC-granskning. Kartkodens reservvektor döljer annars en saknad atlas.
 
 ## Nytt i 0.4.0
 
