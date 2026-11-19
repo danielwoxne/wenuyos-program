@@ -19,12 +19,13 @@ VIEWS = {
 
 
 class WorldMap(Gtk.DrawingArea):
-    def __init__(self, select_destination):
+    def __init__(self, select_destination, select_ship=None):
         super().__init__()
         self.game = None
         self.selected = 'Oslo'
         self.region = 'world'
         self.select_destination = select_destination
+        self.select_ship = select_ship
         self.set_content_width(760)
         self.set_content_height(280)
         self.set_hexpand(True)
@@ -72,9 +73,9 @@ class WorldMap(Gtk.DrawingArea):
             self.color(cr, fg, .36)
             cr.stroke()
 
-    def route(self, cr, coords, width, height, accent):
+    def route(self, cr, coords, width, height, accent, opacity=.88):
         cr.save()
-        self.color(cr, accent, .88)
+        self.color(cr, accent, opacity)
         cr.set_line_width(2.0)
         cr.set_dash((7, 5))
         for part in unwrap_segments(coords):
@@ -89,7 +90,12 @@ class WorldMap(Gtk.DrawingArea):
                 cr.stroke()
         cr.restore()
 
-    def draw_ship(self, cr, x, y, accent, fg):
+    def draw_ship(self, cr, x, y, accent, fg, selected=False):
+        cr.save()
+        cr.translate(x, y)
+        if selected:
+            cr.scale(1.3, 1.3)
+        x, y = 0, 0
         # Small arrow/ship silhouette, rendered directly rather than as an image.
         cr.new_path()
         cr.move_to(x, y-10)
@@ -102,6 +108,22 @@ class WorldMap(Gtk.DrawingArea):
         cr.set_line_width(1.7)
         self.color(cr, fg, 1)
         cr.stroke()
+        cr.restore()
+
+    def ship_pixels(self, width, height):
+        """Keep collocated vessels clickable without shifting actual coordinates."""
+        if not self.game:
+            return []
+        counts = {}
+        out = []
+        for ship in self.game.ships:
+            lat, lon = ship.position()
+            px, py = self.xy(lat, lon, width, height)
+            key = (round(px / 8), round(py / 8))
+            offset = counts.get(key, 0)
+            counts[key] = offset + 1
+            out.append((ship, px + 9 * (offset % 3), py + 9 * (offset // 3)))
+        return out
 
     def draw(self, area, cr, width, height):
         cr.save()
@@ -127,14 +149,16 @@ class WorldMap(Gtk.DrawingArea):
         self.land(cr, width, height, fg)
         if self.game is not None:
             g = self.game
-            if g.voyage:
-                coords = sea_route(g.voyage.get('origin', g.port), g.voyage['destination'])
-            elif self.selected != g.port:
-                coords = sea_route(g.port, self.selected)
-            else:
-                coords = ()
-            if coords:
-                self.route(cr, coords, width, height, accent)
+            # Draw all active voyages; selected vessel gets the brightest route.
+            for ship in g.ships:
+                if ship.voyage:
+                    coords = sea_route(ship.voyage.get('origin', ship.port),
+                                       ship.voyage['destination'])
+                    self.route(cr, coords, width, height, accent,
+                               .93 if ship.id == g.selected_ship_id else .29)
+            if not g.voyage and self.selected != g.port:
+                self.route(cr, sea_route(g.port, self.selected),
+                           width, height, accent, .9)
 
         # Display labels in priority order; avoid overlapping text in overview.
         order = [self.selected]
@@ -168,16 +192,22 @@ class WorldMap(Gtk.DrawingArea):
             self.color(cr, fg, 1)
             cr.move_to(tx, ty)
             cr.show_text(label)
-        if self.game:
-            lat, lon = self.game.position()
-            x, y = self.xy(lat, lon, width, height)
-            if -12 < x < width+12 and -12 < y < height+12:
-                self.draw_ship(cr, x, y, accent, fg)
+        for ship, x, y in self.ship_pixels(width, height):
+            if -15 < x < width + 15 and -15 < y < height + 15:
+                selected = ship.id == self.game.selected_ship_id
+                self.draw_ship(cr, x, y, accent if selected else fg, fg, selected)
         cr.restore()
 
     def pressed(self, gesture, count, x, y):
         width = self.get_width()
         height = self.get_height()
+        if self.select_ship and self.game:
+            nearest = min(self.ship_pixels(width, height),
+                          key=lambda item: (item[1] - x) ** 2 + (item[2] - y) ** 2)
+            if (nearest[1] - x) ** 2 + (nearest[2] - y) ** 2 <= 14 ** 2:
+                self.select_ship(nearest[0].id)
+                self.queue_draw()
+                return
         best = None
         best_d = 15 ** 2
         for port, (lat, lon) in PORTS.items():
