@@ -1,0 +1,12 @@
+name = "Commodore 64"
+name_sv = "Commodore 64"
+version = "1.0.0"
+id = "se.wenuyos.app.c64"
+description = "Commodore 64 in Retro games: VICE, your own C64 ROMs or the free Open ROMs, joystick port"
+description_sv = "Commodore 64 i Retrospel: VICE, dina egna C64-ROM:ar eller fria Open ROMs, joystickport"
+license = "GPL-3.0-or-later"
+author = "Daniel Woxnerud"
+requires = ["vice", "open-roms", "python3-gi", "gir1.2-adw-1"]
+python = ["gi"]
+min_ram_mb = 2048
+needs_network = false
