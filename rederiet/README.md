@@ -1,30 +1,31 @@
-# Rederiet 0.2.0 – världskarta
+# Rederiet 0.3.0 – bygg din egen fraktflotta
 
-Ett eget, litet turbaserat rederispel för WenuyOS. Inspirationen kommer från klassiska handelsspel för hemdatorer; inga originalbilder, namn på programdelar eller spelresurser från *Ports of Call* används.
+**Rederiet** är ett självständigt, turbaserat rederispel för WenuyOS (Debian 13, GTK 4), med känslan från klassiska sjöfarts- och handelsspel. Ingen originalkod, grafik, text eller musik från *Ports of Call* ingår.
 
-## Nytt i 0.2.0
+## Nytt i 0.3.0
 
-- **Världskarta** med schematiska kustlinjer, 15 hamnar på flera kontinenter och klickbara hamnmarkörer.
-- **Världen**, **Europa**, **Atlanten** och **Asien–Stilla havet** som valbara kartutsnitt.
-- **Sjövägar** genom bland annat Suezkanalen och Panamakanalen – renderade som streckade rutter.
-- **Fartygsposition** längs rutten, som flyttas när en speldag går.
-- Fraktuppdrag som blandar korta och långa resor. Anpassad bränsleförbrukning för oceanresor.
-- Äldre sparfiler från 0.1.0 kan läsas.
-
-Kartan är *schematisk* och får **inte** användas som navigationshjälp. Kustlinjerna är handritade, förenklade former – inte riktiga sjökort.
+- **Flotta med upp till åtta fartyg** som kan segla samtidigt och väljas i listan eller direkt på kartan. Alla fartyg har egen rutt, bränsle, skick, position och last.
+- **Fyra fartygstyper** med olika pris, hastighet, lastkapacitet, bränsletank och besättningskostnad: kustfraktare, lastfartyg, oceanfraktare och containerfartyg.
+- **Köp och sälj fartyg** i hamn. Du kan inte sälja ett fartyg med last eller till sjöss, och du måste behålla minst ett fartyg.
+- **Sex frakterbjudanden per hamn och dag**, där större fartyg kan ta flera frakter till samma destination på en resa. Leveranser ger pengar och bättre rykte; sena leveranser ger halverad betalning och sämre rykte.
+- **Förbättrad ekonomi:** olika bränslepriser per hamn, besättningskostnad per fartyg, intäkter, utgifter, rederivärde och säljarvoden. Du kan nu tanka och reparera **delvis** om du inte har råd med fullt arbete.
+- **Världskartan** visar flera samtidiga rutter med särskilt tydlig markering för valt fartyg. Fartyg i samma hamn visas med små förskjutna markörer så de är möjliga att välja.
+- **Säker nystart:** två tryck krävs för att ersätta ett sparat rederi.
+- **Sparfilformat v3:** sparar alla fartyg och frakter, stöder automatiskt 0.1/0.2-sparfiler utan att kräva omstart, och avvisar ogiltiga/orimligt stora sparfiler.
 
 ## Spela
 
-1. Starta i Göteborg med ett fartyg och 22 000 kr.
-2. Klicka på en hamn på kartan eller välj den från listan. Streckad linje visar den föreslagna rutten.
-3. Acceptera ett fraktuppdrag och segla mot destinationshamnen.
-4. Tryck **Nästa dag** för att se fartyget röra sig över världskartan.
-5. Vid ankomst lossas rätt last automatiskt och du får betalt. Tanka/reparera i hamn och välj nästa uppdrag.
-6. Spelet sparas under din användardatakatalog. **Nytt rederi** ersätter det pågående spelet.
+1. Starta som kapten på **Nordstjärnan** i Göteborg med 22 000 kr. Välj en frakt som ryms ombord.
+2. Klicka på önskad hamn på världskartan eller välj ur destinationlistan. Klicka **Segla**.
+3. Klicka **Nästa dag** för att förflytta **alla** fartyg samtidigt. För levererad last kommer betalningen automatiskt.
+4. **Tanka**, **reparera** eller använd **varvet** när valt fartyg ligger i hamn.
+5. När du har råd: köp ett till fartyg, välj vilket du styr i flottlistan och planera en annan resa samtidigt.
 
-## Kör och testa
+Det går att segla utan last, men då kostar resan bränsle och besättningslöner utan fraktintäkter.
 
-På WenuyOS/Debian 13 med Python 3, GTK 4 och PyGObject:
+## Köra och prova
+
+På WenuyOS/Debian 13 med Python 3.13, `python3-gi` och `gir1.2-gtk-4.0`:
 
 ```sh
 cd rederiet
@@ -32,8 +33,17 @@ python3 main.py
 python3 -m unittest discover -s tests -v
 ```
 
-Resursprofil: ritning via GTK 4/Cairo med små vektorformer, ingen SDL/OpenGL/GPU, inga karttexturer, inga timerloopar, inget nätverk eller externa API-anrop. Tema- och accentfärg kommer från aktiv GTK-färgpalett. Spelmotorn använder en liten graf över sjövägar och beräknar allt offline. För målmaskiner med **2 GB RAM** och `WENUYOS_GFX=soft`, `WENUYOS_PERF=low`.
+- **Offline**: inga nätverksanrop, inga externa API:er och ingen telemetry.
+- **2 GB-målprofil**: statiska ruttpunkter och Cairo/GTK-vektorgrafik; inga karttexturer, stora bildfiler, OpenGL eller kontinuerliga timerloopar. `WENUYOS_PERF=low` och `WENUYOS_GFX=soft` kräver inget separat grafikspår.
+- **Svenska/engelska**: språkval enligt WenuyOS locale (`T(en, sv)` i Python); färger och fartygsmarkörer följer GTK-temat.
+- **Sparfil**: `GLib.get_user_data_dir()/se.wenuyos.app.rederiet/save.json`, utanför programinstallationen.
+- **Kartan** är en handritad schematisk spelkarta. Rutter, bränslepriser, fartyg och ekonomi är fiktiva och ska aldrig användas för navigering eller verkliga affärsbeslut.
 
-### Teststatus
+## Teststatus för 0.3.0
 
-Logik- och geometri-enhetstester körs utan GTK. GTK-fönster, WenuyOS `verify`, installationspaket och verklig ThinkPad/Chromebook måste fortfarande testas på målsystemet.
+- Python-logik, gamla sparfiler, ekonomi och flera fartyg testas via `tests/test_engine.py`, `tests/test_world.py`, `tests/test_fleet.py`.
+- `tests/test_map_widget.py` ritar **riktiga Cairo-anrop** men använder en **GTK-stubb**. Det är **inte** ett prov av ett verkligt GTK-fönster.
+- `python3 -m compileall` kontrollerar syntax; lokalt test körs även med `WENUYOS_PERF=low WENUYOS_GFX=soft`.
+- Återstår: `wenuyos verify`, UI-interaktion i GTK4/labwc, Debian 13-installation, faktisk minnesmätning på 2 GB-dator, signerad `.wapp`, oberoende granskning och godkännande före släpp.
+
+Utveckling sker i `danielwoxne/wenuyos-program`, mappen `rederiet/`, utkast-PR #33. Ingen ändring i WenuyOS main eller programsläpp utan godkänd process.
