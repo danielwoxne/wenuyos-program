@@ -188,6 +188,11 @@ class Game:
     def repair_quote(self):
         return (100 - self.condition) * 60
 
+    @property
+    def won(self):
+        """First campaign milestone; endless play remains possible afterwards."""
+        return self.delivered >= 10 and self.company_value() >= 50_000
+
     def company_value(self):
         return self.money + sum(self.sale_quote(s) for s in self.ships)
 
