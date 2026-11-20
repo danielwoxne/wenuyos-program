@@ -310,10 +310,11 @@ def make_task(level_id, rng, sv=True, kind=None):
             t["question"] = T("How do you say this time?", "Hur säger man den här tiden?")
             t["options"], t["correct"] = _options(rng, phrase, [say(a, b, sv) for a, b in _fit(_confusions(h, m), step)] + [say(h % 12 + 2, m, sv)],
                                                   lambda: say(*random_time(rng, step), sv))
-        else:                    # 24-timmarstid → ställ visarna
+        else:                    # 24-timmarstid → ställ visarna och välj förmiddag/eftermiddag
             t["target"] = (h, m)
+            t["day"] = True      # urtavlan är likadan kl. 03:15 och 15:15 – tiden på dygnet väljs för sig (ChatGPT 20 nov)
             t["shown"] = digital(h, m)
-            t["question"] = T("Set the clock to:", "Ställ klockan på:")
+            t["question"] = T("Set the clock, and choose before or after noon:", "Ställ klockan och välj förmiddag eller eftermiddag:")
         t["explain"] = T(f"{digital(h, m)} is {phrase} {when}.", f"{digital(h, m)} är {phrase} {when}.")
         t["hint"] = hands_hint(h, m, sv)
         return t
@@ -372,6 +373,8 @@ def make_round(level_id, rng=None, sv=True, n=ROUND):
 def check(task, answer):
     """answer: index för flervalsuppgifter, (h, m) för ställ-uppgifter"""
     if task["target"] is not None:
+        if task.get("day"):   # 24-timmarsnivån: visarna och förmiddag/eftermiddag ska stämma (svaret är 0–23)
+            return answer[0] % 24 == task["target"][0] % 24 and answer[1] == task["target"][1]
         return same_time(answer[0], answer[1], task["target"][0], task["target"][1])
     return answer == task["correct"]
 
@@ -396,7 +399,9 @@ class Progress:
             with open(path, encoding="utf-8") as f:
                 d = json.load(f)
             if isinstance(d, dict):
-                for k, v in (d.get("stars") or {}).items():
+                st = d.get("stars")
+                # bara en ordbok räknas – {"stars": "hej"} gav AttributeError och programmet öppnades inte (ChatGPT 20 nov)
+                for k, v in (st.items() if isinstance(st, dict) else ()):
                     if k in LEVEL_IDS and isinstance(v, int) and not isinstance(v, bool):
                         self.stars[k] = max(0, min(3, v))
                 r = d.get("rounds", 0)

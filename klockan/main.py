@@ -24,7 +24,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Pango", "1.0")
 gi.require_version("PangoCairo", "1.0")
-from gi.repository import Adw, GLib, Gtk, Pango, PangoCairo  # noqa: E402
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango, PangoCairo  # noqa: E402
 
 ID = "se.wenuyos.app.klockan"
 try:   # libwenuy: WenuyOS fönstergrund, språk och mätning (wenuyos prestanda). Utan den: vanliga libadwaita-fönster.
@@ -58,8 +58,8 @@ class ClockFace(Gtk.DrawingArea):
         self.minute_help = False     # minuterna 5, 10, 15 … utanför siffrorna
         self.on_change = None
         self._grab = None
-        self.set_content_width(300)
-        self.set_content_height(300)
+        self.set_content_width(220)    # krymper på små skärmar (1024×600), växer i ett stort fönster
+        self.set_content_height(220)
         self.set_hexpand(True)
         self.set_vexpand(True)
         self.set_draw_func(self._draw)
@@ -182,12 +182,12 @@ class Klockan:
             Wenuy.app_window_get_header_bar(self.win).pack_end(Wenuy.window_actions_button())
         else:
             self.win = Adw.ApplicationWindow(application=app, title=tr("Clock Trainer", "Klockan"))
-        self.win.set_default_size(920, 640)
+        self.win.set_default_size(*self._fit_size(920, 640))
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE, transition_duration=150)
-        self.stack.add_named(self._home_page(), "home")
-        self.stack.add_named(self._play_page(), "play")
-        self.stack.add_named(self._result_page(), "result")
-        self.stack.add_named(self._free_page(), "free")
+        self.stack.add_named(self._scroll(self._home_page()), "home")
+        self.stack.add_named(self._scroll(self._play_page()), "play")
+        self.stack.add_named(self._scroll(self._result_page()), "result")
+        self.stack.add_named(self._scroll(self._free_page()), "free")
         if Wenuy:
             Wenuy.app_window_set_content(self.win, self.stack)
         else:
@@ -245,6 +245,23 @@ class Klockan:
             b.add_css_class(c)
         b.connect("clicked", cb)
         return b
+
+    @staticmethod
+    def _scroll(page):
+        """rullar upp och ner om skärmen är för låg – Nästa och Klar ska alltid gå att nå"""
+        return Gtk.ScrolledWindow(child=page, hscrollbar_policy=Gtk.PolicyType.NEVER)
+
+    @staticmethod
+    def _fit_size(w, h):
+        """inte större än skärmen (1024×600 på små datorer – panelen tar resten)"""
+        try:
+            mons = Gdk.Display.get_default().get_monitors()
+            g = mons.get_item(0).get_geometry() if mons.get_n_items() else None
+            if g:
+                return min(w, g.width - 40), min(h, g.height - 110)
+        except (AttributeError, TypeError):
+            pass
+        return w, h
 
     def _play_page(self):
         page = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=20, margin_top=16, margin_bottom=16, margin_start=16, margin_end=16)
@@ -309,7 +326,15 @@ class Klockan:
         grid.attach(self.minus_m, 0, 1, 1, 1)
         grid.attach(self.plus_m, 1, 1, 1, 1)
         self.set_box.append(grid)
-        self.done = self._button(tr("Done", "Klar"), lambda _b: self.answer((self.clock.h, self.clock.m)), "suggested-action")
+        # 24-timmarsnivån: urtavlan är likadan kl. 03:15 och 15:15, så tiden på dygnet väljs här (ChatGPT 20 nov)
+        self.day_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8, homogeneous=True)
+        self.am = Gtk.ToggleButton(label=tr("Before noon (00–11)", "Förmiddag (00–11)"))
+        self.pm = Gtk.ToggleButton(label=tr("After noon (12–23)", "Eftermiddag (12–23)"), group=self.am)
+        for b in (self.am, self.pm):
+            b.set_size_request(-1, 40)
+            self.day_box.append(b)
+        self.set_box.append(self.day_box)
+        self.done = self._button(tr("Done", "Klar"), lambda _b: self.answer(self._set_answer()), "suggested-action")
         self.done.set_size_request(-1, 44)
         self.set_box.append(self.done)
         right.append(self.set_box)
@@ -329,6 +354,13 @@ class Klockan:
         right.append(bottom)
         page.append(right)
         return page
+
+    def _set_answer(self):
+        """visarna (1–12) – och på 24-timmarsnivån förmiddag/eftermiddag → 0–23"""
+        h, m = self.clock.h, self.clock.m
+        if self.tasks[self.index].get("day"):
+            h = h % 12 + (12 if self.pm.get_active() else 0)
+        return (h, m)
 
     def _nudge_step(self):
         step = K.level(self.level_id)["step"]
@@ -382,7 +414,9 @@ class Klockan:
             self.clock.set_time(t["h"], t["m"])
         self.options_box.set_visible(not setting)
         self.set_box.set_visible(setting)
-        for w in (self.minus_h, self.plus_h, self.minus_m, self.plus_m, self.done):
+        self.day_box.set_visible(bool(t.get("day")))
+        self.am.set_active(True)
+        for w in (self.minus_h, self.plus_h, self.minus_m, self.plus_m, self.done, self.am, self.pm):
             w.set_sensitive(True)
         if not setting:
             for b, text in zip(self.option_buttons, t["options"]):
@@ -419,10 +453,12 @@ class Klockan:
                     b.add_css_class("error")
         else:
             self.clock.editable = False
-            for w in (self.minus_h, self.plus_h, self.minus_m, self.plus_m, self.done):
+            for w in (self.minus_h, self.plus_h, self.minus_m, self.plus_m, self.done, self.am, self.pm):
                 w.set_sensitive(False)
             if not ok:   # visa hur det skulle se ut
                 self.clock.set_time(*t["target"])
+                if t.get("day"):
+                    (self.pm if t["target"][0] % 24 >= 12 else self.am).set_active(True)
         text = (tr("Correct!", "Rätt!") if ok else tr("Not quite.", "Inte riktigt.")) + " " + t["explain"]
         if not ok and t["hint"] and t["show"] == "clock":
             text += "\n" + t["hint"]   # var visarna står

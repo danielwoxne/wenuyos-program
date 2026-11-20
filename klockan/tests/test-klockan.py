@@ -120,6 +120,21 @@ check(len(r1) == 10 and r1 == r2 and all((a["h"], a["m"]) != (b["h"], b["m"]) fo
       "en omgång: tio uppgifter, samma frö ger samma omgång, aldrig samma tid två gånger i rad")
 check([K.stars(n) for n in (10, 9, 8, 7, 6, 5, 0)] == [3, 2, 2, 1, 1, 0, 0], "stjärnor: 10 rätt = 3, 8 = 2, 6 = 1")
 
+# ---- 24-timmarsnivån: att ställa 15:15 kräver eftermiddag, inte bara visarna (ChatGPT 20 nov)
+rng = random.Random(24)
+sets = [K.make_task("dygn", rng, True, kind="set24") for _ in range(40)]
+check(all(t.get("day") and t["target"] is not None for t in sets), "ställ-uppgifterna på 24-timmarsnivån frågar efter tiden på dygnet")
+t = dict(sets[0], target=(15, 15))
+check(K.check(t, (15, 15)) and not K.check(t, (3, 15)) and not K.check(t, (15, 20)), "15:15: eftermiddag rätt, 03:15 fel, fel minut fel")
+t = dict(sets[0], target=(3, 15))
+check(K.check(t, (3, 15)) and not K.check(t, (15, 15)), "03:15: förmiddag rätt, 15:15 fel")
+t = dict(sets[0], target=(0, 30))
+check(K.check(t, (0, 30)) and K.check(t, (24, 30)) and not K.check(t, (12, 30)), "00:30 (natt) och 12:30 (mitt på dagen) skiljs åt")
+plain = K.make_task("halv", random.Random(1), True, kind="set")
+check(not plain.get("day") and K.check(dict(plain, target=(3, 30)), (15, 30)), "övriga nivåer: bara visarna bedöms (03:30 = 15:30 på urtavlan)")
+mainpy = (ROOT / "main.py").read_text(encoding="utf-8")
+check('t.get("day")' in mainpy and "self.pm" in mainpy, "fönstret har förmiddag/eftermiddag för de uppgifterna")
+
 # ---- framsteg
 with tempfile.TemporaryDirectory() as d:
     path = os.path.join(d, "x", "framsteg.json")
@@ -133,6 +148,17 @@ with tempfile.TemporaryDirectory() as d:
         if not (z.rounds == 0 and set(z.stars) <= {"hel"} and z.stars.get("hel", 3) == 3):
             check(False, f"trasig fil: {junk!r}")
     check(True, "en trasig eller påhittad framstegsfil ger en tom start, ingen krasch")
+    # ChatGPT 20 nov: stars som inte är en ordbok kraschade (AttributeError) och programmet öppnades inte
+    for junk in ('{"stars": "hej", "rounds": 1}', '{"stars": [1, 2, 3], "rounds": 2}', '{"stars": ["hel"]}', '{"stars": null, "rounds": 5}',
+                 '{"stars": 7}', '{"stars": true}', "null", '"text"', "7"):
+        open(path, "w").write(junk)
+        try:
+            z = K.Progress(path)
+            okj = z.stars == {} and isinstance(z.rounds, int)
+        except Exception as e:   # noqa: BLE001 – precis det som provas
+            okj = False
+            junk += f" → {type(e).__name__}"
+        check(okj, f"stars av fel sort ger en tom start: {junk}")
     ro = K.Progress("/proc/finns-inte/framsteg.json")
     check(ro.record("hel", 10) == (3, True), "går inte filen att skriva fungerar programmet ändå")
 
