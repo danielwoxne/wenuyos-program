@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Commodore 64
+Name[sv]=Commodore 64
+Comment=The blue BASIC screen and your C64 games – VICE with your own ROMs or the free Open ROMs
+Comment[sv]=Den blå BASIC-skärmen och dina C64-spel – VICE med dina egna ROM:ar eller fria Open ROMs
+Exec=main.py
+Icon=se.wenuyos.app.c64
+Terminal=false
+Categories=Game;Emulator;
+Keywords=c64;commodore;vice;basic;retro;rom;joystick;emulator;
+Keywords[sv]=c64;commodore;vice;basic;retro;rom;joystick;emulator;spel;
+StartupNotify=true
