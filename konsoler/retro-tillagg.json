@@ -42,13 +42,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -90,13 +88,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -138,13 +134,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -185,13 +179,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -236,13 +228,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -283,13 +273,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    }
   },
   {
@@ -349,13 +337,11 @@
      "mednafen",
      "/usr/games/mednafen"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mednafen"
-    ]
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
    },
    "requires": {
     "glob": "PlayStation/BIOS/*",
@@ -410,13 +396,11 @@
      "hatari",
      "/usr/games/hatari"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "hatari"
-    ]
+    "install": {
+     "apt": [
+      "hatari"
+     ]
+    }
    },
    "requires": {
     "glob": "AtariST/TOS/*",
@@ -457,13 +441,11 @@
      "fuse-gtk",
      "/usr/games/fuse-gtk"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "fuse-emulator-gtk"
-    ]
+    "install": {
+     "apt": [
+      "fuse-emulator-gtk"
+     ]
+    }
    }
   },
   {
@@ -508,13 +490,11 @@
      "openmsx",
      "/usr/games/openmsx"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "openmsx"
-    ]
+    "install": {
+     "apt": [
+      "openmsx"
+     ]
+    }
    }
   },
   {
@@ -550,13 +530,11 @@
      "atari800",
      "/usr/games/atari800"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "atari800"
-    ]
+    "install": {
+     "apt": [
+      "atari800"
+     ]
+    }
    }
   },
   {
@@ -591,13 +569,11 @@
      "mupen64plus",
      "/usr/games/mupen64plus"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "mupen64plus-ui-console"
-    ]
+    "install": {
+     "apt": [
+      "mupen64plus-ui-console"
+     ]
+    }
    }
   },
   {
@@ -630,13 +606,11 @@
      "desmume",
      "/usr/games/desmume"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "desmume"
-    ]
+    "install": {
+     "apt": [
+      "desmume"
+     ]
+    }
    }
   },
   {
@@ -684,13 +658,11 @@
      "dolphin-emu",
      "/usr/games/dolphin-emu"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "dolphin-emu"
-    ]
+    "install": {
+     "apt": [
+      "dolphin-emu"
+     ]
+    }
    }
   },
   {
@@ -731,14 +703,9 @@
    "emulator": {
     "name": "PPSSPP",
     "flatpak": "org.ppsspp.PPSSPP",
-    "install": [
-     "flatpak",
-     "install",
-     "-y",
-     "--noninteractive",
-     "flathub",
-     "org.ppsspp.PPSSPP"
-    ]
+    "install": {
+     "flatpak": "org.ppsspp.PPSSPP"
+    }
    }
   }
  ]
