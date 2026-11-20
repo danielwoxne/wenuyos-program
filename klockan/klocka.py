@@ -6,11 +6,16 @@
   uppgifter          make_task(level, rng, sv), make_round(level, rng, sv)
   framsteg           Progress(path)     stjärnor per nivå, sparas som JSON
 
-Nivåerna följer hur klockan lärs ut i skolan (Lgr22, årskurs 1–3: analog och digital tid; 4–6: tidsskillnader):
-hel timme → halv → kvart → fem minuter → minuter → dygnets 24 timmar → hur lång tid."""
+Nivåerna följer grundskolans kursplan i matematik (Lgr22, centralt innehåll om tid – citaten i skola.LGR):
+  åk 1–3  hel timme → halv → kvart → fem minuter → minuter → dygnets 24 timmar → hur lång tid → tidsenheter → kalendern
+  åk 4–6  enhetsbyten → tidtabeller och datum → sekunder och tiondelar
+  åk 7–9  hastighet, sträcka och tid
+Urtavlan och 24-timmarsklockan finns här; resten av tiden (enheter, kalender, enhetsbyten, km/h) i skola.py."""
 import json
 import os
 import random
+
+import skola
 
 # ------------------------------------------------------------------ tal i ord
 _SV = ["noll", "ett", "två", "tre", "fyra", "fem", "sex", "sju", "åtta", "nio", "tio", "elva", "tolv", "tretton",
@@ -178,31 +183,35 @@ def same_time(h1, m1, h2, m2):
 
 # ------------------------------------------------------------------ nivåer
 LEVELS = [
-    {"id": "hel", "step": 60, "kinds": ["read", "read", "set"],
+    {"id": "hel", "stage": "1-3", "step": 60, "kinds": ["read", "read", "set"],
      "name": ("Whole hours", "Hel timme"),
      "about": ("The long hand points at 12. The short hand shows the hour.",
                "Den långa visaren pekar på 12. Den korta visar timmen.")},
-    {"id": "halv", "step": 30, "kinds": ["read", "read", "set"],
+    {"id": "halv", "stage": "1-3", "step": 30, "kinds": ["read", "read", "set"],
      "name": ("Half hours", "Halv"),
      "about": ("The long hand points at 6 – half past.", "Den långa visaren pekar på 6. Halv fyra är en halvtimme före fyra.")},
-    {"id": "kvart", "step": 15, "kinds": ["read", "read", "set", "digital"],
+    {"id": "kvart", "stage": "1-3", "step": 15, "kinds": ["read", "read", "set", "digital"],
      "name": ("Quarter past and quarter to", "Kvart över och kvart i"),
      "about": ("The long hand at 3 is quarter past, at 9 quarter to.", "Lång visare på 3 är kvart över, på 9 kvart i.")},
-    {"id": "fem", "step": 5, "kinds": ["read", "read", "set", "digital", "words"],
+    {"id": "fem", "stage": "1-3", "step": 5, "kinds": ["read", "read", "set", "digital", "words"],
      "name": ("Five-minute steps", "Fem minuter i taget"),
      "about": ("Each number is five minutes for the long hand.", "Varje siffra är fem minuter för den långa visaren.")},
-    {"id": "minut", "step": 1, "kinds": ["read", "set", "digital", "words"],
+    {"id": "minut", "stage": "1-3", "step": 1, "kinds": ["read", "set", "digital", "words"],
      "name": ("Every minute", "Varje minut"),
      "about": ("The small marks are single minutes.", "De små strecken är enskilda minuter.")},
-    {"id": "dygn", "step": 5, "kinds": ["day", "day", "words24", "set24"],
+    {"id": "dygn", "stage": "1-3", "step": 5, "kinds": ["day", "day", "words24", "set24"],
      "name": ("24 hours – morning and afternoon", "Dygnets 24 timmar"),
      "about": ("After noon the digital clock keeps counting: 13, 14, 15 …",
                "Efter klockan tolv fortsätter den digitala klockan: 13, 14, 15 …")},
-    {"id": "tid", "step": 5, "kinds": ["later", "later", "earlier", "length"],
+    {"id": "tid", "stage": "1-3", "step": 5, "kinds": ["later", "later", "earlier", "length"],
      "name": ("How long does it take?", "Hur lång tid?"),
      "about": ("Count on from one time to another.", "Räkna vidare från en tid till en annan.")},
 ]
+LEVELS += skola.LEVELS            # åk 1–3 (enheter, kalender), åk 4–6, åk 7–9 – i ordning efter stadium
+LEVELS.sort(key=lambda lv: ["1-3", "4-6", "7-9"].index(lv["stage"]))
 LEVEL_IDS = [lv["id"] for lv in LEVELS]
+STAGES = skola.STAGES
+LGR = skola.LGR
 ROUND = 10
 
 
@@ -267,6 +276,9 @@ def make_task(level_id, rng, sv=True, kind=None):
     kind = kind or rng.choice(lv["kinds"])
     T = (lambda en, s: s) if sv else (lambda en, s: en)
     t = {"level": level_id, "kind": kind, "step": step, "show": "clock", "shown": "", "options": None, "correct": -1, "target": None, "hint": ""}
+
+    if kind in skola.KINDS:   # tid utan urtavla: enheter, kalender, enhetsbyten, tidtabeller, km/h
+        return skola.make(kind, rng, sv, t, _options)
 
     if kind in ("read", "digital", "words", "set"):
         h, m = random_time(rng, step)

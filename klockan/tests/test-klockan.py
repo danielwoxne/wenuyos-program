@@ -62,7 +62,17 @@ check(K.hands_hint(3, 0, True) == "Den korta visaren pekar på 3, den långa på
 
 # ---- uppgifterna: 300 per nivå och språk
 steps = {"hel": 60, "halv": 30, "kvart": 15, "fem": 5, "minut": 1, "dygn": 5, "tid": 5}
-check(K.LEVEL_IDS == list(steps) and all(K.level(i)["step"] == s for i, s in steps.items()), "sju nivåer i skolans ordning: " + ", ".join(K.LEVEL_IDS))
+order = ["hel", "halv", "kvart", "fem", "minut", "dygn", "tid", "enheter", "kalender", "byten", "tidtabell", "sekunder", "fart"]
+check(K.LEVEL_IDS == order and all(K.level(i)["step"] == s for i, s in steps.items()), "13 nivåer i skolans ordning: " + ", ".join(K.LEVEL_IDS))
+stages = [lv["stage"] for lv in K.LEVELS]
+check(stages == sorted(stages, key=["1-3", "4-6", "7-9"].index) and set(stages) == {"1-3", "4-6", "7-9"} and set(K.LGR) == set(stages),
+      "varje nivå hör till ett stadium (åk 1–3, 4–6, 7–9), och varje stadium har nivåer och kursplanens text")
+# kursplanens ord (Lgr22, Skolverket – SKOLFS 2010:37 i senaste lydelse) ordagrant i programmet
+for stage, quote in (("1-3", "Mätning av längd, massa, volym och tid med vanliga nutida och äldre måttenheter."),
+                     ("1-3", "Jämförelser och uppskattningar av storheter."),
+                     ("4-6", "Jämförelse, uppskattning och mätning av längd, area, massa, volym, tid och vinkel med standardiserade måttenheter samt enhetsbyten i samband med detta."),
+                     ("7-9", "Härledda enheter, till exempel km/h och kr/kg.")):
+    check(quote in K.LGR[stage][1], f"Lgr22 åk {stage}: {quote[:48]} …")
 for lang, is_sv in (("svenska", True), ("engelska", False)):
     problems, kinds = [], {}
     for lid in K.LEVEL_IDS:
@@ -87,7 +97,7 @@ for lang, is_sv in (("svenska", True), ("engelska", False)):
                 problems.append((lid, i, "frasen"))
             if t["kind"] in ("digital", "day") and t["options"][t["correct"]] != K.digital(t["h"], t["m"]):
                 problems.append((lid, i, "digital"))
-    check(not problems, f"{lang}: 2 100 uppgifter – fyra olika svar, exakt ett rätt, tider inom nivån {problems[:3] or ''}")
+    check(not problems, f"{lang}: 3 900 uppgifter – fyra olika svar, exakt ett rätt, tider inom nivån {problems[:3] or ''}")
     check(all(kinds[l["id"]] == set(l["kinds"]) for l in K.LEVELS), f"{lang}: varje nivå ger alla sina uppgiftstyper")
 
 # hur lång tid: räkna efter
@@ -107,6 +117,108 @@ for _ in range(400):
         end = start + span if t["kind"] == "later" else start - span
         ok &= span > 0 and right == K.digital((end // 60) % 24, end % 60)
 check(ok, "hur lång tid: svaret stämmer när man räknar efter (400 uppgifter)")
+# ---- tid utan urtavla (skola.py): varje svar räknat efter på eget sätt, 300 uppgifter per sort
+import skola as S
+DAY = {"måndag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lördag": 5, "söndag": 6}
+def doy(text):   # "3 april" → dag på året
+    d, mname = text.split()
+    return S.day_of_year(int(d), S.MONTHS_SV.index(mname) + 1)
+def mins_of(text):   # "2 h 15 min" → 135
+    h = re.search(r"(\d+) h", text); m = re.search(r"(\d+) min", text)
+    return (int(h.group(1)) * 60 if h else 0) + (int(m.group(1)) if m else 0)
+def f(x):
+    return float(x.replace(",", "."))
+wrongs = {}
+for lv in [lv for lv in K.LEVELS if lv["id"] not in steps]:
+    for kind in sorted(set(lv["kinds"])):
+        rng = random.Random(len(kind) * 97)
+        bad = []
+        for i in range(300):
+            t = K.make_task(lv["id"], rng, True, kind)
+            q, sh, right = t["question"], t["shown"], t["options"][t["correct"]]
+            if kind == "h2min":
+                okk = right == f"{round(f(sh[:-2]) * 60)} min"
+            elif kind == "min2h":
+                okk = mins_of(right) == int(sh.split()[0])
+            elif kind == "s2min":
+                mm = re.match(r"(?:(\d+) min)? ?(?:(\d+) s)?", right)
+                okk = int(mm.group(1) or 0) * 60 + int(mm.group(2) or 0) == int(sh.split()[0])
+            elif kind == "decimal":
+                okk = (mins_of(right) == round(f(sh[:-2]) * 60)) if sh.endswith(" h") else abs(f(right[:-2]) * 60 - int(sh.split()[0])) < 1e-9
+            elif kind == "dayh":
+                n = int(sh.split()[0])
+                okk = right == str(n * (24 if "dygn" in sh else 7))
+            elif kind in ("journey", "midnight"):
+                a, b = sh.split(" → ")
+                okk = mins_of(right) == ((int(b[:2]) * 60 + int(b[3:])) - (int(a[:2]) * 60 + int(a[3:]))) % 1440 and mins_of(right) > 0
+            elif kind == "nextbus":
+                arrive = re.search(r"hållplatsen (\d\d:\d\d)", q).group(1)
+                times = re.findall(r"\d\d:\d\d", sh)
+                okk = right == min(x for x in times + [S.clock(int(times[-1][:2]) * 60 + int(times[-1][3:]) + 10 ** 3)] if x > arrive)
+            elif kind == "datediff":
+                a, b = sh.split(" → ")
+                okk = int(right) == doy(b) - doy(a) or int(right) == doy(b) + 365 - doy(a)
+            elif kind == "date":
+                n = 7 if "en vecka" in q else 14 if "två veckor" in q else int(re.search(r"(\d+) dagar", q).group(1))
+                okk = (doy(right) - doy(sh)) % 365 == n
+            elif kind == "weekday":
+                d = DAY[sh.lower()]
+                n = -1 if "i går" in q else -2 if "i förrgår" in q else 1 if "i morgon" in q else int(re.search(r"om (\d+) dagar", q).group(1))
+                okk = DAY[right] == (d + n) % 7
+            elif kind == "monthdays":
+                okk = int(right) == S.DAYS_IN[S.MONTHS_SV.index(sh.lower())]
+            elif kind == "month":
+                okk = right in S.MONTHS_SV
+            elif kind == "fastest":
+                times = dict(re.findall(r"(\w+) ([\d,]+) s", sh))
+                okk = right == min(times, key=lambda k: f(times[k]))
+            elif kind == "secdiff":
+                a, b = [f(x) for x in re.findall(r"([\d,]+) s", sh)]
+                okk = abs(f(right[:-2]) - (b - a)) < 1e-9
+            elif kind == "secconv":
+                mm = re.match(r"(\d+) min (\d+) s", sh)
+                okk = right == f"{int(mm.group(1)) * 60 + int(mm.group(2))} s"
+            elif kind == "speed":
+                km = f(sh.split(" km")[0]); okk = abs(f(right.split()[0]) - km / (mins_of(sh.split(", ")[1]) / 60)) < 1e-9
+            elif kind == "distance":
+                v, m = re.match(r"(\d+) km/h, (\d+) min", sh).groups(); okk = abs(f(right.split()[0]) - int(v) * int(m) / 60) < 1e-9
+            elif kind == "traveltime":
+                km, v = re.match(r"([\d,]+) km, (\d+) km/h", sh).groups(); okk = mins_of(right) == round(f(km) / int(v) * 60)
+            elif kind == "kmh":
+                val, unit = sh.split()
+                okk = abs(f(right.split()[0]) - (f(val) * 3.6 if unit == "m/s" else f(val) / 3.6)) < 0.006
+            elif kind == "hdec":
+                okk = mins_of(right) == round(f(sh[:-2]) * 60)
+            elif kind == "unitfact":
+                facts = {"sekunder på en minut": 60, "minuter på en timme": 60, "timmar på ett dygn": 24, "dagar på en vecka": 7, "månader på ett år": 12,
+                         "minuter på en kvart": 15, "minuter på en halvtimme": 30, "dagar på ett vanligt år": 365, "veckor på ett år": 52,
+                         "år på ett decennium": 10, "år på ett sekel": 100}
+                okk = int(right) == facts[sh]
+            elif kind == "longest":
+                size = {"1 sekund": 1, "1 minut": 2, "en kvart": 3, "en halvtimme": 4, "1 timme": 5, "1 dygn": 6, "1 vecka": 7, "1 månad": 8,
+                        "1 år": 9, "ett decennium": 10, "ett sekel": 11}
+                pickf = max if "längst" in q else min
+                okk = right == pickf(t["options"], key=size.get)
+            elif kind == "estimate":
+                okk = right.split()[0] == t["options"][0].split()[0] and len({o.split()[0] for o in t["options"]}) == 1
+            else:
+                okk = False
+            if not okk:
+                bad.append((kind, q, sh, right))
+            wrongs.setdefault(kind, set()).update(o for j, o in enumerate(t["options"]) if j != t["correct"])
+        check(not bad, f"{lv['id']}/{kind}: rätt svar räknat efter i 300 uppgifter {bad[:1] or ''}")
+# de vanliga felen finns bland felsvaren
+check("1 h 50 min" in wrongs["decimal"] or "1 h 50 min" in wrongs["hdec"], "felsvar: 1,5 h läst som 1 h 50 min")
+check(any(re.match(r"3[2-9] \w+", w) for w in wrongs["date"]), "felsvar: datum som inte finns (34 mars) – man glömmer att månaden tar slut")
+check(any(o.startswith("1 h") for o in wrongs["journey"]), "tidtabellen: räknat som vanliga tal (14:47 → 15:22 blir 1 h 15 min)")
+check("100 min" in wrongs["h2min"] or "150 min" in wrongs["h2min"], "felsvar: en timme som 100 minuter")
+t = K.make_task("sekunder", random.Random(2), True, "fastest")
+check(t["show"] == "text" and len(t["options"]) == 4, "sekunder: fyra löpare att välja mellan")
+check(S.num(2.5, True) == "2,5" and S.num(2.5, False) == "2.5" and S.num(3.0, True) == "3" and S.hm(135, True) == "2 h 15 min"
+      and S.hm(45, True) == "45 min" and S.ms(100) == "1 min 40 s" and S.clock(25 * 60 + 5) == "01:05", "tal och tider skrivs rätt (decimalkomma på svenska)")
+check(S.from_day_of_year(S.day_of_year(3, 4)) == (3, 4) and S.from_day_of_year(366) == (1, 1) and S.date_text(3, 4, False) == "April 3",
+      "kalendern: dag på året fram och tillbaka, nyår, engelskt datum")
+
 # dygnet: eftermiddagens urtavla har två digitala tider – bara den som passar tiden på dygnet är rätt
 rng = random.Random(3)
 seen12 = 0

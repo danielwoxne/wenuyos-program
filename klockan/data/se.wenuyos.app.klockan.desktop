@@ -2,13 +2,13 @@
 Type=Application
 Name=Clock Trainer
 Name[sv]=Klockan
-Comment=Learn to tell the time – analog and digital clocks, step by step
-Comment[sv]=Lär dig klockan – analog och digital tid, steg för steg
+Comment=Learn the clock and time, school years 1–9 – clocks, units, calendar, timetables, speed
+Comment[sv]=Lär dig klockan och tiden, åk 1–9 – klockan, enheter, kalender, tidtabeller, hastighet
 Exec=main.py
 Icon=se.wenuyos.app.klockan
 Terminal=false
 Categories=Education;
-Keywords=clock;time;learn;school;analog;digital;hours;minutes;
-Keywords[sv]=klocka;klockan;tid;lära;skola;analog;digital;timmar;minuter;halv;kvart;
+Keywords=clock;time;learn;school;analog;digital;hours;minutes;calendar;date;timetable;speed;units;
+Keywords[sv]=klocka;klockan;tid;lära;skola;analog;digital;timmar;minuter;halv;kvart;kalender;datum;tidtabell;hastighet;enhetsbyte;matematik;
 StartupNotify=true
 StartupWMClass=se.wenuyos.app.klockan

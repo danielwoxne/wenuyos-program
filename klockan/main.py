@@ -205,37 +205,47 @@ class Klockan:
     # ------------------------------------------------------------- hem
     def _home_page(self):
         page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14, margin_top=24, margin_bottom=24, margin_start=16, margin_end=16)
-        title = Gtk.Label(label=tr("Learn the clock", "Lär dig klockan"), xalign=0)
+        title = Gtk.Label(label=tr("Learn the clock and time", "Lär dig klockan och tiden"), xalign=0)
         title.add_css_class("title-1")
         page.append(title)
         self.home_sub = Gtk.Label(xalign=0, wrap=True)
         self.home_sub.add_css_class("dim-label")
         page.append(self.home_sub)
-        self.levels = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        self.levels.add_css_class("boxed-list")
-        page.append(self.levels)
-        clamp = Adw.Clamp(maximum_size=720, child=page)
-        return Gtk.ScrolledWindow(child=clamp, hscrollbar_policy=Gtk.PolicyType.NEVER)
+        self.levels_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+        page.append(self.levels_box)
+        return Adw.Clamp(maximum_size=760, child=page)
 
     def show_home(self):
         self._quiet()
-        self.levels.remove_all()
-        for n, lv in enumerate(K.LEVELS, 1):
-            row = Adw.ActionRow(title=f"{n}. " + tr(*lv["name"]), subtitle=tr(*lv["about"]), activatable=True)
-            got = Gtk.Label(label=stars_text(self.progress.stars.get(lv["id"], 0)))
-            got.add_css_class("title-3")
-            row.add_suffix(got)
-            row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
-            row.connect("activated", lambda _r, lid=lv["id"]: self.start(lid))
-            self.levels.append(row)
-        free = Adw.ActionRow(title=tr("Explore the clock", "Utforska klockan"),
-                             subtitle=tr("Drag the hands and see the time in words and digits.", "Dra i visarna och se tiden i ord och siffror."),
-                             activatable=True)
-        free.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
-        free.connect("activated", lambda _r: self.show_free())
-        self.levels.append(free)
+        child = self.levels_box.get_first_child()
+        while child:
+            nxt = child.get_next_sibling()
+            self.levels_box.remove(child)
+            child = nxt
+        n = 0
+        for stage, name in K.STAGES:
+            group = Adw.PreferencesGroup(title=tr(*name), description=tr(*K.LGR[stage]))
+            for lv in [lv for lv in K.LEVELS if lv["stage"] == stage]:
+                n += 1
+                row = Adw.ActionRow(title=f"{n}. " + tr(*lv["name"]), subtitle=tr(*lv["about"]), activatable=True)
+                got = Gtk.Label(label=stars_text(self.progress.stars.get(lv["id"], 0)))
+                got.add_css_class("title-3")
+                row.add_suffix(got)
+                row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+                row.connect("activated", lambda _r, lid=lv["id"]: self.start(lid))
+                group.add(row)
+            if stage == "1-3":
+                free = Adw.ActionRow(title=tr("Explore the clock", "Utforska klockan"),
+                                     subtitle=tr("Drag the hands and see the time in words and digits.", "Dra i visarna och se tiden i ord och siffror."),
+                                     activatable=True)
+                free.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+                free.connect("activated", lambda _r: self.show_free())
+                group.add(free)
+            self.levels_box.append(group)
         self.home_sub.set_label(tr("Ten tasks per round. Three stars for all correct.", "Tio uppgifter per omgång. Tre stjärnor för alla rätt.")
-                                + "  " + tr("Stars so far:", "Stjärnor hittills:") + f" {self.progress.total()} / {3 * len(K.LEVELS)}")
+                                + "  " + tr("Stars so far:", "Stjärnor hittills:") + f" {self.progress.total()} / {3 * len(K.LEVELS)}"
+                                + "\n" + tr("The levels follow the Swedish compulsory school syllabus in mathematics (Lgr22).",
+                                            "Nivåerna följer grundskolans kursplan i matematik (Lgr22)."))
         self.stack.set_visible_child_name("home")
 
     # ------------------------------------------------------------- övning
@@ -276,6 +286,11 @@ class Klockan:
         big.insert(Pango.attr_scale_new(3.0))   # som en digital klocka: stora siffror
         self.digital_big.set_attributes(big)
         left.append(self.digital_big)
+        # uppgifter utan klocka (enheter, kalender, tidtabeller, km/h): det som uppgiften handlar om, stort
+        self.card = Gtk.Label(vexpand=True, hexpand=True, wrap=True, justify=Gtk.Justification.CENTER, max_width_chars=22)
+        self.card.add_css_class("title-1")
+        self.card.add_css_class("numeric")
+        left.append(self.card)
         self.hint = Gtk.Label(wrap=True, justify=Gtk.Justification.CENTER)
         self.hint.add_css_class("dim-label")
         left.append(self.hint)
@@ -395,12 +410,14 @@ class Klockan:
         self.bar.set_fraction(self.index / len(self.tasks))
         self.question.set_label(t["question"])
         setting = t["target"] is not None
-        clock = t["show"] == "clock"
+        clock, text = t["show"] == "clock", t["show"] == "text"
         self.clock.set_visible(clock)
         self.hint.set_visible(clock)
         self.help_check.set_visible(clock and K.level(self.level_id)["step"] < 60)
-        self.digital_big.set_visible(not clock)
-        self.digital_big.set_label(t["shown"] if not clock else "")
+        self.digital_big.set_visible(t["show"] == "digital")
+        self.digital_big.set_label(t["shown"] if t["show"] == "digital" else "")
+        self.card.set_visible(text)
+        self.card.set_label(t["shown"] if text else "")
         self.shown.set_visible(setting)
         self.shown.set_label(t["shown"] if setting else "")
         self.clock.step = t["step"]
@@ -497,7 +514,9 @@ class Klockan:
         elif got >= 1:
             text = tr("Well done. Try again for more stars.", "Bra jobbat. Försök igen för fler stjärnor.")
         else:
-            text = tr("Keep practising – look at where the short hand points first.", "Öva lite till – titta först var den korta visaren pekar.")
+            text = (tr("Keep practising – look at where the short hand points first.", "Öva lite till – titta först var den korta visaren pekar.")
+                    if any(t["show"] == "clock" for t in self.tasks)
+                    else tr("Keep practising – read the explanation after each task.", "Öva lite till – läs förklaringen efter varje uppgift."))
         if best:
             text += "\n" + tr("New best for this level.", "Nytt rekord på den här nivån.")
         self.result.set_description(tr(*K.level(self.level_id)["name"]) + "\n" + text)
@@ -568,7 +587,7 @@ class Klockan:
         if self.answered:
             self.speak(t["explain"])
         else:
-            self.speak(t["question"] + " " + (t["shown"] if t["target"] is not None or t["show"] == "digital" else ""))
+            self.speak(t["question"] + " " + (t["shown"] if t["target"] is not None or t["show"] in ("digital", "text") else ""))
 
     def _quiet(self):
         if self.voice and self.voice.poll() is None:
