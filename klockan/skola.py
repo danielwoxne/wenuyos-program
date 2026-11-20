@@ -54,6 +54,20 @@ def date_text(day, month, sv):
     return f"{day} {MONTHS_SV[month - 1]}" if sv else f"{MONTHS_EN[month - 1]} {day}"
 
 
+FEB_END = 59   # 28 februari är årets dag 59 ett vanligt år
+
+
+def passes_february(start, n):
+    """går dagarna start → start + n förbi slutet av februari? Då beror svaret på skottår (ChatGPT 20 nov:
+    27 februari → 2 mars är 3 dagar ett vanligt år, 4 ett skottår) – uppgiften säger då "ett vanligt år"."""
+    return any((start + k - 1) % 365 + 1 == FEB_END for k in range(n))
+
+
+def leap_note(sv):
+    return (" Februari har 28 dagar ett vanligt år och 29 ett skottår." if sv
+            else " February has 28 days in a common year and 29 in a leap year.")
+
+
 def day_of_year(day, month):
     return sum(DAYS_IN[:month - 1]) + day
 
@@ -79,6 +93,12 @@ LGR = {
     "7-9": ("Grades 7–9: derived units, for example km/h.",
             "Åk 7–9: \"Härledda enheter, till exempel km/h och kr/kg.\""),
 }
+# Kursplanen anger centralt innehåll per stadium, inte i vilken årskurs varje del ska läras (ChatGPT 20 nov):
+# nivåernas placering är programmets förslag på progression.
+PROGRESSION_NOTE = ("The order of the levels is this program's suggested progression; the syllabus describes core content per stage, "
+                    "not a requirement for each level.",
+                    "Nivåernas ordning är programmets förslag på progression – kursplanen beskriver centralt innehåll per stadium, "
+                    "inte krav för varje nivå.")
 STAGES = [("1-3", ("Grades 1–3", "Årskurs 1–3")), ("4-6", ("Grades 4–6", "Årskurs 4–6")), ("7-9", ("Grades 7–9", "Årskurs 7–9"))]
 
 LEVELS = [
@@ -225,7 +245,9 @@ def _make(kind, rng, sv, t, options):
         ed, em = from_day_of_year(start + n)
         ans = date_text(ed, em, sv)
         what = T("a week", "en vecka") if n == 7 else T("two weeks", "två veckor") if n == 14 else T(f"{n} days", f"{n} dagar")
-        t["question"] = T(f"Which date is it {what} after {date_text(sd, sm, False)}?", f"Vilket datum är det {what} efter {date_text(sd, sm, True)}?")
+        feb = passes_february(start, n)
+        t["question"] = (T(f"Which date is it {what} after {date_text(sd, sm, False)}?", f"Vilket datum är det {what} efter {date_text(sd, sm, True)}?")
+                         + (T(" (A common year, not a leap year.)", " (Ett vanligt år, inte skottår.)") if feb else ""))
         t["shown"] = date_text(sd, sm, sv)
         naive = f"{sd + n} {MONTHS_SV[sm - 1]}" if sv else f"{MONTHS_EN[sm - 1]} {sd + n}"   # "34 mars" – det vanliga felet
         wrong = [naive, date_text(*from_day_of_year(start + n + 1), sv), date_text(*from_day_of_year(start + n - 1), sv),
@@ -233,6 +255,8 @@ def _make(kind, rng, sv, t, options):
         t["options"], t["correct"] = options(rng, ans, wrong, lambda: date_text(*from_day_of_year(start + n + rng.choice([2, -2, 3])), sv))
         t["explain"] = T(f"{MONTHS_EN[sm - 1]} has {DAYS_IN[sm - 1]} days, so {what} after {date_text(sd, sm, False)} is {ans}.",
                          f"{MONTHS_SV[sm - 1]} har {DAYS_IN[sm - 1]} dagar, så {what} efter {date_text(sd, sm, True)} är det {ans}.")
+        if feb:
+            t["explain"] += leap_note(sv)
         return t
 
     # ---- åk 4–6: enhetsbyten
@@ -347,13 +371,17 @@ def _make(kind, rng, sv, t, options):
         n = rng.randint(DAYS_IN[sm - 1] - sd + 1, DAYS_IN[sm - 1] - sd + 15)   # alltid in i nästa månad
         ed, em = from_day_of_year(start + n)
         t["shown"] = f"{date_text(sd, sm, sv)} → {date_text(ed, em, sv)}"
-        t["question"] = T(f"How many days is it from {date_text(sd, sm, False)} to {date_text(ed, em, False)}?",
-                          f"Hur många dagar är det från {date_text(sd, sm, True)} till {date_text(ed, em, True)}?")
+        feb = passes_february(start, n)
+        t["question"] = (T(f"How many days is it from {date_text(sd, sm, False)} to {date_text(ed, em, False)}?",
+                           f"Hur många dagar är det från {date_text(sd, sm, True)} till {date_text(ed, em, True)}?")
+                         + (T(" (A common year, not a leap year.)", " (Ett vanligt år, inte skottår.)") if feb else ""))
         naive = abs(ed - sd)
         t["options"], t["correct"] = options(rng, str(n), [str(naive), str(n + 1), str(n - 1), str(n + 2)], lambda: str(n + rng.choice([3, -2, 4])))
         rest = DAYS_IN[sm - 1] - sd
         t["explain"] = T(f"{rest} days to the end of {MONTHS_EN[sm - 1]} ({DAYS_IN[sm - 1]} days), then {ed} more: {rest} + {ed} = {n}.",
                          f"{rest} dagar till slutet av {MONTHS_SV[sm - 1]} ({DAYS_IN[sm - 1]} dagar), sedan {ed} till: {rest} + {ed} = {n}.")
+        if feb:
+            t["explain"] += leap_note(sv)
         return t
 
     # ---- åk 4–6: sekunder och tiondelar

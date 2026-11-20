@@ -245,7 +245,8 @@ class Klockan:
         self.home_sub.set_label(tr("Ten tasks per round. Three stars for all correct.", "Tio uppgifter per omgång. Tre stjärnor för alla rätt.")
                                 + "  " + tr("Stars so far:", "Stjärnor hittills:") + f" {self.progress.total()} / {3 * len(K.LEVELS)}"
                                 + "\n" + tr("The levels follow the Swedish compulsory school syllabus in mathematics (Lgr22).",
-                                            "Nivåerna följer grundskolans kursplan i matematik (Lgr22)."))
+                                            "Nivåerna följer grundskolans kursplan i matematik (Lgr22).")
+                                + " " + tr(*K.PROGRESSION_NOTE))
         self.stack.set_visible_child_name("home")
 
     # ------------------------------------------------------------- övning

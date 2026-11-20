@@ -207,6 +207,46 @@ for lv in [lv for lv in K.LEVELS if lv["id"] not in steps]:
                 bad.append((kind, q, sh, right))
             wrongs.setdefault(kind, set()).update(o for j, o in enumerate(t["options"]) if j != t["correct"])
         check(not bad, f"{lv['id']}/{kind}: rätt svar räknat efter i 300 uppgifter {bad[:1] or ''}")
+# skottår (ChatGPT 20 nov): 27 februari → 2 mars är 3 dagar ett vanligt år, 4 ett skottår – räknat med datetime
+import datetime
+def days_between(y, a, b):
+    return (datetime.date(y, b[1], b[0]) - datetime.date(y, a[1], a[0])).days
+check(days_between(2025, (27, 2), (2, 3)) == 3 and days_between(2024, (27, 2), (2, 3)) == 4, "datetime: 27/2 → 2/3 är 3 dagar 2025 och 4 dagar 2024")
+check(S.day_of_year(2, 3) - S.day_of_year(27, 2) == 3, "programmet räknar ett vanligt år (som 2025)")
+check(S.passes_february(S.day_of_year(27, 2), 3) and S.passes_february(S.day_of_year(28, 2), 1) and not S.passes_february(S.day_of_year(1, 3), 10)
+      and not S.passes_february(S.day_of_year(20, 9), 20), "uppgiften vet när dagarna passerar slutet av februari")
+feb_ok, feb_seen, ny_seen = True, 0, 0
+for kind, lid in (("date", "kalender"), ("datediff", "tidtabell")):
+    rng = random.Random(29)
+    for i in range(3000):
+        for is_sv in (True, False):
+            t = K.make_task(lid, rng, is_sv, kind)
+            if kind == "date":
+                n = 7 if ("en vecka" in t["question"] or "a week" in t["question"]) else 14 if ("två veckor" in t["question"] or "two weeks" in t["question"]) \
+                    else int(re.search(r"(\d+) (?:dagar|days)", t["question"]).group(1))
+                a = re.match(r"(\d+) (\w+)", t["shown"]) if is_sv else re.match(r"(\w+) (\d+)", t["shown"])
+                d, mname = (int(a.group(1)), a.group(2)) if is_sv else (int(a.group(2)), a.group(1))
+                start = S.day_of_year(d, (S.MONTHS_SV if is_sv else S.MONTHS_EN).index(mname) + 1)
+            else:
+                a, b = t["shown"].split(" → ")
+                if not is_sv:
+                    continue
+                start, n = doy(a), doy(b) - doy(a)
+            feb = S.passes_february(start, n)
+            says = ("Ett vanligt år" in t["question"]) if is_sv else ("common year" in t["question"])
+            feb_ok &= feb == says and (not feb or ("skottår" in t["explain"] if is_sv else "leap year" in t["explain"]))
+            feb_seen += feb
+            # facit med datetime under ett vanligt år (2025), även över nyår
+            d0 = datetime.date(2025, 1, 1) + datetime.timedelta(days=start - 1)
+            d1 = d0 + datetime.timedelta(days=n)
+            if kind == "date":
+                right = t["options"][t["correct"]]
+                want = f"{d1.day} {S.MONTHS_SV[d1.month - 1]}" if is_sv else f"{S.MONTHS_EN[d1.month - 1]} {d1.day}"
+                feb_ok &= right == want
+                ny_seen += d1.year == 2026
+check(feb_ok and feb_seen > 20, f"uppgifter över februari säger \"ett vanligt år\" och förklarar skottår; svaret stämmer med datetime 2025 ({feb_seen} över februari)")
+check(ny_seen > 0, f"datum över nyår (31 december → januari) stämmer med datetime ({ny_seen} st)")
+
 # de vanliga felen finns bland felsvaren
 check("1 h 50 min" in wrongs["decimal"] or "1 h 50 min" in wrongs["hdec"], "felsvar: 1,5 h läst som 1 h 50 min")
 check(any(re.match(r"3[2-9] \w+", w) for w in wrongs["date"]), "felsvar: datum som inte finns (34 mars) – man glömmer att månaden tar slut")

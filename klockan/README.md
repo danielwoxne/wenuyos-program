@@ -12,7 +12,10 @@ Lär dig klockan steg för steg – analog och digital tid, på svenska och enge
     nästa buss, dagar mellan datum), sekunder och tiondelar (vem var snabbast, skillnad, min och s).
   - **Åk 7–9** – *"Härledda enheter, till exempel km/h och kr/kg."*: hastighet, sträcka och tid, km/h ↔ m/s, timmar i
     decimalform från räknaren.
-  Varje omgång är tio uppgifter och ger upp till tre stjärnor; alla nivåer går att välja från början.
+  Kursplanen anger centralt innehåll per stadium, inte i vilken årskurs varje del ska läras – nivåernas ordning och
+  placering är programmets **förslag på progression**. Varje omgång är tio uppgifter och ger upp till tre stjärnor;
+  alla nivåer går att välja från början. Datum räknas med ett vanligt år; uppgifter som passerar slutet av februari
+  säger det ("ett vanligt år, inte skottår").
 - **Sorters uppgifter**: läs av klockan (välj svar), ställ klockan (dra i visarna eller använd knapparna; på 24-timmarsnivån
   också förmiddag/eftermiddag), räkna tid och flerval om enheter, kalender, tidtabeller och hastighet.
 - **Utforska klockan**: dra fritt i visarna och se tiden i ord och med siffror (03:00 eller 15:00).

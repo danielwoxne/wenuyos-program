@@ -212,6 +212,7 @@ LEVELS.sort(key=lambda lv: ["1-3", "4-6", "7-9"].index(lv["stage"]))
 LEVEL_IDS = [lv["id"] for lv in LEVELS]
 STAGES = skola.STAGES
 LGR = skola.LGR
+PROGRESSION_NOTE = skola.PROGRESSION_NOTE
 ROUND = 10
 
 
