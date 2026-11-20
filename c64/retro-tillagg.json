@@ -1,0 +1,58 @@
+{
+ "api": 2,
+ "run": "retro_kor.py",
+ "systems": [
+  {
+   "id": "C64",
+   "name": [
+    "Commodore 64",
+    "Commodore 64"
+   ],
+   "short": [
+    "Commodore 64",
+    "Commodore 64"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".d64",
+    ".d71",
+    ".d81",
+    ".g64",
+    ".t64",
+    ".tap",
+    ".prg",
+    ".crt"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "Spel",
+   "launchers": true,
+   "skip_dirs": [
+    "ROM"
+   ],
+   "emulator": {
+    "name": "VICE",
+    "exe": [
+     "x64sc"
+    ],
+    "install": [
+     "sudo",
+     "apt-get",
+     "install",
+     "-y",
+     "vice",
+     "open-roms"
+    ]
+   },
+   "hints": [
+    {
+     "text": [
+      "Uses the free Open ROMs. Your own C64 ROMs: open Commodore 64.",
+      "Använder fria Open ROMs. Egna C64-ROM:ar: öppna Commodore 64."
+     ],
+     "when": "missing:C64/ROM/*"
+    }
+   ]
+  }
+ ]
+}

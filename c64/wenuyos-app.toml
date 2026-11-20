@@ -9,4 +9,5 @@ author = "Daniel Woxnerud"
 requires = ["vice", "open-roms", "python3-gi", "gir1.2-adw-1"]
 python = ["gi"]
 min_ram_mb = 2048
-needs_network = false
+needs_network = true   # bara när man trycker Installera (emulatorer från Debian/Flathub), synligt i ett terminalfönster
+retro = "retro-tillagg.json"

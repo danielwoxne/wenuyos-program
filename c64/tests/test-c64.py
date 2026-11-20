@@ -54,7 +54,13 @@ cmd = K.vice_command(["x64sc"], ["/spel.d64"], {"c64_joyport": 1, "c64_fullscree
 check("-joydev1" in cmd and "-VICIIfull" in cmd and cmd[-2:] == ["-autostart", "/spel.d64"], "spel: port 1 och helskärm när det är valt")
 K.emulator_for = lambda s: ("VICE", ["x64sc"], None)
 g = {"system": "C64", "files": [tap], "id": tap, "dir": os.path.dirname(tap), "name": "band"}
-check(R.command(g, {})[-2:] == ["-autostart", tap], "Retrospel startar C64-spel genom tillägget")
+check(K.command(g, {})[-2:] == ["-autostart", tap], "programmets kod: VICE startar spelet")
+T64 = R.TILLAGG["C64"]
+T64.emulator_for = lambda s: ("VICE", ["/usr/bin/x64sc"], None)
+rc = R.command(g, {})
+check(rc[1:] == ["-I", str(ROOT / "retro_kor.py"), "play", "C64", tap], "Retrospel startar spelet genom programmets kommando – i en egen process")
+check(not any(isinstance(v, type(R)) for v in vars(T64).values()) and not hasattr(R, "retro_kod"),
+      "Retrospel har inte läst in programmets kod (bara beskrivningen)")
 check(K.describe("C64", None) == (None, None) and K.describe("C64", ["x64sc"])[0] is None, "med egna ROM:ar: inget att förklara")
 
 # ---- fönstret

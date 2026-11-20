@@ -24,15 +24,12 @@ def ladda(home=None):
     if home:
         os.environ.update(HOME=home, XDG_CONFIG_HOME=os.path.join(home, ".config"), XDG_DATA_HOME=os.path.join(home, ".local/share"))
     os.environ.setdefault("LANG", "sv_SE.UTF-8")
-    loader = importlib.machinery.SourceFileLoader("retro", core)
-    spec = importlib.util.spec_from_loader("retro", loader)
-    R = importlib.util.module_from_spec(spec)
-    loader.exec_module(R)
-    progs = tempfile.mkdtemp()
-    os.makedirs(os.path.join(progs, HERE.name))
-    shutil.copy(HERE / "retro-tillagg.py", os.path.join(progs, HERE.name, "retro-tillagg.py"))
-    R.load_tillagg(progs)
-    mods = list(dict.fromkeys(R.TILLAGG.values()))
-    if len(mods) != 1:
-        print("FEL: tillägget laddades inte"); sys.exit(1)
-    return R, mods[0]
+    os.environ["WENUYOS_RETRO"] = core
+    sys.path.insert(0, str(HERE))
+    import retro_kor
+    R = retro_kor.core()
+    R.load_tillagg([str(HERE)])   # som när programmet är installerat (beskrivningen, ingen kod)
+    if not R.TILLAGG:
+        print("FEL: retro-tillagg.json lästes inte in"); sys.exit(1)
+    _, K = retro_kor.load(R)
+    return R, K

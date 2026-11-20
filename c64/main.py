@@ -18,18 +18,20 @@ def tr(en, sv):
 
 
 def retro():
-    """Retrospel (WenuyOS) med C64-tillägget → (Retrospel, tillägget) eller (None, None)"""
+    """Retrospel (WenuyOS) och programmets egen kod (retro-kod.py) – i det här programmets process"""
     core = os.environ.get("WENUYOS_RETRO") or "/usr/bin/wenuyos-retro"
     if not os.path.isfile(core):
         return None, None
-    loader = importlib.machinery.SourceFileLoader("wenuyos_retro", core)
-    spec = importlib.util.spec_from_loader("wenuyos_retro", loader)
-    R = importlib.util.module_from_spec(spec)
-    loader.exec_module(R)
-    if not hasattr(R, "load_tillagg"):
+    sys.path.insert(0, HERE)
+    import retro_kor
+    try:
+        R = retro_kor.core()
+    except Exception:   # noqa: BLE001 – en för gammal eller trasig Retrospel: fönstret säger till
+        return None, None
+    if getattr(R, "TILLAGG_API", 0) != 2:
         return R, None
-    R.load_tillagg(os.path.dirname(HERE))   # mappen med programmen (~/Program)
-    return R, R.TILLAGG.get("C64")
+    R.load_tillagg([HERE])   # namnen på systemen, som i Retrospel (bara beskrivningen)
+    return retro_kor.load(R)
 
 
 def joyport(R):
@@ -107,7 +109,8 @@ def main():
             g = self.group("Commodore 64", tr("C64 games open in Retro games and from Files – double-click a .d64, .t64, .prg or .crt file.",
                                               "C64-spel öppnas i Retrospel och från Filer – dubbelklicka på en .d64-, .t64-, .prg- eller .crt-fil."))
             r = Adw.ActionRow(title="VICE", subtitle=tr("Installed (free software, GPL-2.0)", "Installerat (fri programvara, GPL-2.0)") if pre
-                              else tr("Not installed", "Inte installerat"))
+                              else tr("Not installed – Install downloads VICE and Open ROMs from Debian (internet), in a terminal window",
+                                                                                         "Inte installerat – Installera hämtar VICE och Open ROMs från Debian (internet), i ett terminalfönster"))
             if not pre:
                 b = Gtk.Button(label=tr("Install", "Installera"), valign=Gtk.Align.CENTER)
                 b.add_css_class("suggested-action")
