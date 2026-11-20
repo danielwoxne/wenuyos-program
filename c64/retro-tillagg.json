@@ -35,14 +35,12 @@
     "exe": [
      "x64sc"
     ],
-    "install": [
-     "sudo",
-     "apt-get",
-     "install",
-     "-y",
-     "vice",
-     "open-roms"
-    ]
+    "install": {
+     "apt": [
+      "vice",
+      "open-roms"
+     ]
+    }
    },
    "hints": [
     {
