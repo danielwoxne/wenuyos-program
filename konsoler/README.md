@@ -9,9 +9,14 @@ i samma lista som förut.
 
 | | |
 |---|---|
-| `retro-tillagg.py` | systemen, emulatorerna (Mednafen, Hatari, Fuse, openMSX, Atari800, Mupen64Plus, DeSmuME, Dolphin, PPSSPP), kommandona, BIOS/TOS, tangenterna |
+| `retro-tillagg.json` | beskrivningen som Retrospel läser: systemen, filtyperna, emulatorn, BIOS/ROM-krav, tipsen – bara data |
+| `retro_kor.py` | programmets kommando: Retrospel startar det i en egen process när du trycker Spela (`play`) eller Lägg in (`add`) |
+| `retro-kod.py` | koden bakom kommandot (flyttad ur Retrospel): emulatorernas kommandon, BIOS/ROM-igenkänning |
 | `main.py` | fönstret: systemen och deras emulatorer, BIOS och TOS, helskärm |
 | `tests/` | `WENUYOS_RETRO=…/wenuyos-retro bash tests/run.sh` (på WenuyOS hittas Retrospel själv) |
 
 **Nätverk:** inget av sig självt. En emulator installeras från Debian (PSP: Flathub) först när du trycker Installera,
 i ett terminalfönster. Inga spel, BIOS eller ROM:ar följer med.
+
+**Säkerhet (ChatGPT 20 nov):** Retrospel kör aldrig programmets kod för att läsa in det – bara `retro-tillagg.json`,
+och bara för program som installerats med wenuyos-get (`retro = "retro-tillagg.json"` i `wenuyos-app.toml`).

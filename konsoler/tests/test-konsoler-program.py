@@ -29,4 +29,20 @@ win = (ROOT / "main.py").read_text(encoding="utf-8")
 ok(not re.search(r"urllib|requests|curl |wget", win), "fönstret kopplar inte upp sig (installationen sker synligt i terminalen)")
 desk = (ROOT / "data/se.wenuyos.app.konsoler.desktop").read_text(encoding="utf-8")
 ok(all(k in desk for k in ("Name[sv]=Konsoler och hemdatorer", "Comment[sv]=", "Keywords[sv]=", "Categories=Game;Emulator;")), ".desktop: båda språken")
+# Retrospel läser bara beskrivningen; programmets kommando körs i en egen process
+import json, os, subprocess, tempfile
+j = json.load(open(ROOT / "retro-tillagg.json", encoding="utf-8"))
+ok(R.check_tillagg(j, str(ROOT))[1][0]["id"] == "NES" and len(R.TILLAGG) == 15, "beskrivningen godkänns av Retrospel, alla 15 system")
+ps = R.TILLAGG["PlayStation"]
+ps.emulator_for = lambda s: ("Mednafen", ["/usr/games/mednafen"], None)
+import shutil as _sh
+bdir = os.path.join(R.RETRO, "PlayStation", "BIOS"); _sh.rmtree(bdir, ignore_errors=True)
+text, btn = ps.describe("PlayStation", ["mednafen"])
+ok("BIOS" in text and btn and btn[0] == "bios", "PlayStation utan BIOS: Retrospel säger det och visar Lägg in BIOS…")
+ok(R.command({"system": "PlayStation", "files": ["/x.cue"]}, {}) == "bios", "PlayStation utan BIOS: Retrospel ber om BIOS i stället för att starta")
+junk = os.path.join(tempfile.mkdtemp(), "skräp.bin"); open(junk, "wb").write(b"x" * 1000)
+ok(ps.add_file(junk) == [], "Lägg in en fil som inte är en BIOS: programmets kommando svarar tom lista")
+r = subprocess.run([sys.executable, "-I", str(ROOT / "retro_kor.py"), "play", "Okänt", "/x.nes"], capture_output=True, text=True,
+                   env={**os.environ, "WENUYOS_RETRO": os.environ["WENUYOS_RETRO"]})
+ok(r.returncode == 2, "programmets kommando: ett okänt system startar ingenting")
 print(f"Konsoler, programmet: {n} prov godkända")

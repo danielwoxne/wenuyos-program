@@ -22,11 +22,11 @@ for s in ("N64", "NintendoDS", "GameCube", "PSP"):
     ok(s in R.ORDER and s in R.SYSTEM_NAME and s in R.SYSTEM_ICON, f"{s}: visas i Retrospel")
 orig = K.emulator_for
 K.emulator_for = lambda s: ("X", ["emu"], None)
-ok(R.command({"system": "N64", "files": ["/a.z64"], "id": "/a.z64"}, {}) == ["emu", "--windowed", "/a.z64"], "N64: i ett fönster")
-ok(R.command({"system": "N64", "files": ["/a.z64"], "id": "/a.z64"}, {"console_fullscreen": True}) == ["emu", "--fullscreen", "/a.z64"], "N64: helskärm när den är vald")
-ok(R.command({"system": "NintendoDS", "files": ["/a.nds"], "id": "/a.nds"}, {}) == ["emu", "/a.nds"], "DS: DeSmuME med spelet")
-ok(R.command({"system": "GameCube", "files": ["/a.rvz"], "id": "/a.rvz"}, {}) == ["emu", "-b", "-e", "/a.rvz"], "GameCube: Dolphin startar spelet direkt")
-ok(R.command({"system": "PSP", "files": ["/a.cso"], "id": "/a.cso"}, {}) == ["emu", "@@", "/a.cso", "@@"], "PSP: filen lämnas in i sandlådan (Flatpak)")
+ok(K.command({"system": "N64", "files": ["/a.z64"], "id": "/a.z64"}, {}) == ["emu", "--windowed", "/a.z64"], "N64: i ett fönster")
+ok(K.command({"system": "N64", "files": ["/a.z64"], "id": "/a.z64"}, {"console_fullscreen": True}) == ["emu", "--fullscreen", "/a.z64"], "N64: helskärm när den är vald")
+ok(K.command({"system": "NintendoDS", "files": ["/a.nds"], "id": "/a.nds"}, {}) == ["emu", "/a.nds"], "DS: DeSmuME med spelet")
+ok(K.command({"system": "GameCube", "files": ["/a.rvz"], "id": "/a.rvz"}, {}) == ["emu", "-b", "-e", "/a.rvz"], "GameCube: Dolphin startar spelet direkt")
+ok(K.command({"system": "PSP", "files": ["/a.cso"], "id": "/a.cso"}, {}) == ["emu", "@@", "/a.cso", "@@"], "PSP: filen lämnas in i sandlådan (Flatpak)")
 K.emulator_for = orig
 K.flatpak_has = lambda a: False
 name, pre, inst = K.emulator_for("PSP")

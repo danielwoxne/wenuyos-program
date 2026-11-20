@@ -111,22 +111,22 @@ os.rename(K.PS1_BIOS_DIR, K.PS1_BIOS_DIR + "-x")
 check(K.mednafen_command(["mednafen"], ff, cfg) == "bios", "PlayStation utan BIOS: Retrospel ber om den")
 os.rename(K.PS1_BIOS_DIR + "-x", K.PS1_BIOS_DIR)
 R.emulator_for = K.emulator_for = lambda system: ("X", ["emu"], None)
-c = R.command(st, cfg)
+c = K.command(st, cfg)
 check(c[:3] == ["emu", "--tos", K.atari_tos()] and c[c.index("--disk-a") + 1].endswith("(Disk 1).st") and "--disk-b" in c and "--fast-boot" in c,
       "Atari ST: TOS, diskett 1 i A och 2 i B, snabbstart med EmuTOS")
 K.ZX_ROMS = os.path.join(home, "zxroms"); os.makedirs(K.ZX_ROMS); open(os.path.join(K.ZX_ROMS, "opense.rom"), "wb").close()
-check(R.command({"system": "ZXSpectrum", "files": [zx], "id": zx}, cfg) == ["emu", "--rom-48", os.path.join(K.ZX_ROMS, "opense.rom"), zx],
+check(K.command({"system": "ZXSpectrum", "files": [zx], "id": zx}, cfg) == ["emu", "--rom-48", os.path.join(K.ZX_ROMS, "opense.rom"), zx],
       "ZX Spectrum: Fuse med filen och fria Open SE BASIC")
 open(os.path.join(K.ZX_ROMS, "48.rom"), "wb").close()
-check(R.command({"system": "ZXSpectrum", "files": [zx], "id": zx}, cfg) == ["emu", zx], "ZX Spectrum: Sinclairs ROM när den finns")
-check(R.command({"system": "MSX", "files": ["/a.rom"], "id": "/a.rom"}, cfg) == ["emu", "-carta", "/a.rom"], "MSX: kassetten i port A")
-check(R.command({"system": "Atari800", "files": ["/a.xex"], "id": "/a.xex"}, {"console_fullscreen": True}) == ["emu", "-fullscreen", "/a.xex"],
+check(K.command({"system": "ZXSpectrum", "files": [zx], "id": zx}, cfg) == ["emu", zx], "ZX Spectrum: Sinclairs ROM när den finns")
+check(K.command({"system": "MSX", "files": ["/a.rom"], "id": "/a.rom"}, cfg) == ["emu", "-carta", "/a.rom"], "MSX: kassetten i port A")
+check(K.command({"system": "Atari800", "files": ["/a.xex"], "id": "/a.xex"}, {"console_fullscreen": True}) == ["emu", "-fullscreen", "/a.xex"],
       "Atari 800 (helskärm när den är vald)")
 for f in os.listdir(K.TOS_DIR): os.remove(os.path.join(K.TOS_DIR, f))
-check(R.command(st, cfg) == "tos", "Atari ST utan TOS: Retrospel ber om den")
+check(K.command(st, cfg) == "tos", "Atari ST utan TOS: Retrospel ber om den")
 
 # ---- emulatorerna installeras från Debian
-src = (ROOT / "retro-tillagg.py").read_text(encoding="utf-8")
+src = (ROOT / "retro-kod.py").read_text(encoding="utf-8")
 check(all(f'"{p}")' in src for p in ("mednafen", "hatari", "fuse-emulator-gtk", "openmsx", "atari800")), "paketen finns i Debian 13 (apt)")
 
 # ---- tangenterna

@@ -16,17 +16,20 @@ def tr(en, sv):
 
 
 def retro():
+    """Retrospel (WenuyOS) och programmets egen kod (retro-kod.py) – i det här programmets process"""
     core = os.environ.get("WENUYOS_RETRO") or "/usr/bin/wenuyos-retro"
     if not os.path.isfile(core):
         return None, None
-    loader = importlib.machinery.SourceFileLoader("wenuyos_retro", core)
-    spec = importlib.util.spec_from_loader("wenuyos_retro", loader)
-    R = importlib.util.module_from_spec(spec)
-    loader.exec_module(R)
-    if not hasattr(R, "load_tillagg"):
+    sys.path.insert(0, HERE)
+    import retro_kor
+    try:
+        R = retro_kor.core()
+    except Exception:   # noqa: BLE001 – en för gammal eller trasig Retrospel: fönstret säger till
+        return None, None
+    if getattr(R, "TILLAGG_API", 0) != 2:
         return R, None
-    R.load_tillagg(os.path.dirname(HERE))
-    return R, R.TILLAGG.get("NES")
+    R.load_tillagg([HERE])   # namnen på systemen, som i Retrospel (bara beskrivningen)
+    return retro_kor.load(R)
 
 
 def systems(R, K):
@@ -94,9 +97,9 @@ def main():
             fs.connect("notify::active", lambda row, _p: self.set_cfg("console_fullscreen", row.get_active()))
             g.add(fs)
 
-            gs = self.group(tr("Systems", "System"), tr("Each emulator is free software from Debian (PSP: Flathub). It is installed when you press Install. "
+            gs = self.group(tr("Systems", "System"), tr("Each emulator is free software from Debian (PSP: Flathub). It is downloaded from the internet only when you press Install – you see it happen in a terminal window. "
                                                            "Mednafen: arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad.",
-                                                        "Varje emulator är fri programvara från Debian (PSP: Flathub). Den installeras när du trycker Installera. "
+                                                        "Varje emulator är fri programvara från Debian (PSP: Flathub). Den hämtas från internet först när du trycker Installera – du ser det hända i ett terminalfönster. "
                                                            "Mednafen: piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll."))
             for sid, name, emu, have, inst, text in systems(R, K):
                 r = Adw.ActionRow(title=name, subtitle=(emu + " · " + (tr("installed", "installerat") if have else tr("not installed", "inte installerat")))
