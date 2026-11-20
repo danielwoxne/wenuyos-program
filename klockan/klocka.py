@@ -159,6 +159,18 @@ def nearest_hand(deg, h, m, radius=1.0):
     return "hour" if _diff(deg, ha) + 8 < _diff(deg, ma) else "minute"
 
 
+def hands_hint(h, m, sv):
+    """var visarna står, i ord – förklaringen efter ett fel svar"""
+    here, nxt = hour12(h), hour12(h + 1)
+    if sv:
+        short = f"Den korta visaren pekar på {here}" if m == 0 else f"Den korta visaren står mellan {here} och {nxt}"
+        long = f"den långa på {m // 5 or 12}" if m % 5 == 0 else f"den långa på minutstreck {m}"
+        return f"{short}, {long} ({m} min)." if m else f"{short}, {long}."
+    short = f"The short hand points at {here}" if m == 0 else f"The short hand is between {here} and {nxt}"
+    long = f"the long hand at {m // 5 or 12}" if m % 5 == 0 else f"the long hand at minute mark {m}"
+    return f"{short}, {long} ({m} min)." if m else f"{short}, {long}."
+
+
 def same_time(h1, m1, h2, m2):
     """samma läge på urtavlan (03:15 och 15:15 ser likadana ut)"""
     return h1 % 12 == h2 % 12 and m1 == m2
@@ -254,7 +266,7 @@ def make_task(level_id, rng, sv=True, kind=None):
     step = lv["step"]
     kind = kind or rng.choice(lv["kinds"])
     T = (lambda en, s: s) if sv else (lambda en, s: en)
-    t = {"level": level_id, "kind": kind, "step": step, "show": "clock", "shown": "", "options": None, "correct": -1, "target": None}
+    t = {"level": level_id, "kind": kind, "step": step, "show": "clock", "shown": "", "options": None, "correct": -1, "target": None, "hint": ""}
 
     if kind in ("read", "digital", "words", "set"):
         h, m = random_time(rng, step)
@@ -278,6 +290,7 @@ def make_task(level_id, rng, sv=True, kind=None):
             t["shown"] = phrase
             t["question"] = T("Set the clock to:", "Ställ klockan på:")
         t["explain"] = T(f"The time is {phrase} ({digital(h, m)}).", f"Klockan är {phrase} ({digital(h, m)}).")
+        t["hint"] = hands_hint(h, m, sv)
         return t
 
     if kind in ("day", "words24", "set24"):
@@ -302,6 +315,7 @@ def make_task(level_id, rng, sv=True, kind=None):
             t["shown"] = digital(h, m)
             t["question"] = T("Set the clock to:", "Ställ klockan på:")
         t["explain"] = T(f"{digital(h, m)} is {phrase} {when}.", f"{digital(h, m)} är {phrase} {when}.")
+        t["hint"] = hands_hint(h, m, sv)
         return t
 
     # ---- hur lång tid: senare, tidigare, hur länge

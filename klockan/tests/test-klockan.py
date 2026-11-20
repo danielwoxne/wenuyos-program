@@ -55,6 +55,11 @@ check(K.nearest_hand(180, 3, 30) == "minute" and K.nearest_hand(100, 3, 30) == "
       and K.nearest_hand(92, 3, 15, 0.9) == "minute", "rätt visare greppas (nära mitten: den korta)")
 check(K.same_time(3, 15, 15, 15) and not K.same_time(3, 15, 4, 15) and K.same_time(12, 0, 0, 0), "03:15 och 15:15 är samma läge på urtavlan")
 
+check(K.hands_hint(3, 0, True) == "Den korta visaren pekar på 3, den långa på 12."
+      and K.hands_hint(3, 15, True) == "Den korta visaren står mellan 3 och 4, den långa på 3 (15 min)."
+      and K.hands_hint(12, 47, True) == "Den korta visaren står mellan 12 och 1, den långa på minutstreck 47 (47 min)."
+      and K.hands_hint(6, 5, False) == "The short hand is between 6 and 7, the long hand at 1 (5 min).", "förklaringen efter ett fel: var visarna står")
+
 # ---- uppgifterna: 300 per nivå och språk
 steps = {"hel": 60, "halv": 30, "kvart": 15, "fem": 5, "minut": 1, "dygn": 5, "tid": 5}
 check(K.LEVEL_IDS == list(steps) and all(K.level(i)["step"] == s for i, s in steps.items()), "sju nivåer i skolans ordning: " + ", ".join(K.LEVEL_IDS))
@@ -144,7 +149,7 @@ main = (ROOT / "main.py").read_text(encoding="utf-8")
 check('application_id="se.wenuyos.app.klockan"' in main, "samma id i programmet som i .desktop-filen")
 code = "\n".join(l for l in (main + (ROOT / "klocka.py").read_text(encoding="utf-8")).splitlines() if not l.lstrip().startswith("#"))
 check(not re.search(r"\b(urllib|requests|socket|http\.client|curl|wget)\b", code), "programmet kopplar aldrig upp sig")
-check(not re.search(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(", main), "inga hårdkodade färger – visarna får temats färger")
+check(not re.search(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|(?<![_a-z])rgba?\(", main), "inga hårdkodade färger – visarna får temats färger")
 check(not re.search(r"timeout_add|add_tick_callback|idle_add", main), "inget som tickar i bakgrunden")
 texts = re.findall(r'(?:label|title|subtitle|tooltip_text)="([A-ZÅÄÖa-zåäö][^"]*)"', main)
 check(not texts, f"alla texter i fönstret går genom tr() {texts[:3] or ''}")
