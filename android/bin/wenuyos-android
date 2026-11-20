@@ -261,27 +261,50 @@ busy_now() {
 # (högst 90 s) – först då fungerar installationer och appstarter, och först då får bevakningen pausa Android.
 BOOT_WAIT=${WENUYOS_ANDROID_BOOT_WAIT:-270}   # varv om en tredjedels sekund
 SF_EVERY=${WENUYOS_ANDROID_SF_EVERY:-6}   # var 6:e varv (~2 s): har grafiken (surfaceflinger) startat om?
+# Kraschslinga i grafiken: Androids tjänst svarar och sys.boot_completed kan till och med bli 1, men surfaceflinger
+# får ett nytt processnummer var 5:e sekund (Claude på ThinkPaden 19 nov: 15 och 16 nov på A275). Därför räknas
+# Android som startat först när grafiken haft SAMMA processnummer i SF_STABLE sekunder – längre än två varv i
+# slingan – och två byten betyder kraschslinga. (ChatGPT 20 nov: den första versionen godkände efter ~6 s.)
+SF_STABLE=${WENUYOS_ANDROID_SF_STABLE:-12}
+SF_BLIND=${WENUYOS_ANDROID_SF_BLIND:-6}   # sf-pid går inte att läsa alls (äldre root-hjälpare): som förut efter 6 s
+bw_now() { printf '%(%s)T' -1; }
+# Ett steg i bedömningen (ren logik, provas med påhittade tidsserier i test-android-grafik.py).
+#   bw_step <sekunder> <sys.boot_completed-svar|""> <uppe 0|1> <sf-pid|"-" = inte läst det här varvet|"" = gick inte att läsa>
+#   → 0 = startat, 2 = kraschslinga, 1 = vänta. Tillståndet ligger i BW_* (bw_reset nollställer).
+bw_reset() { BW_up=0; BW_last=""; BW_since=""; BW_restarts=0; BW_seen=no; BW_t0=""; }
+bw_step() {
+  local t=$1 out=$2 alive=$3 p=$4
+  [ -n "$BW_t0" ] || BW_t0=$t
+  if [ "$alive" = 1 ]; then BW_up=$((BW_up + 1)); else BW_up=0; fi
+  if [ "$p" != "-" ] && [ -n "$p" ]; then
+    BW_seen=yes
+    if [ "$p" != "$BW_last" ]; then
+      [ -n "$BW_last" ] && BW_restarts=$((BW_restarts + 1))
+      BW_last=$p; BW_since=$t
+    fi
+  fi
+  [ "$BW_restarts" -ge 2 ] && return 2
+  local booted=no
+  { [ "$(printf '%s' "$out" | tr -d '[:space:]')" = 1 ] || [ "$BW_up" -ge 15 ]; } && booted=yes
+  [ "$booted" = yes ] || return 1
+  if [ "$BW_seen" = yes ]; then
+    [ $((t - BW_since)) -ge "$SF_STABLE" ] && return 0   # grafiken har stått still länge nog
+  else
+    [ $((t - BW_t0)) -ge "$SF_BLIND" ] && return 0       # processnumret går inte att läsa: som förut
+  fi
+  return 1
+}
 boot_wait() {
   [ -f "$RUN/android-booted" ] && return 0
-  local i out up=0 p sf_last="" sf_restarts=0
+  local i out alive p rc
+  bw_reset
   for i in $(seq 1 "$BOOT_WAIT"); do
-    out=$(waydroid prop get sys.boot_completed 2>&1) && case "$out" in *Failed*|*failed*) false;; esac && up=$((up + 1)) || up=0
-    # kraschslinga i grafiken: Androids tjänst svarar ändå, men surfaceflinger får ett nytt processnummer var 5:e sekund
-    # (Claude på ThinkPaden 19 nov: 15 och 16 nov på A275 – reservläget med mjukvarugrafik slog aldrig till). 2 = kraschar.
-    if [ $((i % SF_EVERY)) = 0 ]; then
-      p=$(ROOT sf-pid 2>/dev/null | tr -cd '0-9')
-      if [ -n "$p" ] && [ "$p" != "$sf_last" ]; then
-        [ -n "$sf_last" ] && sf_restarts=$((sf_restarts + 1))
-        sf_last=$p
-      fi
-      [ "$sf_restarts" -ge 2 ] && return 2
-    fi
-    # klart: Android säger själv att det har startat – eller så har Androids tjänst svarat 15 gånger i rad (~10 s) utan
-    # att egenskapen gick att läsa (då vet vi i alla fall att tjänsterna är uppe), och grafiken har hunnit kontrolleras
-    # några gånger (annars räknades en kraschslinga som startad)
-    if [ "$(printf '%s' "$out" | tr -d '[:space:]')" = 1 ] || { [ "$up" -ge 15 ] && [ "$i" -ge $((SF_EVERY * 3)) ]; }; then
-      mkdir -p "$RUN"; : > "$RUN/android-booted"; return 0
-    fi
+    out=$(waydroid prop get sys.boot_completed 2>&1) && case "$out" in *Failed*|*failed*) false;; esac && alive=1 || alive=0
+    p=-
+    [ $((i % SF_EVERY)) = 0 ] && p=$(ROOT sf-pid 2>/dev/null | tr -cd '0-9')
+    rc=0; bw_step "$(bw_now)" "$out" "$alive" "$p" || rc=$?
+    [ "$rc" = 2 ] && return 2
+    if [ "$rc" = 0 ]; then mkdir -p "$RUN"; : > "$RUN/android-booted"; return 0; fi
     [ "$i" = 15 ] && [ -z "${WENUYOS_ANDROID_QUIET:-}" ] && note "Android" "$(T "Starting – ready in a moment…" "Startar – klart om en stund…")"   # efter 5 s: säg att något händer
     sleep 0.33
   done
@@ -330,7 +353,12 @@ gfx_fallback() {
   [ "$(cfg graphics)" != hardware ] && [ "$(gfx_now)" = hardware ] || return 1
   note "Android" "$(T "Starting with software graphics instead…" "Startar med mjukvarugrafik i stället…")"
   waydroid session stop >/dev/null 2>&1
-  ROOT gfx software >/dev/null 2>&1; ROOT restart >/dev/null 2>&1
+  # varje steg måste lyckas – annars sparas inget (ingen falsk "mjukvarugrafik" i Inställningar), och användaren får veta
+  if ! ROOT gfx software >/dev/null 2>&1 || ! ROOT restart >/dev/null 2>&1; then
+    note "Android" "$(T "Could not switch Android to software graphics – try: wenuyos-android graphics software" \
+                        "Kunde inte byta Android till mjukvarugrafik – prova: wenuyos-android graphics software")"
+    return 3
+  fi
   setcfg graphics software
   rm -f "$RUN/android-booted"
   return 0
@@ -364,9 +392,11 @@ session_up() {
   local bw=0
   boot_wait || bw=$?
   if [ "$bw" = 2 ]; then
-    if gfx_fallback; then start_wait || return 1; boot_wait || true
-    else note "Android" "$(T "Android's graphics keep crashing – try: wenuyos-android graphics software" "Androids grafik kraschar gång på gång – prova: wenuyos-android graphics software")"
-    fi
+    local fb=0
+    gfx_fallback || fb=$?
+    if [ "$fb" = 0 ]; then start_wait || return 1; boot_wait || true
+    elif [ "$fb" = 1 ]; then note "Android" "$(T "Android's graphics keep crashing – try: wenuyos-android graphics software" "Androids grafik kraschar gång på gång – prova: wenuyos-android graphics software")"
+    fi   # 3: gfx_fallback har redan sagt vad som gick fel
   fi
   # styrspakar som satt i redan innan Android startade kommer annars inte med (bara de som kopplas in efteråt)
   [ "$fresh" = yes ] && ROOT joysticks >/dev/null 2>&1

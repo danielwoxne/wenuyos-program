@@ -103,8 +103,9 @@ check(sh2("busy_now")[0] != 0 and not list(rund.glob("android-busy.*")), "märke
                                '  if [ "$n" -lt "${READY_AT:-3}" ]; then echo "Failed to get service waydroidplatform"; exit ${FAILRC:-0}; fi; echo "${PROPVAL-1}"; fi\nexit 0\n')
 cnt = tmp / "cnt"
 def boot(**extra):
+    # utan ROOT går processnumret inte att läsa: då gäller SF_BLIND (6 s) – 0 här så att provet går fort
     cnt.write_text("0"); (rund / "android-booted").unlink(missing_ok=True)
-    rc, out = sh2("boot_wait; echo rc=$?", CNT=str(cnt), **extra)
+    rc, out = sh2("boot_wait; echo rc=$?", CNT=str(cnt), **{"WENUYOS_ANDROID_SF_BLIND": "0", **extra})
     return out, int(cnt.read_text()), (rund / "android-booted").exists()
 out, n, booted = boot(READY_AT="4")
 check("rc=0" in out and n == 4 and booted, "väntar tills Android säger att det har startat (sys.boot_completed = 1)")
@@ -113,8 +114,8 @@ check("rc=0" in out and n == 1 and "NOTE" not in out, "redan startat: ingen vän
 rc, out = sh2("boot_wait; echo rc=$?", CNT=str(cnt))
 check("rc=0" in out and int(cnt.read_text()) == 1, "färdigstartat minns till nästa gång (ingen ny fråga)")
 out, n, booted = boot(READY_AT="1", PROPVAL="")
-check("rc=0" in out and n == 18 and booted,
-      "egenskapen går inte att läsa men Androids tjänst svarar: klart efter 15 svar i rad, när grafiken kontrollerats tre gånger")
+check("rc=0" in out and n == 15 and booted,
+      "egenskapen går inte att läsa men Androids tjänst svarar: klart efter 15 svar i rad")
 # kraschslinga i grafiken (Claude på ThinkPaden 19 nov: surfaceflinger startade om var 5:e s i 5 min, 15 nov på A275 –
 # tjänsten svarade ändå, så starten räknades som lyckad och mjukvarugrafiken provades aldrig)
 sfc = tmp / "sfcnt"
@@ -122,16 +123,17 @@ def boot_sf(sf, **extra):
     sfc.write_text("0")
     rootf = 'ROOT() { [ "$1" = sf-pid ] || return 0; n=$(cat "$SFC"); n=$((n+1)); echo $n > "$SFC"; ' + sf + '; }\n'
     cnt.write_text("0"); (rund / "android-booted").unlink(missing_ok=True)
-    rc, out = sh2(rootf + "boot_wait; echo rc=$?", CNT=str(cnt), SFC=str(sfc), **extra)
+    # SF_STABLE=0: "grafiken har stått still" direkt när numret lästs (tidsgränsen provas i test-android-grafik.py)
+    rc, out = sh2(rootf + "boot_wait; echo rc=$?", CNT=str(cnt), SFC=str(sfc), **{"WENUYOS_ANDROID_SF_STABLE": "0", **extra})
     return out, (rund / "android-booted").exists()
-out, booted = boot_sf('echo $((1000 + n))', READY_AT="1", PROPVAL="")
+out, booted = boot_sf('echo $((1000 + n))', READY_AT="1", PROPVAL="", WENUYOS_ANDROID_SF_STABLE="12")
 check("rc=2" in out and not booted, "grafiken får nytt processnummer gång på gång: kraschslinga (2), inte färdigstartat")
 out, booted = boot_sf('echo 1234', READY_AT="1", PROPVAL="")
 check("rc=0" in out and booted, "samma processnummer hela tiden: grafiken håller, klart som förut")
 out, booted = boot_sf('[ "$n" = 1 ] && echo 1234 || echo', READY_AT="1", PROPVAL="")
 check("rc=0" in out and booted, "processnumret går inte att läsa (tomt): ingen falsk kraschslinga")
-out, booted = boot_sf('echo $((1000 + n))', READY_AT="4")
-check("rc=0" in out and booted, "Android säger själv att det har startat (sys.boot_completed = 1): klart, även före grafikkollen")
+out, booted = boot_sf('echo $((1000 + n))', READY_AT="4", WENUYOS_ANDROID_SF_STABLE="12")
+check("rc=2" in out and not booted, "Android säger att det har startat (sys.boot_completed = 1) men grafiken kraschar: kraschslinga (ChatGPT 20 nov)")
 out, n, booted = boot(READY_AT="999", WENUYOS_ANDROID_BOOT_WAIT="20")
 check("rc=1" in out and not booted and "NOTE Android Startar" in out, "Android svarar aldrig: ger upp, säger till efter 5 s, och märks inte som färdigstartat")
 out, n, booted = boot(READY_AT="999", WENUYOS_ANDROID_BOOT_WAIT="20", WENUYOS_ANDROID_QUIET="1")
