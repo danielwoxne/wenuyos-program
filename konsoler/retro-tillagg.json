@@ -1,0 +1,712 @@
+{
+ "api": 2,
+ "run": "retro_kor.py",
+ "systems": [
+  {
+   "id": "NES",
+   "name": [
+    "NES",
+    "NES"
+   ],
+   "short": [
+    "NES",
+    "NES"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".nes",
+    ".unf",
+    ".unif"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "SNES",
+   "name": [
+    "Super Nintendo",
+    "Super Nintendo"
+   ],
+   "short": [
+    "Super Nintendo",
+    "Super Nintendo"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".sfc",
+    ".smc"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "GameBoy",
+   "name": [
+    "Game Boy and Game Boy Color",
+    "Game Boy och Game Boy Color"
+   ],
+   "short": [
+    "Game Boy",
+    "Game Boy"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".gb",
+    ".gbc"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "GameBoyAdvance",
+   "name": [
+    "Game Boy Advance",
+    "Game Boy Advance"
+   ],
+   "short": [
+    "Game Boy Advance",
+    "Game Boy Advance"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".gba"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "MegaDrive",
+   "name": [
+    "Sega Mega Drive, Master System and Game Gear",
+    "Sega Mega Drive, Master System och Game Gear"
+   ],
+   "short": [
+    "Sega",
+    "Sega"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".md",
+    ".gen",
+    ".smd",
+    ".sms",
+    ".gg"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "PCEngine",
+   "name": [
+    "PC Engine",
+    "PC Engine"
+   ],
+   "short": [
+    "PC Engine",
+    "PC Engine"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".pce"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   }
+  },
+  {
+   "id": "PlayStation",
+   "name": [
+    "PlayStation",
+    "PlayStation"
+   ],
+   "short": [
+    "PlayStation",
+    "PlayStation"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".cue",
+    ".m3u",
+    ".toc",
+    ".ccd"
+   ],
+   "folder_only": [
+    ".cue",
+    ".m3u",
+    ".toc",
+    ".ccd"
+   ],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Needs the BIOS from your own PlayStation (a 512 kB file, e.g. SCPH1001.BIN).",
+      "Behöver BIOS från din egen PlayStation (en fil på 512 kB, t.ex. SCPH1001.BIN)."
+     ],
+     "when": "missing:PlayStation/BIOS/*",
+     "button": [
+      "Add BIOS…",
+      "Lägg in BIOS…"
+     ]
+    },
+    {
+     "text": [
+      "Arrow keys and Z/X · Enter = Start · Alt+Shift+1 in the game sets up a gamepad",
+      "Piltangenterna och Z/X · Enter = Start · Alt+Skift+1 i spelet ställer in en handkontroll"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "Mednafen",
+    "exe": [
+     "mednafen",
+     "/usr/games/mednafen"
+    ],
+    "install": {
+     "apt": [
+      "mednafen"
+     ]
+    }
+   },
+   "requires": {
+    "glob": "PlayStation/BIOS/*",
+    "kind": "bios"
+   },
+   "playlists_hide": true
+  },
+  {
+   "id": "AtariST",
+   "name": [
+    "Atari ST",
+    "Atari ST"
+   ],
+   "short": [
+    "Atari ST",
+    "Atari ST"
+   ],
+   "icon": "media-floppy-symbolic",
+   "ext": [
+    ".st",
+    ".msa",
+    ".dim"
+   ],
+   "folder_only": [
+    ".dim"
+   ],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Needs TOS: your own, or the free EmuTOS – download the zip file from emutos.sourceforge.io and add it here.",
+      "Behöver TOS: din egen, eller fria EmuTOS – hämta zip-filen från emutos.sourceforge.io och lägg in den här."
+     ],
+     "when": "missing:AtariST/TOS/*",
+     "button": [
+      "Add TOS…",
+      "Lägg in TOS…"
+     ],
+     "site": "https://emutos.sourceforge.io/download.html"
+    }
+   ],
+   "emulator": {
+    "name": "Hatari",
+    "exe": [
+     "hatari",
+     "/usr/games/hatari"
+    ],
+    "install": {
+     "apt": [
+      "hatari"
+     ]
+    }
+   },
+   "requires": {
+    "glob": "AtariST/TOS/*",
+    "kind": "tos"
+   }
+  },
+  {
+   "id": "ZXSpectrum",
+   "name": [
+    "ZX Spectrum",
+    "ZX Spectrum"
+   ],
+   "short": [
+    "ZX Spectrum",
+    "ZX Spectrum"
+   ],
+   "icon": "media-tape-symbolic",
+   "ext": [
+    ".tap",
+    ".tzx",
+    ".z80",
+    ".sna",
+    ".szx"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [],
+   "emulator": {
+    "name": "Fuse",
+    "exe": [
+     "fuse-gtk",
+     "/usr/games/fuse-gtk"
+    ],
+    "install": {
+     "apt": [
+      "fuse-emulator-gtk"
+     ]
+    }
+   }
+  },
+  {
+   "id": "MSX",
+   "name": [
+    "MSX",
+    "MSX"
+   ],
+   "short": [
+    "MSX",
+    "MSX"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".rom",
+    ".mx1",
+    ".mx2"
+   ],
+   "folder_only": [
+    ".rom"
+   ],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "ROM cartridges, with the free C-BIOS",
+      "ROM-kassetter, med fria C-BIOS"
+     ],
+     "when": "installed"
+    }
+   ],
+   "emulator": {
+    "name": "openMSX",
+    "exe": [
+     "openmsx",
+     "/usr/games/openmsx"
+    ],
+    "install": {
+     "apt": [
+      "openmsx"
+     ]
+    }
+   }
+  },
+  {
+   "id": "Atari800",
+   "name": [
+    "Atari 800/XL",
+    "Atari 800/XL"
+   ],
+   "short": [
+    "Atari 800/XL",
+    "Atari 800/XL"
+   ],
+   "icon": "media-floppy-symbolic",
+   "ext": [
+    ".atr",
+    ".xex",
+    ".xfd",
+    ".car"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [],
+   "emulator": {
+    "name": "Atari800",
+    "exe": [
+     "atari800",
+     "/usr/games/atari800"
+    ],
+    "install": {
+     "apt": [
+      "atari800"
+     ]
+    }
+   }
+  },
+  {
+   "id": "N64",
+   "name": [
+    "Nintendo 64",
+    "Nintendo 64"
+   ],
+   "short": [
+    "Nintendo 64",
+    "Nintendo 64"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".n64",
+    ".z64",
+    ".v64"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [],
+   "emulator": {
+    "name": "Mupen64Plus",
+    "exe": [
+     "mupen64plus",
+     "/usr/games/mupen64plus"
+    ],
+    "install": {
+     "apt": [
+      "mupen64plus-ui-console"
+     ]
+    }
+   }
+  },
+  {
+   "id": "NintendoDS",
+   "name": [
+    "Nintendo DS",
+    "Nintendo DS"
+   ],
+   "short": [
+    "Nintendo DS",
+    "Nintendo DS"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".nds"
+   ],
+   "folder_only": [],
+   "heavy": false,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [],
+   "emulator": {
+    "name": "DeSmuME",
+    "exe": [
+     "desmume",
+     "/usr/games/desmume"
+    ],
+    "install": {
+     "apt": [
+      "desmume"
+     ]
+    }
+   }
+  },
+  {
+   "id": "GameCube",
+   "name": [
+    "GameCube and Wii",
+    "GameCube och Wii"
+   ],
+   "short": [
+    "GameCube/Wii",
+    "GameCube/Wii"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".gcm",
+    ".rvz",
+    ".wbfs",
+    ".gcz",
+    ".ciso",
+    ".iso"
+   ],
+   "folder_only": [
+    ".iso"
+   ],
+   "heavy": true,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Heavy: needs a faster computer than one with 2 GB of memory – the games may be slow.",
+      "Tungt: behöver en snabbare dator än en med 2 GB minne – spelen kan gå långsamt."
+     ],
+     "when": "heavy"
+    }
+   ],
+   "emulator": {
+    "name": "Dolphin",
+    "exe": [
+     "dolphin-emu",
+     "/usr/games/dolphin-emu"
+    ],
+    "install": {
+     "apt": [
+      "dolphin-emu"
+     ]
+    }
+   }
+  },
+  {
+   "id": "PSP",
+   "name": [
+    "PlayStation Portable",
+    "PlayStation Portable"
+   ],
+   "short": [
+    "PSP",
+    "PSP"
+   ],
+   "icon": "input-gaming-symbolic",
+   "ext": [
+    ".cso",
+    ".iso"
+   ],
+   "folder_only": [
+    ".iso"
+   ],
+   "heavy": true,
+   "sub": "",
+   "launchers": true,
+   "skip_dirs": [
+    "BIOS",
+    "TOS",
+    "Sparningar"
+   ],
+   "hints": [
+    {
+     "text": [
+      "Heavy: needs a faster computer than one with 2 GB of memory – the games may be slow.",
+      "Tungt: behöver en snabbare dator än en med 2 GB minne – spelen kan gå långsamt."
+     ],
+     "when": "heavy"
+    }
+   ],
+   "emulator": {
+    "name": "PPSSPP",
+    "flatpak": "org.ppsspp.PPSSPP",
+    "install": {
+     "flatpak": "org.ppsspp.PPSSPP"
+    }
+   }
+  }
+ ]
+}

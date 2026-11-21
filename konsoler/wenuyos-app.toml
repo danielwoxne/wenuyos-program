@@ -1,0 +1,13 @@
+name = "Consoles and home computers"
+name_sv = "Konsoler och hemdatorer"
+version = "1.0.0"
+id = "se.wenuyos.app.konsoler"
+description = "Game consoles and home computers in Retro games – each emulator is installed when you have a game for it"
+description_sv = "Spelkonsoler och hemdatorer i Retrospel – varje emulator installeras när du har ett spel till den"
+license = "GPL-3.0-or-later"
+author = "Daniel Woxnerud"
+requires = ["python3-gi", "gir1.2-adw-1"]
+python = ["gi"]
+min_ram_mb = 2048
+needs_network = true   # bara när man trycker Installera (emulatorer från Debian/Flathub), synligt i ett terminalfönster
+retro = "retro-tillagg.json"
