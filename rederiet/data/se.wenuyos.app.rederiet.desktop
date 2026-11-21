@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=The Shipping Company
+Name[sv]=Rederiet
+Comment=Manage a cargo shipping business
+Comment[sv]=Driv ett rederi och frakta gods mellan hamnar
+Exec=rederiet
+Icon=se.wenuyos.app.rederiet
+Terminal=false
+Categories=Game;StrategyGame;
+Keywords=ship;cargo;trade;ports;
+Keywords[sv]=fartyg;frakt;handel;hamnar;
+StartupWMClass=se.wenuyos.app.rederiet
