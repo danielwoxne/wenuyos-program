@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install Android app
+Name[sv]=Installera Android-app
+Exec=@WENUYOS_ANDROID@ apk %f
+TryExec=@WENUYOS_ANDROID@
+MimeType=application/vnd.android.package-archive;application/vnd.android.xapk;
+NoDisplay=true
+Icon=se.wenuyos.app.android
+Terminal=false

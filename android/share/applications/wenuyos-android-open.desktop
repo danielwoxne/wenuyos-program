@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Android app
+Name[sv]=Android-app
+Comment=Open the file in an Android app
+Comment[sv]=Öppna filen i en Android-app
+Exec=@WENUYOS_ANDROID@ open %f
+TryExec=@WENUYOS_ANDROID@
+Icon=wenuy-phone
+NoDisplay=true
+X-WenuyOS-Android=true
+MimeType=application/pdf;image/jpeg;image/png;image/gif;image/webp;video/mp4;video/webm;video/x-matroska;audio/mpeg;audio/ogg;audio/flac;audio/mp4;text/plain;application/epub+zip;application/vnd.android.package-archive;application/vnd.oasis.opendocument.text;application/vnd.openxmlformats-officedocument.wordprocessingml.document;
+Keywords=android;open;
+Keywords[sv]=android;öppna;

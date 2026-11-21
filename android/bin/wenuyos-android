@@ -1,0 +1,804 @@
+#!/bin/bash
+# Android-appar i WenuyOS (Waydroid: LineageOS i en container, delar Linux-kärnan).
+# Programmet Android-appar (wenuyos-program/android) sedan 20 nov 2026 – förut /usr/lib/wenuyos/wenuyos-android.
+# Root-delen ligger kvar i systemet: /usr/lib/wenuyos/wenuyos-android-root (fasta kommandon, sudo utan lösenord).
+# Varje Android-app öppnas i ett eget fönster på skrivbordet (eller helskärm),
+# syns i sökfältet och startar bara när en Android-app används.
+#
+#   wenuyos-android setup         genvägarna: kommandot ~/.local/bin/wenuyos-android, Helskärm/Fönster/Stäng i Start
+#                                 och "Öppna i Android" för filer (görs när programmet öppnas)
+#   wenuyos-android enable        installera och slå på (kräver internet första gången, ~1 GB)
+#   wenuyos-android status [--json]   (--json: installerat, kör, pausat, minne, appar, grafik …)
+#   wenuyos-android apps          installerade Android-appar (paket<TAB>namn)
+#   wenuyos-android full          hela Android i helskärm
+#   wenuyos-android window        hela Android i ett vanligt fönster (storlek: display)
+#   wenuyos-android size          välj fönstrets storlek i en meny och öppna Android igen
+#   wenuyos-android display auto|large|medium|phone|full   storlek på Android-fönstret
+#   wenuyos-android density auto|140|160|200|240           textstorlek i Android (dpi)
+#   wenuyos-android mode apps|single   varje app i eget fönster, eller hela Android i ett
+#   wenuyos-android aurora        Aurora Store (fri app, hämtar appar från Google Play utan Google-konto)
+#   wenuyos-android microg        microG (fri ersättning för Googles tjänster)
+#   wenuyos-android apk <fil>     installera en .apk (är den en del av en delad app: alla delar)
+#   wenuyos-android xapk <fil|mapp>  en app i flera delar: .xapk, .apks, .apkm eller en uppackad mapp
+#   wenuyos-android fdroid        installera F-Droid (fri appbutik)
+#   wenuyos-android arm           stöd för ARM-appar (icke-fri översättare, hämtas till datorn)
+#   wenuyos-android launch <paket> starta en Android-app (väcker Android om det är pausat)
+#   wenuyos-android open <fil>    öppna en fil i en Android-app (filen hamnar i en delad mapp)
+#   wenuyos-android touch auto|none|all|add <paket>|remove <paket>|list|mode   musen som finger
+#                                 (auto, standard: finger i spel när datorn saknar pekskärm – annars är musen en mus)
+#   wenuyos-android share on|off  Dokument, Bilder, Hämtade filer, Musik och Videor syns i Android (standard: på)
+#   wenuyos-android autostop <minuter>|never|auto   stäng Android så här länge efter sista fönstret (auto: 10, eller
+#                                 aldrig när Android hålls förberett – se prestart)
+#   wenuyos-android prestart auto|on|off   förbered Android i bakgrunden efter inloggningen, så att appar öppnas direkt
+#                                 (auto = om datorn har minst 4 GB minne och en Android-app använts de senaste 14 dagarna)
+#   wenuyos-android game add|remove <paket> | list   visa en Android-app som ett spel (Spel-biblioteket)
+#   wenuyos-android fullui add|remove <paket> | list   öppna appen i Android-fönstret i stället för i ett eget fönster
+#                                 (för spel som blir delvis genomskinliga i eget fönster; Among Us är förvalt)
+#   wenuyos-android graphics auto|hardware|software   grafikkort eller mjukvarurendering
+#   wenuyos-android images [mapp]  Android från USB (signerade avbildningar, mappen wenuyos-android-images)
+#   wenuyos-android upgrade       hämta Android-uppdateringar (LineageOS) – görs av wenuyos update
+#   wenuyos-android watch         bevakning i bakgrunden (startas med skrivbordet)
+#   wenuyos-android stop          stäng Android (frigör minnet)
+#   wenuyos-android disable       stäng av (behåller appar och data)
+set -uo pipefail
+HERE=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)   # programmappen (~/Program/Android-appar)
+XAPK="$HERE/lib/wenuyos_xapk.py"
+LINK="$HOME/.local/bin/wenuyos-android"
+SELF="$LINK"; [ -x "$SELF" ] || SELF=$(readlink -f "$0")   # Android-apparnas genvägar pekar hit
+# grep -q i en rörledning med pipefail: grep slutar läsa vid första träffen och kommandot före får SIGPIPE –
+# då "misslyckas" rörledningen fast det fanns en träff. qgrep läser allt.
+qgrep() { grep "$@" >/dev/null; }
+sv() { case "${LANG:-}" in sv*) return 0;; esac; return 1; }
+T() { sv && echo "$2" || echo "$1"; }
+have() { command -v waydroid >/dev/null && [ -f /var/lib/waydroid/waydroid.cfg ]; }
+note() { command -v notify-send >/dev/null && notify-send -a Android "$@"; echo "$*"; }
+SHARE="$HOME/Android"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/wenuyos"
+cfg() { cat "$CONF/android-$1" 2>/dev/null; }
+setcfg() { mkdir -p "$CONF"; echo "$2" > "$CONF/android-$1"; }
+ROOT() { sudo -n /usr/lib/wenuyos/wenuyos-android-root "$@"; }   # fasta kommandon utan lösenord
+RUN="${XDG_RUNTIME_DIR:-/tmp}/wenuyos"
+running() { pgrep -u "$(id -u)" -f "waydroid.* session start" >/dev/null; }
+
+# Grafik: Waydroid behöver ett grafikkort med Mesa-drivrutin (Intel, AMD). NVIDIA:s egen drivrutin
+# och datorer utan grafikkort får mjukvarurendering (långsammare, men fungerar).
+gfx_wanted() {
+  local g; g=$(cfg graphics); [ -n "$g" ] && [ "$g" != auto ] && { echo "$g"; return; }
+  ls /dev/dri/renderD* >/dev/null 2>&1 || { echo software; return; }
+  if [ -d /proc/driver/nvidia ] || lsmod 2>/dev/null | qgrep '^nvidia '; then echo software; return; fi
+  echo hardware
+}
+gfx_now() { grep -q '^ro.hardware.egl=swiftshader' /var/lib/waydroid/waydroid_base.prop 2>/dev/null && echo software || echo hardware; }
+
+# Musen som finger (persist.waydroid.fake_touch): många spel (Unity, t.ex. Among Us) tar bara emot pekhändelser, inte
+# musklick – på en dator utan pekskärm går de då inte att styra alls (Claude på A275, 15 nov). Daniel 16 nov: "Godkänn
+# mus som finger". Valet sparas i android-touch:
+#   saknas eller "auto"  finger i spel när datorn saknar pekskärm: den inbyggda listan + appar som visas som spel
+#   "none" (eller tom)   musen är en mus överallt
+#   "*"                  finger i alla appar
+#   "a,b,c"              finger i de här apparna
+TOUCH_BUILTIN="com.innersloth.spacemafia"
+touch_mode() {
+  local v
+  if [ ! -f "$CONF/android-touch" ]; then echo auto; return; fi
+  v=$(cfg touch)
+  case "$v" in auto) echo auto;; ""|none) echo none;; "*") echo all;; *) echo some;; esac
+}
+# en pekskärm (eller ritplatta som pekar direkt) någonstans? udev: ID_INPUT_TOUCHSCREEN=1. WENUYOS_HAS_TOUCH=1/0 i prov.
+has_touchscreen() {
+  if [ -n "${WENUYOS_HAS_TOUCH:-}" ]; then [ "$WENUYOS_HAS_TOUCH" = 1 ]; return; fi
+  local e
+  for e in /dev/input/event*; do
+    [ -e "$e" ] || continue
+    udevadm info -q property -n "$e" 2>/dev/null | qgrep -x 'ID_INPUT_TOUCHSCREEN=1' && return 0
+  done
+  return 1
+}
+# listan som gäller just nu: paketnamn med komma, "*" eller tom (= ingen)
+touch_list() {
+  case "$(touch_mode)" in
+    none) echo "";;
+    all) echo "*";;
+    some) cfg touch;;
+    auto) has_touchscreen && { echo ""; return; }
+      { for p in $TOUCH_BUILTIN; do echo "$p"; done; cat "$CONF/android-games" 2>/dev/null; } | grep -E '^[A-Za-z0-9_.]+$' | sort -u | paste -sd, -;;
+  esac
+}
+# Rotens kommando skriver värdet i Waydroids filer (gäller när Android startar). Kör Android redan sätts det också
+# direkt – som användaren: rotens "waydroid prop set" når inte den användarsession som Android körs i (A275, 15 nov).
+apply_touch() {
+  local t; t=$(touch_list)
+  ROOT touch "${t:-none}" >/dev/null 2>&1
+  if waydroid status 2>/dev/null | qgrep "Session:.*RUNNING"; then waydroid prop set persist.waydroid.fake_touch "$t" >/dev/null 2>&1 || true; fi
+}
+
+# Allt som ska stämma innan Android startar: nät, grafik, mus
+prepare() {
+  ROOT net >/dev/null 2>&1
+  ROOT base >/dev/null 2>&1
+  if [ "$(gfx_wanted)" != "$(gfx_now)" ]; then ROOT gfx "$(gfx_wanted)" >/dev/null 2>&1 && ROOT restart >/dev/null 2>&1; fi
+  apply_touch
+}
+
+# Skärmens storlek i logiska bildpunkter (första skärmen som är på): "B H"
+screen_size() {
+  /usr/lib/wenuyos/wenuyos-display state 2>/dev/null | python3 -c '
+import sys
+outs, modes = [], {}
+for l in sys.stdin:
+    f = l.rstrip("\n").split("|")
+    if f[0] == "O": outs.append(f)
+    elif f[0] == "M" and "c" in f[5]: modes[f[1]] = (int(f[2]), int(f[3]))
+for o in outs:
+    if o[3] == "1" and o[1] in modes:
+        w, h = modes[o[1]]; s = float(o[7] or 1)
+        if o[6] in ("90", "270", "flipped-90", "flipped-270"): w, h = h, w
+        print(int(w / s), int(h / s)); break
+else:
+    print(1366, 768)'
+}
+# Android-fönstrets storlek (B H) efter valet. Helskärm = skärmens storlek – aldrig 0 0: Waydroids "0 = hela skärmen"
+# fungerar inte här, Android kraschade om och om igen och startade aldrig mer (Claude på ThinkPaden 15 nov)
+window_size() {
+  read -r sw sh < <(screen_size)
+  case "${1:-$(cfg display)}" in
+    full) echo "$sw" "$sh";;
+    phone) echo 412 $(( sh * 9 / 10 > 860 ? 860 : sh * 9 / 10 / 2 * 2 ));;
+    medium) echo $(( sw < 1280 ? sw * 8 / 10 / 2 * 2 : 1280 )) $(( sh < 800 ? sh * 8 / 10 / 2 * 2 : 800 ));;
+    *) echo $(( sw * 8 / 10 / 2 * 2 )) $(( (sh - 48) * 9 / 10 / 2 * 2 ));;   # stort: 80 % av skärmen, plats för dockan
+  esac
+}
+auto_density() {   # 160 dpi på vanliga skärmar, mer på stora/täta
+  read -r sw sh < <(screen_size)
+  if [ "$sh" -ge 1400 ]; then echo 240; elif [ "$sh" -ge 1000 ]; then echo 200; else echo 160; fi
+}
+# Ställ in storlek och täthet; gäller när Android startar nästa gång (startas om om det kör)
+apply_display() {
+  local w h d restart=${1:-}
+  read -r w h < <(window_size)
+  d=$(cfg density); [ -z "$d" ] || [ "$d" = auto ] && d=$(auto_density)
+  waydroid prop set persist.waydroid.width "$w" >/dev/null 2>&1
+  waydroid prop set persist.waydroid.height "$h" >/dev/null 2>&1
+  waydroid prop set persist.waydroid.multi_windows "$([ "$(cfg mode)" = single ] && echo false || echo true)" >/dev/null 2>&1
+  # tätheten (dpi) läses bara när containern startar
+  if ! grep -q "^ro.sf.lcd_density=$d$" /var/lib/waydroid/waydroid_base.prop 2>/dev/null; then
+    ROOT density "$d" >/dev/null 2>&1
+    restart=yes
+  fi
+  if [ -n "$restart" ] && waydroid status 2>/dev/null | qgrep "Session:.*RUNNING"; then
+    waydroid session stop >/dev/null 2>&1; ROOT restart >/dev/null 2>&1
+  fi
+}
+# waydroid_script (fri, GPL-3) – används för ARM-översättning och microG
+wscript() {
+  local d=/var/lib/wenuyos/waydroid_script
+  if [ -d "$d/.git" ]; then sudo git -C "$d" pull -q; else sudo git clone -q --depth 1 https://github.com/casualsnek/waydroid_script "$d" || return 1; fi
+  [ -x "$d/venv/bin/python3" ] || sudo python3 -m venv "$d/venv" || return 1
+  sudo "$d/venv/bin/pip" install -q -r "$d/requirements.txt" || return 1
+  waydroid session stop >/dev/null 2>&1
+  sudo "$d/venv/bin/python3" "$d/main.py" "$@"
+}
+
+# Signerad mapp med Android-avbildningar (wenuyos-android-images/ på ett USB-minne): system.img,
+# vendor.img och ev. waydroid-paket (*.deb), alla listade i android-images.sha256 med WenuyOS-signatur
+usb_images() {
+  find /media /run/media /mnt -maxdepth 4 -type f -path '*/wenuyos-android-images/android-images.sha256.sig' 2>/dev/null | head -1 | xargs -r dirname
+}
+verify_images() {
+  local dir=$1 f
+  [ -f "$dir/android-images.sha256" ] && [ -f "$dir/android-images.sha256.sig" ] || { echo "$(T "Not a WenuyOS Android image folder" "Inte en mapp med WenuyOS Android-avbildningar")"; return 1; }
+  { if command -v gpgv >/dev/null; then gpgv --keyring /usr/share/wenuyos/keys/wenuyos-update.gpg "$dir/android-images.sha256.sig" "$dir/android-images.sha256"
+    else sqv --keyring /usr/share/wenuyos/keys/wenuyos-update.gpg "$dir/android-images.sha256.sig" "$dir/android-images.sha256"; fi; } >/dev/null 2>&1 \
+    || { echo "$(T "Signature does not match – nothing installed" "Signaturen stämmer inte – ingenting installerat")"; return 1; }
+  (cd "$dir" && sha256sum --quiet -c android-images.sha256) || { echo "$(T "Checksum error – nothing installed" "Fel kontrollsumma – ingenting installerat")"; return 1; }
+  for f in system.img vendor.img; do [ -f "$dir/$f" ] || { echo "$f saknas"; return 1; }; done
+  for f in "$dir"/*.deb; do   # paket måste också vara signerade (listade i kontrollsummorna)
+    [ -e "$f" ] || continue
+    grep -q "[ *]$(basename "$f")\$" "$dir/android-images.sha256" || { echo "$(basename "$f"): $(T "not signed" "inte signerad")"; return 1; }
+  done
+}
+
+start_wait() {
+  # containern startar först här, inte vid datorns start (0,8 s av starten på A275, och minne hela tiden)
+  systemctl is-active -q waydroid-container 2>/dev/null || ROOT container >/dev/null 2>&1
+  (waydroid session start >/dev/null 2>&1 &)
+  # frågar tre gånger i sekunden (var en gång i sekunden: upp till en sekund för sent varje start), högst en minut
+  for _ in $(seq 1 180); do sleep 0.33; waydroid status 2>/dev/null | qgrep "Session:.*RUNNING" && return 0; done
+  return 1
+}
+
+# ---- Snabb start (Daniel 15 nov 2026: "Jag vill att det ska gå snabbt och se ut som ett vanligt program eller spel")
+# Android förbereds i bakgrunden en stund efter inloggningen och pausas sedan (ingen processor, minnet kvar). Då öppnas
+# en Android-app på någon sekund i stället för att hela Android ska starta först. Bara på datorer med minne nog, och
+# bara om Android-appar faktiskt används – annars startar Android som förut när den första appen öppnas.
+MEMINFO=${WENUYOS_MEMINFO:-/proc/meminfo}
+mem_kb() { awk -v k="$1:" '$1 == k { print $2; exit }' "$MEMINFO" 2>/dev/null; }
+PRESTART_MIN_KB=3600000   # "4 GB" (en dator med 4 GB visar ungefär 3,7–3,9 GB)
+used_recently() {   # en Android-app har startats de senaste 14 dagarna
+  [ -f "$CONF/android-last-used" ] && [ -n "$(find "$CONF/android-last-used" -mtime -14 2>/dev/null)" ]
+}
+prestart_wanted() {
+  case "$(cfg prestart)" in
+    on) return 0;;
+    off) return 1;;
+  esac
+  local total; total=$(mem_kb MemTotal)
+  [ "${total:-0}" -ge "$PRESTART_MIN_KB" ] && used_recently
+}
+# ont om minne: mindre än en åttondel ledigt – då stängs ett pausat Android även om det annars får ligga kvar
+memory_low() {
+  local total avail; total=$(mem_kb MemTotal); avail=$(mem_kb MemAvailable)
+  [ "${total:-0}" -gt 0 ] && [ "${avail:-0}" -lt $((total / 8)) ]
+}
+# efter hur många minuter utan fönster Android stängs helt: det användaren valt, annars "never" när Android hålls
+# förberett (det pausade Android är det som gör starten snabb), annars 10
+autostop_minutes() {
+  local v; v=$(cfg autostop)
+  [ -n "$v" ] && { echo "$v"; return; }
+  prestart_wanted && echo never || echo 10
+}
+app_name() {   # appens namn ur dess startfil, annars paketnamnet
+  local n; n=$(sed -n 's/^Name=//p' "$HOME/.local/share/applications/waydroid.$1.desktop" 2>/dev/null | head -1)
+  echo "${n:-$1}"
+}
+# ---- Upptaget och färdigstartat (Claude på ThinkPaden 15 nov 2026: en .xapk-installation och `full` frystes mitt i
+# uppstarten av bevakningen, och Android blev aldrig klart; installationen började dessutom innan Android startat färdigt)
+# Upptaget: den som använder Android (startar det, installerar, öppnar en app eller en fil) lämnar en fil med sitt
+# processnummer. Bevakningen (watch) pausar och stänger inte medan en sådan process lever – filen efter en process som
+# inte finns längre städas bort av bevakningen.
+busy_mark() { mkdir -p "$RUN"; : > "$RUN/android-busy.$$"; trap 'rm -f "$RUN/android-busy.$$"' EXIT; }
+busy_now() {
+  local f pid any=1
+  for f in "$RUN"/android-busy.*; do
+    [ -e "$f" ] || continue
+    pid=${f##*.}
+    case "$pid" in ''|*[!0-9]*) rm -f "$f"; continue;; esac
+    if kill -0 "$pid" 2>/dev/null; then any=0; else rm -f "$f"; fi
+  done
+  return $any
+}
+# Färdigstartat: sessionen "kör" långt innan Android svarar (32 s senare på A275). Vänta tills sys.boot_completed är 1
+# (högst 90 s) – först då fungerar installationer och appstarter, och först då får bevakningen pausa Android.
+BOOT_WAIT=${WENUYOS_ANDROID_BOOT_WAIT:-270}   # varv om en tredjedels sekund
+SF_EVERY=${WENUYOS_ANDROID_SF_EVERY:-6}   # var 6:e varv (~2 s): har grafiken (surfaceflinger) startat om?
+# Kraschslinga i grafiken: Androids tjänst svarar och sys.boot_completed kan till och med bli 1, men surfaceflinger
+# får ett nytt processnummer var 5:e sekund (Claude på ThinkPaden 19 nov: 15 och 16 nov på A275). Därför räknas
+# Android som startat först när grafiken haft SAMMA processnummer i SF_STABLE sekunder – längre än två varv i
+# slingan – och två byten betyder kraschslinga. (ChatGPT 20 nov: den första versionen godkände efter ~6 s.)
+SF_STABLE=${WENUYOS_ANDROID_SF_STABLE:-12}
+SF_BLIND=${WENUYOS_ANDROID_SF_BLIND:-6}   # sf-pid går inte att läsa alls (äldre root-hjälpare): som förut efter 6 s
+bw_now() { printf '%(%s)T' -1; }
+# Ett steg i bedömningen (ren logik, provas med påhittade tidsserier i test-android-grafik.py).
+#   bw_step <sekunder> <sys.boot_completed-svar|""> <uppe 0|1> <sf-pid|"-" = inte läst det här varvet|"" = gick inte att läsa>
+#   → 0 = startat, 2 = kraschslinga, 1 = vänta. Tillståndet ligger i BW_* (bw_reset nollställer).
+bw_reset() { BW_up=0; BW_last=""; BW_since=""; BW_restarts=0; BW_seen=no; BW_t0=""; }
+bw_step() {
+  local t=$1 out=$2 alive=$3 p=$4
+  [ -n "$BW_t0" ] || BW_t0=$t
+  if [ "$alive" = 1 ]; then BW_up=$((BW_up + 1)); else BW_up=0; fi
+  if [ "$p" != "-" ] && [ -n "$p" ]; then
+    BW_seen=yes
+    if [ "$p" != "$BW_last" ]; then
+      [ -n "$BW_last" ] && BW_restarts=$((BW_restarts + 1))
+      BW_last=$p; BW_since=$t
+    fi
+  fi
+  [ "$BW_restarts" -ge 2 ] && return 2
+  local booted=no
+  { [ "$(printf '%s' "$out" | tr -d '[:space:]')" = 1 ] || [ "$BW_up" -ge 15 ]; } && booted=yes
+  [ "$booted" = yes ] || return 1
+  if [ "$BW_seen" = yes ]; then
+    [ $((t - BW_since)) -ge "$SF_STABLE" ] && return 0   # grafiken har stått still länge nog
+  else
+    [ $((t - BW_t0)) -ge "$SF_BLIND" ] && return 0       # processnumret går inte att läsa: som förut
+  fi
+  return 1
+}
+boot_wait() {
+  [ -f "$RUN/android-booted" ] && return 0
+  local i out alive p rc
+  bw_reset
+  for i in $(seq 1 "$BOOT_WAIT"); do
+    out=$(waydroid prop get sys.boot_completed 2>&1) && case "$out" in *Failed*|*failed*) false;; esac && alive=1 || alive=0
+    p=-
+    [ $((i % SF_EVERY)) = 0 ] && p=$(ROOT sf-pid 2>/dev/null | tr -cd '0-9')
+    rc=0; bw_step "$(bw_now)" "$out" "$alive" "$p" || rc=$?
+    [ "$rc" = 2 ] && return 2
+    if [ "$rc" = 0 ]; then mkdir -p "$RUN"; : > "$RUN/android-booted"; return 0; fi
+    [ "$i" = 15 ] && [ -z "${WENUYOS_ANDROID_QUIET:-}" ] && note "Android" "$(T "Starting – ready in a moment…" "Startar – klart om en stund…")"   # efter 5 s: säg att något händer
+    sleep 0.33
+  done
+  return 1   # inte klart på 90 s: den som anropar går vidare som förut, men bevakningen pausar aldrig ett sådant Android
+}
+
+# En sparad storlek på 0 (från en äldre `full`) gör att Android aldrig startar. Läs den direkt i Android så snart
+# containern kör, rätta den till den valda storleken och starta om – en gång.
+heal_size() {
+  local got w h
+  got=$(ROOT size-get 2>/dev/null) || return 1
+  read -r w h <<< "$got"
+  [ -n "$w" ] && [ -n "$h" ] || return 1          # gick inte att läsa: rör inget
+  [ "$w" != 0 ] && [ "$h" != 0 ] && return 1      # storleken är bra
+  read -r w h < <(window_size)
+  ROOT size "$w" "$h" >/dev/null 2>&1 || return 1
+  note "Android" "$(T "The saved window size was wrong (0×0) – fixed, starting again…" "Den sparade fönsterstorleken var fel (0×0) – rättad, startar om…")"
+  waydroid session stop >/dev/null 2>&1
+  return 0
+}
+# Android-fönstret (hela Android) i rätt storlek. Storleken ändras bara när Android startar: stäng om den kör i fel storlek.
+ensure_window_size() {
+  local want have_now w h
+  want=$(window_size "$1")
+  have_now="$(waydroid prop get persist.waydroid.width 2>/dev/null) $(waydroid prop get persist.waydroid.height 2>/dev/null)"
+  if [ "$want" != "$have_now" ]; then
+    read -r w h <<< "$want"
+    waydroid prop set persist.waydroid.width "$w" >/dev/null 2>&1; waydroid prop set persist.waydroid.height "$h" >/dev/null 2>&1
+    waydroid status 2>/dev/null | qgrep "Session:.*RUNNING" && waydroid session stop >/dev/null 2>&1
+  fi
+}
+# Appar som öppnas i Android-fönstret (hela Android) i stället för i ett eget fönster: en del spel (Unity) lämnar sina
+# mörka ytor genomskinliga i ett eget fönster, så att det som ligger bakom syns igenom (Among Us, provat på A275 – i
+# Android-fönstret är bilden täckande). Inbyggd lista + användarens egen (wenuyos-android fullui add <paket>).
+FULLUI_BUILTIN="com.innersloth.spacemafia"
+is_fullui() {
+  [ -n "$1" ] || return 1
+  grep -qxF -- "-$1" "$CONF/android-fullui" 2>/dev/null && return 1     # uttryckligen borttagen ur den inbyggda listan
+  case " $FULLUI_BUILTIN " in *" $1 "*) return 0;; esac
+  grep -qxF -- "$1" "$CONF/android-fullui" 2>/dev/null
+}
+
+# Grafikkortet fungerade inte med Android: byt till mjukvarurendering en gång (bara i automatiskt läge) och spara
+# valet, så att samma fel inte kommer tillbaka vid nästa start. 1 = inget att byta till.
+gfx_fallback() {
+  [ "$(cfg graphics)" != hardware ] && [ "$(gfx_now)" = hardware ] || return 1
+  note "Android" "$(T "Starting with software graphics instead…" "Startar med mjukvarugrafik i stället…")"
+  waydroid session stop >/dev/null 2>&1
+  # varje steg måste lyckas – annars sparas inget (ingen falsk "mjukvarugrafik" i Inställningar), och användaren får veta
+  if ! ROOT gfx software >/dev/null 2>&1 || ! ROOT restart >/dev/null 2>&1; then
+    note "Android" "$(T "Could not switch Android to software graphics – try: wenuyos-android graphics software" \
+                        "Kunde inte byta Android till mjukvarugrafik – prova: wenuyos-android graphics software")"
+    return 3
+  fi
+  setcfg graphics software
+  rm -f "$RUN/android-booted"
+  return 0
+}
+
+session_up() {
+  local fresh=no
+  busy_mark
+  ROOT unfreeze >/dev/null 2>&1; rm -f "$RUN/android-frozen"
+  if ! waydroid status 2>/dev/null | qgrep "Session:.*RUNNING"; then
+    fresh=yes
+    rm -f "$RUN/android-booted"
+    prepare
+    # Delade mappar före starten: Waydroid tar med mappar som redan är monterade (rbind) när Android
+    # startar – det som monteras efteråt syns inte inne i Android
+    [ "$(cfg share)" != off ] && ROOT share on >/dev/null 2>&1
+    local up=no
+    if start_wait; then
+      up=yes
+      if heal_size; then start_wait || up=no; fi   # 0×0 rättat: en omstart
+    fi
+    if [ "$up" = no ]; then
+      # grafikkortet fungerade inte med Android: prova mjukvarurendering en gång (automatiskt läge)
+      gfx_fallback || return 1
+      start_wait || return 1
+    fi
+  fi
+  # kör redan men har inte startat färdigt (t.ex. en kraschslinga efter 0×0): rätta storleken och starta om
+  if [ ! -f "$RUN/android-booted" ] && heal_size; then start_wait || return 1; fi
+  # (se boot_wait: utan svar går vi vidare som förut). Kraschar grafiken i en slinga: mjukvarugrafik i stället.
+  local bw=0
+  boot_wait || bw=$?
+  if [ "$bw" = 2 ]; then
+    local fb=0
+    gfx_fallback || fb=$?
+    if [ "$fb" = 0 ]; then start_wait || return 1; boot_wait || true
+    elif [ "$fb" = 1 ]; then note "Android" "$(T "Android's graphics keep crashing – try: wenuyos-android graphics software" "Androids grafik kraschar gång på gång – prova: wenuyos-android graphics software")"
+    fi   # 3: gfx_fallback har redan sagt vad som gick fel
+  fi
+  # styrspakar som satt i redan innan Android startade kommer annars inte med (bara de som kopplas in efteråt)
+  [ "$fresh" = yes ] && ROOT joysticks >/dev/null 2>&1
+  # ~/Android = Androids egen lagring
+  local m="$HOME/.local/share/waydroid/data/media/0"
+  [ -d "$m" ] && [ ! -e "$SHARE" ] && ln -s "$m" "$SHARE"
+  return 0
+}
+
+# Android-appar i menyn startar via wenuyos-android launch (väcker Android först)
+fix_desktop_files() {
+  local f p
+  for f in "$HOME"/.local/share/applications/waydroid.*.desktop; do
+    [ -f "$f" ] || continue
+    if grep -q '^Exec=waydroid app launch ' "$f"; then
+      sed -i "s#^Exec=waydroid app launch #Exec=$SELF launch #" "$f"
+    fi
+    # spel (wenuyos-android game add <paket>): Categories=Game – då hamnar appen i Spel-biblioteket som andra spel
+    p=$(basename "$f" .desktop); p=${p#waydroid.}
+    if is_game "$p"; then
+      grep -q '^Categories=.*Game;' "$f" || sed -i 's#^Categories=#Categories=Game;#' "$f"
+    elif grep -q '^Categories=Game;.*X-WayDroid-App' "$f"; then
+      sed -i 's#^Categories=Game;#Categories=#' "$f"
+    fi
+  done
+}
+is_game() { [ -n "$1" ] && grep -qxF "$1" "$CONF/android-games" 2>/dev/null; }
+
+stop_android() {
+  ROOT unfreeze >/dev/null 2>&1; rm -f "$RUN/android-frozen" "$RUN/android-booted"
+  waydroid session stop >/dev/null 2>&1
+  ROOT share off >/dev/null 2>&1
+}
+
+mime_of() { xdg-mime query filetype "$1" 2>/dev/null || file -b --mime-type "$1"; }
+
+case "${1:-status}" in
+  setup)
+    # kommandot (Inställningar, Programbutiken och Filer hittar Android här) och genvägarna i Start
+    mkdir -p "$HOME/.local/bin" "${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    chmod +x "$(readlink -f "$0")" 2>/dev/null   # (en .wapp packas upp utan körbit)
+    ln -sfn "$(readlink -f "$0")" "$LINK.tmp" && mv -fT "$LINK.tmp" "$LINK"
+    apps="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    for f in "$HERE"/share/applications/wenuyos-android-*.desktop; do
+      [ -f "$f" ] || continue
+      sed -e "s#@WENUYOS_ANDROID@#$LINK#g" "$f" > "$apps/$(basename "$f").tmp" && mv -f "$apps/$(basename "$f").tmp" "$apps/$(basename "$f")"
+    done
+    # Android-appar som redan finns: genvägarna pekar på det här programmet (förut /usr/lib/wenuyos/wenuyos-android)
+    for f in "$apps"/waydroid.*.desktop; do
+      [ -f "$f" ] && sed -i "s#^Exec=/usr/lib/wenuyos/wenuyos-android launch #Exec=$LINK launch #" "$f"
+    done
+    command -v update-desktop-database >/dev/null && update-desktop-database -q "$apps" 2>/dev/null
+    true;;
+  enable)
+    mb=$(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1024 ))
+    [ $mb -lt 1800 ] && { echo "$(T "Android apps need at least 2 GB RAM ($mb MB found)." "Android-appar kräver minst 2 GB RAM (hittade $mb MB).")"; exit 1; }
+    # Android från USB (ingen nedladdning): en signerad wenuyos-android-images-mapp på ett USB-minne
+    usb=$(usb_images)
+    if [ -n "$usb" ]; then
+      if verify_images "$usb"; then
+        echo "STEP $(T "Using Android from USB ($usb)…" "Använder Android från USB ($usb)…")"
+        sudo install -d /etc/waydroid-extra/images
+        sudo cp "$usb/system.img" "$usb/vendor.img" /etc/waydroid-extra/images/ || exit 1
+        if ! command -v waydroid >/dev/null && ls "$usb"/*.deb >/dev/null 2>&1; then
+          sudo apt-get install -y "$usb"/*.deb || echo "$(T "Packages on the USB need more packages – trying the internet" "Paketen på USB behöver fler paket – provar via internet")"
+        fi
+      else
+        usb=""
+      fi
+    fi
+    # Waydroid finns i Debians eget backports-förråd (trixie-backports, byggt för Debians Python)
+    if ! command -v waydroid >/dev/null; then
+      echo "STEP $(T "Installing Waydroid (free software, GPL-3)…" "Installerar Waydroid (fri programvara, GPL-3)…")"
+      sudo apt-get update -qq 2>/dev/null
+      sudo apt-get install -y -t trixie-backports waydroid || exit 1
+    fi
+    # delade mappar (bindfs); urklippet sköts av WenuyOS egen pyclip (wl-clipboard)
+    dpkg -s bindfs >/dev/null 2>&1 || sudo apt-get install -y -qq bindfs >/dev/null 2>&1
+    if [ ! -f /var/lib/waydroid/waydroid.cfg ]; then
+      if [ -f /etc/waydroid-extra/images/system.img ]; then
+        sudo waydroid init || exit 1   # avbildningarna från USB
+      else
+        echo "STEP $(T "Downloading Android (LineageOS, no Google services, ~800 MB)…" "Hämtar Android (LineageOS, utan Google-tjänster, ~800 MB)…")"
+        sudo waydroid init -s VANILLA || exit 1
+      fi
+    fi
+    sudo systemctl start waydroid-container >/dev/null 2>&1   # bara nu – startas när en Android-app öppnas
+    # Fönsterläge: varje app i eget fönster; musen är en mus (finger bara i valda appar); lågt minne på 2–3 GB
+    sudo waydroid prop set persist.waydroid.multi_windows true >/dev/null 2>&1 || true
+    ROOT gfx "$(gfx_wanted)" >/dev/null 2>&1; ROOT base >/dev/null 2>&1
+    sudo systemctl restart waydroid-container
+    session_up && apply_display yes   # fönsterstorlek och textstorlek efter den här skärmen
+    note "$(T "Android is ready" "Android är klart")" "$(T "Android apps open in their own windows and appear in search. Get apps: F-Droid." "Android-appar öppnas i egna fönster och syns i sökfältet. Hämta appar: F-Droid.")"
+    $0 fdroid
+    (setsid "$0" watch >/dev/null 2>&1 &);;
+  status)
+    if [ "${2:-}" = --json ]; then
+      # för Inställningar → Android (billigt: inga waydroid-anrop utom status)
+      inst=$(have && echo true || echo false)
+      run=false; have && waydroid status 2>/dev/null | qgrep 'Session:.*RUNNING' && run=true
+      frozen=false; [ -f "$RUN/android-frozen" ] && frozen=true
+      mem=0
+      for cg in /sys/fs/cgroup/lxc.payload.waydroid /sys/fs/cgroup/lxc/waydroid; do
+        [ -r "$cg/memory.current" ] && { mem=$(( $(cat "$cg/memory.current") / 1048576 )); break; }
+      done
+      apps=$(ls "$HOME"/.local/share/applications/waydroid.*.desktop 2>/dev/null | wc -l)
+      printf '{"installed":%s,"running":%s,"frozen":%s,"memory_mb":%s,"apps":%s,"graphics":"%s","graphics_setting":"%s","share":"%s","autostop":"%s","prestart":"%s","prestart_now":%s,"touch":"%s","microg":%s,"arm":"%s"}\n' \
+        "$inst" "$run" "$frozen" "$mem" "$apps" "$(gfx_now)" "$(cfg graphics || true)" "$(cfg share || true)" "$(cfg autostop || true)" \
+        "$(cfg prestart || true)" "$(prestart_wanted && echo true || echo false)" "$(touch_list | sed 's/"//g')" \
+        "$([ "$(cfg microg)" = yes ] && echo true || echo false)" "$(cat /var/lib/wenuyos/android-arm 2>/dev/null)"
+    elif have; then waydroid status; else T "Android apps: not enabled (wenuyos install android)" "Android-appar: inte påslaget (wenuyos install android)"; fi;;
+  full|window)
+    have || exec wenuyos-terminal -H "$0" enable
+    ensure_window_size "$([ "$1" = full ] && echo full || cfg display)"
+    session_up
+    # Helskärm: Android-fönstret i skärmens storlek fyller skärmen. Fönster: vanlig titelrad (labwc
+    # serverDecoration) – Android kan inte ändra storlek medan det kör, så storleken väljs med
+    # "wenuyos-android size" (startar om Android-fönstret).
+    exec waydroid show-full-ui;;
+  size)
+    # Välj storlek på Android-fönstret i en meny och öppna det igen i den storleken
+    have || exit 1
+    pick=$(wenuyos-dialog --list --title=WenuyOS --text="$(T "Android window size" "Android-fönstrets storlek")" --column="$(T "Size" "Storlek")" \
+           "$(T "Phone (narrow)" "Telefon (smalt)")" "$(T "Medium" "Mellan")" "$(T "Large" "Stort")" "$(T "Full screen" "Helskärm")" 2>/dev/null) || exit 0
+    case "$pick" in
+      Telefon*|Phone*) d=phone;; Mellan|Medium) d=medium;; Stort|Large) d=large;; *) exec "$0" full;;
+    esac
+    setcfg display "$d"
+    exec "$0" window;;
+  display)
+    case "${2:-}" in
+      auto|large|medium|phone|full) setcfg display "$2";;
+      "") d=$(cfg display); echo "${d:-auto}"   # utan värde: det som är valt nu (Claude på A275, 16 nov)
+        read -r w h < <(window_size); echo "$(T "Android window: " "Android-fönster: ")$( [ "$w" = 0 ] && T "full screen" "hela skärmen" || echo "${w}×${h}")"; exit 0;;
+      *) echo "auto|large|medium|phone|full"; exit 1;;
+    esac
+    have && apply_display; read -r w h < <(window_size); echo "$(T "Android window: " "Android-fönster: ")$( [ "$w" = 0 ] && T "full screen" "hela skärmen" || echo "${w}×${h}")";;
+  density)
+    case "${2:-}" in auto|1[0-9][0-9]|2[0-9][0-9]|3[0-9][0-9]) setcfg density "$2";; *) echo "auto|140|160|200|240"; exit 1;; esac
+    have && apply_display;;
+  mode)
+    case "${2:-}" in apps|single) setcfg mode "$2";; *) echo "apps|single"; exit 1;; esac
+    have && apply_display yes;;
+  aurora)
+    # Aurora Store från F-Droid (fri, GPL-3): appar från Google Play utan Google-konto
+    have || { note "$(T "Enable Android apps first" "Slå på Android-appar först")"; exit 1; }
+    session_up || exit 1
+    code=$(curl -fsSL https://f-droid.org/api/v1/packages/com.aurora.store | python3 -c 'import json,sys; print(json.load(sys.stdin)["suggestedVersionCode"])') || { echo "$(T "No contact with f-droid.org" "Ingen kontakt med f-droid.org")"; exit 1; }
+    tmp=$(mktemp --suffix=.apk)
+    curl -fsSL -o "$tmp" "https://f-droid.org/repo/com.aurora.store_${code}.apk" && waydroid app install "$tmp" && \
+      note "Aurora Store" "$(T "Installed – apps from Google Play without a Google account. Some apps need Google services (see microG)." "Installerad – appar från Google Play utan Google-konto. Vissa appar kräver Googles tjänster (se microG).")"
+    rm -f "$tmp";;
+  microg)
+    # microG (fri, Apache-2.0): ersätter Googles tjänster för appar som behöver dem – installeras i Android-avbildningen
+    have || { note "$(T "Enable Android apps first" "Slå på Android-appar först")"; exit 1; }
+    echo "STEP $(T "Installing microG…" "Installerar microG…")"
+    wscript install microg || exit 1
+    sudo systemctl restart waydroid-container
+    setcfg microg yes
+    note "microG" "$(T "Installed. Open microG Settings in Android to turn on what you need." "Installerat. Öppna microG-inställningarna i Android och slå på det du behöver.")";;
+  images)
+    # Egna Android-avbildningar från USB (fönstret: Android från USB). Mappen ska innehålla
+    # system.img och vendor.img, android-images.sha256 och en WenuyOS-signatur (android-images.sha256.sig).
+    # Användarens data i Android behålls. Utan mapp: den första på ett USB-minne.
+    dir="${2:-$(usb_images)}"
+    [ -n "$dir" ] || { echo "$(T "No signed Android images (wenuyos-android-images) on a USB stick" "Inga signerade Android-avbildningar (wenuyos-android-images) på något USB-minne")"; exit 1; }
+    verify_images "$dir" || exit 1
+    command -v waydroid >/dev/null || { echo "$(T "Enable Android apps first (wenuyos install android)" "Slå på Android-appar först (wenuyos install android)")"; exit 1; }
+    echo "STEP $(T "Installing Android images from USB…" "Installerar Android-avbildningar från USB…")"
+    waydroid session stop >/dev/null 2>&1
+    sudo install -d /etc/waydroid-extra/images
+    sudo cp "$dir/system.img" "$dir/vendor.img" /etc/waydroid-extra/images/
+    sudo waydroid init -f || exit 1
+    ROOT base >/dev/null 2>&1; ROOT gfx "$(gfx_wanted)" >/dev/null 2>&1
+    sudo systemctl restart waydroid-container
+    echo "$(T "Done – start Android again." "Klart – starta Android igen.")";;
+  apk)
+    have || { note "$(T "Enable Android apps first" "Slå på Android-appar först")"; exec wenuyos-terminal -H "$0" enable; }
+    f="${2:?apk}"
+    case "$f" in *.xapk|*.apks|*.apkm) exec "$0" xapk "$f";; esac
+    # en del av en delad app (uppackad .xapk: basen + config.arm64_v8a.apk …): installera alla delar
+    d=$(python3 -I "$XAPK" split "$f" 2>/dev/null)
+    [ -n "$d" ] && exec "$0" xapk "$d"
+    session_up && waydroid app install "$f" && note "$(T "Installed" "Installerad")" "$(basename "$f")";;
+  xapk)
+    # .xapk/.apks/.apkm eller en mapp med delarna (Daniel 13 nov) – waydroid app install tar bara en .apk
+    have || { note "$(T "Enable Android apps first" "Slå på Android-appar först")"; exec wenuyos-terminal -H "$0" enable; }
+    src=$(realpath -e "${2:?xapk}") || exit 1
+    cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+    [ "$cache" = "$HOME/.cache" ] || cache="$HOME/.cache"   # roten letar bara här
+    name=$(basename "$src" | tr -c 'A-Za-z0-9._-' '_' | sed 's/^[^A-Za-z0-9]*//' | cut -c1-100); [ -n "$name" ] || name=app
+    work="$cache/wenuyos/android-split/$name"
+    mkdir -p "$cache/wenuyos/android-split"
+    note "Android" "$(T "Preparing" "Förbereder") $(basename "$src") …"
+    plan=$(python3 -I "$XAPK" prepare "$src" "$work") || {
+      note "Android" "$(T "Not an Android app in parts" "Inte en Android-app i delar") ($(printf '%s' "$plan" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("error",""))' 2>/dev/null))"
+      rm -rf "$work"; exit 1; }
+    field() { printf '%s' "$plan" | python3 -c "import json,sys;v=json.load(sys.stdin).get('$1');print(v if not isinstance(v,bool) else str(v).lower())"; }
+    app=$(field name)
+    # bara ARM-delar: översättaren behövs på en vanlig dator (Intel/AMD)
+    if [ "$(field needs_arm)" = true ] && [ "$(uname -m)" = x86_64 ] && [ -z "$(cat /var/lib/wenuyos/android-arm 2>/dev/null)" ]; then
+      note "Android" "$(T "$app needs support for ARM apps – turning it on first" "$app behöver stöd för ARM-appar – det slås på först")"
+      wenuyos-terminal -H "$0" arm || { rm -rf "$work"; exit 1; }
+      [ -n "$(cat /var/lib/wenuyos/android-arm 2>/dev/null)" ] || { rm -rf "$work"; exit 1; }
+    fi
+    session_up || { rm -rf "$work"; exit 1; }
+    if ROOT split "$name"; then note "Android" "$(T "Installed" "Installerad"): $app"; rm -rf "$work"
+    else note "Android" "$(T "Could not install" "Kunde inte installera") $app"; rm -rf "$work"; exit 1; fi;;
+  fdroid)
+    have || exit 1; session_up || exit 1
+    waydroid app list 2>/dev/null | qgrep org.fdroid.fdroid && exit 0
+    tmp=$(mktemp --suffix=.apk); curl -fsSL -o "$tmp" https://f-droid.org/F-Droid.apk && waydroid app install "$tmp" && \
+      note "F-Droid" "$(T "Free app store installed – find it in search." "Fri appbutik installerad – finns i sökfältet.")"
+    rm -f "$tmp";;
+  arm)
+    # ARM-översättare: libndk (Google, bäst på AMD) eller libhoudini (Intel, bäst på Intel).
+    # INTE fri programvara och skickas inte med WenuyOS – hämtas här, på användarens begäran,
+    # via det fria verktyget waydroid_script (GPL-3): https://github.com/casualsnek/waydroid_script
+    have || { echo "$(T "Enable Android apps first." "Slå på Android-appar först.")"; exit 1; }
+    vendor=$(awk -F': ' '/^vendor_id/ {print $2; exit}' /proc/cpuinfo)
+    case "$vendor" in GenuineIntel) tr=libhoudini;; *) tr=libndk;; esac
+    [ -n "${2:-}" ] && tr="$2"
+    echo "STEP $(T "Downloading ARM translation ($tr)…" "Hämtar ARM-översättning ($tr)…")"
+    wscript install "$tr" || exit 1
+    sudo systemctl restart waydroid-container
+    printf '%s\n' "$tr" | sudo tee /var/lib/wenuyos/android-arm >/dev/null
+    note "$(T "ARM apps enabled" "ARM-appar påslaget")" "$(T "Translation: $tr" "Översättning: $tr")";;
+  stop) stop_android; note "$(T "Android stopped" "Android stängt")";;
+  disable) stop_android; sudo systemctl disable --now waydroid-container;;
+  apps)
+    for f in "$HOME"/.local/share/applications/waydroid.*.desktop; do
+      [ -f "$f" ] || continue
+      p=$(basename "$f" .desktop); p=${p#waydroid.}
+      printf '%s\t%s\n' "$p" "$(sed -n 's/^Name=//p' "$f" | head -1)"
+    done | sort -t$'\t' -k2;;
+  launch)
+    pkg=${2:?paket}
+    have || exec wenuyos-terminal -H "$0" enable
+    mkdir -p "$CONF"; touch "$CONF/android-last-used"   # används Android-appar: förbered Android efter inloggningen (prestart auto)
+    # appar som blir genomskinliga i eget fönster: i Android-fönstret (hela Android), i den valda storleken
+    if is_fullui "$pkg"; then
+      d=$(cfg display); [ -z "$d" ] || [ "$d" = full ] && d=large
+      ensure_window_size "$d"
+    fi
+    session_up || { note "$(app_name "$pkg")" "$(T "The app could not start (Android did not start)" "Appen kunde inte starta (Android startade inte)")"; exit 1; }
+    apply_touch   # musen som finger gäller direkt (också för ett spel som just lagts till i Spel-biblioteket)
+    if is_fullui "$pkg"; then
+      # Bara spelet syns (Daniel 16 nov: "Kan vi få bort bakgrundsemuleringen och bara emulera spelet/programmet i
+      # fönstret"): förut öppnades appen som ett litet fönster ovanpå Androids skrivbord (fönsterläget för
+      # Android-appar), så att Androids bakgrund syntes runt spelet. Nu öppnas Android-fönstret först och spelet sedan
+      # i helskärmsläge inne i det – det täcker hela fönstret. Kör spelet redan: det tas bara fram (ingen omstart).
+      waydroid show-full-ui >/dev/null 2>&1 &
+      sleep 2   # Android-fönstret visar sitt skrivbord när det öppnas – spelet ska läggas ovanpå efteråt
+      ROOT fullapp "$pkg" >/dev/null 2>&1 || waydroid app launch "$pkg" >/dev/null 2>&1
+      wait
+      exit 0
+    fi
+    exec waydroid app launch "$pkg";;
+  fullui)
+    case "${2:-}" in
+      add) pkg=${3:?paket}; mkdir -p "$CONF"; touch "$CONF/android-fullui"
+        grep -vxF -- "-$pkg" "$CONF/android-fullui" > "$CONF/android-fullui.new" || true; mv "$CONF/android-fullui.new" "$CONF/android-fullui"
+        is_fullui "$pkg" || echo "$pkg" >> "$CONF/android-fullui";;
+      remove) pkg=${3:?paket}; mkdir -p "$CONF"; touch "$CONF/android-fullui"
+        grep -vxF -- "$pkg" "$CONF/android-fullui" > "$CONF/android-fullui.new" || true; mv "$CONF/android-fullui.new" "$CONF/android-fullui"
+        is_fullui "$pkg" && echo "-$pkg" >> "$CONF/android-fullui"; true;;   # inbyggd: kom ihåg att den är borttagen
+      list|"") { for p in $FULLUI_BUILTIN; do is_fullui "$p" && echo "$p"; done; grep -v '^-' "$CONF/android-fullui" 2>/dev/null || true; } | sort -u;;
+      *) echo "add|remove <paket> | list"; exit 1;;
+    esac;;
+  open)
+    f=$(realpath -e "${2:?fil}") || exit 1
+    have || { note "$(T "Enable Android apps first" "Slå på Android-appar först")"; exit 1; }
+    case "$f" in *.apk) exec "$0" apk "$f";; *.xapk|*.apks|*.apkm) exec "$0" xapk "$f";; esac
+    session_up || exit 1
+    # filen måste ligga i en delad mapp; annars kopieras den till Hämtade filer
+    rel=""
+    for k in DOCUMENTS:Documents PICTURES:Pictures DOWNLOAD:Download MUSIC:Music VIDEOS:Movies; do
+      d=$(xdg-user-dir "${k%%:*}"); [ -n "$d" ] && [ "$d" != "$HOME" ] || continue
+      case "$f" in "$d"/*) rel="${k#*:}/${f#"$d"/}"; break;; esac
+    done
+    if [ -z "$rel" ] || [ "$(cfg share)" = off ]; then
+      dl="$HOME/.local/share/waydroid/data/media/0/Download"
+      [ "$(cfg share)" != off ] && dl=$(xdg-user-dir DOWNLOAD)
+      cp -f "$f" "$dl/" 2>/dev/null || { note "Android" "$(T "Could not copy the file" "Kunde inte kopiera filen")"; exit 1; }
+      rel="Download/$(basename "$f")"
+    fi
+    uri="file:///sdcard/$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$rel")"
+    ROOT view "$uri" "$(mime_of "$f")" || note "Android" "$(T "No Android app can open this file" "Ingen Android-app kan öppna filen")";;
+  touch)
+    cur=$(touch_list)
+    case "${2:-list}" in
+      auto) rm -f "$CONF/android-touch";;
+      none) setcfg touch "none";;
+      all) setcfg touch "*";;
+      add) [ "$cur" = "*" ] && cur=""
+        pkg=${3:?paket}; [[ "$pkg" =~ ^[A-Za-z0-9_.]+$ ]] || { echo "$(T "Not a package name" "Inte ett paketnamn"): $pkg"; exit 1; }
+        setcfg touch "$(printf '%s\n' ${cur//,/ } "$pkg" | sort -u | grep . | paste -sd,)";;
+      remove) v=$(printf '%s\n' ${cur//,/ } | grep -vx "${3:?paket}" | paste -sd,); setcfg touch "${v:-none}";;
+      list) echo "${cur:-$(T "none (the mouse is a mouse)" "ingen (musen är en mus)")}"; exit 0;;
+      mode) touch_mode; exit 0;;
+      *) echo "auto|none|all|add <paket>|remove <paket>|list|mode"; exit 1;;
+    esac
+    have && apply_touch
+    if have && waydroid status 2>/dev/null | qgrep "Session:.*RUNNING"; then
+      echo "$(T "Applies now – an app that is already open: close it and open it again" "Gäller nu – en app som redan är öppen: stäng den och öppna den igen")"
+    else
+      echo "$(T "Applies when the app starts" "Gäller när appen startar")"
+    fi;;
+  share)
+    case "${2:-}" in
+      on) setcfg share on; have && ! running && ROOT share on
+          running && echo "$(T "Applies the next time Android starts" "Gäller nästa gång Android startar")";;
+      off) setcfg share off; have && ROOT share off;;
+      *) echo "on|off"; exit 1;;
+    esac;;
+  autostop)
+    case "${2:-}" in
+      never|[0-9]|[0-9][0-9]|[0-9][0-9][0-9]) setcfg autostop "$2";;
+      auto) rm -f "$CONF/android-autostop";;   # 10 minuter, eller kvar pausat när Android hålls förberett (prestart)
+      *) echo "<minuter>|never|auto"; exit 1;;
+    esac;;
+  prestart)
+    case "${2:-}" in
+      auto|on|off) setcfg prestart "$2";;
+      "") prestart_wanted && echo yes || echo no;;   # gäller det just nu?
+      *) echo "auto|on|off"; exit 1;;
+    esac;;
+  game)
+    case "${2:-}" in
+      add) pkg=${3:?paket}; mkdir -p "$CONF"; is_game "$pkg" || echo "$pkg" >> "$CONF/android-games"; fix_desktop_files;;
+      remove) pkg=${3:?paket}
+        if [ -f "$CONF/android-games" ]; then grep -vxF "$pkg" "$CONF/android-games" > "$CONF/android-games.new" || true; mv "$CONF/android-games.new" "$CONF/android-games"; fi
+        fix_desktop_files;;
+      list|"") cat "$CONF/android-games" 2>/dev/null || true;;
+      *) echo "add|remove <paket> | list"; exit 1;;
+    esac;;
+  graphics)
+    case "${2:-}" in auto|hardware|software) setcfg graphics "$2";; *) echo "auto|hardware|software ($(T "now" "nu"): $(gfx_now))"; exit 1;; esac
+    have || exit 0
+    if [ "$(gfx_wanted)" != "$(gfx_now)" ]; then
+      running && waydroid session stop >/dev/null 2>&1
+      ROOT gfx "$(gfx_wanted)" && ROOT restart
+    fi
+    echo "$(T "Graphics" "Grafik"): $(gfx_wanted)";;
+  upgrade)
+    have || exit 0
+    echo "STEP $(T "Updating Android (LineageOS)…" "Uppdaterar Android (LineageOS)…")"
+    running && waydroid session stop >/dev/null 2>&1
+    if [ -d /etc/waydroid-extra/images ]; then
+      echo "$(T "Android images from USB are used – update them with a new USB image." "Android-avbildningar från USB används – uppdatera med en ny avbildning från USB.")"
+    else
+      sudo waydroid upgrade || exit 1
+    fi
+    ROOT base; ROOT gfx "$(gfx_wanted)"; apply_display
+    sudo systemctl restart waydroid-container;;
+  prestart-now)   # (bevakningen kör det här) starta Android utan att öppna något fönster
+    have || exit 0
+    running && exit 0
+    WENUYOS_ANDROID_QUIET=1 session_up;;
+  watch)
+    # Bakgrundsbevakning (en gång per inloggning, ~0 CPU): pausar Android en minut efter att sista
+    # Android-fönstret stängts, stänger det helt efter "autostop" minuter (frigör minnet),
+    # och ser till att Android-apparna i menyn startar via "launch".
+    exec 9>"$RUN/android-watch.lock" 2>/dev/null || { mkdir -p "$RUN"; exec 9>"$RUN/android-watch.lock"; }
+    flock -n 9 || exit 0
+    idle=0; prestarted=no
+    while sleep 20; do
+      have || { sleep 280; continue; }
+      fix_desktop_files
+      # snabb start: en gång per inloggning, 20 s efter att skrivbordet kommit upp, med låg prioritet. Android pausas
+      # sedan en minut senare av raderna nedan (inga fönster) och ligger förberett.
+      if [ "$prestarted" = no ]; then
+        prestarted=yes
+        if prestart_wanted && ! running && ! memory_low; then
+          (nice -n 10 "$0" prestart-now >/dev/null 2>&1 &)
+          continue
+        fi
+      fi
+      running || { idle=0; rm -f "$RUN/android-frozen" "$RUN/android-booted"; continue; }
+      [ -f "$RUN/windows" ] || continue   # panelen kör inte – vet inte vilka fönster som finns
+      # Android används just nu – det startar, en app installeras eller öppnas, hela Android visas: pausa och stäng
+      # inte, och börja räkna om från noll (förut frystes Android mitt i uppstarten och blev aldrig klart)
+      if busy_now || pgrep -u "$(id -u)" -f "waydroid.* (app launch|app install|show-full-ui)" >/dev/null; then
+        [ -f "$RUN/android-frozen" ] && { ROOT unfreeze >/dev/null 2>&1; rm -f "$RUN/android-frozen"; }
+        idle=0; continue
+      fi
+      if grep -qiE '^(waydroid|android)' "$RUN/windows"; then
+        idle=0
+        [ -f "$RUN/android-frozen" ] && { ROOT unfreeze >/dev/null 2>&1; rm -f "$RUN/android-frozen"; }
+        continue
+      fi
+      idle=$((idle + 20))
+      # pausa bara ett Android som har startat färdigt (android-booted) – annars blir uppstarten aldrig klar
+      if [ $idle -ge 60 ] && [ ! -f "$RUN/android-frozen" ] && [ -f "$RUN/android-booted" ]; then
+        ROOT freeze >/dev/null 2>&1 && touch "$RUN/android-frozen"
+      fi
+      stop=$(autostop_minutes)
+      if [ "$stop" != never ] && [ $idle -ge $((stop * 60)) ]; then
+        stop_android; idle=0
+      elif [ "$stop" = never ] && [ -z "$(cfg autostop)" ] && [ $idle -ge 300 ] && memory_low; then
+        stop_android; idle=0   # förberett Android, men datorn har ont om minne: stäng det (startar igen när en app öppnas)
+      fi
+    done;;
+  *) sed -n '2,/^set -uo/p' "$0" | grep '^#' | sed 's/^# \{0,1\}//';;
+esac

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<!-- GENERERAD av theme/color-icons/hand.py – handritad stil (Daniels bilder 19 nov) -->
+<defs><pattern id="h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#2A2723" stroke-opacity="0.32" stroke-width="1.6"/></pattern></defs>
+<path d="M40.0 118.0 L104.0 118.0 L100.0 124.0 L36.0 124.0 Z" fill="url(#h)"/>
+<path d="M33.6 7.5 L63.9 8.0 L94.3 7.7 L93.5 62.2 L94.0 115.6 L64.5 115.4 L33.8 116.4 L34.6 61.5 Z" fill="#3E3A35" stroke="#2A2723" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M40.6 18.1 L64.2 18.4 L88.1 17.8 L87.8 58.8 L88.0 100.2 L63.9 100.8 L40.1 100.7 L39.6 59.2 Z" fill="#1F5FD6" stroke="#2A2723" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M47.9 27.9 Q54.6 25.8 61.8 24.7" fill="none" stroke="#FBF4E6" stroke-width="2.4" stroke-linecap="round"/>
+<ellipse cx="64.0" cy="108.2" rx="3.0" ry="3.4" fill="#D7D1C6" stroke="#2A2723" stroke-width="2"/>
+</svg>
